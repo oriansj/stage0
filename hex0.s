@@ -1,8 +1,5 @@
-.text # section declaration
-
-# we must export the entry point to the ELF linker or loader.
-# They convientionally recognize _start as their entry point.
-# Use ld -e main to override the default if you wish
+# Our writable space
+.data
 .global _start
 hex:
 	# Purge Comment Lines
@@ -128,8 +125,7 @@ Done:
 	mov	$60, %rax	# put the exit syscall number in eax
 	syscall		# Call it a good day
 
-# Our writable space
-.data
+
 read_size = 2
 input:
 	.byte read_size

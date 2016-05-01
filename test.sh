@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Build new
-./hex2 < hex2_1.hex | sponge trial && ./exec_enable trial
+./bin/hex < hex0.hex |
+sponge bin/trial && ./bin/exec_enable bin/trial
 
 # Test compile
-./trial < foo > example2
-readelf -a trial > summary2
+./bin/trial < hex0.hex |
+sponge tmp/foo
 
 # Check results
-sha256sum example* summary*
-
+sha256sum bin/trial tmp/foo

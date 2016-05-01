@@ -1,0 +1,126 @@
+## Self Bootstrapping Hex Assembler written in Hex
+## And a shitload of comments
+## That can be converted to assembly and compiled
+
+## ELF Header
+7F 45 4C 46        ## e_ident[EI_MAG0-3] ELF's magic number
+02                 ## e_ident[EI_CLASS] Indicating 64 bit
+01                 ## e_ident[EI_DATA] Indicating little endianness
+01                 ## e_ident[EI_VERSION] Indicating original elf
+00                 ## e_ident[EI_OSABI] Set at 0 because none cares
+00                 ## e_ident[EI_ABIVERSION] See above
+00 00 00 00 00 00 00 ## e_ident[EI_PAD]
+02 00              ## e_type Indicating Executable
+3E 00              ## e_machine Indicating AMD64
+01 00 00 00        ## e_version Indicating original elf
+FB 00 60 00 00 00 00 00 ## e_entry Address of the entry point
+40 00 00 00 00 00 00 00 ## e_phoff Address of program header table
+00 00 00 00 00 00 00 00 ## e_shoff Address of section header table
+00 00 00 00        ## e_flags
+40 00              ## e_ehsize Indicating our 64 Byte header
+38 00              ## e_phentsize size of a program header table
+01 00              ## e_phnum number of entries in program table
+00 00              ## e_shentsize size of a section header table
+00 00              ## e_shnum number of entries in section table
+00 00              ## e_shstrndx index of the section names
+
+## Program Header table
+01 00 00 00             ## p_type
+06 00 00 00             ## Flags
+00 00 00 00 00 00 00 00 ## p_offset
+00 00 60 00 00 00 00 00 ## p_vaddr
+00 00 60 00 00 00 00 00 ## Undefined
+9B 01 00 00 00 00 00 00 ## p_filesz
+9B 01 00 00 00 00 00 00 ## p_memsz
+00 00 20 00 00 00 00 00 ## Required alignment
+
+## Hex
+48 83 f8 23        # cmp $0x23,%rax
+74 26              # je 6000a4 <purge_comment>
+48 83 f8 30        # cmp $0x30,%rax
+7c 6f              # jl 6000f3 <ascii_other>
+48 83 f8 3a        # cmp $0x3a,%rax
+7c 5a              # jl 6000e4 <ascii_num>
+48 83 f8 41        # cmp $0x41,%rax
+7c 63              # jl 6000f3 <ascii_other>
+48 83 f8 47        # cmp $0x47,%rax
+7c 58              # jl 6000ee <ascii_high>
+48 83 f8 61        # cmp $0x61,%rax
+7c 57              # jl 6000f3 <ascii_other>
+48 83 f8 67        # cmp $0x67,%rax
+7c 47              # jl 6000e9 <ascii_low>
+eb 4f              # jmp 6000f3 <ascii_other>
+
+## Purge Comment
+48 c7 c2 01 00 00 00 # mov $0x1,%rdx
+48 c7 c6 99 01 60 00 # mov $0x600199,%rsi
+48 c7 c7 00 00 00 00 # mov $0x0,%rdi
+48 c7 c0 00 00 00 00 # mov $0x0,%rax
+0f 05                # syscall
+48 85 c0             # test %rax,%rax
+0f 84 be 00 00 00    # je 600189 <Done>
+8a 04 25 99 01 60 00 # mov 0x600199,%al
+48 0f b6 c0          # movzbq %al,%rax
+48 83 f8 0a          # cmp $0xa,%rax
+75 c8                # jne 6000a4 <purge_comment>
+48 c7 c0 ff ff ff ff # mov $0xffffffffffffffff,%rax
+c3                   # retq
+
+## ascii num
+48 83 e8 30          # sub $0x30,%rax
+c3                   # retq
+
+## ascii low
+48 83 e8 57          # sub $0x57,%rax
+c3                   # retq
+
+## ascii high
+48 83 e8 37          # sub $0x37,%rax
+c3                   # retq
+
+## ascii other
+48 c7 c0 ff ff ff ff # mov $0xffffffffffffffff,%rax
+c3                   # retq
+
+## start
+49 c7 c7 ff ff ff ff # mov $0xffffffffffffffff,%r15
+49 c7 c6 00 00 00 00 # mov $0x0,%r14
+
+## Loop
+48 c7 c2 01 00 00 00 # mov $0x1,%rdx
+48 c7 c6 99 01 60 00 # mov $0x600199,%rsi
+48 c7 c7 00 00 00 00 # mov $0x0,%rdi
+48 c7 c0 00 00 00 00 # mov $0x0,%rax
+0f 05                # syscall
+48 85 c0             # test %rax,%rax
+74 5d                # je 600189 <Done>
+8a 04 25 99 01 60 00 # mov 0x600199,%al
+48 0f b6 c0          # movzbq %al,%rax
+e8 3c ff ff ff       # callq 600078 <hex>
+48 83 f8 00          # cmp $0x0,%rax
+7c c7                # jl 600109 <loop>
+49 83 ff 00          # cmp $0x0,%r15
+7d 0c                # jge 600154 <print>
+49 89 c6             # mov %rax,%r14
+49 c7 c7 00 00 00 00 # mov $0x0,%r15
+eb b5                # jmp 600109 <loop>
+
+## print
+49 c1 e6 04          # shl $0x4,%r14
+4c 01 f0             # add %r14,%rax
+88 04 25 9a 01 60 00 # mov %al,0x60019a
+49 c7 c7 ff ff ff ff # mov $0xffffffffffffffff,%r15
+48 c7 c2 01 00 00 00 # mov $0x1,%rdx
+48 c7 c6 9a 01 60 00 # mov $0x60019a,%rsi
+48 c7 c7 01 00 00 00 # mov $0x1,%rdi
+48 c7 c0 01 00 00 00 # mov $0x1,%rax
+0f 05                # syscall
+eb 80                # jmp 600109 <loop>
+
+## Done
+48 c7 c7 00 00 00 00 # mov $0x0,%rdi
+48 c7 c0 3c 00 00 00 # mov $0x3c,%rax
+0f 05                # syscall
+
+## Place for input, This actually isn't required but here it is
+02 00 00
