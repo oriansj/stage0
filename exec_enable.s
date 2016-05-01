@@ -1,9 +1,6 @@
 .text # section declaration
-msg:
-	.string "needs a proper file name\n"
-	len = . - msg # length of our dear string
 
-# we must export the entry point to the ELF linker or loader.
+	# we must export the entry point to the ELF linker or loader.
 # They convientionally recognize _start as their entry point.
 # Use ld -e main to override the default if you wish
 .global _start
@@ -33,18 +30,10 @@ Done:
 	# program completed Successfully
 	mov	$0, %rdi	# All is well
 	mov	$60, %rax	# put the exit syscall number in eax
-	syscall			# Call it a good day
+	syscall		# Call it a good day
 
 Bail:
-	# first let the user know what was wrong
-	mov $len,%rdx 	# third argument: message length
-	mov $msg,%rsi 	# second argument: pointer to message to write
-	mov $1,%rdi		# first argument: file handle (stdout)
-	mov $1,%rax		# system call number (sys_write)
-	syscall			# call kernel
-	
 	# Second terminate with an error
 	mov	$1, %rdi	# there was an error
 	mov	$60, %rax	# put the exit syscall number in eax
-	syscall			# bail out
-
+	syscall		# bail out

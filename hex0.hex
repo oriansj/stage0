@@ -29,7 +29,7 @@ FB 00 60 00 00 00 00 00 ## e_entry Address of the entry point
 06 00 00 00             ## Flags
 00 00 00 00 00 00 00 00 ## p_offset
 00 00 60 00 00 00 00 00 ## p_vaddr
-00 00 60 00 00 00 00 00 ## Undefined
+00 00 00 00 00 00 00 00 ## Undefined
 9B 01 00 00 00 00 00 00 ## p_filesz
 9B 01 00 00 00 00 00 00 ## p_memsz
 00 00 20 00 00 00 00 00 ## Required alignment
