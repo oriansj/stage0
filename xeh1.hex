@@ -1,0 +1,71 @@
+## ELF Header
+7F 45 4C 46        ## e_ident[EI_MAG0-3] ELF's magic number
+02                 ## e_ident[EI_CLASS] Indicating 64 bit
+01                 ## e_ident[EI_DATA] Indicating little endianness
+01                 ## e_ident[EI_VERSION] Indicating original elf
+00                 ## e_ident[EI_OSABI] Set at 0 because none cares
+00                 ## e_ident[EI_ABIVERSION] See above
+00 00 00 00 00 00 00 ## e_ident[EI_PAD]
+02 00              ## e_type Indicating Executable
+3E 00              ## e_machine Indicating AMD64
+01 00 00 00        ## e_version Indicating original elf
+78 00 60 00 00 00 00 00
+40 00 00 00 00 00 00 00 ## e_phoff Address of program header table
+30 01 00 00 00 00 00 00
+00 00 00 00        ## e_flags
+40 00              ## e_ehsize Indicating our 64 Byte header
+38 00              ## e_phentsize size of a program header table
+01 00              ## e_phnum number of entries in program table
+00 00              ## e_shentsize size of a section header table
+00 00              ## e_shnum number of entries in section table
+00 00              ## e_shstrndx index of the section names
+
+## Program Header table
+01 00 00 00             ## p_type
+06 00 00 00             ## Flags
+00 00 00 00 00 00 00 00 ## p_offset
+00 00 60 00 00 00 00 00 ## p_vaddr
+00 00 00 00 00 00 00 00 ## Undefined
+18 01 00 00 00 00 00 00 ## p_filesz
+18 01 00 00 00 00 00 00 ## p_memsz
+00 00 20 00 00 00 00 00 ## Required alignment
+
+
+## Start
+48 c7 c2 01 00 00 00 #	mov    $0x1,%rdx
+48 c7 c6 17 01 60 00 #	mov    $0x600117,%rsi
+48 c7 c7 00 00 00 00 #	mov    $0x0,%rdi
+48 c7 c0 00 00 00 00 #	mov    $0x0,%rax
+0f 05                #	syscall
+48 85 c0             #	test   %rax,%rax
+74 5b                #	je     6000f6 <Done>
+8a 04 25 17 01 60 00 #	mov    0x600117,%al
+4c 0f b6 e0          #	movzbq %al,%r12
+4c 0f b6 e8          #	movzbq %al,%r13
+49 c1 ec 04          #	shr    $0x4,%r12
+49 83 e5 0f          #	and    $0xf,%r13
+49 81 c4 06 01 60 00 #	add    $0x600106,%r12
+49 81 c5 06 01 60 00 #	add    $0x600106,%r13
+48 c7 c2 01 00 00 00 #	mov    $0x1,%rdx
+4c 89 e6             #	mov    %r12,%rsi
+48 c7 c7 01 00 00 00 #	mov    $0x1,%rdi
+48 c7 c0 01 00 00 00 #	mov    $0x1,%rax
+0f 05                #	syscall
+48 c7 c2 01 00 00 00 #	mov    $0x1,%rdx
+4c 89 ee             #	mov    %r13,%rsi
+48 c7 c7 01 00 00 00 #	mov    $0x1,%rdi
+48 c7 c0 01 00 00 00 #	mov    $0x1,%rax
+0f 05                #	syscall
+eb 82                #	jmp    600078 <_start>
+
+
+## Done
+48 c7 c7 00 00 00 00 #	mov    $0x0,%rdi
+48 c7 c0 3c 00 00 00 #	mov    $0x3c,%rax
+0f 05                #	syscall
+
+## Hex output chars
+30 31 32 33 34 35 36 37 38 39 41 42 43 44 45 46 0A
+
+## Where the byte we are reading is shoved
+00

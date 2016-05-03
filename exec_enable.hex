@@ -29,7 +29,7 @@ F0 01 00 00 00 00 00 00 ## e_shoff Address of section header table
 05 00 00 00         ## Flags
 00 00 00 00 00 00 00 00 ## p_offset
 00 00 40 00 00 00 00 00 ## p_vaddr
-00 00 40 00 00 00 00 00 ## Undefined
+00 00 00 00 00 00 00 00 ## Undefined
 B1 00 00 00 00 00 00 00 ## p_filesz
 B1 00 00 00 00 00 00 00 ## p_memsz
 00 00 20 00 00 00 00 00 ## Required alignment
