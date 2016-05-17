@@ -1,0 +1,260 @@
+# start:
+# Let us first setup our stack
+BC0001            # mov sp,0x100
+B8007E            # mov ax,0x7e00
+8ED0              # mov ss,ax
+# Setup segment to shove input
+B80010            # mov ax,0x1000
+8EC0              # mov es,ax
+BD0000            # mov bp,0x0
+# Initialize variables
+B80000            # mov ax,0x0
+BF0100            # mov di,0x1
+BE0000            # mov si,0x0
+
+# loop:
+E85100            # call read_char
+# Check for C-d
+3C04              # cmp al,0x4
+7505              # jnz 0x25 [Skip over next 2 instructions]
+E8E400            # call execute_code
+EBF4              # jmp loop
+# Check for C-l
+3C0C              # cmp al,0xc
+7505              # jnz 0x2e [Skip over next 2 instructions]
+E84600            # call clear_screen
+EBEB              # jmp loop
+# Check for [Enter]
+3C0D              # cmp al,0xd
+7505              # jnz 0x37 [Skip over next 2 instructions]
+E85800            # call display_newline
+EBE2              # jmp loop
+
+# Otherwise just print the char
+E82E00            # call print_char
+E88D00            # call hex
+3C00              # cmp al,0x0 [Check if is hex char]
+7CD8              # jl loop
+83FF00            # cmp di,byte +0x0 [Check if toggled]
+740A              # jz 0x50 [Skip over next 4 instructions]
+
+# Process first nibble of pair
+BE0F00            # mov si,0xf
+21C6              # and si,ax
+BF0000            # mov di,0x0
+EBC9              # jmp loop
+
+# Process second nibble of pair
+C1E604            # shl si,byte 0x4
+83E00F            # and ax,byte +0xf
+01F0              # add ax,si
+BF0100            # mov di,0x1
+89EB              # mov bx,bp
+
+# Write out byte
+268807            # mov [es:bx],al
+
+# Update our pointer
+83C501            # add bp,byte +0x1
+E8C900            # call insert_spacer
+EBB1              # jmp loop
+
+# print_char:
+B40E              # mov ah,0xe
+CD10              # int 0x10
+C3                # ret
+
+# read_char:
+B400              # mov ah,0x0
+CD16              # int 0x16
+C3                # ret
+
+# clear_screen:
+# The actual clearing of the screen
+B000              # mov al,0x0
+B406              # mov ah,0x6
+B707              # mov bh,0x7
+B100              # mov cl,0x0
+B500              # mov ch,0x0
+B250              # mov dl,0x50
+B618              # mov dh,0x18
+CD10              # int 0x10
+# The resetting of the cursor
+B402              # mov ah,0x2
+B700              # mov bh,0x0
+B600              # mov dh,0x0
+B200              # mov dl,0x0
+CD10              # int 0x10
+C3                # ret
+
+# display_newline:
+E81B00            # call get_cursor_position
+80FC0C            # cmp ah,0xc
+7E04              # jng 0x99 [Skip over next 2 instructions]
+E81C00            # call word 0xb4
+C3                # ret
+# Move the cursor down if required
+B601              # mov dh,0x1
+00E6              # add dh,ah
+B402              # mov ah,0x2
+B700              # mov bh,0x0
+B200              # mov dl,0x0
+CD10              # int 0x10
+B00D              # mov al,0xd
+E8BEFF            # call print_char
+C3                # ret
+
+# get_cursor_position:
+B403              # mov ah,0x3
+B700              # mov bh,0x0
+CD10              # int 0x10
+89D0              # mov ax,dx
+C3                # ret
+
+# scroll_window:
+B001              # mov al,0x1
+B406              # mov ah,0x6
+B707              # mov bh,0x7
+B100              # mov cl,0x0
+B500              # mov ch,0x0
+B250              # mov dl,0x50
+B618              # mov dh,0x18
+CD10              # int 0x10
+B00D              # mov al,0xd
+E89FFF            # call print_char
+C3                # ret
+
+# hex:
+# Deal with line comments starting with #
+3C23              # cmp al,0x23
+742A              # jz ascii_comment
+# Deal with line comments starting with ;
+3C3B              # cmp al,0x3b
+7426              # jz ascii_comment
+# Deal with all ascii less than '0'
+3C30              # cmp al,0x30
+7C1F              # jl ascii_other
+# Deal with '0' through '9'
+3C3A              # cmp al,0x3a
+7C12              # jl ascii_num
+# Deal with all ascii less than 'A'
+3C41              # cmp al,0x41
+7C17              # jl ascii_other
+# Deal with 'A' through 'F'
+3C47              # cmp al,0x47
+7C10              # jl ascii_high
+# Deal with all ascii less than 'a'
+3C61              # cmp al,0x61
+7C0F              # jl ascii_other
+# Deal with 'a' through 'f'
+3C67              # cmp al,0x67
+7C05              # jl ascii_low
+# Deal with everything else
+EB09              # jmp ascii_other
+
+# ascii_num:
+2C30              # sub al,0x30
+C3                # ret
+
+# ascii_low:
+2C57              # sub al,0x57
+C3                # ret
+
+# ascii_high:
+2C37              # sub al,0x37
+C3                # ret
+
+# ascii_other:
+B0FF              # mov al,0xff
+C3                # ret
+
+# ascii_comment:
+E872FF            # call read_char
+E86AFF            # call print_char
+3C0D              # cmp al,0xd
+75F6              # jnz ascii_comment
+E8AFFF            # call scroll_window
+EBEE              # jmp ascii_other
+
+# execute_code:
+# Clear the screen to be nice
+E868FF            # call clear_screen
+
+# Zero all registers and segments before jump
+B80000            # mov ax,0x0
+BB0000            # mov bx,0x0
+B90000            # mov cx,0x0
+BA0000            # mov dx,0x0
+BE0000            # mov si,0x0
+BF0000            # mov di,0x0
+BD0000            # mov bp,0x0
+8ED8              # mov ds,ax
+8ED0              # mov ss,ax
+8EC0              # mov es,ax
+8EE0              # mov fs,ax
+8EE8              # mov gs,ax
+
+# Load the code that we input by hand
+680010            # push word 0x1000
+6A00              # push byte +0x0
+# Using intersegment return
+CF                # iretw
+
+# insert_spacer:
+B020              # mov al,0x20
+E834FF            # call word 0x68
+C3                # ret
+
+# done:
+F4                # hlt
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+55AA              # Magic Number
