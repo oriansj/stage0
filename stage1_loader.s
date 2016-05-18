@@ -56,7 +56,7 @@ read_floppy:
 	mov fs, ax
 	mov gs, ax
 
-	;; Load the code that we input by hand
+	;; Prepare to Jump to the code we loaded
 	push 01000h
 	push 0h
 

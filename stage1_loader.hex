@@ -1,0 +1,164 @@
+# start:
+# Wait for user input before running
+B400              # mov ah,0x0
+CD16              # int 0x16
+
+# Clear the screen to be nice
+# Clearing the screen
+B000              # mov al,0x0
+B406              # mov ah,0x6
+B707              # mov bh,0x7
+B100              # mov cl,0x0
+B500              # mov ch,0x0
+B250              # mov dl,0x50
+B618              # mov dh,0x18
+CD10              # int 0x10
+# Reseting the cursor
+B402              # mov ah,0x2
+B700              # mov bh,0x0
+B600              # mov dh,0x0
+B200              # mov dl,0x0
+CD10              # int 0x10
+
+# read_floppy:
+B080              # mov al,0x80
+B402              # mov ah,0x2
+B500              # mov ch,0x0
+B101              # mov cl,0x1
+B600              # mov dh,0x0
+B200              # mov dl,0x0
+BB0010            # mov bx,0x1000
+8EC3              # mov es,bx
+BB0000            # mov bx,0x0
+CD13              # int 0x13
+72E8              # jc read_floppy
+
+# Zero all registers and segments before jump
+B80000            # mov ax,0x0
+BB0000            # mov bx,0x0
+B90000            # mov cx,0x0
+BA0000            # mov dx,0x0
+BE0000            # mov si,0x0
+BF0000            # mov di,0x0
+BD0000            # mov bp,0x0
+8ED8              # mov ds,ax
+8ED0              # mov ss,ax
+8EC0              # mov es,ax
+8EE0              # mov fs,ax
+8EE8              # mov gs,ax
+
+# Load where we need to jump to execute the loaded code
+680010            # push word 0x1000
+6A00              # push byte +0x0
+
+# Use intersegment return to jump to the code loaded from floppy A:
+CF                # iretw
+
+# done:
+F4                # hlt
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90 90 90       # 4 nops
+90 90             # 2 nops
+55AA              # Magic Number
