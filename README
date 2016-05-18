@@ -1,0 +1,10 @@
+This is a set of manually created hex programs in a Cthulhu Path to madness fashion.
+Which only have the goal of creating a bootstrapping path to a C compiler capable of 
+Compiling GCC, with only the explicit requirement of a single 1 KByte binary or less.
+
+This repo contains a few of my false start pieces that may be of interest to people who
+want to independently create the root binary, I welcome all bug fixes and code that aids
+in the above stated goal.
+
+I'll be adding more code and documentation as I build pieces.
+ALL code in this REPO is under the GPLv3 or Later.
