@@ -1,5 +1,10 @@
 * Platform specific information
 ** 8086
+To encode assembly to hex, please reference: http://ref.x86asm.net/geek.html
+WARNING encoding is an extremely slow and painful process by hand,
+BE VERY VERY THANKFUL for those that came before us and made such wonderful
+things as assemblers and C compilers that hide most of the horrible darkness from our eyes...
+
 *** Default memory map
 16-bit mem map	(seg:off)
 0x0000:0x0000 -> 0x0000:0x0500  BIOS stuff
@@ -42,7 +47,7 @@ change floppy0 blank_floppy.img
 There are literally hundreds of ways of building the root bootstrap binary.
 All that is required is a simply hex compiler written in any language on
 any system available to the user.
-This repository contains a hex compiler written for linux in hex and assembly as
+This repository contains a hex compiler written for Linux in hex and assembly as
 well as a platform independent C implementation.
 Then to complete the build process write to the master boot record of a floppy disk.
 Or should you desire simply use qemu to boot the compiled file directly.
