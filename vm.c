@@ -1,50 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-
-/* Virtual machine state */
-struct lilith
-{
-	uint64_t *memory;
-	uint64_t reg[16];
-	uint64_t ip;
-	bool halted;
-	bool exception;
-};
-
-struct Instruction
-{
-	uint64_t ip;
-	uint8_t opcode;
-	uint32_t XOP;
-	uint32_t Immediate;
-	uint32_t HAL_CODE;
-	uint8_t reg0;
-	uint8_t reg1;
-	uint8_t reg2;
-	uint8_t reg3;
-	bool invalid;
-};
-
-/* Allocate and intialize memory/state */
-struct lilith* create_vm(size_t size)
-{
-	struct lilith* vm;
-	vm = calloc(1, sizeof(struct lilith));
-	vm->memory = calloc(size, sizeof(uint8_t));
-	vm->halted = false;
-	vm->exception = false;
-	return vm;
-}
-
-/* Free up the memory we previously allocated */
-void destroy_vm(struct lilith* vm)
-{
-	free(vm->memory);
-	free(vm);
-}
+#include "vm.h"
+#define DEBUG true;
 
 /* Load program tape into Memory */
 void load_program(struct lilith* vm, char **argv)
@@ -63,107 +18,140 @@ void load_program(struct lilith* vm, char **argv)
 	fclose(program);
 }
 
+/* Load instruction addressed at IP */
 void read_instruction(struct lilith* vm, struct Instruction *current)
 {
 	memset(current, 0, sizeof(struct Instruction));
-	uint8_t opcode, segment1, segment2, segment3;
-
 	/* Store IP for debugging */
 	current->ip = vm->ip;
 
 	/* Read the actual bytes and increment the IP */
-	opcode = vm->memory[vm->ip];
+	current->raw0 = (uint8_t)vm->memory[vm->ip];
 	vm->ip = vm->ip + 1;
-	segment1 = vm->memory[vm->ip];
+	current->raw1 = (uint8_t)vm->memory[vm->ip];
 	vm->ip = vm->ip + 1;
-	segment2 = vm->memory[vm->ip];
+	current->raw2 = (uint8_t)vm->memory[vm->ip];
 	vm->ip = vm->ip + 1;
-	segment3 = vm->memory[vm->ip];
+	current->raw3 = (uint8_t)vm->memory[vm->ip];
 	vm->ip = vm->ip + 1;
+	unpack_instruction(current);
+}
 
-	/* The first byte is always the master opcode */
-	current->opcode = opcode;
-	current->invalid = false;
-	current->XOP = 0xFFFF;
-	current->Immediate = 0xFFFF;
-	current->HAL_CODE = 0xFFFF;
-	current->reg0 = 0xFF;
-	current->reg1 = 0xFF;
-	current->reg2 = 0xFF;
-	current->reg3 = 0xFF;
+/* Process 4OP Integer instructions */
+bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
+{
+	return true;
+}
 
-	/* Extract the fields from the instruction for easier evaluation */
-	switch(opcode)
+/* Process 3OP Integer instructions */
+bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
+{
+	switch(c->raw_XOP)
+	{
+		case 0x000: /* ADD */
+		{
+			vm->reg[c->reg0] = vm->reg[c->reg1] + vm->reg[c->reg2];
+			break;
+		}
+		default: return true;
+	}
+	return false;
+}
+
+/* Process 2OP Integer instructions */
+bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
+{
+	return true;
+}
+
+/* Process 1OP Integer instructions */
+bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
+{
+	return true;
+}
+
+/* Process 2OPI Integer instructions */
+bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
+{
+	/* 0x0E ... 0x2B */
+	switch(c->raw0)
+	{
+		case 0x0E: /* ADDI */
+		{
+			vm->reg[c->reg0] = (int8_t)(vm->reg[c->reg1] + c->raw_Immediate);
+			break;
+		}
+		case 0x0F: /* ADDUI */
+		{
+			vm->reg[c->reg0] = vm->reg[c->reg1] + c->raw_Immediate;			break;
+		}
+		default: return true;
+	}
+	return false;
+}
+
+/* Use Opcode to decide what to do and then have it done */
+void eval_instruction(struct lilith* vm, struct Instruction* current)
+{
+	bool invalid = false;
+
+	switch(current->raw0)
 	{
 		case 0x00: /* Deal with NOPs */
 		{
+			vm->halted = true;
+			return;
+		}
+		case 0x01:
+		{
+			decode_4OP(current);
+			invalid = eval_4OP_Int(vm, current);
+			if ( invalid) goto fail;
 			break;
 		}
-		case 0x01 ... 0x04: /* Deal with 4OP */
+		case 0x05:
 		{
-			current->XOP = segment1;
-			current->Immediate = 0;
-			current->reg0 = segment2/16;
-			current->reg1 = segment2%16;
-			current->reg2 = segment3/16;
-			current->reg3 = segment3%16;
+			decode_3OP(current);
+			invalid = eval_3OP_Int(vm, current);
+			if ( invalid) goto fail;
 			break;
 		}
-		case 0x05 ... 0x08:  /* Deal with 3OP */
+		case 0x09:
 		{
-			current->XOP = segment1*16 + segment2/16;
-			current->Immediate = 0;
-			current->reg0 = segment2%16;
-			current->reg1 = segment3/16;
-			current->reg2 = segment3%16;
+			decode_2OP(current);
+			invalid = eval_2OP_Int(vm, current);
+			if ( invalid) goto fail;
 			break;
 		}
-		case 0x09 ... 0x0C: /* Deal with 2OP */
+		case 0x0D:
 		{
-			current->XOP = segment1*256 + segment2;
-			current->Immediate = 0;
-			current->reg0 = segment3/16;
-			current->reg1 = segment3%16;
+			decode_1OP(current);
+			invalid = eval_1OP_Int(vm, current);
+			if ( invalid) goto fail;
 			break;
 		}
-		case 0x0D: /* Deal with 1OP */
+		case 0x0E ... 0x2B:
 		{
-			current->XOP = segment1*4096 + segment2*16 + segment3/16;
-			current->Immediate = 0;
-			current->reg0 = segment3%16;
+			decode_2OPI(current);
+			invalid = eval_2OPI_Int(vm, current);
+			if ( invalid) goto fail;
 			break;
 		}
-		case 0x0E ... 0x2B: /* Deal with 2OPI */
+		case 0x2C:
 		{
-			current->XOP = 0;
-			current->Immediate = segment2*256 + segment3;
-			current->reg0 = segment1/16;
-			current->reg1 = segment1%16;
-			break;
 		}
-		case 0x2C ... 0x3B: /* Deal with 1OPI */
+		case 0x3C:
 		{
-			current->XOP = 0;
-			current->Immediate = (segment1%16)*4096 + segment2*256 + segment3;
-			current->HAL_CODE = 0;
-			current->reg0 = segment1/16;
-			break;
 		}
-		case 0x3C:  /* Deal with 0OPI */
+		case 0x42:
 		{
-			current->XOP = 0;
-			current->Immediate = segment1*4096 + segment2*256 + segment3;
-			break;
-		}
-		case 0x42: /* Deal with Halcode */
-		{
-			current->XOP = 0;
-			current->HAL_CODE = segment1*4096 + segment2*256 + segment3;
-			break;
 		}
 		case 0xFF: /* Deal with illegal instruction */
 		default:
 		{
+fail:
+			fprintf(stderr, "Unable to execute the following instruction:\n%c %c %c %c\n", current->raw0, current->raw1, current->raw2, current->raw3);
+			fprintf(stderr, "%s\n", current->operation);
 			current->invalid = true;
 			break;
 		}
@@ -178,6 +166,7 @@ void execute_vm(struct lilith* vm)
 	while(!vm->halted)
 	{
 		read_instruction(vm, current);
+		eval_instruction(vm, current);
 	}
 
 	free(current);
