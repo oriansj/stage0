@@ -46,11 +46,70 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 3OP Integer instructions */
 bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 {
+	int64_t tmp1, tmp2;
+	uint64_t utmp1, utmp2;
+
+	tmp1 = (int64_t)(vm->reg[c->reg1]);
+	tmp2 = (int64_t)(vm->reg[c->reg2]);
+	utmp1 = vm->reg[c->reg1];
+	utmp2 = vm->reg[c->reg2];
+
 	switch(c->raw_XOP)
 	{
 		case 0x000: /* ADD */
 		{
-			vm->reg[c->reg0] = vm->reg[c->reg1] + vm->reg[c->reg2];
+			vm->reg[c->reg0] = (int64_t)(tmp1 + tmp2);
+			break;
+		}
+		case 0x001: /* ADDU */
+		{
+			vm->reg[c->reg0] = utmp1 + utmp2;
+			break;
+		}
+		case 0x002: /* SUB */
+		{
+			vm->reg[c->reg0] = (int64_t)(tmp1 - tmp2);
+			break;
+		}
+		case 0x003: /* SUBU */
+		{
+			vm->reg[c->reg0] = utmp1 - utmp2;
+			break;
+		}
+		case 0x004: /* CMP */
+		{
+			/* Clear bottom 3 bits of condition register */
+			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFFFFFFFFFF8;
+			if(tmp1 > tmp2)
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
+			}
+			else if(tmp1 == tmp2)
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
+			}
+			else
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
+			}
+			break;
+		}
+		case 0x005: /* CMPU */
+		{
+			/* Clear bottom 3 bits of condition register */
+			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFFFFFFFFFF8;
+			if(utmp1 > utmp2)
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
+			}
+			else if(utmp1 == utmp2)
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
+			}
+			else
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
+			}
 			break;
 		}
 		default: return true;
@@ -73,17 +132,138 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 2OPI Integer instructions */
 bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 {
+	int64_t tmp1;
+	uint64_t utmp1;
+
+	tmp1 = (int64_t)(vm->reg[c->reg1]);
+	utmp1 = vm->reg[c->reg1];
+
 	/* 0x0E ... 0x2B */
 	switch(c->raw0)
 	{
 		case 0x0E: /* ADDI */
 		{
-			vm->reg[c->reg0] = (int8_t)(vm->reg[c->reg1] + c->raw_Immediate);
+			vm->reg[c->reg0] = (int64_t)(tmp1 + c->raw_Immediate);
 			break;
 		}
 		case 0x0F: /* ADDUI */
 		{
-			vm->reg[c->reg0] = vm->reg[c->reg1] + c->raw_Immediate;			break;
+			vm->reg[c->reg0] = utmp1 + c->raw_Immediate;
+			break;
+		}
+		case 0x10: /* SUB */
+		{
+			vm->reg[c->reg0] = (int64_t)(tmp1 - c->raw_Immediate);
+			break;
+		}
+		case 0x11: /* SUBU */
+		{
+			vm->reg[c->reg0] = utmp1 + c->raw_Immediate;
+			break;
+		}
+		default: return true;
+	}
+	return false;
+}
+
+/* Process 1OPI instructions */
+bool eval_1OPI(struct lilith* vm, struct Instruction* c)
+{
+	bool C, B, O, GT, EQ, LT;
+	uint64_t tmp;
+
+	tmp = vm->reg[c->reg0];
+
+	C = tmp & Carry;
+	B = tmp & Borrow;
+	O = tmp & Overflow;
+	GT = tmp & GreaterThan;
+	EQ = tmp & EQual;
+	LT = tmp & LessThan;
+
+	/* 0x2C ... 0x3B */
+	switch(c->raw0)
+	{
+		case 0x2C: /*JMP.C*/
+		{
+			if(1 == C)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x2D: /*JMP.B*/
+		{
+			if(1 == B)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x2E: /*JMP.O*/
+		{
+			if(1 == O)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x2F: /*JMP.G*/
+		{
+			if(1 == GT)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x30: /*JMP.GE*/
+		{
+			if((1 == GT) || (1 == EQ))
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x31: /*JMP.E*/
+		{
+			if(1 == EQ)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x32: /*JMP.NE*/
+		{
+			if(1 != EQ)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x33: /*JMP.LE*/
+		{
+			if((1 == EQ) || (1 == LT))
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x34: /*JMP.L*/
+		{
+			if(1 == LT)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
 		}
 		default: return true;
 	}
@@ -99,7 +279,6 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 	{
 		case 0x00: /* Deal with NOPs */
 		{
-			vm->halted = true;
 			return;
 		}
 		case 0x01:
@@ -137,17 +316,30 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x2C:
+		case 0x2C ... 0x3B:
 		{
+			decode_1OPI(current);
+			invalid = eval_1OPI(vm, current);
+			if ( invalid) goto fail;
+			break;
 		}
-		case 0x3C:
+		case 0x3C: /* JUMP */
 		{
+			decode_0OPI(current);
+			/* Adust the IP relative the the start of this instruction*/
+			vm->ip = vm->ip + current->raw_Immediate - 4;
+			break;
 		}
 		case 0x42:
 		{
 		}
-		case 0xFF: /* Deal with illegal instruction */
-		default:
+		case 0xFF: /* Deal with HALT */
+		{
+			vm->halted = true;
+			fprintf(stderr, "Computer Program has Halted\n");
+			break;
+		}
+		default: /* Deal with illegal instruction */
 		{
 fail:
 			fprintf(stderr, "Unable to execute the following instruction:\n%c %c %c %c\n", current->raw0, current->raw1, current->raw2, current->raw3);

@@ -23,7 +23,7 @@ struct Instruction
 	uint32_t raw_XOP;
 	char XOP[6];
 	char operation[9];
-	uint32_t raw_Immediate;
+	int32_t raw_Immediate;
 	char Immediate[7];
 	uint32_t HAL_CODE;
 	uint8_t reg0;
@@ -36,11 +36,11 @@ struct Instruction
 /* Condition Codes */
 enum condition
 {
-Carry = 1 << 5,
-Borrow = 1 << 4,
-Overflow = 1 << 3,
-GreaterThan = 1 << 2,
-EQual = 1 << 1,
+Carry = (1 << 5),
+Borrow = (1 << 4),
+Overflow = (1 << 3),
+GreaterThan = (1 << 2),
+EQual = (1 << 1),
 LessThan = 1
 };
 
@@ -78,7 +78,7 @@ void decode_4OP(struct Instruction* c)
 /* Deal with 3OP */
 void decode_3OP(struct Instruction* c)
 {
-	c->raw_XOP = c->raw1*16 + c->raw2/16;
+	c->raw_XOP = c->raw1*0x10 + c->raw2/16;
 	c->XOP[0] = c->operation[2];
 	c->XOP[1] = c->operation[3];
 	c->XOP[2] = c->operation[4];
@@ -91,7 +91,7 @@ void decode_3OP(struct Instruction* c)
 /* Deal with 2OP */
 void decode_2OP(struct Instruction* c)
 {
-	c->raw_XOP = c->raw1*256 + c->raw2;
+	c->raw_XOP = c->raw1*0x100 + c->raw2;
 	c->XOP[0] = c->operation[2];
 	c->XOP[1] = c->operation[3];
 	c->XOP[2] = c->operation[4];
@@ -104,7 +104,7 @@ void decode_2OP(struct Instruction* c)
 /* Deal with 1OP */
 void decode_1OP(struct Instruction* c)
 {
-	c->raw_XOP = c->raw1*4096 + c->raw2*16 + c->raw3/16;
+	c->raw_XOP = c->raw1*0x1000 + c->raw2*0x10 + c->raw3/16;
 	c->XOP[0] = c->operation[2];
 	c->XOP[1] = c->operation[3];
 	c->XOP[2] = c->operation[4];
@@ -117,7 +117,7 @@ void decode_1OP(struct Instruction* c)
 /* Deal with 2OPI */
 void decode_2OPI(struct Instruction* c)
 {
-	c->raw_Immediate = c->raw2*256 + c->raw3;
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
 	c->Immediate[0] = c->operation[4];
 	c->Immediate[1] = c->operation[5];
 	c->Immediate[2] = c->operation[6];
@@ -129,19 +129,25 @@ void decode_2OPI(struct Instruction* c)
 /* Deal with 1OPI */
 void decode_1OPI(struct Instruction* c)
 {
-	c->raw_Immediate = (c->raw1%16)*4096 + c->raw2*256 + c->raw3;
+	c->raw_Immediate = (c->raw1%16)*0x10000 + c->raw2*0x100 + c->raw3;
+	/* Sign extend immediate*/
+	c->raw_Immediate = c->raw_Immediate << 12;
+	c->raw_Immediate = c->raw_Immediate >> 12;
 	c->Immediate[0] = c->operation[3];
 	c->Immediate[1] = c->operation[4];
 	c->Immediate[2] = c->operation[5];
 	c->Immediate[3] = c->operation[6];
 	c->Immediate[4] = c->operation[7];
 	c->HAL_CODE = 0;
-	c->reg0 = c->raw1/16;
+	c->reg0 = c->raw3/16;
 }
 /* Deal with 0OPI */
 void decode_0OPI(struct Instruction* c)
 {
-	c->raw_Immediate = c->raw1*4096 + c->raw2*256 + c->raw3;
+	c->raw_Immediate = c->raw1*0x10000 + c->raw2*0x100 + c->raw3;
+	/* Sign extend immediate*/
+	c->raw_Immediate = c->raw_Immediate << 8;
+	c->raw_Immediate = c->raw_Immediate >> 8;
 	c->Immediate[0] = c->operation[2];
 	c->Immediate[1] = c->operation[3];
 	c->Immediate[2] = c->operation[4];
@@ -153,7 +159,7 @@ void decode_0OPI(struct Instruction* c)
 /* Deal with Halcode */
 void decode_HALCODE(struct Instruction* c)
 {
-	c->HAL_CODE = c->raw1*4096 + c->raw2*256 + c->raw3;
+	c->HAL_CODE = c->raw1*0x10000 + c->raw2*0x100 + c->raw3;
 }
 
 /* Useful unpacking functions */
