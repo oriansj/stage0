@@ -8,8 +8,8 @@
 struct lilith
 {
 	uint8_t *memory;
-	uint64_t reg[16];
-	uint64_t ip;
+	uint32_t reg[16];
+	uint32_t ip;
 	bool halted;
 	bool exception;
 };
@@ -17,7 +17,7 @@ struct lilith
 /* Unpacked instruction */
 struct Instruction
 {
-	uint64_t ip;
+	uint32_t ip;
 	uint8_t raw0, raw1, raw2, raw3;
 	char opcode[3];
 	uint32_t raw_XOP;

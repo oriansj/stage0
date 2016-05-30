@@ -46,11 +46,11 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 3OP Integer instructions */
 bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 {
-	int64_t tmp1, tmp2;
-	uint64_t utmp1, utmp2;
+	int32_t tmp1, tmp2;
+	uint32_t utmp1, utmp2;
 
-	tmp1 = (int64_t)(vm->reg[c->reg1]);
-	tmp2 = (int64_t)(vm->reg[c->reg2]);
+	tmp1 = (int32_t)(vm->reg[c->reg1]);
+	tmp2 = (int32_t)(vm->reg[c->reg2]);
 	utmp1 = vm->reg[c->reg1];
 	utmp2 = vm->reg[c->reg2];
 
@@ -58,7 +58,7 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 	{
 		case 0x000: /* ADD */
 		{
-			vm->reg[c->reg0] = (int64_t)(tmp1 + tmp2);
+			vm->reg[c->reg0] = (int32_t)(tmp1 + tmp2);
 			break;
 		}
 		case 0x001: /* ADDU */
@@ -68,7 +68,7 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x002: /* SUB */
 		{
-			vm->reg[c->reg0] = (int64_t)(tmp1 - tmp2);
+			vm->reg[c->reg0] = (int32_t)(tmp1 - tmp2);
 			break;
 		}
 		case 0x003: /* SUBU */
@@ -79,7 +79,7 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		case 0x004: /* CMP */
 		{
 			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFFFFFFFFFF8;
+			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
 			if(tmp1 > tmp2)
 			{
 				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
@@ -97,7 +97,7 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		case 0x005: /* CMPU */
 		{
 			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFFFFFFFFFF8;
+			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
 			if(utmp1 > utmp2)
 			{
 				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
@@ -189,14 +189,6 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			break;
 		}
 		case 0x01B: /* PACK32U.CO */
-		{
-			break;
-		}
-		case 0x01C: /* PACK64.CO */
-		{
-			break;
-		}
-		case 0x01D: /* PACK64U.CO */
 		{
 			break;
 		}
@@ -348,11 +340,11 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 2OPI Integer instructions */
 bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 {
-	int64_t tmp1;
-	uint64_t utmp1;
-	uint8_t raw0, raw1, raw2, raw3, raw4, raw5, raw6, raw7;
+	int32_t tmp1;
+	uint32_t utmp1;
+	uint8_t raw0, raw1, raw2, raw3;
 
-	tmp1 = (int64_t)(vm->reg[c->reg1]);
+	tmp1 = (int32_t)(vm->reg[c->reg1]);
 	utmp1 = vm->reg[c->reg1];
 
 	/* 0x0E ... 0x2B */
@@ -360,7 +352,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 	{
 		case 0x0E: /* ADDI */
 		{
-			vm->reg[c->reg0] = (int64_t)(tmp1 + c->raw_Immediate);
+			vm->reg[c->reg0] = (int32_t)(tmp1 + c->raw_Immediate);
 			break;
 		}
 		case 0x0F: /* ADDUI */
@@ -370,7 +362,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x10: /* SUB */
 		{
-			vm->reg[c->reg0] = (int64_t)(tmp1 - c->raw_Immediate);
+			vm->reg[c->reg0] = (int32_t)(tmp1 - c->raw_Immediate);
 			break;
 		}
 		case 0x11: /* SUBU */
@@ -381,7 +373,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		case 0x12: /* CMPI */
 		{
 			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFFFFFFFFFF8;
+			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
 			if(tmp1 > c->raw_Immediate)
 			{
 				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
@@ -396,35 +388,14 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x13: /* LOAD */
-		{
-			raw0 = vm->memory[utmp1 + c->raw_Immediate];
-			raw1 = vm->memory[utmp1 + c->raw_Immediate + 1];
-			raw2 = vm->memory[utmp1 + c->raw_Immediate + 2];
-			raw3 = vm->memory[utmp1 + c->raw_Immediate + 3];
-			raw4 = vm->memory[utmp1 + c->raw_Immediate + 4];
-			raw5 = vm->memory[utmp1 + c->raw_Immediate + 5];
-			raw6 = vm->memory[utmp1 + c->raw_Immediate + 6];
-			raw7 = vm->memory[utmp1 + c->raw_Immediate + 7];
-
-			vm->reg[c->reg0] = raw0*0x100000000000000 +
-							   raw1*0x1000000000000 +
-							   raw2*0x10000000000 +
-							   raw3*0x100000000 +
-							   raw4*0x1000000 +
-							   raw5*0x10000 +
-							   raw6*0x100 +
-							   raw7;
-			break;
-		}
 		case 0x14: /* LOAD8 */
 		{
 			raw0 = vm->memory[utmp1 + c->raw_Immediate];
-			int64_t tmp = raw0;
+			int32_t tmp = raw0;
 
 			/* Sign extend Register */
-			tmp = tmp << 56;
-			tmp = tmp >> 56;
+			tmp = tmp << 24;
+			tmp = tmp >> 24;
 
 			vm->reg[c->reg0] = tmp;
 			break;
@@ -439,11 +410,11 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			raw0 = vm->memory[utmp1 + c->raw_Immediate];
 			raw1 = vm->memory[utmp1 + c->raw_Immediate + 1];
 
-			int64_t tmp = raw0*0x100 + raw1;
+			int32_t tmp = raw0*0x100 + raw1;
 
 			/* Sign extend Register */
-			tmp = tmp << 48;
-			tmp = tmp >> 48;
+			tmp = tmp << 16;
+			tmp = tmp >> 16;
 			vm->reg[c->reg0] = tmp;
 			break;
 		}
@@ -456,23 +427,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			break;
 		}
 		case 0x18: /* LOAD32 */
-		{
-			raw0 = vm->memory[utmp1 + c->raw_Immediate];
-			raw1 = vm->memory[utmp1 + c->raw_Immediate + 1];
-			raw2 = vm->memory[utmp1 + c->raw_Immediate + 2];
-			raw3 = vm->memory[utmp1 + c->raw_Immediate + 3];
-
-			int64_t tmp = raw0*0x1000000 +
-						  raw1*0x10000 +
-						  raw2*0x100 +
-						  raw3;
-			/* Sign extend Register */
-			tmp = tmp << 32;
-			tmp = tmp >> 32;
-			vm->reg[c->reg0] = tmp;
-			break;
-		}
 		case 0x19: /* LOADU32 */
+		case 0x13: /* LOAD */
 		{
 			raw0 = vm->memory[utmp1 + c->raw_Immediate];
 			raw1 = vm->memory[utmp1 + c->raw_Immediate + 1];
@@ -485,32 +441,10 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 							   raw3;
 			break;
 		}
-		case 0x1A: /* LOAD64 */
-		case 0x1B: /* LOADU64 */
-		{
-			raw0 = vm->memory[utmp1 + c->raw_Immediate];
-			raw1 = vm->memory[utmp1 + c->raw_Immediate + 1];
-			raw2 = vm->memory[utmp1 + c->raw_Immediate + 2];
-			raw3 = vm->memory[utmp1 + c->raw_Immediate + 3];
-			raw4 = vm->memory[utmp1 + c->raw_Immediate + 4];
-			raw5 = vm->memory[utmp1 + c->raw_Immediate + 5];
-			raw6 = vm->memory[utmp1 + c->raw_Immediate + 6];
-			raw7 = vm->memory[utmp1 + c->raw_Immediate + 7];
-
-			vm->reg[c->reg0] = raw0*0x100000000000000 +
-							   raw1*0x1000000000000 +
-							   raw2*0x10000000000 +
-							   raw3*0x100000000 +
-							   raw4*0x1000000 +
-							   raw5*0x10000 +
-							   raw6*0x100 +
-							   raw7;
-			break;
-		}
 		case 0x1F: /* CMPUI */
 		{
 			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFFFFFFFFFF8;
+			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
 			if(utmp1 > (uint32_t)c->raw_Immediate)
 			{
 				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
@@ -525,38 +459,9 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x20: /* STORE */
-		{
-			uint64_t tmp = vm->reg[c->reg0];
-			raw7 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw6 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw5 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw4 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw3 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw2 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw1 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw0 = tmp;
-
-			vm->memory[utmp1 + c->raw_Immediate] = raw0;
-			vm->memory[utmp1 + c->raw_Immediate + 1] = raw1;
-			vm->memory[utmp1 + c->raw_Immediate + 2] = raw2;
-			vm->memory[utmp1 + c->raw_Immediate + 3] = raw3;
-			vm->memory[utmp1 + c->raw_Immediate + 4] = raw4;
-			vm->memory[utmp1 + c->raw_Immediate + 5] = raw5;
-			vm->memory[utmp1 + c->raw_Immediate + 6] = raw6;
-			vm->memory[utmp1 + c->raw_Immediate + 7] = raw7;
-			break;
-		}
 		case 0x21: /* STORE8 */
 		{
-			int64_t tmp = (int8_t)(vm->reg[c->reg0]);
+			int32_t tmp = (int8_t)(vm->reg[c->reg0]);
 			raw0 = tmp%0x100;
 
 			vm->memory[utmp1 + c->raw_Immediate] = raw0;
@@ -564,7 +469,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x22: /* STOREU8 */
 		{
-			uint64_t tmp = vm->reg[c->reg0];
+			uint32_t tmp = vm->reg[c->reg0];
 			raw0 = tmp%0x100;
 
 			vm->memory[utmp1 + c->raw_Immediate] = raw0;
@@ -572,7 +477,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x23: /* STORE16 */
 		{
-			int64_t tmp = (int16_t)(vm->reg[c->reg0]);
+			int32_t tmp = (int16_t)(vm->reg[c->reg0]);
 			raw1 = tmp%0x100;
 			tmp = tmp/0x100;
 			raw0 = tmp%0x100;
@@ -583,7 +488,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x24: /* STOREU16 */
 		{
-			uint64_t tmp = vm->reg[c->reg0];
+			uint32_t tmp = vm->reg[c->reg0];
 			raw1 = tmp%0x100;
 			tmp = tmp/0x100;
 			raw0 = tmp%0x100;
@@ -593,25 +498,10 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			break;
 		}
 		case 0x25: /* STORE32 */
-		{
-			int64_t tmp = (int64_t)(vm->reg[c->reg0]);
-			raw3 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw2 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw1 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw0 = tmp%0x100;
-
-			vm->memory[utmp1 + c->raw_Immediate] = raw0;
-			vm->memory[utmp1 + c->raw_Immediate + 1] = raw1;
-			vm->memory[utmp1 + c->raw_Immediate + 2] = raw2;
-			vm->memory[utmp1 + c->raw_Immediate + 3] = raw3;
-			break;
-		}
 		case 0x26: /* STOREU32 */
+		case 0x20: /* STORE */
 		{
-			uint64_t tmp = vm->reg[c->reg0];
+			uint32_t tmp = vm->reg[c->reg0];
 			raw3 = tmp%0x100;
 			tmp = tmp/0x100;
 			raw2 = tmp%0x100;
@@ -625,64 +515,6 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			vm->memory[utmp1 + c->raw_Immediate + 2] = raw2;
 			vm->memory[utmp1 + c->raw_Immediate + 3] = raw3;
 
-			break;
-		}
-		case 0x27: /* STORE64 */
-		{
-			int64_t tmp = (int64_t)(vm->reg[c->reg0]);
-			raw7 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw6 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw5 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw4 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw3 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw2 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw1 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw0 = tmp;
-
-			vm->memory[utmp1 + c->raw_Immediate] = raw0;
-			vm->memory[utmp1 + c->raw_Immediate + 1] = raw1;
-			vm->memory[utmp1 + c->raw_Immediate + 2] = raw2;
-			vm->memory[utmp1 + c->raw_Immediate + 3] = raw3;
-			vm->memory[utmp1 + c->raw_Immediate + 4] = raw4;
-			vm->memory[utmp1 + c->raw_Immediate + 5] = raw5;
-			vm->memory[utmp1 + c->raw_Immediate + 6] = raw6;
-			vm->memory[utmp1 + c->raw_Immediate + 7] = raw7;
-			break;
-		}
-		case 0x28: /* STOREU64 */
-		{
-			uint64_t tmp = vm->reg[c->reg0];
-			raw7 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw6 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw5 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw4 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw3 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw2 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw1 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw0 = tmp;
-
-			vm->memory[utmp1 + c->raw_Immediate] = raw0;
-			vm->memory[utmp1 + c->raw_Immediate + 1] = raw1;
-			vm->memory[utmp1 + c->raw_Immediate + 2] = raw2;
-			vm->memory[utmp1 + c->raw_Immediate + 3] = raw3;
-			vm->memory[utmp1 + c->raw_Immediate + 4] = raw4;
-			vm->memory[utmp1 + c->raw_Immediate + 5] = raw5;
-			vm->memory[utmp1 + c->raw_Immediate + 6] = raw6;
-			vm->memory[utmp1 + c->raw_Immediate + 7] = raw7;
 			break;
 		}
 		default: return true;
@@ -694,7 +526,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 {
 	bool C, B, O, GT, EQ, LT;
-	uint64_t tmp;
+	uint32_t tmp;
 
 	tmp = vm->reg[c->reg0];
 

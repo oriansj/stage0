@@ -38,8 +38,8 @@
 05 01 9a bc # PACK16U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
 05 01 Aa bc # PACK32.CO a b c :: a = PACK(b) c = Overload? [signed]
 05 01 Ba bc # PACK32U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
-05 01 Ca bc # PACK64.CO a b c :: a = PACK(b) c = Overload? [signed]
-05 01 Da bc # PACK64U.CO a b c :: a = PACK(b) c = Overload? [signed]
+05 01 Ca bc # Reserved
+05 01 Da bc # Reserved
 05 01 Ex xx # Reserved
 05 01 Fx xx # Reserved
 05 02 0a bc # AND a b c :: a = b & c
@@ -116,8 +116,8 @@
 17 ab ii ii # LOADU16 a b ii ii :: a = MEM[b + ii ii] [unsigned 16bits]
 18 ab ii ii # LOAD32 a b ii ii :: a = MEM[b + ii ii] [signed 32bits]
 19 ab ii ii # LOADU32 a b ii ii :: a = MEM[b + ii ii] [unsigned 32bits]
-1A ab ii ii # LOAD64 a b ii ii :: a = MEM[b + ii ii] [signed 64bits]
-1B ab ii ii # LOADU64 a b ii ii :: a = MEM[b + ii ii] [unsigned 64bits]
+1A ab ii ii # Reserved
+1B ab ii ii # Reserved
 1C ab ii ii # Reserved
 1D ab ii ii # Reserved
 1E ab ii ii # Reserved
@@ -129,8 +129,8 @@
 24 ab ii ii # STOREU16 a b ii :: MEM[b + ii ii] = a [unsigned 16bits]
 25 ab ii ii # STORE32 a b ii :: MEM[b + ii ii] = a [signed 32bits]
 26 ab ii ii # STOREU32 a b ii :: MEM[b + ii ii] = a [unsigned 32bits]
-27 ab ii ii # STORE64 a b ii :: MEM[b + ii ii] = a [signed 64bits]
-28 ab ii ii # STOREU64 a b ii :: MEM[b + ii ii] = a [unsigned 64bits]
+27 ab ii ii # Reserved
+28 ab ii ii # Reserved
 29 ab ii ii # Reserved
 2A ab ii ii # Reserved
 2B ab ii ii # Reserved
