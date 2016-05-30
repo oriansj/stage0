@@ -173,3 +173,5 @@ FE xx xx xx
 FF xx xx xx # HALT equivelent, although these instructions will all be treated as HALTs. DO NOT USE THEM.
 FF FF FF FF # Proper HALT
 
+There is a direct and consistent relationship between the nybbles and the registers.
+Reg0 -> 0, Reg1 -> 1, ... Reg14 -> E, Reg15 -> F

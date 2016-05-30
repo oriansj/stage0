@@ -377,6 +377,86 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			vm->reg[c->reg0] = utmp1 + c->raw_Immediate;
 			break;
 		}
+		case 0x12: /* CMPI */
+		{
+			break;
+		}
+		case 0x13: /* LOAD */
+		{
+			break;
+		}
+		case 0x14: /* LOAD8 */
+		{
+			break;
+		}
+		case 0x15: /* LOADU8 */
+		{
+			break;
+		}
+		case 0x16: /* LOAD16 */
+		{
+			break;
+		}
+		case 0x17: /* LOADU16 */
+		{
+			break;
+		}
+		case 0x18: /* LOAD32 */
+		{
+			break;
+		}
+		case 0x19: /* LOADU32 */
+		{
+			break;
+		}
+		case 0x1A: /* LOAD64 */
+		{
+			break;
+		}
+		case 0x1B: /* LOADU64 */
+		{
+			break;
+		}
+		case 0x1F: /* CMPUI */
+		{
+			break;
+		}
+		case 0x20: /* STORE */
+		{
+			break;
+		}
+		case 0x21: /* STORE8 */
+		{
+			break;
+		}
+		case 0x22: /* STOREU8 */
+		{
+			break;
+		}
+		case 0x23: /* STORE16 */
+		{
+			break;
+		}
+		case 0x24: /* STOREU16 */
+		{
+			break;
+		}
+		case 0x25: /* STORE32 */
+		{
+			break;
+		}
+		case 0x26: /* STOREU32 */
+		{
+			break;
+		}
+		case 0x27: /* STORE64 */
+		{
+			break;
+		}
+		case 0x28: /* STOREU64 */
+		{
+			break;
+		}
 		default: return true;
 	}
 	return false;
@@ -400,7 +480,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 	/* 0x2C ... 0x3B */
 	switch(c->raw0)
 	{
-		case 0x2C: /*JMP.C*/
+		case 0x2C: /* JUMP.C */
 		{
 			if(1 == C)
 			{
@@ -409,7 +489,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x2D: /*JMP.B*/
+		case 0x2D: /* JUMP.B */
 		{
 			if(1 == B)
 			{
@@ -418,7 +498,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x2E: /*JMP.O*/
+		case 0x2E: /* JUMP.O */
 		{
 			if(1 == O)
 			{
@@ -427,7 +507,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x2F: /*JMP.G*/
+		case 0x2F: /* JUMP.G */
 		{
 			if(1 == GT)
 			{
@@ -436,7 +516,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x30: /*JMP.GE*/
+		case 0x30: /* JUMP.GE */
 		{
 			if((1 == GT) || (1 == EQ))
 			{
@@ -445,7 +525,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x31: /*JMP.E*/
+		case 0x31: /* JUMP.E */
 		{
 			if(1 == EQ)
 			{
@@ -454,7 +534,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x32: /*JMP.NE*/
+		case 0x32: /* JUMP.NE */
 		{
 			if(1 != EQ)
 			{
@@ -463,7 +543,7 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x33: /*JMP.LE*/
+		case 0x33: /* JUMP.LE */
 		{
 			if((1 == EQ) || (1 == LT))
 			{
@@ -472,9 +552,27 @@ bool eval_1OPI(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
-		case 0x34: /*JMP.L*/
+		case 0x34: /* JUMP.L */
 		{
 			if(1 == LT)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x35: /* JUMP.Z */
+		{
+			if(0 == tmp)
+			{
+				/* Adust the IP relative the the start of this instruction*/
+				vm->ip = vm->ip + c->raw_Immediate - 4;
+			}
+			break;
+		}
+		case 0x36: /* JUMP.NZ */
+		{
+			if(0 != tmp)
 			{
 				/* Adust the IP relative the the start of this instruction*/
 				vm->ip = vm->ip + c->raw_Immediate - 4;
