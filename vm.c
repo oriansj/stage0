@@ -40,7 +40,234 @@ void read_instruction(struct lilith* vm, struct Instruction *current)
 /* Process 4OP Integer instructions */
 bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 {
-	return true;
+	int32_t tmp1, tmp2;
+	uint32_t utmp1, utmp2;
+	int64_t btmp1;
+	uint64_t ubtmp1;
+
+	bool C, B;
+
+	utmp1 = vm->reg[c->reg3];
+
+	C = utmp1 & Carry;
+	B = utmp1 & Borrow;
+
+	switch(c->raw_XOP)
+	{
+		case 0x00: /* ADD.CI */
+		{
+			break;
+		}
+		case 0x01: /* ADD.CO */
+		{
+			break;
+		}
+		case 0x02: /* ADD.CIO */
+		{
+			break;
+		}
+		case 0x03: /* ADDU.CI */
+		{
+			break;
+		}
+		case 0x04: /* ADDU.CO */
+		{
+			break;
+		}
+		case 0x05: /* ADDU.CIO */
+		{
+			break;
+		}
+		case 0x06: /* SUB.BI */
+		{
+			tmp1 = (int32_t)(vm->reg[c->reg1]);
+			tmp2 = (int32_t)(vm->reg[c->reg2]);
+			if(1 == B)
+			{
+				vm->reg[c->reg0] = tmp1 - tmp2 - 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp1 - tmp2;
+			}
+			break;
+		}
+		case 0x07: /* SUB.BO */
+		{
+			btmp1 = (int64_t)(vm->reg[c->reg1]);
+			tmp1 = (int32_t)(vm->reg[c->reg2]);
+			tmp2 = (int32_t)(btmp1 - tmp1);
+
+			if(btmp1 != (tmp2 + tmp1))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
+			}
+			vm->reg[c->reg0] = tmp2;
+			break;
+		}
+		case 0x08: /* SUB.BIO */
+		{
+			btmp1 = (int64_t)(vm->reg[c->reg1]);
+			tmp1 = (int32_t)(vm->reg[c->reg2]);
+			tmp2 = (int32_t)(btmp1 - tmp1);
+
+			if(btmp1 != (tmp2 + tmp1))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
+			}
+
+			if(1 == B)
+			{
+				vm->reg[c->reg0] = tmp2 - 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp2;
+			}
+			break;
+		}
+		case 0x09: /* SUBU.BI */
+		{
+			utmp1 = vm->reg[c->reg1];
+			utmp2 = vm->reg[c->reg2];
+			if(1 == B)
+			{
+				vm->reg[c->reg0] = utmp1 - utmp2 - 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = utmp1 - utmp2;
+			}
+			break;
+		}
+		case 0x0A: /* SUBU.BO */
+		{
+			utmp1 = vm->reg[c->reg1];
+			utmp2 = vm->reg[c->reg2];
+			ubtmp1 = (uint64_t)(utmp1 - utmp2);
+
+			if(utmp1 != (ubtmp1 + utmp2))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
+			}
+			vm->reg[c->reg0] = (utmp1 - utmp2);
+			break;
+		}
+		case 0x0B: /* SUBU.BIO */
+		{
+			utmp1 = vm->reg[c->reg1];
+			utmp2 = vm->reg[c->reg2];
+			ubtmp1 = (uint64_t)(utmp1 - utmp2);
+
+			if(utmp1 != (ubtmp1 + utmp2))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
+			}
+			if(1 == B)
+			{
+				vm->reg[c->reg0] = utmp1 - utmp2 - 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = utmp1 - utmp2;
+			}
+			break;
+		}
+		case 0x0C: /* MULTIPLY */
+		{
+			btmp1 = (int32_t)(vm->reg[c->reg2]) * (int32_t)( vm->reg[c->reg3]);
+			vm->reg[c->reg0] = btmp1 % 0x100000000;
+			vm->reg[c->reg1] = btmp1 / 0x100000000;
+			break;
+		}
+		case 0x0D: /* MULTIPLYU */
+		{
+			ubtmp1 = vm->reg[c->reg2] * vm->reg[c->reg3];
+			vm->reg[c->reg0] = ubtmp1 % 0x100000000;
+			vm->reg[c->reg1] = ubtmp1 / 0x100000000;
+			break;
+		}
+		case 0x0E: /* DIVIDE */
+		{
+			tmp1 = (int32_t)(vm->reg[c->reg2]);
+			tmp2 = (int32_t)(vm->reg[c->reg3]);
+			vm->reg[c->reg0] = tmp1 / tmp2;
+			vm->reg[c->reg1] = tmp1 % tmp2;
+			break;
+		}
+		case 0x0F: /* DIVIDEU */
+		{
+			utmp1 = vm->reg[c->reg2];
+			utmp2 = vm->reg[c->reg3];
+			vm->reg[c->reg0] = utmp1 / utmp2;
+			vm->reg[c->reg1] = utmp1 % utmp2;
+			break;
+		}
+		case 0x10: /* MUX */
+		{
+			vm->reg[c->reg0] = ((vm->reg[c->reg2] & ~(vm->reg[c->reg1])) |
+								(vm->reg[c->reg3] & vm->reg[c->reg1]));
+			break;
+		}
+		case 0x11: /* NMUX */
+		{
+			vm->reg[c->reg0] = ((vm->reg[c->reg2] & vm->reg[c->reg1]) |
+								(vm->reg[c->reg3] & ~(vm->reg[c->reg1])));
+			break;
+		}
+		case 0x12: /* SORT */
+		{
+			tmp1 = (int32_t)(vm->reg[c->reg2]);
+			tmp2 = (int32_t)(vm->reg[c->reg3]);
+
+			if(tmp1 > tmp2)
+			{
+				vm->reg[c->reg0] = tmp1;
+				vm->reg[c->reg1] = tmp2;
+			}
+			else
+			{
+				vm->reg[c->reg1] = tmp1;
+				vm->reg[c->reg0] = tmp2;
+			}
+			break;
+		}
+		case 0x13: /* SORTU */
+		{
+			utmp1 = vm->reg[c->reg2];
+			utmp2 = vm->reg[c->reg3];
+
+			if(utmp1 > utmp2)
+			{
+				vm->reg[c->reg0] = utmp1;
+				vm->reg[c->reg1] = utmp2;
+			}
+			else
+			{
+				vm->reg[c->reg1] = utmp1;
+				vm->reg[c->reg0] = utmp2;
+			}
+			break;
+		}
+		default: return true;
+	}
+	return false;
 }
 
 /* Process 3OP Integer instructions */
@@ -504,7 +731,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1;
 	uint32_t utmp1;
-	uint8_t raw0, raw1, raw2, raw3;
+	uint8_t raw0, raw1;
 
 	tmp1 = (int32_t)(vm->reg[c->reg1]);
 	utmp1 = vm->reg[c->reg1];
@@ -522,12 +749,12 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			vm->reg[c->reg0] = utmp1 + c->raw_Immediate;
 			break;
 		}
-		case 0x10: /* SUB */
+		case 0x10: /* SUBI */
 		{
 			vm->reg[c->reg0] = (int32_t)(tmp1 - c->raw_Immediate);
 			break;
 		}
-		case 0x11: /* SUBU */
+		case 0x11: /* SUBUI */
 		{
 			vm->reg[c->reg0] = utmp1 + c->raw_Immediate;
 			break;

@@ -4,6 +4,30 @@
 
 # 4OP nn is the XOP,  a = b OP c Cond d
 01 nn ab cd # 4OP Integer group
+01 00 ab cd # ADD.CI a b c d :: a = b + c + CARRY? d [signed]
+01 01 ab cd # ADD.CO a b c d :: a = b + c; d = CARRY? [signed]
+01 02 ab cd # ADD.CIO a b c d :: a = b + c + CARRY? d; d = CARRY? [signed]
+01 03 ab cd # ADDU.CI a b c d :: a = b + c + CARRY? d  [unsigned]
+01 04 ab cd # ADDU.CO a b c d :: a = b + c; d = CARRY? [unsigned]
+01 05 ab cd # ADDU.CIO a b c d :: a = b + c + CARRY? d; d = CARRY? [unsigned]
+01 06 ab cd # SUB.BI a b c d :: a = b - c - BORROW? d [signed]
+01 07 ab cd # SUB.BO a b c d :: a = b - c; d = BORROW? [signed]
+01 08 ab cd # SUB.BIO a b c d :: a = b - c - BORROW? d; d = BORROW? [signed]
+01 09 ab cd # SUBU.BI a b c d :: a = b - c - BORROW? d [unsigned]
+01 0A ab cd # SUBU.BO a b c d :: a = b - c; d = BORROW? [unsigned]
+01 0B ab cd # SUBU.BIO a b c d :: a = b - c - BORROW? d; d = BORROW? [unsigned]
+01 0C ab cd # MULTIPLY a b c d :: a = MUL c d; b = MULH c d [signed]
+01 0D ab cd # MULTIPLYU a b c d :: a = MUL c d; b = MULH c d [unsigned]
+01 0E ab cd # DIVIDE a b c d :: a = DIV c d; b = MOD c d [signed]
+01 0F ab cd # DIVIDEU a b c d :: a = DIV c d; b = MOD c d [unsigned]
+01 10 ab cd # MUX a b c d :: a = (c & ~b) | (d & b)
+01 11 ab cd # NMUX a b c d :: a = (c & b) | (d & ~b)
+01 12 ab cd # SORT a b c d :: a = MAX(c, d); b = MIN(c, d) [signed]
+01 13 ab cd # SORTU a b c d :: a = MAX(c, d); b = MIN(c, d) [unsigned]
+01 14 xx xx # Reserved
+...
+01 FF xx xx # Reserved
+
 02 nn ab cd # 4OP Floating group
 03 nn ab cd # 4OP SIMD group
 04 nn ab cd # 4OP Reserved group
