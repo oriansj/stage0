@@ -112,6 +112,166 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
+		case 0x006: /* MUL */
+		{
+			break;
+		}
+		case 0x007: /* MULH */
+		{
+			break;
+		}
+		case 0x008: /* MULU */
+		{
+			break;
+		}
+		case 0x009: /* MULUH */
+		{
+			break;
+		}
+		case 0x00A: /* DIV */
+		{
+			break;
+		}
+		case 0x00B: /* MOD */
+		{
+			break;
+		}
+		case 0x00C: /* DIVU */
+		{
+			break;
+		}
+		case 0x00D: /* MODU */
+		{
+			break;
+		}
+		case 0x010: /* MAX */
+		{
+			break;
+		}
+		case 0x011: /* MAXU */
+		{
+			break;
+		}
+		case 0x012: /* MIN */
+		{
+			break;
+		}
+		case 0x013: /* MINU */
+		{
+			break;
+		}
+		case 0x014: /* PACK */
+		{
+			break;
+		}
+		case 0x015: /* UNPACK */
+		{
+			break;
+		}
+		case 0x016: /* PACK8.CO */
+		{
+			break;
+		}
+		case 0x017: /* PACK8U.CO */
+		{
+			break;
+		}
+		case 0x018: /* PACK16.CO */
+		{
+			break;
+		}
+		case 0x019: /* PACK16U.CO */
+		{
+			break;
+		}
+		case 0x01A: /* PACK32.CO */
+		{
+			break;
+		}
+		case 0x01B: /* PACK32U.CO */
+		{
+			break;
+		}
+		case 0x01C: /* PACK64.CO */
+		{
+			break;
+		}
+		case 0x01D: /* PACK64U.CO */
+		{
+			break;
+		}
+		case 0x020: /* AND */
+		{
+			break;
+		}
+		case 0x021: /* OR */
+		{
+			break;
+		}
+		case 0x022: /* XOR */
+		{
+			break;
+		}
+		case 0x023: /* NAND */
+		{
+			break;
+		}
+		case 0x024: /* NOR */
+		{
+			break;
+		}
+		case 0x025: /* XNOR */
+		{
+			break;
+		}
+		case 0x026: /* MPQ */
+		{
+			break;
+		}
+		case 0x027: /* LPQ */
+		{
+			break;
+		}
+		case 0x028: /* CPQ */
+		{
+			break;
+		}
+		case 0x029: /* BPQ */
+		{
+			break;
+		}
+		case 0x030: /* SAL */
+		{
+			break;
+		}
+		case 0x031: /* SAR */
+		{
+			break;
+		}
+		case 0x032: /* SL0 */
+		{
+			break;
+		}
+		case 0x033: /* SR0 */
+		{
+			break;
+		}
+		case 0x034: /* SL1 */
+		{
+			break;
+		}
+		case 0x035: /* SR1 */
+		{
+			break;
+		}
+		case 0x036: /* ROL */
+		{
+			break;
+		}
+		case 0x037: /* ROR */
+		{
+			break;
+		}
 		default: return true;
 	}
 	return false;
@@ -120,13 +280,69 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 2OP Integer instructions */
 bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 {
-	return true;
+	switch(c->raw_XOP)
+	{
+		case 0x0000: /* NEG */
+		{
+			break;
+		}
+		case 0x0001: /* ABS */
+		{
+			break;
+		}
+		case 0x0002: /* NABS */
+		{
+			break;
+		}
+		case 0x0003: /* SWAP */
+		{
+			break;
+		}
+		case 0x0004: /* COPY */
+		{
+			break;
+		}
+		case 0x0005: /* MOVE */
+		{
+			break;
+		}
+		case 0x0100: /* BRANCH */
+		{
+			break;
+		}
+		default: return true;
+	}
+	return false;
 }
 
 /* Process 1OP Integer instructions */
 bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 {
-	return true;
+	switch(c->raw_XOP)
+	{
+		case 0x00000: /* READPC */
+		{
+			break;
+		}
+		case 0x00001: /* READSCID */
+		{
+			break;
+		}
+		case 0x00002: /* FALSE */
+		{
+			break;
+		}
+		case 0x00003: /* TRUE */
+		{
+			break;
+		}
+		case 0x01000: /* JSR_COROUTINE */
+		{
+			break;
+		}
+		default: return true;
+	}
+	return false;
 }
 
 /* Process 2OPI Integer instructions */
