@@ -1,0 +1,175 @@
+# Legacy NOP
+00 00 00 00 # Proper NOP
+00 xx xx xx # NOP equivelent, although these instructions will all be treated as NOPs. DO NOT USE THEM.
+
+# 4OP nn is the XOP,  a = b OP c Cond d
+01 nn ab cd # 4OP Integer group
+02 nn ab cd # 4OP Floating group
+03 nn ab cd # 4OP SIMD group
+04 nn ab cd # 4OP Reserved group
+
+# 3OP nn n is the XOP, a = b OP c
+05 nn na bc # 3OP Integer group
+05 00 0a bc # ADD a b c :: a = b + c [signed]
+05 00 1a bc # ADDU a b c :: a = b + c [unsigned]
+05 00 2a bc # SUB a b c :: a = b - c [signed]
+05 00 3a bc # SUBU a b c :: a = b - c [unsigned]
+05 00 4a bc # CMP a b c :: a = b CMP c [signed]
+05 00 5a bc # CMPU a b c :: a = b CMP c [unsigned]
+05 00 6a bc # MUL a b c :: a = b * c [signed] bottom n bits
+05 00 7a bc # MULH a b c :: a = (b * c) >> n [signed] top n bits
+05 00 8a bc # MULU a b c :: a = b * c [unsigned] bottom n bits
+05 00 9a bc # MULUH a b c :: a = (b * c) >> n [unsigned] top n bits
+05 00 Aa bc # DIV a b c :: a = b / c [signed]
+05 00 Ba bc # MOD a b c :: a = b % c [signed]
+05 00 Ca bc # DIVU a b c :: a = b / c [unsigned]
+05 00 Da bc # MODU a b c :: a = b % c [unsigned]
+05 00 Ex xx # Reserved
+05 00 Fx xx # Reserved
+05 01 0a bc # MAX a b c :: a = MAX(b, c) [signed]
+05 01 1a bc # MAXU a b c :: a = MAX(b, c) [unsigned]
+05 01 2a bc # MIN a b c :: a = MIN(b, c) [signed]
+05 01 3a bc # MINU a b c :: a = MIN(b, c) [unsigned]
+05 01 4a bc # PACK a b c :: a = PACK(b, c)
+05 01 5a bc # UNPACK a b c :: a = UNPACK(b, c)
+05 01 6a bc # PACK8.CO a b c :: a = PACK(b) c = Overload? [signed]
+05 01 7a bc # PACK8U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
+05 01 8a bc # PACK16.CO a b c :: a = PACK(b) c = Overload? [signed]
+05 01 9a bc # PACK16U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
+05 01 Aa bc # PACK32.CO a b c :: a = PACK(b) c = Overload? [signed]
+05 01 Ba bc # PACK32U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
+05 01 Ca bc # PACK64.CO a b c :: a = PACK(b) c = Overload? [signed]
+05 01 Da bc # PACK64U.CO a b c :: a = PACK(b) c = Overload? [signed]
+05 01 Ex xx # Reserved
+05 01 Fx xx # Reserved
+05 02 0a bc # AND a b c :: a = b & c
+05 02 1a bc # OR a b c :: a = b | c
+05 02 2a bc # XOR a b c :: a = b XOR c
+05 02 3a bc # NAND a b c :: a != b & c
+05 02 4a bc # NOR a b c :: a != b | c
+05 02 5a bc # XNOR a b c :: a != b XOR c
+05 02 6a bc # MPQ a b c :: a = b MPQ c [Converse Nonimplication]
+05 02 7a bc # LPQ a b c :: a = b LPQ c [Material Nonimplication]
+05 02 8a bc # CPQ a b c :: a = b CPQ c [Material Implication]
+05 02 8a bc # BPQ a b c :: a = b BPQ c [Converse Implication]
+05 02 9x xx # Reserved
+...
+05 02 Fx xx # Reserved
+05 03 0a bc # SAL a b c :: a = b >> c [arithmetically]
+05 03 1a bc # SAR a b c :: a = b << c [arithmetically]
+05 03 2a bc # SL0 a b c :: a = b >> c [Fill with zeros]
+05 03 3a bc # SR0 a b c :: a = b << c [Fill with zeros]
+05 03 4a bc # SL1 a b c :: a = b >> c [Fill with ones]
+05 03 5a bc # SR1 a b c :: a = b << c [Fill with ones]
+05 03 6a bc # ROL a b c :: a = ROL(b, c) [Circular rotate left]
+05 03 7a bc # ROR a b c :: a = ROR(b, c) [Circular rotate right]
+05 03 8x xx # Reserved
+...
+05 FF Fx xx # Reserved
+06 nn na bc # 3OP Floating group
+07 nn na bc # 3OP SIMD group
+08 nn na bc # 3OP Reserved group
+
+# 2OP nn nn is the XOP, a = OP b
+09 nn nn ab # 2OP Integer group
+09 00 00 ab # NEG a b :: a = (b > 0) ? -b : b
+09 00 01 ab # ABS a b :: a = |b|
+09 00 02 ab # NABS a b :: a = -|b|
+09 00 03 ab # SWAP a b :: a <=> b
+09 00 04 ab # COPY a b :: a = b
+09 00 05 ab # MOVE a b :: a = b; b = 0
+09 00 06 xx # Reserved
+...
+09 00 FF xx # Reserved
+09 01 00 ab # BRANCH a b :: Mem[b] = PC; PC = a
+09 01 01 xx # Reserved
+...
+09 FF FF xx # Reserved
+0A nn nn ab # 2OP Floating group
+0B nn nn ab # 2OP SIMD group
+0C nn nn ab # 2OP Reserved group
+
+# 1OP nn nn n is the XOP, a = OP a
+0D nn nn na # 1OP group
+0D 00 00 0a # READPC a :: a = PC
+0D 00 00 1a # READSCID a :: a = SCID
+0D 00 00 2a # FALSE a :: a = 0
+0D 00 00 3a # TRUE a :: a = FF ... FF
+0D 00 00 4x # Reserved
+...
+0D 00 FF Fx # Reserved
+0D 01 00 0a # JSR_COROUTINE a; PC = a
+0D 01 00 1x # Reserved
+...
+0D FF FF Fx # Reserved
+
+# 2OPI ii ii is the Immediate, a = b OP ii ii
+0E ab ii ii # ADDI a b ii ii :: a = b + ii ii [signed]
+0F ab ii ii # ADDUI a b ii ii :: a = b + ii ii [unsigned]
+10 ab ii ii # SUBI a b ii ii :: a = b - ii ii [signed]
+11 ab ii ii # SUBUI a b ii ii :: a = b - ii ii [unsigned]
+12 ab ii ii # CMPI a b ii ii :: a = b CMP ii ii [signed]
+13 ab ii ii # LOAD a b ii ii :: a = MEM[b + ii ii]
+14 ab ii ii # LOAD8 a b ii ii :: a = MEM[b + ii ii] [signed 8bits]
+15 ab ii ii # LOADU8 a b ii ii :: a = MEM[b + ii ii] [unsigned 8bits]
+16 ab ii ii # LOAD16 a b ii ii :: a = MEM[b + ii ii] [signed 16bits]
+17 ab ii ii # LOADU16 a b ii ii :: a = MEM[b + ii ii] [unsigned 16bits]
+18 ab ii ii # LOAD32 a b ii ii :: a = MEM[b + ii ii] [signed 32bits]
+19 ab ii ii # LOADU32 a b ii ii :: a = MEM[b + ii ii] [unsigned 32bits]
+1A ab ii ii # LOAD64 a b ii ii :: a = MEM[b + ii ii] [signed 64bits]
+1B ab ii ii # LOADU64 a b ii ii :: a = MEM[b + ii ii] [unsigned 64bits]
+1C ab ii ii # Reserved
+1D ab ii ii # Reserved
+1E ab ii ii # Reserved
+1F ab ii ii # CMPUI a b ii ii :: a = b CMP ii ii [unsigned]
+20 ab ii ii # STORE a b ii :: MEM[b + ii ii] = a
+21 ab ii ii # STORE8 a b ii :: MEM[b + ii ii] = a [signed 8bits]
+22 ab ii ii # STOREU8 a b ii :: MEM[b + ii ii] = a [unsigned 8bits]
+23 ab ii ii # STORE16 a b ii :: MEM[b + ii ii] = a [signed 16bits]
+24 ab ii ii # STOREU16 a b ii :: MEM[b + ii ii] = a [unsigned 16bits]
+25 ab ii ii # STORE32 a b ii :: MEM[b + ii ii] = a [signed 32bits]
+26 ab ii ii # STOREU32 a b ii :: MEM[b + ii ii] = a [unsigned 32bits]
+27 ab ii ii # STORE64 a b ii :: MEM[b + ii ii] = a [signed 64bits]
+28 ab ii ii # STOREU64 a b ii :: MEM[b + ii ii] = a [unsigned 64bits]
+29 ab ii ii # Reserved
+2A ab ii ii # Reserved
+2B ab ii ii # Reserved
+
+# 1OPI i ii ii is the Immediate, a = a OP i ii ii
+2C ai ii ii # JUMP.C a i ii ii :: Carry? a; PC = PC + i ii ii
+2D ai ii ii # JUMP.B a i ii ii :: Borrow? a; PC = PC + i ii ii
+2E ai ii ii # JUMP.O a i ii ii :: Overflow? a; PC = PC + i ii ii
+2F ai ii ii # JUMP.G a i ii ii :: GT? a; PC = PC + i ii ii
+30 ai ii ii # JUMP.GE a i ii ii :: GT? a | EQ? a; PC = PC + i ii ii
+31 ai ii ii # JUMP.E a i ii ii :: EQ? a; PC = PC + i ii ii
+32 ai ii ii # JUMP.NE a i ii ii :: NEQ? a; PC = PC + i ii ii
+33 ai ii ii # JUMP.LE a i ii ii :: LT? a | EQ? a; PC = PC + i ii ii
+34 ai ii ii # JUMP.L a i ii ii :: LT? a; PC = PC + i ii ii
+35 ai ii ii # JUMP.Z a i ii ii :: ZERO? a; PC = PC + i ii ii
+36 ai ii ii # JUMP.NZ a i ii ii :: NZERO? a; PC = PC + i ii ii
+37 xx xx xx # Reserved
+38 xx xx xx # Reserved
+39 xx xx xx # Reserved
+3A xx xx xx # Reserved
+3B xx xx xx # Reserved
+
+# 0OPI ii ii ii is the Immediate, OP ii ii ii
+3C ii ii ii # JUMP ii ii ii :: PC = PC + ii ii ii
+
+# Reserved Block 0, At this time these instructions only produce a warning; but could do anything. DO NOT USE.
+3D xx xx xx
+...
+41 xx xx xx
+
+# HALCODE hh hh hh is the HALCODE callID, invalid HALCODE SHOULD NOT BE USED.
+42 hh hh hh
+
+# Reserved Block 1, At this time these instructions only produce a warning; but could do anything. DO NOT USE.
+43 xx xx xx
+...
+FE xx xx xx
+
+# 0OP
+FF xx xx xx # HALT equivelent, although these instructions will all be treated as HALTs. DO NOT USE THEM.
+FF FF FF FF # Proper HALT
+
