@@ -114,50 +114,98 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x006: /* MUL */
 		{
+			int64_t sum = tmp1 * tmp2;
+			/* We only want the bottom 32bits */
+			vm->reg[c->reg0] = sum % 0x100000000;
 			break;
 		}
 		case 0x007: /* MULH */
 		{
+			int64_t sum = tmp1 * tmp2;
+			/* We only want the top 32bits */
+			vm->reg[c->reg0] = sum / 0x100000000;
 			break;
 		}
 		case 0x008: /* MULU */
 		{
+			uint64_t sum = tmp1 * tmp2;
+			/* We only want the bottom 32bits */
+			vm->reg[c->reg0] = sum % 0x100000000;
 			break;
 		}
 		case 0x009: /* MULUH */
 		{
+			uint64_t sum = tmp1 * tmp2;
+			/* We only want the top 32bits */
+			vm->reg[c->reg0] = sum / 0x100000000;
 			break;
 		}
 		case 0x00A: /* DIV */
 		{
+			vm->reg[c->reg0] = tmp1 / tmp2;
 			break;
 		}
 		case 0x00B: /* MOD */
 		{
+			vm->reg[c->reg0] = tmp1 % tmp2;
 			break;
 		}
 		case 0x00C: /* DIVU */
 		{
+			vm->reg[c->reg0] = utmp1 / utmp2;
 			break;
 		}
 		case 0x00D: /* MODU */
 		{
+			vm->reg[c->reg0] = utmp1 % utmp2;
 			break;
 		}
 		case 0x010: /* MAX */
 		{
+			if(tmp1 > tmp2)
+			{
+				vm->reg[c->reg0] = tmp1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp2;
+			}
 			break;
 		}
 		case 0x011: /* MAXU */
 		{
+			if(utmp1 > utmp2)
+			{
+				vm->reg[c->reg0] = utmp1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = utmp2;
+			}
 			break;
 		}
 		case 0x012: /* MIN */
 		{
+			if(tmp1 < tmp2)
+			{
+				vm->reg[c->reg0] = tmp1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp2;
+			}
 			break;
 		}
 		case 0x013: /* MINU */
 		{
+			if(utmp1 < utmp2)
+			{
+				vm->reg[c->reg0] = utmp1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = utmp2;
+			}
 			break;
 		}
 		case 0x014: /* PACK */
@@ -194,42 +242,52 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x020: /* AND */
 		{
+			vm->reg[c->reg0] = utmp1 & utmp2;
 			break;
 		}
 		case 0x021: /* OR */
 		{
+			vm->reg[c->reg0] = utmp1 | utmp2;
 			break;
 		}
 		case 0x022: /* XOR */
 		{
+			vm->reg[c->reg0] = utmp1 ^ utmp2;
 			break;
 		}
 		case 0x023: /* NAND */
 		{
+			vm->reg[c->reg0] = ~(utmp1 & utmp2);
 			break;
 		}
 		case 0x024: /* NOR */
 		{
+			vm->reg[c->reg0] = ~(utmp1 | utmp2);
 			break;
 		}
 		case 0x025: /* XNOR */
 		{
+			vm->reg[c->reg0] = ~(utmp1 ^ utmp2);
 			break;
 		}
 		case 0x026: /* MPQ */
 		{
+			vm->reg[c->reg0] = (~utmp1) & utmp2;
 			break;
 		}
 		case 0x027: /* LPQ */
 		{
+			vm->reg[c->reg0] = utmp1 & (~utmp2);
 			break;
 		}
 		case 0x028: /* CPQ */
 		{
+			vm->reg[c->reg0] = (~utmp1) | utmp2;
 			break;
 		}
 		case 0x029: /* BPQ */
 		{
+			vm->reg[c->reg0] = utmp1 | (~utmp2);
 			break;
 		}
 		case 0x030: /* SAL */
@@ -272,34 +330,91 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 2OP Integer instructions */
 bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 {
+	int32_t tmp1 = (int32_t)(vm->reg[c->reg1]);
+	uint32_t utmp1 = vm->reg[c->reg1];
+
 	switch(c->raw_XOP)
 	{
 		case 0x0000: /* NEG */
 		{
+			vm->reg[c->reg0] = tmp1*-1;
 			break;
 		}
 		case 0x0001: /* ABS */
 		{
+			if(0 <= tmp1)
+			{
+				vm->reg[c->reg0] = tmp1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp1*-1;
+			}
 			break;
 		}
 		case 0x0002: /* NABS */
 		{
+			if(0 > tmp1)
+			{
+				vm->reg[c->reg0] = tmp1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp1*-1;
+			}
 			break;
 		}
 		case 0x0003: /* SWAP */
 		{
+			vm->reg[c->reg1] = vm->reg[c->reg0];
+			vm->reg[c->reg0] = utmp1;
 			break;
 		}
 		case 0x0004: /* COPY */
 		{
+			vm->reg[c->reg0] = utmp1;
 			break;
 		}
 		case 0x0005: /* MOVE */
 		{
+			vm->reg[c->reg0] = utmp1;
+			vm->reg[c->reg1] = 0;
 			break;
 		}
 		case 0x0100: /* BRANCH */
 		{
+			/* Preserve index */
+			uint32_t utmp1 = vm->reg[c->reg1];
+
+			/* Use the index register to store the PC for upload to MEM */
+			vm->reg[c->reg1] = vm->ip;
+
+			/* Write out the PC */
+			writeout_Reg(vm, utmp1, c->reg1);
+
+			/* Restore our index */
+			vm->reg[c->reg1] = utmp1;
+
+			/* Update PC */
+			vm->ip = vm->reg[c->reg0];
+			break;
+		}
+		case 0x0101: /* CALL */
+		{
+		/* Preserve index */
+			uint32_t utmp1 = vm->reg[c->reg1];
+
+			/* Use the index register to store the PC for upload to MEM */
+			vm->reg[c->reg1] = vm->ip;
+
+			/* Write out the PC */
+			writeout_Reg(vm, utmp1, c->reg1);
+
+			/* Update our index */
+			vm->reg[c->reg1] = utmp1 + 4;
+
+			/* Update PC */
+			vm->ip = vm->reg[c->reg0];
 			break;
 		}
 		default: return true;
@@ -314,22 +429,69 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 	{
 		case 0x00000: /* READPC */
 		{
+			vm->reg[c->reg0] = vm->ip;
 			break;
 		}
 		case 0x00001: /* READSCID */
 		{
+			/* We only support Base 8,16 and 32*/
+			vm->reg[c->reg0] = 0x00000007;
 			break;
 		}
 		case 0x00002: /* FALSE */
 		{
+			vm->reg[c->reg0] = 0;
 			break;
 		}
 		case 0x00003: /* TRUE */
 		{
+			vm->reg[c->reg0] = 0xFFFFFFFF;
 			break;
 		}
 		case 0x01000: /* JSR_COROUTINE */
 		{
+			vm->ip = vm->reg[c->reg0];
+			break;
+		}
+		case 0x01001: /* RET */
+		{
+			/* Preserve index */
+			uint32_t utmp1 = vm->reg[c->reg0];
+
+			/* Read in the new PC */
+			readin_Reg(vm, utmp1, c->reg0);
+			vm->ip = vm->reg[c->reg0];
+
+			/* Update our index */
+			vm->reg[c->reg0] = utmp1 - 4;
+			break;
+		}
+		case 0x02000: /* PUSHPC */
+		{
+			/* Preserve index */
+			uint32_t utmp1 = vm->reg[c->reg0];
+
+			/* Use the index register to store the PC for upload to MEM */
+			vm->reg[c->reg0] = vm->ip;
+
+			/* Write out the PC */
+			writeout_Reg(vm, utmp1, c->reg0);
+
+			/* Update our index */
+			vm->reg[c->reg0] = utmp1 + 4;
+			break;
+		}
+		case 0x02001: /* POPPC */
+		{
+			/* Preserve index */
+			uint32_t utmp1 = vm->reg[c->reg0];
+
+			/* Read in the new PC */
+			readin_Reg(vm, utmp1, c->reg0);
+			vm->ip = vm->reg[c->reg0];
+
+			/* Update our index */
+			vm->reg[c->reg0] = utmp1 - 4;
 			break;
 		}
 		default: return true;
@@ -388,6 +550,11 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			}
 			break;
 		}
+		case 0x13: /* LOAD */
+		{
+			readin_Reg(vm, (utmp1 + c->raw_Immediate) , c->reg0);
+			break;
+		}
 		case 0x14: /* LOAD8 */
 		{
 			raw0 = vm->memory[utmp1 + c->raw_Immediate];
@@ -428,17 +595,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x18: /* LOAD32 */
 		case 0x19: /* LOADU32 */
-		case 0x13: /* LOAD */
 		{
-			raw0 = vm->memory[utmp1 + c->raw_Immediate];
-			raw1 = vm->memory[utmp1 + c->raw_Immediate + 1];
-			raw2 = vm->memory[utmp1 + c->raw_Immediate + 2];
-			raw3 = vm->memory[utmp1 + c->raw_Immediate + 3];
-
-			vm->reg[c->reg0] = raw0*0x1000000 +
-							   raw1*0x10000 +
-							   raw2*0x100 +
-							   raw3;
+			readin_Reg(vm, (utmp1 + c->raw_Immediate) , c->reg0);
 			break;
 		}
 		case 0x1F: /* CMPUI */
@@ -457,6 +615,11 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			{
 				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
 			}
+			break;
+		}
+		case 0x20: /* STORE */
+		{
+			writeout_Reg(vm, (utmp1 + c->raw_Immediate), c->reg0);
 			break;
 		}
 		case 0x21: /* STORE8 */
@@ -499,22 +662,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x25: /* STORE32 */
 		case 0x26: /* STOREU32 */
-		case 0x20: /* STORE */
 		{
-			uint32_t tmp = vm->reg[c->reg0];
-			raw3 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw2 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw1 = tmp%0x100;
-			tmp = tmp/0x100;
-			raw0 = tmp%0x100;
-
-			vm->memory[utmp1 + c->raw_Immediate] = raw0;
-			vm->memory[utmp1 + c->raw_Immediate + 1] = raw1;
-			vm->memory[utmp1 + c->raw_Immediate + 2] = raw2;
-			vm->memory[utmp1 + c->raw_Immediate + 3] = raw3;
-
+			writeout_Reg(vm, (utmp1 + c->raw_Immediate), c->reg0);
 			break;
 		}
 		default: return true;

@@ -81,8 +81,9 @@
 09 00 06 xx # Reserved
 ...
 09 00 FF xx # Reserved
-09 01 00 ab # BRANCH a b :: Mem[b] = PC; PC = a
-09 01 01 xx # Reserved
+09 01 00 ab # BRANCH a b :: MEM[b] = PC; PC = a
+09 01 01 ab # CALL a b :: MEM[b] = PC; b = b + (register size in bytes); PC = a
+09 01 02 xx # Reserved
 ...
 09 FF FF xx # Reserved
 0A nn nn ab # 2OP Floating group
@@ -99,7 +100,13 @@
 ...
 0D 00 FF Fx # Reserved
 0D 01 00 0a # JSR_COROUTINE a; PC = a
-0D 01 00 1x # Reserved
+0D 01 00 1a # RET a :: PC = MEM[a]; a = a - (register size in bytes)
+0D 01 00 2x # Reserved
+...
+0D 01 FF Fx # Reserved
+0D 02 00 0a # PUSHPC a :: MEM[a] = PC; a = a + (register size in bytes)
+0D 02 00 1a # POPPC a :: PC = MEM[a]; a = a - (register size in bytes)
+0D 02 00 2x # Reserved
 ...
 0D FF FF Fx # Reserved
 
