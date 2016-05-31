@@ -56,32 +56,136 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 	{
 		case 0x00: /* ADD.CI */
 		{
+			tmp1 = vm->reg[c->reg1];
+			tmp2 = vm->reg[c->reg2];
+
+			/* If carry bit set add in the carry */
+			if(1 == C)
+			{
+				vm->reg[c->reg0] = tmp1 + tmp2 + 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp1 + tmp2;
+			}
 			break;
 		}
 		case 0x01: /* ADD.CO */
 		{
+			tmp1 = (int32_t)(vm->reg[c->reg1]);
+			tmp2 = (int32_t)(vm->reg[c->reg2]);
+			btmp1 = ((int64_t)tmp1) + ((int64_t)tmp2);
+
+			/* If addition exceeds int32_t MAX, set carry bit */
+			if(1 == ( btmp1 >> 31 ))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
+			}
+
+			/* Standard addition */
+			vm->reg[c->reg0] = (tmp1 + tmp2);
 			break;
 		}
 		case 0x02: /* ADD.CIO */
 		{
+			tmp1 = (int32_t)(vm->reg[c->reg1]);
+			tmp2 = (int32_t)(vm->reg[c->reg2]);
+			btmp1 = ((int64_t)tmp1) + ((int64_t)tmp2);
+
+			/* If addition exceeds int32_t MAX, set carry bit */
+			if(1 == ( btmp1 >> 31 ))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
+			}
+
+			/* If carry bit set before operation add in the carry */
+			if(1 == C)
+			{
+				vm->reg[c->reg0] = tmp1 + tmp2 + 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = tmp1 + tmp2;
+			}
 			break;
 		}
 		case 0x03: /* ADDU.CI */
 		{
+			utmp1 = vm->reg[c->reg1];
+			utmp2 = vm->reg[c->reg2];
+
+			/* If carry bit set add in the carry */
+			if(1 == C)
+			{
+				vm->reg[c->reg0] = utmp1 + utmp2 + 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = utmp1 + utmp2;
+			}
 			break;
 		}
 		case 0x04: /* ADDU.CO */
 		{
+			utmp1 = vm->reg[c->reg1];
+			utmp2 = vm->reg[c->reg2];
+			ubtmp1 = ((uint64_t)utmp1) + ((uint64_t)utmp2);
+
+			/* If addition exceeds uint32_t MAX, set carry bit */
+			if(0 != ( ubtmp1 >> 32 ))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
+			}
+
+			/* Standard addition */
+			vm->reg[c->reg0] = (utmp1 + utmp2);
 			break;
 		}
 		case 0x05: /* ADDU.CIO */
 		{
+			utmp1 = vm->reg[c->reg1];
+			utmp2 = vm->reg[c->reg2];
+			ubtmp1 = ((uint64_t)utmp1) + ((uint64_t)utmp2);
+
+			/* If addition exceeds uint32_t MAX, set carry bit */
+			if(0 != ( ubtmp1 >> 32 ))
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
+			}
+			else
+			{
+				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
+			}
+
+			/* If carry bit was set before operation add in the carry */
+			if(1 == C)
+			{
+				vm->reg[c->reg0] = utmp1 + utmp2 + 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = utmp1 + utmp2;
+			}
 			break;
 		}
 		case 0x06: /* SUB.BI */
 		{
 			tmp1 = (int32_t)(vm->reg[c->reg1]);
 			tmp2 = (int32_t)(vm->reg[c->reg2]);
+
+			/* If borrow bit set subtract out the borrow */
 			if(1 == B)
 			{
 				vm->reg[c->reg0] = tmp1 - tmp2 - 1;
@@ -98,6 +202,7 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			tmp1 = (int32_t)(vm->reg[c->reg2]);
 			tmp2 = (int32_t)(btmp1 - tmp1);
 
+			/* If subtraction goes below int32_t MIN set borrow */
 			if(btmp1 != (tmp2 + tmp1))
 			{
 				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
@@ -106,6 +211,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			{
 				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
 			}
+
+			/* Standard subtraction */
 			vm->reg[c->reg0] = tmp2;
 			break;
 		}
@@ -115,6 +222,7 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			tmp1 = (int32_t)(vm->reg[c->reg2]);
 			tmp2 = (int32_t)(btmp1 - tmp1);
 
+			/* If subtraction goes below int32_t MIN set borrow */
 			if(btmp1 != (tmp2 + tmp1))
 			{
 				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
@@ -124,6 +232,7 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
 			}
 
+			/* If borrow bit was set prior to operation subtract out the borrow */
 			if(1 == B)
 			{
 				vm->reg[c->reg0] = tmp2 - 1;
@@ -138,6 +247,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			utmp1 = vm->reg[c->reg1];
 			utmp2 = vm->reg[c->reg2];
+
+			/* If borrow bit set subtract out the borrow */
 			if(1 == B)
 			{
 				vm->reg[c->reg0] = utmp1 - utmp2 - 1;
@@ -154,6 +265,7 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			utmp2 = vm->reg[c->reg2];
 			ubtmp1 = (uint64_t)(utmp1 - utmp2);
 
+			/* If subtraction goes below uint32_t MIN set borrow */
 			if(utmp1 != (ubtmp1 + utmp2))
 			{
 				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
@@ -162,6 +274,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			{
 				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
 			}
+
+			/* Standard subtraction */
 			vm->reg[c->reg0] = (utmp1 - utmp2);
 			break;
 		}
@@ -171,6 +285,7 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			utmp2 = vm->reg[c->reg2];
 			ubtmp1 = (uint64_t)(utmp1 - utmp2);
 
+			/* If subtraction goes below uint32_t MIN set borrow */
 			if(utmp1 != (ubtmp1 + utmp2))
 			{
 				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
@@ -179,6 +294,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			{
 				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
 			}
+
+			/* If borrow bit was set prior to operation subtract out the borrow */
 			if(1 == B)
 			{
 				vm->reg[c->reg0] = utmp1 - utmp2 - 1;
@@ -191,14 +308,16 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x0C: /* MULTIPLY */
 		{
-			btmp1 = (int32_t)(vm->reg[c->reg2]) * (int32_t)( vm->reg[c->reg3]);
-			vm->reg[c->reg0] = btmp1 % 0x100000000;
-			vm->reg[c->reg1] = btmp1 / 0x100000000;
+			tmp1 = (int32_t)(vm->reg[c->reg2]);
+			tmp2 = (int32_t)( vm->reg[c->reg3]);
+			btmp1 = ((int64_t)tmp1) * ((int64_t)tmp2);
+			vm->reg[c->reg0] = (int32_t)(btmp1 % 0x100000000);
+			vm->reg[c->reg1] = (int32_t)(btmp1 / 0x100000000);
 			break;
 		}
 		case 0x0D: /* MULTIPLYU */
 		{
-			ubtmp1 = vm->reg[c->reg2] * vm->reg[c->reg3];
+			ubtmp1 = (uint64_t)(vm->reg[c->reg2]) * (uint64_t)(vm->reg[c->reg3]);
 			vm->reg[c->reg0] = ubtmp1 % 0x100000000;
 			vm->reg[c->reg1] = ubtmp1 / 0x100000000;
 			break;
