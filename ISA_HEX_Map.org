@@ -7,26 +7,34 @@
 4OP nn is the XOP,  a = b OP c Cond d
 
 *** 01 nn ab cd :: 4OP Integer group
+**** Add subgroup
 01 00 ab cd # ADD.CI a b c d :: a = b + c + CARRY? d [signed]
 01 01 ab cd # ADD.CO a b c d :: a = b + c; d = CARRY? [signed]
 01 02 ab cd # ADD.CIO a b c d :: a = b + c + CARRY? d; d = CARRY? [signed]
 01 03 ab cd # ADDU.CI a b c d :: a = b + c + CARRY? d  [unsigned]
 01 04 ab cd # ADDU.CO a b c d :: a = b + c; d = CARRY? [unsigned]
 01 05 ab cd # ADDU.CIO a b c d :: a = b + c + CARRY? d; d = CARRY? [unsigned]
+
+**** Subtract subgroup
 01 06 ab cd # SUB.BI a b c d :: a = b - c - BORROW? d [signed]
 01 07 ab cd # SUB.BO a b c d :: a = b - c; d = BORROW? [signed]
 01 08 ab cd # SUB.BIO a b c d :: a = b - c - BORROW? d; d = BORROW? [signed]
 01 09 ab cd # SUBU.BI a b c d :: a = b - c - BORROW? d [unsigned]
 01 0A ab cd # SUBU.BO a b c d :: a = b - c; d = BORROW? [unsigned]
 01 0B ab cd # SUBU.BIO a b c d :: a = b - c - BORROW? d; d = BORROW? [unsigned]
+
+**** long math
 01 0C ab cd # MULTIPLY a b c d :: a = MUL c d; b = MULH c d [signed]
 01 0D ab cd # MULTIPLYU a b c d :: a = MUL c d; b = MULH c d [unsigned]
 01 0E ab cd # DIVIDE a b c d :: a = DIV c d; b = MOD c d [signed]
 01 0F ab cd # DIVIDEU a b c d :: a = DIV c d; b = MOD c d [unsigned]
+
+**** Logic
 01 10 ab cd # MUX a b c d :: a = (c & ~b) | (d & b)
 01 11 ab cd # NMUX a b c d :: a = (c & b) | (d & ~b)
 01 12 ab cd # SORT a b c d :: a = MAX(c, d); b = MIN(c, d) [signed]
 01 13 ab cd # SORTU a b c d :: a = MAX(c, d); b = MIN(c, d) [unsigned]
+
 **** Reserved Block
 01 14 xx xx # Reserved
 ...
@@ -39,12 +47,15 @@
 ** 3OP Groups
 3OP nn n is the XOP, a = b OP c
 *** 05 nn na bc :: 3OP Integer group
+**** Turing group
 05 00 0a bc # ADD a b c :: a = b + c [signed]
 05 00 1a bc # ADDU a b c :: a = b + c [unsigned]
 05 00 2a bc # SUB a b c :: a = b - c [signed]
 05 00 3a bc # SUBU a b c :: a = b - c [unsigned]
 05 00 4a bc # CMP a b c :: a = b CMP c [signed]
 05 00 5a bc # CMPU a b c :: a = b CMP c [unsigned]
+
+**** Convience group
 05 00 6a bc # MUL a b c :: a = b * c [signed] bottom n bits
 05 00 7a bc # MULH a b c :: a = (b * c) >> n [signed] top n bits
 05 00 8a bc # MULU a b c :: a = b * c [unsigned] bottom n bits
@@ -53,12 +64,18 @@
 05 00 Ba bc # MOD a b c :: a = b % c [signed]
 05 00 Ca bc # DIVU a b c :: a = b / c [unsigned]
 05 00 Da bc # MODU a b c :: a = b % c [unsigned]
+
+**** Reserved group 0
 05 00 Ex xx # Reserved
 05 00 Fx xx # Reserved
+
+**** Sort group
 05 01 0a bc # MAX a b c :: a = MAX(b, c) [signed]
 05 01 1a bc # MAXU a b c :: a = MAX(b, c) [unsigned]
 05 01 2a bc # MIN a b c :: a = MIN(b, c) [signed]
 05 01 3a bc # MINU a b c :: a = MIN(b, c) [unsigned]
+
+**** Binary packing group
 05 01 4a bc # PACK a b c :: a = PACK(b, c)
 05 01 5a bc # UNPACK a b c :: a = UNPACK(b, c)
 05 01 6a bc # PACK8.CO a b c :: a = PACK(b) c = Overload? [signed]
@@ -71,6 +88,8 @@
 05 01 Da bc # Reserved
 05 01 Ex xx # Reserved
 05 01 Fx xx # Reserved
+
+**** Logical group
 05 02 0a bc # AND a b c :: a = b & c
 05 02 1a bc # OR a b c :: a = b | c
 05 02 2a bc # XOR a b c :: a = b XOR c
@@ -80,10 +99,14 @@
 05 02 6a bc # MPQ a b c :: a = b MPQ c [Converse Nonimplication]
 05 02 7a bc # LPQ a b c :: a = b LPQ c [Material Nonimplication]
 05 02 8a bc # CPQ a b c :: a = b CPQ c [Material Implication]
-05 02 8a bc # BPQ a b c :: a = b BPQ c [Converse Implication]
-05 02 9x xx # Reserved
+05 02 9a bc # BPQ a b c :: a = b BPQ c [Converse Implication]
+
+**** Reserved group 1
+05 02 Ax xx # Reserved
 ...
 05 02 Fx xx # Reserved
+
+**** Bit rotation group
 05 03 0a bc # SAL a b c :: a = b >> c [arithmetically]
 05 03 1a bc # SAR a b c :: a = b << c [arithmetically]
 05 03 2a bc # SL0 a b c :: a = b >> c [Fill with zeros]
@@ -92,7 +115,8 @@
 05 03 5a bc # SR1 a b c :: a = b << c [Fill with ones]
 05 03 6a bc # ROL a b c :: a = ROL(b, c) [Circular rotate left]
 05 03 7a bc # ROR a b c :: a = ROR(b, c) [Circular rotate right]
-**** Reserved
+
+**** Reserved group 2
 05 03 8x xx # Reserved
 ...
 05 FF Fx xx # Reserved
@@ -105,18 +129,25 @@
 2OP nn nn is the XOP, a = OP b
 
 *** 09 nn nn ab :: 2OP Integer group
+**** Numeric subgroup
 09 00 00 ab # NEG a b :: a = (b > 0) ? -b : b
 09 00 01 ab # ABS a b :: a = |b|
 09 00 02 ab # NABS a b :: a = -|b|
+
+**** Movement subgroup
 09 00 03 ab # SWAP a b :: a <=> b
 09 00 04 ab # COPY a b :: a = b
 09 00 05 ab # MOVE a b :: a = b; b = 0
+
+**** Reserved Block 0
 09 00 06 xx # Reserved
 ...
 09 00 FF xx # Reserved
+
+**** Function call subgroup
 09 01 00 ab # BRANCH a b :: MEM[b] = PC; PC = a
 09 01 01 ab # CALL a b :: MEM[b] = PC; b = b + (register size in bytes); PC = a
-**** Reserved
+**** Reserved Block 1
 09 01 02 xx # Reserved
 ...
 09 FF FF xx # Reserved
@@ -129,18 +160,27 @@
 1OP nn nn n is the XOP, a = OP a
 
 *** 0D nn nn na :: 1OP group
+**** State subgroup
 0D 00 00 0a # READPC a :: a = PC
 0D 00 00 1a # READSCID a :: a = SCID
 0D 00 00 2a # FALSE a :: a = 0
 0D 00 00 3a # TRUE a :: a = FF ... FF
+
+**** Reserved block 0
 0D 00 00 4x # Reserved
 ...
 0D 00 FF Fx # Reserved
+
+**** Function return subgroup
 0D 01 00 0a # JSR_COROUTINE a; PC = a
 0D 01 00 1a # RET a :: PC = MEM[a]; a = a - (register size in bytes)
+
+**** Reserved block 1
 0D 01 00 2x # Reserved
 ...
 0D 01 FF Fx # Reserved
+
+**** Stack state Subgroup
 0D 02 00 0a # PUSHPC a :: MEM[a] = PC; a = a + (register size in bytes)
 0D 02 00 1a # POPPC a :: PC = MEM[a]; a = a - (register size in bytes)
 
