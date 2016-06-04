@@ -1,6 +1,9 @@
 #include "vm.h"
 #define DEBUG true;
 
+FILE* tape_01;
+FILE* tape_02;
+
 /* Load program tape into Memory */
 void load_program(struct lilith* vm, char **argv)
 {
@@ -35,6 +38,112 @@ void read_instruction(struct lilith* vm, struct Instruction *current)
 	current->raw3 = (uint8_t)vm->memory[vm->ip];
 	vm->ip = vm->ip + 1;
 	unpack_instruction(current);
+}
+
+/* Process HALCODE instructions */
+bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
+{
+	switch(c->HAL_CODE)
+	{
+		case 0x100000: /* fopen */
+		{
+			if(0x00001100 == vm->reg[0])
+			{
+				tape_01 = fopen("tape_01", "r");
+			}
+
+			if (0x00001101 == vm->reg[0])
+			{
+				tape_02 = fopen("tape_02", "w");
+			}
+			break;
+		}
+		case 0x100001: /* fclose */
+		{
+			if(0x00001100 == vm->reg[0])
+			{
+				fclose(tape_01);
+			}
+
+			if (0x00001101 == vm->reg[0])
+			{
+				fclose(tape_02);
+			}
+			break;
+		}
+		case 0x100002: /* fseek */
+		{
+			if(0x00001100 == vm->reg[0])
+			{
+				fseek(tape_01, vm->reg[1], SEEK_CUR);
+			}
+
+			if (0x00001101 == vm->reg[0])
+			{
+				fseek(tape_02, vm->reg[1], SEEK_CUR);
+			}
+			break;
+		}
+		case 0x100003: /* rewind */
+		{
+			if(0x00001100 == vm->reg[0])
+			{
+				rewind(tape_01);
+			}
+
+			if (0x00001101 == vm->reg[0])
+			{
+				rewind(tape_02);
+			}
+			break;
+		}
+		case 0x100100: /* fgetc */
+		{
+			int32_t byte = -1;
+
+			if (0x00000000 == vm->reg[1])
+			{
+				byte = fgetc(stdin);
+			}
+
+			if(0x00001100 == vm->reg[1])
+			{
+				byte = fgetc(tape_01);
+			}
+
+			if (0x00001101 == vm->reg[1])
+			{
+				byte = fgetc(tape_02);
+			}
+
+			vm->reg[0] = byte;
+
+			break;
+		}
+		case 0x100200: /* fputc */
+		{
+			int32_t byte = vm->reg[0];
+
+			if (0x00000000 == vm->reg[1])
+			{
+				fputc(byte, stdout);
+			}
+
+			if(0x00001100 == vm->reg[1])
+			{
+				fputc(byte, tape_01);
+			}
+
+			if (0x00001101 == vm->reg[1])
+			{
+				fputc(byte, tape_02);
+			}
+
+			break;
+		}
+		default: return true;
+	}
+	return false;
 }
 
 /* Process 4OP Integer instructions */
@@ -1201,6 +1310,14 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		}
 		case 0x42: /* HALCODE */
 		{
+			decode_HALCODE(current);
+			invalid = eval_HALCODE(vm, current);
+			if ( invalid )
+			{
+				vm->halted = true;
+				fprintf(stderr, "Invalid HALCODE\nComputer Program has Halted\n");
+			}
+			break;
 		}
 		case 0xFF: /* Deal with HALT */
 		{

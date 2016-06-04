@@ -194,6 +194,31 @@
 
 # HALCODE hh hh hh is the HALCODE callID, invalid HALCODE SHOULD NOT BE USED.
 42 hh hh hh
+42 00 xx xx # Reserved
+...
+42 0F xx xx # Reserved
+
+# Tape console HALCODE is used for interacting with any tape console attached to the system.
+# In this reference implementation we will be interacting with a simplified version of the series 10 console.
+# All compatible implementations need to ensure to implement functional equivelents.
+# Provided of course that any deviations would not change any output specified to be written to tape.
+# Padding with Zeros til start/end of page/segment however is acceptable.
+# The following 3 devices must exact with the following IDs
+# Keyboard/tty :: 00 00 00 00
+# Tape 1 :: 00 00 11 00
+# Tape 2 :: 00 00 11 01
+42 10 00 00 # FOPEN :: Feed on device who's ID matches the contents register 0 until first non-zero byte is found.
+42 10 00 01 # FCLOSE :: Close out writes to device who's ID matches the contents of register 0.
+42 10 00 02 # FSEEK :: seek forward or backward the number of bytes specified in register 1 on the device who's ID matches the contents of register 0.
+42 10 00 03 # REWIND :: rewind back to first non-zero byte found on tape.
+42 10 00 04 # Reserved
+...
+42 10 00 FF # Reserved
+42 10 01 00 # FGETC :: read 1 byte into register 0 from device who's ID is in register 1
+42 10 01 01 # Reserved
+...
+42 10 01 FF # Reserved
+42 10 02 00 # FPUTC :: write 1 byte from register 0 to device who's ID is in register 1
 
 # Reserved Block 1, At this time these instructions only produce a warning; but could do anything. DO NOT USE.
 43 xx xx xx

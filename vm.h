@@ -139,7 +139,7 @@ void decode_1OPI(struct Instruction* c)
 	c->Immediate[3] = c->operation[6];
 	c->Immediate[4] = c->operation[7];
 	c->HAL_CODE = 0;
-	c->reg0 = c->raw3/16;
+	c->reg0 = c->raw1/16;
 }
 /* Deal with 0OPI */
 void decode_0OPI(struct Instruction* c)
