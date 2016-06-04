@@ -1,9 +1,12 @@
-# Legacy NOP
+* Instruction Listing
+** 00 xx xx xx :: NOP
 00 00 00 00 # Proper NOP
 00 xx xx xx # NOP equivelent, although these instructions will all be treated as NOPs. DO NOT USE THEM.
 
-# 4OP nn is the XOP,  a = b OP c Cond d
-01 nn ab cd # 4OP Integer group
+** 4OP Groups
+4OP nn is the XOP,  a = b OP c Cond d
+
+*** 01 nn ab cd :: 4OP Integer group
 01 00 ab cd # ADD.CI a b c d :: a = b + c + CARRY? d [signed]
 01 01 ab cd # ADD.CO a b c d :: a = b + c; d = CARRY? [signed]
 01 02 ab cd # ADD.CIO a b c d :: a = b + c + CARRY? d; d = CARRY? [signed]
@@ -24,16 +27,18 @@
 01 11 ab cd # NMUX a b c d :: a = (c & b) | (d & ~b)
 01 12 ab cd # SORT a b c d :: a = MAX(c, d); b = MIN(c, d) [signed]
 01 13 ab cd # SORTU a b c d :: a = MAX(c, d); b = MIN(c, d) [unsigned]
+**** Reserved Block
 01 14 xx xx # Reserved
 ...
 01 FF xx xx # Reserved
 
-02 nn ab cd # 4OP Floating group
-03 nn ab cd # 4OP SIMD group
-04 nn ab cd # 4OP Reserved group
+*** 02 nn ab cd :: 4OP Floating group
+*** 03 nn ab cd :: 4OP SIMD group
+*** 04 nn ab cd :: 4OP Reserved group
 
-# 3OP nn n is the XOP, a = b OP c
-05 nn na bc # 3OP Integer group
+** 3OP Groups
+3OP nn n is the XOP, a = b OP c
+*** 05 nn na bc :: 3OP Integer group
 05 00 0a bc # ADD a b c :: a = b + c [signed]
 05 00 1a bc # ADDU a b c :: a = b + c [unsigned]
 05 00 2a bc # SUB a b c :: a = b - c [signed]
@@ -87,15 +92,19 @@
 05 03 5a bc # SR1 a b c :: a = b << c [Fill with ones]
 05 03 6a bc # ROL a b c :: a = ROL(b, c) [Circular rotate left]
 05 03 7a bc # ROR a b c :: a = ROR(b, c) [Circular rotate right]
+**** Reserved
 05 03 8x xx # Reserved
 ...
 05 FF Fx xx # Reserved
-06 nn na bc # 3OP Floating group
-07 nn na bc # 3OP SIMD group
-08 nn na bc # 3OP Reserved group
 
-# 2OP nn nn is the XOP, a = OP b
-09 nn nn ab # 2OP Integer group
+*** 06 nn na bc :: 3OP Floating group
+*** 07 nn na bc :: 3OP SIMD group
+*** 08 nn na bc :: 3OP Reserved group
+
+** 2OP Groups
+2OP nn nn is the XOP, a = OP b
+
+*** 09 nn nn ab :: 2OP Integer group
 09 00 00 ab # NEG a b :: a = (b > 0) ? -b : b
 09 00 01 ab # ABS a b :: a = |b|
 09 00 02 ab # NABS a b :: a = -|b|
@@ -107,15 +116,19 @@
 09 00 FF xx # Reserved
 09 01 00 ab # BRANCH a b :: MEM[b] = PC; PC = a
 09 01 01 ab # CALL a b :: MEM[b] = PC; b = b + (register size in bytes); PC = a
+**** Reserved
 09 01 02 xx # Reserved
 ...
 09 FF FF xx # Reserved
-0A nn nn ab # 2OP Floating group
-0B nn nn ab # 2OP SIMD group
-0C nn nn ab # 2OP Reserved group
 
-# 1OP nn nn n is the XOP, a = OP a
-0D nn nn na # 1OP group
+*** 0A nn nn ab :: 2OP Floating group
+*** 0B nn nn ab :: 2OP SIMD group
+*** 0C nn nn ab :: 2OP Reserved group
+
+** 1OP Groups
+1OP nn nn n is the XOP, a = OP a
+
+*** 0D nn nn na :: 1OP group
 0D 00 00 0a # READPC a :: a = PC
 0D 00 00 1a # READSCID a :: a = SCID
 0D 00 00 2a # FALSE a :: a = 0
@@ -130,16 +143,25 @@
 0D 01 FF Fx # Reserved
 0D 02 00 0a # PUSHPC a :: MEM[a] = PC; a = a + (register size in bytes)
 0D 02 00 1a # POPPC a :: PC = MEM[a]; a = a - (register size in bytes)
+
+**** Reserved
 0D 02 00 2x # Reserved
 ...
 0D FF FF Fx # Reserved
 
-# 2OPI ii ii is the Immediate, a = b OP ii ii
+** 2OPI Groups
+2OPI ii ii is the Immediate, a = b OP ii ii
+
+*** 2OPI Integer
 0E ab ii ii # ADDI a b ii ii :: a = b + ii ii [signed]
 0F ab ii ii # ADDUI a b ii ii :: a = b + ii ii [unsigned]
 10 ab ii ii # SUBI a b ii ii :: a = b - ii ii [signed]
 11 ab ii ii # SUBUI a b ii ii :: a = b - ii ii [unsigned]
+
+*** 2OPI Integer signed compare
 12 ab ii ii # CMPI a b ii ii :: a = b CMP ii ii [signed]
+
+*** 2OPI Integer Load
 13 ab ii ii # LOAD a b ii ii :: a = MEM[b + ii ii]
 14 ab ii ii # LOAD8 a b ii ii :: a = MEM[b + ii ii] [signed 8bits]
 15 ab ii ii # LOADU8 a b ii ii :: a = MEM[b + ii ii] [unsigned 8bits]
@@ -152,7 +174,11 @@
 1C ab ii ii # Reserved
 1D ab ii ii # Reserved
 1E ab ii ii # Reserved
+
+*** 2OPI Integer unsigned compare
 1F ab ii ii # CMPUI a b ii ii :: a = b CMP ii ii [unsigned]
+
+*** 2OPI Integer store
 20 ab ii ii # STORE a b ii :: MEM[b + ii ii] = a
 21 ab ii ii # STORE8 a b ii :: MEM[b + ii ii] = a [signed 8bits]
 22 ab ii ii # STOREU8 a b ii :: MEM[b + ii ii] = a [unsigned 8bits]
@@ -166,7 +192,10 @@
 2A ab ii ii # Reserved
 2B ab ii ii # Reserved
 
-# 1OPI i ii ii is the Immediate, a = a OP i ii ii
+** 1OPI Groups
+1OPI i ii ii is the Immediate, a = a OP i ii ii
+
+*** Conditional Jumps
 2C ai ii ii # JUMP.C a i ii ii :: Carry? a; PC = PC + i ii ii
 2D ai ii ii # JUMP.B a i ii ii :: Borrow? a; PC = PC + i ii ii
 2E ai ii ii # JUMP.O a i ii ii :: Overflow? a; PC = PC + i ii ii
@@ -184,50 +213,87 @@
 3A xx xx xx # Reserved
 3B xx xx xx # Reserved
 
-# 0OPI ii ii ii is the Immediate, OP ii ii ii
+** 0OPI group
+0OPI ii ii ii is the Immediate, OP ii ii ii
+
+*** Unconditional jumps
 3C ii ii ii # JUMP ii ii ii :: PC = PC + ii ii ii
 
-# Reserved Block 0, At this time these instructions only produce a warning; but could do anything. DO NOT USE.
-3D xx xx xx
+** Reserved Block 0
+At this time these instructions only produce a warning; but could do anything.
+DO NOT USE.
+3D 00 00 00 # Reserved
 ...
-41 xx xx xx
+41 FF FF FF # Reserve
 
-# HALCODE hh hh hh is the HALCODE callID, invalid HALCODE SHOULD NOT BE USED.
-42 hh hh hh
+** HALCODE Group
+42 hh hh hh is the HALCODE callID, invalid HALCODE SHOULD NOT BE USED.
+
+*** HALCODE Reserved for Operating Systems
+The following block contains both instructions that are reserved for Operating systems and for internal use by Operating systems
 42 00 xx xx # Reserved
 ...
 42 0F xx xx # Reserved
 
-# Tape console HALCODE is used for interacting with any tape console attached to the system.
-# In this reference implementation we will be interacting with a simplified version of the series 10 console.
-# All compatible implementations need to ensure to implement functional equivelents.
-# Provided of course that any deviations would not change any output specified to be written to tape.
-# Padding with Zeros til start/end of page/segment however is acceptable.
-# The following 3 devices must exact with the following IDs
-# Keyboard/tty :: 00 00 00 00
-# Tape 1 :: 00 00 11 00
-# Tape 2 :: 00 00 11 01
+*** Tape console HALCODE
+This HALCODE is used for interacting with any tape console attached to the system.
+
+**** Reference specific notes
+In this reference implementation we will be interacting with a simplified version of the series 10 console.
+All compatible implementations need to ensure to implement functional equivelents.
+Provided of course that any deviations would not change any output specified to be written to tape.
+Padding with Zeros til start/end of page/segment however is acceptable.
+
+**** Standard compatibility requirements
+The following 3 devices must exist with the following exact IDs
+Keyboard/tty :: 00 00 00 00
+Tape 1 :: 00 00 11 00
+Tape 2 :: 00 00 11 01
+
+**** Required Device HALCODE
 42 10 00 00 # FOPEN :: Feed on device who's ID matches the contents register 0 until first non-zero byte is found.
 42 10 00 01 # FCLOSE :: Close out writes to device who's ID matches the contents of register 0.
 42 10 00 02 # FSEEK :: seek forward or backward the number of bytes specified in register 1 on the device who's ID matches the contents of register 0.
 42 10 00 03 # REWIND :: rewind back to first non-zero byte found on tape.
+
+**** Reserved Block for Hardware specific implementation details
 42 10 00 04 # Reserved
 ...
 42 10 00 FF # Reserved
+
+**** Required Device capability HALCODE
+***** Device Read HALCODE
 42 10 01 00 # FGETC :: read 1 byte into register 0 from device who's ID is in register 1
+
+***** Reserved Block for Hardware specific implementation details
 42 10 01 01 # Reserved
 ...
 42 10 01 FF # Reserved
+
+***** Device Write HALCODE
 42 10 02 00 # FPUTC :: write 1 byte from register 0 to device who's ID is in register 1
-
-# Reserved Block 1, At this time these instructions only produce a warning; but could do anything. DO NOT USE.
-43 xx xx xx
+***** Reserved Block for Hardware specific implementation details
+42 10 02 01 # Reserved
 ...
-FE xx xx xx
+42 10 02 FF # Reserved
 
-# 0OP
+**** Reserved Block for Future HALCODE Expansion
+42 10 03 00 # Reserved
+...
+42 FF FF FF # Reserved
+
+** Reserved Block 1
+At this time these instructions only produce a warning; but could do anything.
+DO NOT USE.
+43 00 00 00 # Reserved
+...
+FE FF FF FF # Reserved
+
+** 0OP
 FF xx xx xx # HALT equivelent, although these instructions will all be treated as HALTs. DO NOT USE THEM.
 FF FF FF FF # Proper HALT
 
+* Encoding/Decoding Reference
+** Registers
 There is a direct and consistent relationship between the nybbles and the registers.
 Reg0 -> 0, Reg1 -> 1, ... Reg14 -> E, Reg15 -> F
