@@ -235,29 +235,29 @@
 ** 1OPI Groups
 1OPI i ii ii is the Immediate, a = a OP i ii ii
 
-*** Conditional Jumps
-2C ai ii ii # JUMP.C a i ii ii :: Carry? a; PC = PC + i ii ii
-2D ai ii ii # JUMP.B a i ii ii :: Borrow? a; PC = PC + i ii ii
-2E ai ii ii # JUMP.O a i ii ii :: Overflow? a; PC = PC + i ii ii
-2F ai ii ii # JUMP.G a i ii ii :: GT? a; PC = PC + i ii ii
-30 ai ii ii # JUMP.GE a i ii ii :: GT? a | EQ? a; PC = PC + i ii ii
-31 ai ii ii # JUMP.E a i ii ii :: EQ? a; PC = PC + i ii ii
-32 ai ii ii # JUMP.NE a i ii ii :: NEQ? a; PC = PC + i ii ii
-33 ai ii ii # JUMP.LE a i ii ii :: LT? a | EQ? a; PC = PC + i ii ii
-34 ai ii ii # JUMP.L a i ii ii :: LT? a; PC = PC + i ii ii
-35 ai ii ii # JUMP.Z a i ii ii :: ZERO? a; PC = PC + i ii ii
-36 ai ii ii # JUMP.NZ a i ii ii :: NZERO? a; PC = PC + i ii ii
-37 xx xx xx # Reserved
-38 xx xx xx # Reserved
-39 xx xx xx # Reserved
-3A xx xx xx # Reserved
-3B xx xx xx # Reserved
+*** Conditional Integer Jumps
+2C 0a ii ii # JUMP.C a i ii ii :: Carry? a; PC = PC + i ii ii
+2C 1a ii ii # JUMP.B a i ii ii :: Borrow? a; PC = PC + i ii ii
+2C 2a ii ii # JUMP.O a i ii ii :: Overflow? a; PC = PC + i ii ii
+2C 3a ii ii # JUMP.G a i ii ii :: GT? a; PC = PC + i ii ii
+2C 4a ii ii # JUMP.GE a i ii ii :: GT? a | EQ? a; PC = PC + i ii ii
+2C 5a ii ii # JUMP.E a i ii ii :: EQ? a; PC = PC + i ii ii
+2C 6a ii ii # JUMP.NE a i ii ii :: NEQ? a; PC = PC + i ii ii
+2C 7a ii ii # JUMP.LE a i ii ii :: LT? a | EQ? a; PC = PC + i ii ii
+2C 8a ii ii # JUMP.L a i ii ii :: LT? a; PC = PC + i ii ii
+2C 9a ii ii # JUMP.Z a i ii ii :: ZERO? a; PC = PC + i ii ii
+2C Aa ii ii # JUMP.NZ a i ii ii :: NZERO? a; PC = PC + i ii ii
+2C Bx xx xx # Reserved
+2C Cx xx xx # Reserved
+2C Dx xx xx # Reserved
+2C Ex xx xx # Reserved
+2C Fx xx xx # Reserved
 
 ** 0OPI group
-0OPI ii ii ii is the Immediate, OP ii ii ii
+0OPI ii ii is the Immediate, OP ii ii
 
 *** Unconditional jumps
-3C ii ii ii # JUMP ii ii ii :: PC = PC + ii ii ii
+3C 00 ii ii # JUMP ii ii :: PC = PC + ii ii
 
 ** Reserved Block 0
 At this time these instructions only produce a warning; but could do anything.

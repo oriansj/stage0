@@ -14,7 +14,7 @@ struct Instruction
 	uint32_t raw_XOP;
 	char XOP[6];
 	char operation[9];
-	int32_t raw_Immediate;
+	int16_t raw_Immediate;
 	char Immediate[7];
 	uint32_t HAL_CODE;
 	uint8_t reg0;
@@ -744,74 +744,72 @@ void decode_Integer_2OPI(struct Instruction* c)
 void decode_1OPI(struct Instruction* c)
 {
 	/* Parse Raw Data */
-	c->raw_Immediate = (c->raw1%16)*0x10000 + c->raw2*0x100 + c->raw3;
-	/* Sign extend immediate*/
-	c->raw_Immediate = c->raw_Immediate << 12;
-	c->raw_Immediate = c->raw_Immediate >> 12;
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
 	c->Immediate[0] = c->operation[3];
 	c->Immediate[1] = c->operation[4];
 	c->Immediate[2] = c->operation[5];
 	c->Immediate[3] = c->operation[6];
 	c->Immediate[4] = c->operation[7];
 	c->HAL_CODE = 0;
-	c->reg0 = c->raw1/16;
+	c->raw_XOP = c->raw1/16;
+	c->reg0 = c->raw1%16;
 
 	char Name[20] = "ILLEGAL_1OPI";
 
 	/* Convert to Human readable form */
-	switch(c->raw0)
+	switch(c->raw_XOP)
 	{
-		case 0x2C: /* JUMP.C */
+		case 0x0: /* JUMP.C */
 		{
 			strncpy(Name, "JUMP.C", 19);
 			break;
 		}
-		case 0x2D: /* JUMP.B */
+		case 0x1: /* JUMP.B */
 		{
 			strncpy(Name, "JUMP.B", 19);
 			break;
 		}
-		case 0x2E: /* JUMP.O */
+		case 0x2: /* JUMP.O */
 		{
 			strncpy(Name, "JUMP.O", 19);
 			break;
 		}
-		case 0x2F: /* JUMP.G */
+		case 0x3: /* JUMP.G */
 		{
 			strncpy(Name, "JUMP.G", 19);
 			break;
 		}
-		case 0x30: /* JUMP.GE */
+		case 0x4: /* JUMP.GE */
 		{
 			strncpy(Name, "JUMP.GE", 19);
 			break;
 		}
-		case 0x31: /* JUMP.E */
+		case 0x5: /* JUMP.E */
 		{
 			strncpy(Name, "JUMP.E", 19);
 			break;
 		}
-		case 0x32: /* JUMP.NE */
+		case 0x6: /* JUMP.NE */
 		{
 			strncpy(Name, "JUMP.NE", 19);
 			break;
 		}
-		case 0x33: /* JUMP.LE */
+		case 0x7: /* JUMP.LE */
 		{
 			strncpy(Name, "JUMP.LE", 19);
 			break;
 		}
-		case 0x34: /* JUMP.L */
+		case 0x8: /* JUMP.L */
 		{
 			strncpy(Name, "JUMP.L", 19);
 			break;
 		}
-		case 0x35: /* JUMP.Z */
+		case 0x9: /* JUMP.Z */
 		{
 			strncpy(Name, "JUMP.Z", 19);
 			break;
 		}
-		case 0x36: /* JUMP.NZ */
+		case 0xA: /* JUMP.NZ */
 		{
 			strncpy(Name, "JUMP.NZ", 19);
 			break;
@@ -829,23 +827,22 @@ void decode_1OPI(struct Instruction* c)
 void decode_0OPI(struct Instruction* c)
 {
 	/* Parse Raw Data */
-	c->raw_Immediate = c->raw1*0x10000 + c->raw2*0x100 + c->raw3;
-	/* Sign extend immediate*/
-	c->raw_Immediate = c->raw_Immediate << 8;
-	c->raw_Immediate = c->raw_Immediate >> 8;
-	c->Immediate[0] = c->operation[2];
-	c->Immediate[1] = c->operation[3];
-	c->Immediate[2] = c->operation[4];
-	c->Immediate[3] = c->operation[5];
-	c->Immediate[4] = c->operation[6];
-	c->Immediate[5] = c->operation[7];
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->Immediate[0] = c->operation[4];
+	c->Immediate[1] = c->operation[5];
+	c->Immediate[2] = c->operation[6];
+	c->Immediate[3] = c->operation[7];
+	c->HAL_CODE = 0;
+	c->raw_XOP = c->raw1;
+	c->XOP[0] = c->operation[2];
+	c->XOP[1] = c->operation[3];
 
 	char Name[20] = "ILLEGAL_0OPI";
 
 	/* Convert to Human readable form */
-	switch(c->raw0)
+	switch(c->raw_XOP)
 	{
-		case 0x3C: /* JUMP */
+		case 0x00: /* JUMP */
 		{
 			strncpy(Name, "JUMP", 19);
 			break;
@@ -939,7 +936,7 @@ void eval_instruction(struct Instruction* c)
 			decode_Integer_2OPI(c);
 			break;
 		}
-		case 0x2C ... 0x3B: /* Core 1OPI */
+		case 0x2C: /* Core 1OPI */
 		{
 			decode_1OPI(c);
 			break;
