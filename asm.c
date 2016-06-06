@@ -310,8 +310,8 @@ void assemble(struct Token* p)
 
 	//setExpression(p, "", "");
 	/* 0OP Group*/
-	setExpression(p, "NOP", "00 00 00 00", 4);
-	setExpression(p, "HALT", "FF FF FF FF", 4);
+	setExpression(p, "NOP", "00000000", 4);
+	setExpression(p, "HALT", "FFFFFFFF", 4);
 }
 
 void assign_addresses(struct Token* p)
@@ -388,7 +388,7 @@ void eval_immediates(struct Token* p)
 		uint16_t value;
 		value = numerate_string(p->Text);
 
-		if(0 != value)
+		if(('0' == p->Text[0]) || (0 != value))
 		{
 			sprintf(p->Expression, "%04x", value);
 		}
