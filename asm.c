@@ -287,6 +287,9 @@ void assemble(struct Token* p)
 	setExpression(p, "JUMP.L", "2C8", 4);
 	setExpression(p, "JUMP.Z", "2C9", 4);
 	setExpression(p, "JUMP.NZ", "2CA", 4);
+	setExpression(p, "CALLI", "2D0", 4);
+	setExpression(p, "LOADI", "2D1", 4);
+	setExpression(p, "LOADUI", "2D2", 4);
 
 	/* 0OPI Group */
 	setExpression(p, "JUMP", "3C00", 4);

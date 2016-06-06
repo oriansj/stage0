@@ -177,10 +177,10 @@ void unpack_instruction(struct Instruction* c)
 	c->opcode[1] = c->operation[1];
 }
 
-void writeout_Reg(struct lilith* vm, uint32_t p, uint8_t r)
+void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 {
 	uint8_t raw0, raw1, raw2, raw3;
-	uint32_t tmp = vm->reg[r];
+	uint32_t tmp = value;
 	raw3 = tmp%0x100;
 	tmp = tmp/0x100;
 	raw2 = tmp%0x100;
@@ -195,16 +195,18 @@ void writeout_Reg(struct lilith* vm, uint32_t p, uint8_t r)
 	vm->memory[p + 3] = raw3;
 }
 
-void readin_Reg(struct lilith* vm, uint32_t p, uint8_t r)
+uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 {
-	uint8_t raw0, raw1, raw2, raw3;
+	uint8_t raw0, raw1, raw2, raw3, sum;
 	raw0 = vm->memory[p];
 	raw1 = vm->memory[p + 1];
 	raw2 = vm->memory[p + 2];
 	raw3 = vm->memory[p + 3];
 
-	vm->reg[r] = raw0*0x1000000 +
-				 raw1*0x10000 +
-				 raw2*0x100 +
-				 raw3;
+	sum = raw0*0x1000000 +
+		  raw1*0x10000 +
+		  raw2*0x100 +
+		  raw3;
+
+	return sum;
 }

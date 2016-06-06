@@ -838,17 +838,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x0100: /* BRANCH */
 		{
-			/* Preserve index */
-			uint32_t utmp1 = vm->reg[c->reg1];
-
-			/* Use the index register to store the PC for upload to MEM */
-			vm->reg[c->reg1] = vm->ip;
-
 			/* Write out the PC */
-			writeout_Reg(vm, utmp1, c->reg1);
-
-			/* Restore our index */
-			vm->reg[c->reg1] = utmp1;
+			writeout_Reg(vm, vm->reg[c->reg1], vm->ip);
 
 			/* Update PC */
 			vm->ip = vm->reg[c->reg0];
@@ -856,17 +847,11 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x0101: /* CALL */
 		{
-		/* Preserve index */
-			uint32_t utmp1 = vm->reg[c->reg1];
-
-			/* Use the index register to store the PC for upload to MEM */
-			vm->reg[c->reg1] = vm->ip;
-
 			/* Write out the PC */
-			writeout_Reg(vm, utmp1, c->reg1);
+			writeout_Reg(vm, vm->reg[c->reg1], vm->ip);
 
 			/* Update our index */
-			vm->reg[c->reg1] = utmp1 + 4;
+			vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
 
 			/* Update PC */
 			vm->ip = vm->reg[c->reg0];
@@ -910,43 +895,29 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x01001: /* RET */
 		{
-			/* Preserve index */
-			uint32_t utmp1 = vm->reg[c->reg0];
-
 			/* Read in the new PC */
-			readin_Reg(vm, utmp1, c->reg0);
-			vm->ip = vm->reg[c->reg0];
+			vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
 
 			/* Update our index */
-			vm->reg[c->reg0] = utmp1 - 4;
+			vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
 			break;
 		}
 		case 0x02000: /* PUSHPC */
 		{
-			/* Preserve index */
-			uint32_t utmp1 = vm->reg[c->reg0];
-
-			/* Use the index register to store the PC for upload to MEM */
-			vm->reg[c->reg0] = vm->ip;
-
 			/* Write out the PC */
-			writeout_Reg(vm, utmp1, c->reg0);
+			writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
 
 			/* Update our index */
-			vm->reg[c->reg0] = utmp1 + 4;
+			vm->reg[c->reg0] = vm->reg[c->reg0] + 4;
 			break;
 		}
 		case 0x02001: /* POPPC */
 		{
-			/* Preserve index */
-			uint32_t utmp1 = vm->reg[c->reg0];
-
 			/* Read in the new PC */
-			readin_Reg(vm, utmp1, c->reg0);
-			vm->ip = vm->reg[c->reg0];
+			vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
 
 			/* Update our index */
-			vm->reg[c->reg0] = utmp1 - 4;
+			vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
 			break;
 		}
 		default: return true;
@@ -1007,7 +978,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x13: /* LOAD */
 		{
-			readin_Reg(vm, (utmp1 + c->raw_Immediate) , c->reg0);
+			vm->reg[c->reg0] = readin_Reg(vm, (utmp1 + c->raw_Immediate));
 			break;
 		}
 		case 0x14: /* LOAD8 */
@@ -1051,7 +1022,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		case 0x18: /* LOAD32 */
 		case 0x19: /* LOADU32 */
 		{
-			readin_Reg(vm, (utmp1 + c->raw_Immediate) , c->reg0);
+			vm->reg[c->reg0] = readin_Reg(vm, (utmp1 + c->raw_Immediate));
 			break;
 		}
 		case 0x1F: /* CMPUI */
@@ -1074,7 +1045,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x20: /* STORE */
 		{
-			writeout_Reg(vm, (utmp1 + c->raw_Immediate), c->reg0);
+			writeout_Reg(vm, (utmp1 + c->raw_Immediate), vm->reg[c->reg0]);
 			break;
 		}
 		case 0x21: /* STORE8 */
@@ -1118,7 +1089,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		case 0x25: /* STORE32 */
 		case 0x26: /* STOREU32 */
 		{
-			writeout_Reg(vm, (utmp1 + c->raw_Immediate), c->reg0);
+			writeout_Reg(vm, (utmp1 + c->raw_Immediate), vm->reg[c->reg0]);
 			break;
 		}
 		default: return true;
@@ -1248,6 +1219,38 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 	return false;
 }
 
+bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
+{
+	switch(c->raw_XOP)
+	{
+		case 0x0: /* CALLI */
+		{
+			/* Write out the PC */
+			writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
+
+			/* Update our index */
+			vm->reg[c->reg0] = vm->reg[c->reg0] + 4;
+
+			/* Update PC */
+			vm->ip = vm->ip + c->raw_Immediate - 4;
+
+			break;
+		}
+		case 0x1: /* LOADI */
+		{
+			vm->reg[c->reg0] = (int16_t)c->raw_Immediate;
+			break;
+		}
+		case 0x2: /* LOADUI*/
+		{
+			vm->reg[c->reg0] = c->raw_Immediate;
+			break;
+		}
+		default: return true;
+	}
+	return false;
+}
+
 /* Process 0OPI Integer instructions */
 bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 {
@@ -1313,6 +1316,13 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		{
 			decode_1OPI(current);
 			invalid = eval_Integer_1OPI(vm, current);
+			if ( invalid) goto fail;
+			break;
+		}
+		case 0x2D:
+		{
+			decode_1OPI(current);
+			invalid = eval_branch_1OPI(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}

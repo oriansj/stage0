@@ -236,22 +236,27 @@
 1OPI i ii ii is the Immediate, a = a OP i ii ii
 
 *** Conditional Integer Jumps
-2C 0a ii ii # JUMP.C a i ii ii :: Carry? a; PC = PC + i ii ii
-2C 1a ii ii # JUMP.B a i ii ii :: Borrow? a; PC = PC + i ii ii
-2C 2a ii ii # JUMP.O a i ii ii :: Overflow? a; PC = PC + i ii ii
-2C 3a ii ii # JUMP.G a i ii ii :: GT? a; PC = PC + i ii ii
-2C 4a ii ii # JUMP.GE a i ii ii :: GT? a | EQ? a; PC = PC + i ii ii
-2C 5a ii ii # JUMP.E a i ii ii :: EQ? a; PC = PC + i ii ii
-2C 6a ii ii # JUMP.NE a i ii ii :: NEQ? a; PC = PC + i ii ii
-2C 7a ii ii # JUMP.LE a i ii ii :: LT? a | EQ? a; PC = PC + i ii ii
-2C 8a ii ii # JUMP.L a i ii ii :: LT? a; PC = PC + i ii ii
-2C 9a ii ii # JUMP.Z a i ii ii :: ZERO? a; PC = PC + i ii ii
-2C Aa ii ii # JUMP.NZ a i ii ii :: NZERO? a; PC = PC + i ii ii
+2C 0a ii ii # JUMP.C a ii ii :: Carry? a; PC = PC + i ii ii
+2C 1a ii ii # JUMP.B a ii ii :: Borrow? a; PC = PC + i ii ii
+2C 2a ii ii # JUMP.O a ii ii :: Overflow? a; PC = PC + i ii ii
+2C 3a ii ii # JUMP.G a ii ii :: GT? a; PC = PC + i ii ii
+2C 4a ii ii # JUMP.GE a ii ii :: GT? a | EQ? a; PC = PC + i ii ii
+2C 5a ii ii # JUMP.E a ii ii :: EQ? a; PC = PC + i ii ii
+2C 6a ii ii # JUMP.NE a ii ii :: NEQ? a; PC = PC + i ii ii
+2C 7a ii ii # JUMP.LE a ii ii :: LT? a | EQ? a; PC = PC + i ii ii
+2C 8a ii ii # JUMP.L a ii ii :: LT? a; PC = PC + i ii ii
+2C 9a ii ii # JUMP.Z a ii ii :: ZERO? a; PC = PC + i ii ii
+2C Aa ii ii # JUMP.NZ a ii ii :: NZERO? a; PC = PC + i ii ii
 2C Bx xx xx # Reserved
 2C Cx xx xx # Reserved
 2C Dx xx xx # Reserved
 2C Ex xx xx # Reserved
 2C Fx xx xx # Reserved
+
+*** Branch Immediates
+2D 0a ii ii # CALLI a ii ii :: MEM[a] = PC; a = a + (register size in bytes); PC = PC + ii ii
+2D 1a ii ii # LOADI a ii ii :: a = ii ii (signed)
+2D 2a ii ii # LOADUI a ii ii :: a = ii ii (unsigned)
 
 ** 0OPI group
 0OPI ii ii is the Immediate, OP ii ii

@@ -653,7 +653,7 @@ void decode_Integer_2OPI(struct Instruction* c)
 		}
 		case 0x12: /* CMPI */
 		{
-			strncpy(Name, "", 19);
+			strncpy(Name, "CMPI", 19);
 			break;
 		}
 		case 0x13: /* LOAD */
@@ -824,6 +824,49 @@ void decode_1OPI(struct Instruction* c)
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
+void decode_Branch_1OPI(struct Instruction* c)
+{
+	/* Parse Raw Data */
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->Immediate[0] = c->operation[3];
+	c->Immediate[1] = c->operation[4];
+	c->Immediate[2] = c->operation[5];
+	c->Immediate[3] = c->operation[6];
+	c->Immediate[4] = c->operation[7];
+	c->HAL_CODE = 0;
+	c->raw_XOP = c->raw1/16;
+	c->reg0 = c->raw1%16;
+
+	char Name[20] = "ILLEGAL_1OPI";
+
+	/* Convert to Human readable form */
+	switch(c->raw_XOP)
+	{
+		case 0x0: /* CALLI */
+		{
+			strncpy(Name, "CALLI", 19);
+			break;
+		}
+		case 0x1: /* LOADI */
+		{
+			strncpy(Name, "LOADI", 19);
+			break;
+		}
+		case 0x2: /* LOADUI */
+		{
+			strncpy(Name, "LOADUI", 19);
+			break;
+		}
+		default: /* Unknown 1OPI*/
+		{
+			break;
+		}
+	}
+
+	fprintf(stdout, "%s reg%o %d\t", Name, c->reg0, c->raw_Immediate);
+	fprintf(stdout, "# %s\n", c->operation);
+}
+
 void decode_0OPI(struct Instruction* c)
 {
 	/* Parse Raw Data */
@@ -939,6 +982,11 @@ void eval_instruction(struct Instruction* c)
 		case 0x2C: /* Core 1OPI */
 		{
 			decode_1OPI(c);
+			break;
+		}
+		case 0x2D: /* Branch 1OPI*/
+		{
+			decode_Branch_1OPI(c);
 			break;
 		}
 		case 0x3C: /* Core 0OPI */
