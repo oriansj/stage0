@@ -107,12 +107,12 @@
 05 02 Fx xx # Reserved
 
 **** Bit rotation group
-05 03 0a bc # SAL a b c :: a = b >> c [arithmetically]
-05 03 1a bc # SAR a b c :: a = b << c [arithmetically]
-05 03 2a bc # SL0 a b c :: a = b >> c [Fill with zeros]
-05 03 3a bc # SR0 a b c :: a = b << c [Fill with zeros]
-05 03 4a bc # SL1 a b c :: a = b >> c [Fill with ones]
-05 03 5a bc # SR1 a b c :: a = b << c [Fill with ones]
+05 03 0a bc # SAL a b c :: a = b << c [arithmetically]
+05 03 1a bc # SAR a b c :: a = b >> c [arithmetically]
+05 03 2a bc # SL0 a b c :: a = b << c [Fill with zeros]
+05 03 3a bc # SR0 a b c :: a = b >> c [Fill with zeros]
+05 03 4a bc # SL1 a b c :: a = b << c [Fill with ones]
+05 03 5a bc # SR1 a b c :: a = b >> c [Fill with ones]
 05 03 6a bc # ROL a b c :: a = ROL(b, c) [Circular rotate left]
 05 03 7a bc # ROR a b c :: a = ROR(b, c) [Circular rotate right]
 
@@ -257,6 +257,12 @@
 2D 0a ii ii # CALLI a ii ii :: MEM[a] = PC; a = a + (register size in bytes); PC = PC + ii ii
 2D 1a ii ii # LOADI a ii ii :: a = ii ii (signed)
 2D 2a ii ii # LOADUI a ii ii :: a = ii ii (unsigned)
+2D 3a ii ii # SALI a ii ii :: a = a << ii ii [arithmetically]
+2D 4a ii ii # SARI a ii ii :: a = a >> ii ii [arithmetically]
+2D 5a ii ii # SL0I a ii ii :: a = a << ii ii [Fill with zeros]
+2D 6a ii ii # SR0I a ii ii :: a = a >> ii ii [Fill with zeros]
+2D 7a ii ii # SL1I a ii ii :: a = a << ii ii [Fill with ones]
+2D 8a ii ii # SR1I a ii ii :: a = a >> ii ii [Fill with ones]
 
 ** 0OPI group
 0OPI ii ii is the Immediate, OP ii ii

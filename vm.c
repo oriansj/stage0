@@ -747,26 +747,32 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		}
 		case 0x030: /* SAL */
 		{
+			vm->reg[c->reg0] = vm->reg[c->reg1] << vm->reg[c->reg2];
 			break;
 		}
 		case 0x031: /* SAR */
 		{
+			vm->reg[c->reg0] = vm->reg[c->reg1] >> vm->reg[c->reg2];
 			break;
 		}
 		case 0x032: /* SL0 */
 		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], true, true);
 			break;
 		}
 		case 0x033: /* SR0 */
 		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], false, true);
 			break;
 		}
 		case 0x034: /* SL1 */
 		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], true, false);
 			break;
 		}
 		case 0x035: /* SR1 */
 		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], false, false);
 			break;
 		}
 		case 0x036: /* ROL */
@@ -1244,6 +1250,36 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 		case 0x2: /* LOADUI*/
 		{
 			vm->reg[c->reg0] = c->raw_Immediate;
+			break;
+		}
+		case 0x3: /* SALI */
+		{
+			vm->reg[c->reg0] = vm->reg[c->reg0] << c->raw_Immediate;
+			break;
+		}
+		case 0x4: /* SARI */
+		{
+			vm->reg[c->reg0] = vm->reg[c->reg0] >> c->raw_Immediate;
+			break;
+		}
+		case 0x5: /* SL0I */
+		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, true, true);
+			break;
+		}
+		case 0x6: /* SR0I */
+		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, false, true);
+			break;
+		}
+		case 0x7: /* SL1I */
+		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, true, false);
+			break;
+		}
+		case 0x8: /* SR1I */
+		{
+			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, false, false);
 			break;
 		}
 		default: return true;

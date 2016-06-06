@@ -167,6 +167,7 @@ void unpack_byte(uint8_t a, char* c)
 	c[1] = table[a % 16];
 }
 
+/* Unpack the full instruction */
 void unpack_instruction(struct Instruction* c)
 {
 	unpack_byte(c->raw0, &(c->operation[0]));
@@ -177,6 +178,7 @@ void unpack_instruction(struct Instruction* c)
 	c->opcode[1] = c->operation[1];
 }
 
+/* Correctly write out bytes on little endian hardware */
 void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 {
 	uint8_t raw0, raw1, raw2, raw3;
@@ -195,6 +197,7 @@ void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 	vm->memory[p + 3] = raw3;
 }
 
+/* Allow the use of native data format for Register operations */
 uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 {
 	uint8_t raw0, raw1, raw2, raw3, sum;
@@ -209,4 +212,37 @@ uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 		  raw3;
 
 	return sum;
+}
+
+/* Determine the result of bit shifting */
+uint32_t shift_register(uint32_t source, uint32_t amount, bool left, bool zero)
+{
+	uint32_t tmp = source;
+
+	if(left)
+	{
+		while( amount > 0 )
+		{
+			tmp = tmp * 2;
+			amount = amount - 1;
+			if(!zero)
+			{
+				tmp = tmp + 1;
+			}
+		}
+	}
+	else
+	{
+		while( amount > 0 )
+		{
+			tmp = tmp / 2;
+			amount = amount - 1;
+			if(!zero)
+			{
+				tmp = tmp | (1 << 31);
+			}
+		}
+	}
+
+	return tmp;
 }

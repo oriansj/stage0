@@ -857,6 +857,36 @@ void decode_Branch_1OPI(struct Instruction* c)
 			strncpy(Name, "LOADUI", 19);
 			break;
 		}
+		case 0x3: /* SALI */
+		{
+			strncpy(Name, "SALI", 19);
+			break;
+		}
+		case 0x4: /* SARI */
+		{
+			strncpy(Name, "SARI", 19);
+			break;
+		}
+		case 0x5: /* SL0I */
+		{
+			strncpy(Name, "SL0I", 19);
+			break;
+		}
+		case 0x6: /* SR0I */
+		{
+			strncpy(Name, "SR0I", 19);
+			break;
+		}
+		case 0x7: /* SL1I */
+		{
+			strncpy(Name, "SL1I", 19);
+			break;
+		}
+		case 0x8: /* SR1I */
+		{
+			strncpy(Name, "SR1I", 19);
+			break;
+		}
 		default: /* Unknown 1OPI*/
 		{
 			break;

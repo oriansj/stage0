@@ -290,6 +290,12 @@ void assemble(struct Token* p)
 	setExpression(p, "CALLI", "2D0", 4);
 	setExpression(p, "LOADI", "2D1", 4);
 	setExpression(p, "LOADUI", "2D2", 4);
+	setExpression(p, "SALI", "2D3", 4);
+	setExpression(p, "SARI", "2D4", 4);
+	setExpression(p, "SL0I", "2D5", 4);
+	setExpression(p, "SR0I", "2D6", 4);
+	setExpression(p, "SL1I", "2D7", 4);
+	setExpression(p, "SR1I", "2D8", 4);
 
 	/* 0OPI Group */
 	setExpression(p, "JUMP", "3C00", 4);
