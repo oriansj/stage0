@@ -99,7 +99,7 @@ Restart:
 		}
 		else if((!(p->type & comment)) && ((32 == c) || (9 == c)))
 		{
-			if(2 > i)
+			if(1 > i)
 			{
 				goto Restart;
 			}
@@ -257,7 +257,7 @@ void assemble(struct Token* p)
 	setExpression(p, "ADDI", "0E", 4);
 	setExpression(p, "ADDUI", "0F", 4);
 	setExpression(p, "SUBI", "10", 4);
-	setExpression(p, "SUBI", "11", 4);
+	setExpression(p, "SUBUI", "11", 4);
 	setExpression(p, "CMPI", "12", 4);
 	setExpression(p, "LOAD", "13", 4);
 	setExpression(p, "LOAD8", "14", 4);
