@@ -239,7 +239,7 @@ void writeout_doublebyte(struct lilith* vm, uint32_t p, uint32_t value)
 {
 	uint8_t uraw0, uraw1;
 	uint32_t utmp = value;
-	utmp = utmp/0x10000;
+	utmp = utmp%0x10000;
 	uraw1 = utmp%0x100;
 	utmp = utmp/0x100;
 	uraw0 = utmp%0x100;
