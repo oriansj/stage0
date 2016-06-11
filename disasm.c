@@ -189,7 +189,7 @@ void decode_Integer_4OP(struct Instruction* c)
 			break;
 		}
 	}
-	fprintf(stdout, "%s reg%o reg%o reg%o reg%o\t", Name, c->reg0, c->reg1, c->reg2, c->reg3);
+	fprintf(stdout, "%s reg%u reg%u reg%u reg%u\t", Name, c->reg0, c->reg1, c->reg2, c->reg3);
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
@@ -430,13 +430,68 @@ void decode_Integer_3OP(struct Instruction* c)
 			strncpy(Name, "ROR", 19);
 			break;
 		}
+		case 0x038: /* LOADX */
+		{
+			strncpy(Name, "LOADX", 19);
+			break;
+		}
+		case 0x039: /* LOADX8 */
+		{
+			strncpy(Name, "LOADX8", 19);
+			break;
+		}
+		case 0x03A: /* LOADXU8 */
+		{
+			strncpy(Name, "LOADXU8", 19);
+			break;
+		}
+		case 0x03B: /* LOADX16 */
+		{
+			strncpy(Name, "LOADX16", 19);
+			break;
+		}
+		case 0x03C: /* LOADXU16 */
+		{
+			strncpy(Name, "LOADXU16", 19);
+			break;
+		}
+		case 0x03D: /* LOADX32 */
+		{
+			strncpy(Name, "LOADX32", 19);
+			break;
+		}
+		case 0x03E: /* LOADXU32 */
+		{
+			strncpy(Name, "LOADXU32", 19);
+			break;
+		}
+		case 0x048: /* STOREX */
+		{
+			strncpy(Name, "STOREX", 19);
+			break;
+		}
+		case 0x049: /* STOREX8 */
+		{
+			strncpy(Name, "STOREX8", 19);
+			break;
+		}
+		case 0x04A: /* STOREX16 */
+		{
+			strncpy(Name, "STOREX16", 19);
+			break;
+		}
+		case 0x04B: /* STOREX32 */
+		{
+			strncpy(Name, "STOREX32", 19);
+			break;
+		}
 		default: /* Unknown 3OP*/
 		{
 			break;
 		}
 	}
 
-	fprintf(stdout, "%s reg%o reg%o reg%o\t", Name, c->reg0, c->reg1, c->reg2);
+	fprintf(stdout, "%s reg%u reg%u reg%u\t", Name, c->reg0, c->reg1, c->reg2);
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
@@ -503,7 +558,7 @@ void decode_Integer_2OP(struct Instruction* c)
 		}
 	}
 
-	fprintf(stdout, "%s reg%o reg%o\t", Name, c->reg0, c->reg1);
+	fprintf(stdout, "%s reg%u reg%u\t", Name, c->reg0, c->reg1);
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
@@ -570,7 +625,7 @@ void decode_1OP(struct Instruction* c)
 		}
 	}
 
-	fprintf(stdout, "%s reg%o\t", Name, c->reg0);
+	fprintf(stdout, "%s reg%u\t", Name, c->reg0);
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
@@ -706,29 +761,14 @@ void decode_Integer_2OPI(struct Instruction* c)
 			strncpy(Name, "STORE8", 19);
 			break;
 		}
-		case 0x22: /* STOREU8 */
-		{
-			strncpy(Name, "STOREU8", 19);
-			break;
-		}
-		case 0x23: /* STORE16 */
+		case 0x22: /* STORE16 */
 		{
 			strncpy(Name, "STORE16", 19);
 			break;
 		}
-		case 0x24: /* STOREU16 */
-		{
-			strncpy(Name, "STOREU16", 19);
-			break;
-		}
-		case 0x25: /* STORE32 */
+		case 0x23: /* STORE32 */
 		{
 			strncpy(Name, "STORE32", 19);
-			break;
-		}
-		case 0x26: /* STOREU32 */
-		{
-			strncpy(Name, "STOREU32", 19);
 			break;
 		}
 		default: /* Unknown 2OPI*/
@@ -737,7 +777,7 @@ void decode_Integer_2OPI(struct Instruction* c)
 		}
 	}
 
-	fprintf(stdout, "%s reg%o reg%o 0x%x\t", Name, c->reg0, c->reg1, c->raw_Immediate);
+	fprintf(stdout, "%s reg%u reg%u 0x%x\t", Name, c->reg0, c->reg1, c->raw_Immediate);
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
@@ -820,7 +860,7 @@ void decode_1OPI(struct Instruction* c)
 		}
 	}
 
-	fprintf(stdout, "%s reg%o %d\t", Name, c->reg0, c->raw_Immediate);
+	fprintf(stdout, "%s reg%u %d\t", Name, c->reg0, c->raw_Immediate);
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
@@ -893,7 +933,7 @@ void decode_Branch_1OPI(struct Instruction* c)
 		}
 	}
 
-	fprintf(stdout, "%s reg%o %d\t", Name, c->reg0, c->raw_Immediate);
+	fprintf(stdout, "%s reg%u %d\t", Name, c->reg0, c->raw_Immediate);
 	fprintf(stdout, "# %s\n", c->operation);
 }
 

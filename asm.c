@@ -232,6 +232,17 @@ void assemble(struct Token* p)
 	setExpression(p, "SR1", "05035", 4);
 	setExpression(p, "ROL", "05036", 4);
 	setExpression(p, "ROR", "05037", 4);
+	setExpression(p, "LOADX", "05038", 4);
+	setExpression(p, "LOADX8", "05039", 4);
+	setExpression(p, "LOADXU8", "0503A", 4);
+	setExpression(p, "LOADX16", "0503B", 4);
+	setExpression(p, "LOADXU16", "0503C", 4);
+	setExpression(p, "LOADX32", "0503D", 4);
+	setExpression(p, "LOADXU32", "0503E", 4);
+	setExpression(p, "STOREX", "05048", 4);
+	setExpression(p, "STOREX8", "05049", 4);
+	setExpression(p, "STOREX16", "0504A", 4);
+	setExpression(p, "STOREX32", "0504B", 4);
 
 	/* 2OP Integer Group */
 	setExpression(p, "NEG", "090000", 4);
@@ -269,11 +280,8 @@ void assemble(struct Token* p)
 	setExpression(p, "CMPUI", "1F", 4);
 	setExpression(p, "STORE", "20", 4);
 	setExpression(p, "STORE8", "21", 4);
-	setExpression(p, "STOREU8", "22", 4);
-	setExpression(p, "STORE16", "23", 4);
-	setExpression(p, "STOREU16", "24", 4);
-	setExpression(p, "STORE32", "25", 4);
-	setExpression(p, "STOREU32", "26", 4);
+	setExpression(p, "STORE16", "22", 4);
+	setExpression(p, "STORE32", "23", 4);
 
 	/* 1OPI Group */
 	setExpression(p, "JUMP.C", "2C0", 4);

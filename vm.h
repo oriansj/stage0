@@ -200,7 +200,8 @@ void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 /* Allow the use of native data format for Register operations */
 uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 {
-	uint8_t raw0, raw1, raw2, raw3, sum;
+	uint8_t raw0, raw1, raw2, raw3;
+	uint32_t sum;
 	raw0 = vm->memory[p];
 	raw1 = vm->memory[p + 1];
 	raw2 = vm->memory[p + 2];
@@ -212,6 +213,62 @@ uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 		  raw3;
 
 	return sum;
+}
+
+/* Unify byte write functionality */
+void writeout_byte(struct lilith* vm, uint32_t p, uint32_t value)
+{
+	vm->memory[p] = (uint8_t)(value%0x100);
+}
+
+/* Unify byte read functionality*/
+uint32_t readin_byte(struct lilith* vm, uint32_t p, bool Signed)
+{
+	if(Signed)
+	{
+		int32_t raw0;
+		raw0 = (int8_t)(vm->memory[p]);
+		return (uint32_t)(raw0);
+	}
+
+	return (uint32_t)(vm->memory[p]);
+}
+
+/* Unify doublebyte write functionality */
+void writeout_doublebyte(struct lilith* vm, uint32_t p, uint32_t value)
+{
+	uint8_t uraw0, uraw1;
+	uint32_t utmp = value;
+	utmp = utmp/0x10000;
+	uraw1 = utmp%0x100;
+	utmp = utmp/0x100;
+	uraw0 = utmp%0x100;
+
+	vm->memory[p] = uraw0;
+	vm->memory[p + 1] = uraw1;
+}
+
+/* Unify doublebyte read functionality*/
+uint32_t readin_doublebyte(struct lilith* vm, uint32_t p, bool Signed)
+{
+	if(Signed)
+	{
+		int8_t raw0, raw1;
+		int32_t sum;
+		raw0 = vm->memory[p];
+		raw1 = vm->memory[p + 1];
+
+		sum = raw0*0x100 + raw1;
+		return (uint32_t)(sum);
+	}
+
+	uint8_t uraw0, uraw1;
+	uint32_t usum;
+	uraw0 = vm->memory[p];
+	uraw1 = vm->memory[p + 1];
+
+	usum = uraw0*0x100 + uraw1;
+	return usum;
 }
 
 /* Determine the result of bit shifting */
