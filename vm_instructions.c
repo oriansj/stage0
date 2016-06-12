@@ -2,6 +2,132 @@
 FILE* tape_01;
 FILE* tape_02;
 
+/* Correctly write out bytes on little endian hardware */
+void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
+{
+	uint8_t raw0, raw1, raw2, raw3;
+	uint32_t tmp = value;
+	raw3 = tmp%0x100;
+	tmp = tmp/0x100;
+	raw2 = tmp%0x100;
+	tmp = tmp/0x100;
+	raw1 = tmp%0x100;
+	tmp = tmp/0x100;
+	raw0 = tmp%0x100;
+
+	vm->memory[p] = raw0;
+	vm->memory[p + 1] = raw1;
+	vm->memory[p + 2] = raw2;
+	vm->memory[p + 3] = raw3;
+}
+
+/* Allow the use of native data format for Register operations */
+uint32_t readin_Reg(struct lilith* vm, uint32_t p)
+{
+	uint8_t raw0, raw1, raw2, raw3;
+	uint32_t sum;
+	raw0 = vm->memory[p];
+	raw1 = vm->memory[p + 1];
+	raw2 = vm->memory[p + 2];
+	raw3 = vm->memory[p + 3];
+
+	sum = raw0*0x1000000 +
+		  raw1*0x10000 +
+		  raw2*0x100 +
+		  raw3;
+
+	return sum;
+}
+
+/* Unify byte write functionality */
+void writeout_byte(struct lilith* vm, uint32_t p, uint32_t value)
+{
+	vm->memory[p] = (uint8_t)(value%0x100);
+}
+
+/* Unify byte read functionality*/
+uint32_t readin_byte(struct lilith* vm, uint32_t p, bool Signed)
+{
+	if(Signed)
+	{
+		int32_t raw0;
+		raw0 = (int8_t)(vm->memory[p]);
+		return (uint32_t)(raw0);
+	}
+
+	return (uint32_t)(vm->memory[p]);
+}
+
+/* Unify doublebyte write functionality */
+void writeout_doublebyte(struct lilith* vm, uint32_t p, uint32_t value)
+{
+	uint8_t uraw0, uraw1;
+	uint32_t utmp = value;
+	utmp = utmp%0x10000;
+	uraw1 = utmp%0x100;
+	utmp = utmp/0x100;
+	uraw0 = utmp%0x100;
+
+	vm->memory[p] = uraw0;
+	vm->memory[p + 1] = uraw1;
+}
+
+/* Unify doublebyte read functionality*/
+uint32_t readin_doublebyte(struct lilith* vm, uint32_t p, bool Signed)
+{
+	if(Signed)
+	{
+		int8_t raw0, raw1;
+		int32_t sum;
+		raw0 = vm->memory[p];
+		raw1 = vm->memory[p + 1];
+
+		sum = raw0*0x100 + raw1;
+		return (uint32_t)(sum);
+	}
+
+	uint8_t uraw0, uraw1;
+	uint32_t usum;
+	uraw0 = vm->memory[p];
+	uraw1 = vm->memory[p + 1];
+
+	usum = uraw0*0x100 + uraw1;
+	return usum;
+}
+
+/* Determine the result of bit shifting */
+uint32_t shift_register(uint32_t source, uint32_t amount, bool left, bool zero)
+{
+	uint32_t tmp = source;
+
+	if(left)
+	{
+		while( amount > 0 )
+		{
+			tmp = tmp * 2;
+			amount = amount - 1;
+			if(!zero)
+			{
+				tmp = tmp + 1;
+			}
+		}
+	}
+	else
+	{
+		while( amount > 0 )
+		{
+			tmp = tmp / 2;
+			amount = amount - 1;
+			if(!zero)
+			{
+				tmp = tmp | (1 << 31);
+			}
+		}
+	}
+
+	return tmp;
+}
+
 void vm_FOPEN(struct lilith* vm)
 {
 	if(0x00001100 == vm->reg[0])
@@ -95,6 +221,17 @@ void vm_FPUTC(struct lilith* vm)
 		fputc(byte, tape_02);
 	}
 }
+
+/* Condition Codes */
+enum condition
+{
+Carry = (1 << 5),
+Borrow = (1 << 4),
+Overflow = (1 << 3),
+GreaterThan = (1 << 2),
+EQual = (1 << 1),
+LessThan = 1
+};
 
 bool Carry_bit_set(uint32_t a)
 {
@@ -1378,7 +1515,6 @@ void LOADUI(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = c->raw_Immediate;
 }
-
 
 void SALI(struct lilith* vm, struct Instruction* c)
 {

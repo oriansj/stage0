@@ -1,7 +1,277 @@
-#include "vm_instructions.c"
+#include "vm.h"
 #define DEBUG true
-
 uint32_t performance_counter;
+
+/* Prototypes for functions in vm_instructions.c*/
+void vm_FOPEN(struct lilith* vm);
+void vm_FCLOSE(struct lilith* vm);
+void vm_FSEEK(struct lilith* vm);
+void vm_REWIND(struct lilith* vm);
+void vm_FGETC(struct lilith* vm);
+void vm_FPUTC(struct lilith* vm);
+void ADD_CI(struct lilith* vm, struct Instruction* c);
+void ADD_CO(struct lilith* vm, struct Instruction* c);
+void ADD_CIO(struct lilith* vm, struct Instruction* c);
+void ADDU_CI(struct lilith* vm, struct Instruction* c);
+void ADDU_CO(struct lilith* vm, struct Instruction* c);
+void ADDU_CIO(struct lilith* vm, struct Instruction* c);
+void SUB_BI(struct lilith* vm, struct Instruction* c);
+void SUB_BO(struct lilith* vm, struct Instruction* c);
+void SUB_BIO(struct lilith* vm, struct Instruction* c);
+void SUBU_BI(struct lilith* vm, struct Instruction* c);
+void SUBU_BO(struct lilith* vm, struct Instruction* c);
+void SUBU_BIO(struct lilith* vm, struct Instruction* c);
+void MULTIPLY(struct lilith* vm, struct Instruction* c);
+void MULTIPLYU(struct lilith* vm, struct Instruction* c);
+void DIVIDE(struct lilith* vm, struct Instruction* c);
+void DIVIDEU(struct lilith* vm, struct Instruction* c);
+void MUX(struct lilith* vm, struct Instruction* c);
+void NMUX(struct lilith* vm, struct Instruction* c);
+void SORT(struct lilith* vm, struct Instruction* c);
+void SORTU(struct lilith* vm, struct Instruction* c);
+void ADD(struct lilith* vm, struct Instruction* c);
+void ADDU(struct lilith* vm, struct Instruction* c);
+void SUB(struct lilith* vm, struct Instruction* c);
+void SUBU(struct lilith* vm, struct Instruction* c);
+void CMP(struct lilith* vm, struct Instruction* c);
+void CMPU(struct lilith* vm, struct Instruction* c);
+void MUL(struct lilith* vm, struct Instruction* c);
+void MULH(struct lilith* vm, struct Instruction* c);
+void MULU(struct lilith* vm, struct Instruction* c);
+void MULUH(struct lilith* vm, struct Instruction* c);
+void DIV(struct lilith* vm, struct Instruction* c);
+void MOD(struct lilith* vm, struct Instruction* c);
+void DIVU(struct lilith* vm, struct Instruction* c);
+void MODU(struct lilith* vm, struct Instruction* c);
+void MAX(struct lilith* vm, struct Instruction* c);
+void MAXU(struct lilith* vm, struct Instruction* c);
+void MIN(struct lilith* vm, struct Instruction* c);
+void MINU(struct lilith* vm, struct Instruction* c);
+void PACK(struct lilith* vm, struct Instruction* c);
+void UNPACK(struct lilith* vm, struct Instruction* c);
+void PACK8_CO(struct lilith* vm, struct Instruction* c);
+void PACK8U_CO(struct lilith* vm, struct Instruction* c);
+void PACK16_CO(struct lilith* vm, struct Instruction* c);
+void PACK16U_CO(struct lilith* vm, struct Instruction* c);
+void PACK32_CO(struct lilith* vm, struct Instruction* c);
+void PACK32U_CO(struct lilith* vm, struct Instruction* c);
+void AND(struct lilith* vm, struct Instruction* c);
+void OR(struct lilith* vm, struct Instruction* c);
+void XOR(struct lilith* vm, struct Instruction* c);
+void NAND(struct lilith* vm, struct Instruction* c);
+void NOR(struct lilith* vm, struct Instruction* c);
+void XNOR(struct lilith* vm, struct Instruction* c);
+void MPQ(struct lilith* vm, struct Instruction* c);
+void LPQ(struct lilith* vm, struct Instruction* c);
+void CPQ(struct lilith* vm, struct Instruction* c);
+void BPQ(struct lilith* vm, struct Instruction* c);
+void SAL(struct lilith* vm, struct Instruction* c);
+void SAR(struct lilith* vm, struct Instruction* c);
+void SL0(struct lilith* vm, struct Instruction* c);
+void SR0(struct lilith* vm, struct Instruction* c);
+void SL1(struct lilith* vm, struct Instruction* c);
+void SR1(struct lilith* vm, struct Instruction* c);
+void ROL(struct lilith* vm, struct Instruction* c);
+void ROR(struct lilith* vm, struct Instruction* c);
+void LOADX(struct lilith* vm, struct Instruction* c);
+void LOADX8(struct lilith* vm, struct Instruction* c);
+void LOADXU8(struct lilith* vm, struct Instruction* c);
+void LOADX16(struct lilith* vm, struct Instruction* c);
+void LOADXU16(struct lilith* vm, struct Instruction* c);
+void LOADX32(struct lilith* vm, struct Instruction* c);
+void LOADXU32(struct lilith* vm, struct Instruction* c);
+void STOREX(struct lilith* vm, struct Instruction* c);
+void STOREX8(struct lilith* vm, struct Instruction* c);
+void STOREX16(struct lilith* vm, struct Instruction* c);
+void STOREX32(struct lilith* vm, struct Instruction* c);
+void NEG(struct lilith* vm, struct Instruction* c);
+void ABS(struct lilith* vm, struct Instruction* c);
+void NABS(struct lilith* vm, struct Instruction* c);
+void SWAP(struct lilith* vm, struct Instruction* c);
+void COPY(struct lilith* vm, struct Instruction* c);
+void MOVE(struct lilith* vm, struct Instruction* c);
+void BRANCH(struct lilith* vm, struct Instruction* c);
+void CALL(struct lilith* vm, struct Instruction* c);
+void READPC(struct lilith* vm, struct Instruction* c);
+void READSCID(struct lilith* vm, struct Instruction* c);
+void FALSE(struct lilith* vm, struct Instruction* c);
+void TRUE(struct lilith* vm, struct Instruction* c);
+void JSR_COROUTINE(struct lilith* vm, struct Instruction* c);
+void RET(struct lilith* vm, struct Instruction* c);
+void PUSHPC(struct lilith* vm, struct Instruction* c);
+void POPPC(struct lilith* vm, struct Instruction* c);
+void ADDI(struct lilith* vm, struct Instruction* c);
+void ADDUI(struct lilith* vm, struct Instruction* c);
+void SUBI(struct lilith* vm, struct Instruction* c);
+void SUBUI(struct lilith* vm, struct Instruction* c);
+void CMPI(struct lilith* vm, struct Instruction* c);
+void LOAD(struct lilith* vm, struct Instruction* c);
+void LOAD8(struct lilith* vm, struct Instruction* c);
+void LOADU8(struct lilith* vm, struct Instruction* c);
+void LOAD16(struct lilith* vm, struct Instruction* c);
+void LOADU16(struct lilith* vm, struct Instruction* c);
+void LOAD32(struct lilith* vm, struct Instruction* c);
+void LOADU32(struct lilith* vm, struct Instruction* c);
+void CMPUI(struct lilith* vm, struct Instruction* c);
+void STORE(struct lilith* vm, struct Instruction* c);
+void STORE8(struct lilith* vm, struct Instruction* c);
+void STORE16(struct lilith* vm, struct Instruction* c);
+void STORE32(struct lilith* vm, struct Instruction* c);
+void JUMP_C(struct lilith* vm, struct Instruction* c);
+void JUMP_B(struct lilith* vm, struct Instruction* c);
+void JUMP_O(struct lilith* vm, struct Instruction* c);
+void JUMP_G(struct lilith* vm, struct Instruction* c);
+void JUMP_GE(struct lilith* vm, struct Instruction* c);
+void JUMP_E(struct lilith* vm, struct Instruction* c);
+void JUMP_NE(struct lilith* vm, struct Instruction* c);
+void JUMP_LE(struct lilith* vm, struct Instruction* c);
+void JUMP_L(struct lilith* vm, struct Instruction* c);
+void JUMP_Z(struct lilith* vm, struct Instruction* c);
+void JUMP_NZ(struct lilith* vm, struct Instruction* c);
+void CALLI(struct lilith* vm, struct Instruction* c);
+void LOADI(struct lilith* vm, struct Instruction* c);
+void LOADUI(struct lilith* vm, struct Instruction* c);
+void SALI(struct lilith* vm, struct Instruction* c);
+void SARI(struct lilith* vm, struct Instruction* c);
+void SL0I(struct lilith* vm, struct Instruction* c);
+void SR0I(struct lilith* vm, struct Instruction* c);
+void SL1I(struct lilith* vm, struct Instruction* c);
+void SR1I(struct lilith* vm, struct Instruction* c);
+void JUMP(struct lilith* vm, struct Instruction* c);
+
+/* Allocate and intialize memory/state */
+struct lilith* create_vm(size_t size)
+{
+	struct lilith* vm;
+	vm = calloc(1, sizeof(struct lilith));
+	vm->memory = calloc(size, sizeof(uint8_t));
+	vm->halted = false;
+	vm->exception = false;
+	return vm;
+}
+
+/* Free up the memory we previously allocated */
+void destroy_vm(struct lilith* vm)
+{
+	free(vm->memory);
+	free(vm);
+}
+
+/* Deal with 4OP */
+void decode_4OP(struct Instruction* c)
+{
+	c->raw_XOP = c->raw1;
+	c->XOP[0] = c->operation[2];
+	c->XOP[1] = c->operation[3];
+	c->raw_Immediate = 0;
+	c->reg0 = c->raw2/16;
+	c->reg1 = c->raw2%16;
+	c->reg2 = c->raw3/16;
+	c->reg3 = c->raw3%16;
+}
+
+/* Deal with 3OP */
+void decode_3OP(struct Instruction* c)
+{
+	c->raw_XOP = c->raw1*0x10 + c->raw2/16;
+	c->XOP[0] = c->operation[2];
+	c->XOP[1] = c->operation[3];
+	c->XOP[2] = c->operation[4];
+	c->raw_Immediate = 0;
+	c->reg0 = c->raw2%16;
+	c->reg1 = c->raw3/16;
+	c->reg2 = c->raw3%16;
+}
+
+/* Deal with 2OP */
+void decode_2OP(struct Instruction* c)
+{
+	c->raw_XOP = c->raw1*0x100 + c->raw2;
+	c->XOP[0] = c->operation[2];
+	c->XOP[1] = c->operation[3];
+	c->XOP[2] = c->operation[4];
+	c->XOP[3] = c->operation[5];
+	c->raw_Immediate = 0;
+	c->reg0 = c->raw3/16;
+	c->reg1 = c->raw3%16;
+}
+
+/* Deal with 1OP */
+void decode_1OP(struct Instruction* c)
+{
+	c->raw_XOP = c->raw1*0x1000 + c->raw2*0x10 + c->raw3/16;
+	c->XOP[0] = c->operation[2];
+	c->XOP[1] = c->operation[3];
+	c->XOP[2] = c->operation[4];
+	c->XOP[3] = c->operation[5];
+	c->XOP[4] = c->operation[6];
+	c->raw_Immediate = 0;
+	c->reg0 = c->raw3%16;
+}
+
+/* Deal with 2OPI */
+void decode_2OPI(struct Instruction* c)
+{
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->Immediate[0] = c->operation[4];
+	c->Immediate[1] = c->operation[5];
+	c->Immediate[2] = c->operation[6];
+	c->Immediate[3] = c->operation[7];
+	c->reg0 = c->raw1/16;
+	c->reg1 = c->raw1%16;
+}
+
+/* Deal with 1OPI */
+void decode_1OPI(struct Instruction* c)
+{
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->Immediate[0] = c->operation[4];
+	c->Immediate[1] = c->operation[5];
+	c->Immediate[2] = c->operation[6];
+	c->Immediate[3] = c->operation[7];
+	c->HAL_CODE = 0;
+	c->raw_XOP = c->raw1/16;
+	c->XOP[0] = c->operation[2];
+	c->reg0 = c->raw1%16;
+}
+/* Deal with 0OPI */
+void decode_0OPI(struct Instruction* c)
+{
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->Immediate[0] = c->operation[4];
+	c->Immediate[1] = c->operation[5];
+	c->Immediate[2] = c->operation[6];
+	c->Immediate[3] = c->operation[7];
+	c->HAL_CODE = 0;
+	c->raw_XOP = c->raw1;
+	c->XOP[0] = c->operation[2];
+	c->XOP[1] = c->operation[3];
+}
+
+/* Deal with Halcode */
+void decode_HALCODE(struct Instruction* c)
+{
+	c->HAL_CODE = c->raw1*0x10000 + c->raw2*0x100 + c->raw3;
+}
+
+/* Useful unpacking functions */
+void unpack_byte(uint8_t a, char* c)
+{
+	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
+	c[0] = table[a / 16];
+	c[1] = table[a % 16];
+}
+
+/* Unpack the full instruction */
+void unpack_instruction(struct Instruction* c)
+{
+	unpack_byte(c->raw0, &(c->operation[0]));
+	unpack_byte(c->raw1, &(c->operation[2]));
+	unpack_byte(c->raw2, &(c->operation[4]));
+	unpack_byte(c->raw3, &(c->operation[6]));
+	c->opcode[0] = c->operation[0];
+	c->opcode[1] = c->operation[1];
+}
 
 /* Load program tape into Memory */
 void load_program(struct lilith* vm, char **argv)
@@ -823,8 +1093,6 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 2OP Integer instructions */
 bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1 = (int32_t)(vm->reg[c->reg1]);
-	uint32_t utmp1 = vm->reg[c->reg1];
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_2OP";
 	#endif
@@ -917,6 +1185,7 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_1OP";
 	#endif
+
 	switch(c->raw_XOP)
 	{
 		case 0x00000: /* READPC */
@@ -1173,20 +1442,9 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 /* Process 1OPI Integer instructions */
 bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 {
-	bool C, B, O, GT, EQ, LT;
-	uint32_t tmp;
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_1OPI";
 	#endif
-
-	tmp = vm->reg[c->reg0];
-
-	C = tmp & Carry;
-	B = tmp & Borrow;
-	O = tmp & Overflow;
-	GT = tmp & GreaterThan;
-	EQ = tmp & EQual;
-	LT = tmp & LessThan;
 
 	/* 0x2C */
 	switch(c->raw_XOP)
@@ -1303,6 +1561,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_1OPI";
 	#endif
+
 	switch(c->raw_XOP)
 	{
 		case 0x0: /* CALLI */
@@ -1400,6 +1659,7 @@ bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_0OPI";
 	#endif
+
 	switch(c->raw_XOP)
 	{
 		case 0x00: /* JUMP */
