@@ -1,6 +1,12 @@
 This is a set of manually created hex programs in a Cthulhu Path to madness fashion.
-Which only have the goal of creating a bootstrapping path to a C compiler capable of 
+Which only have the goal of creating a bootstrapping path to a C compiler capable of
 Compiling GCC, with only the explicit requirement of a single 1 KByte binary or less.
+
+Additionally, all code must be able to be understood by 70% of the population of programmers.
+If the code can not be understood by that volume, it needs to be altered until it satifies the above requirement.
+
+WE DON'T WANT YOUR CLEVER CODE. Only stupidly simple code will be accepted.
+The Madness must be satisfied and only with the Blood ritual of code we perform here.
 
 This repo contains a few of my false start pieces that may be of interest to people who
 want to independently create the root binary, I welcome all bug fixes and code that aids
