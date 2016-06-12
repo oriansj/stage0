@@ -1,8 +1,6 @@
-#include "vm.h"
+#include "vm_instructions.c"
 #define DEBUG true
 
-FILE* tape_01;
-FILE* tape_02;
 uint32_t performance_counter;
 
 /* Load program tape into Memory */
@@ -56,15 +54,7 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			strncpy(Name, "FOPEN", 19);
 			#endif
 
-			if(0x00001100 == vm->reg[0])
-			{
-				tape_01 = fopen("tape_01", "r");
-			}
-
-			if (0x00001101 == vm->reg[0])
-			{
-				tape_02 = fopen("tape_02", "w");
-			}
+			vm_FOPEN(vm);
 			break;
 		}
 		case 0x100001: /* fclose */
@@ -73,15 +63,7 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			strncpy(Name, "FCLOSE", 19);
 			#endif
 
-			if(0x00001100 == vm->reg[0])
-			{
-				fclose(tape_01);
-			}
-
-			if (0x00001101 == vm->reg[0])
-			{
-				fclose(tape_02);
-			}
+			vm_FCLOSE(vm);
 			break;
 		}
 		case 0x100002: /* fseek */
@@ -90,15 +72,7 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			strncpy(Name, "FSEEK", 19);
 			#endif
 
-			if(0x00001100 == vm->reg[0])
-			{
-				fseek(tape_01, vm->reg[1], SEEK_CUR);
-			}
-
-			if (0x00001101 == vm->reg[0])
-			{
-				fseek(tape_02, vm->reg[1], SEEK_CUR);
-			}
+			vm_FSEEK(vm);
 			break;
 		}
 		case 0x100003: /* rewind */
@@ -107,15 +81,7 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			strncpy(Name, "REWIND", 19);
 			#endif
 
-			if(0x00001100 == vm->reg[0])
-			{
-				rewind(tape_01);
-			}
-
-			if (0x00001101 == vm->reg[0])
-			{
-				rewind(tape_02);
-			}
+			vm_REWIND(vm);
 			break;
 		}
 		case 0x100100: /* fgetc */
@@ -123,25 +89,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "FGETC", 19);
 			#endif
-			int32_t byte = -1;
 
-			if (0x00000000 == vm->reg[1])
-			{
-				byte = fgetc(stdin);
-			}
-
-			if(0x00001100 == vm->reg[1])
-			{
-				byte = fgetc(tape_01);
-			}
-
-			if (0x00001101 == vm->reg[1])
-			{
-				byte = fgetc(tape_02);
-			}
-
-			vm->reg[0] = byte;
-
+			vm_FGETC(vm);
 			break;
 		}
 		case 0x100200: /* fputc */
@@ -149,23 +98,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "FPUTC", 19);
 			#endif
-			int32_t byte = vm->reg[0];
 
-			if (0x00000000 == vm->reg[1])
-			{
-				fputc(byte, stdout);
-			}
-
-			if(0x00001100 == vm->reg[1])
-			{
-				fputc(byte, tape_01);
-			}
-
-			if (0x00001101 == vm->reg[1])
-			{
-				fputc(byte, tape_02);
-			}
-
+			vm_FPUTC(vm);
 			break;
 		}
 		default: return true;
@@ -180,19 +114,9 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 /* Process 4OP Integer instructions */
 bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	uint32_t utmp1, utmp2;
-	int64_t btmp1;
-	uint64_t ubtmp1;
-	bool C, B;
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_4OP";
 	#endif
-
-	utmp1 = vm->reg[c->reg3];
-
-	C = utmp1 & Carry;
-	B = utmp1 & Borrow;
 
 	switch(c->raw_XOP)
 	{
@@ -201,18 +125,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADD.CI", 19);
 			#endif
-			tmp1 = vm->reg[c->reg1];
-			tmp2 = vm->reg[c->reg2];
 
-			/* If carry bit set add in the carry */
-			if(1 == C)
-			{
-				vm->reg[c->reg0] = tmp1 + tmp2 + 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp1 + tmp2;
-			}
+			ADD_CI(vm, c);
 			break;
 		}
 		case 0x01: /* ADD.CO */
@@ -220,22 +134,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADD.CO", 19);
 			#endif
-			tmp1 = (int32_t)(vm->reg[c->reg1]);
-			tmp2 = (int32_t)(vm->reg[c->reg2]);
-			btmp1 = ((int64_t)tmp1) + ((int64_t)tmp2);
 
-			/* If addition exceeds int32_t MAX, set carry bit */
-			if(1 == ( btmp1 >> 31 ))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
-			}
-
-			/* Standard addition */
-			vm->reg[c->reg0] = (tmp1 + tmp2);
+			ADD_CO(vm, c);
 			break;
 		}
 		case 0x02: /* ADD.CIO */
@@ -243,29 +143,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADD.CIO", 19);
 			#endif
-			tmp1 = (int32_t)(vm->reg[c->reg1]);
-			tmp2 = (int32_t)(vm->reg[c->reg2]);
-			btmp1 = ((int64_t)tmp1) + ((int64_t)tmp2);
 
-			/* If addition exceeds int32_t MAX, set carry bit */
-			if(1 == ( btmp1 >> 31 ))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
-			}
-
-			/* If carry bit set before operation add in the carry */
-			if(1 == C)
-			{
-				vm->reg[c->reg0] = tmp1 + tmp2 + 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp1 + tmp2;
-			}
+			ADD_CIO(vm, c);
 			break;
 		}
 		case 0x03: /* ADDU.CI */
@@ -273,18 +152,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADDU.CI", 19);
 			#endif
-			utmp1 = vm->reg[c->reg1];
-			utmp2 = vm->reg[c->reg2];
 
-			/* If carry bit set add in the carry */
-			if(1 == C)
-			{
-				vm->reg[c->reg0] = utmp1 + utmp2 + 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = utmp1 + utmp2;
-			}
+			ADDU_CI(vm, c);
 			break;
 		}
 		case 0x04: /* ADDU.CO */
@@ -292,22 +161,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADDU.CO", 19);
 			#endif
-			utmp1 = vm->reg[c->reg1];
-			utmp2 = vm->reg[c->reg2];
-			ubtmp1 = ((uint64_t)utmp1) + ((uint64_t)utmp2);
 
-			/* If addition exceeds uint32_t MAX, set carry bit */
-			if(0 != ( ubtmp1 >> 32 ))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
-			}
-
-			/* Standard addition */
-			vm->reg[c->reg0] = (utmp1 + utmp2);
+			ADDU_CO(vm, c);
 			break;
 		}
 		case 0x05: /* ADDU.CIO */
@@ -315,29 +170,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADDU.CIO", 19);
 			#endif
-			utmp1 = vm->reg[c->reg1];
-			utmp2 = vm->reg[c->reg2];
-			ubtmp1 = ((uint64_t)utmp1) + ((uint64_t)utmp2);
 
-			/* If addition exceeds uint32_t MAX, set carry bit */
-			if(0 != ( ubtmp1 >> 32 ))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Carry);
-			}
-
-			/* If carry bit was set before operation add in the carry */
-			if(1 == C)
-			{
-				vm->reg[c->reg0] = utmp1 + utmp2 + 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = utmp1 + utmp2;
-			}
+			ADDU_CIO(vm, c);
 			break;
 		}
 		case 0x06: /* SUB.BI */
@@ -345,18 +179,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUB.BI", 19);
 			#endif
-			tmp1 = (int32_t)(vm->reg[c->reg1]);
-			tmp2 = (int32_t)(vm->reg[c->reg2]);
 
-			/* If borrow bit set subtract out the borrow */
-			if(1 == B)
-			{
-				vm->reg[c->reg0] = tmp1 - tmp2 - 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp1 - tmp2;
-			}
+			SUB_BI(vm, c);
 			break;
 		}
 		case 0x07: /* SUB.BO */
@@ -364,22 +188,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUB.BO", 19);
 			#endif
-			btmp1 = (int64_t)(vm->reg[c->reg1]);
-			tmp1 = (int32_t)(vm->reg[c->reg2]);
-			tmp2 = (int32_t)(btmp1 - tmp1);
 
-			/* If subtraction goes below int32_t MIN set borrow */
-			if(btmp1 != (tmp2 + tmp1))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
-			}
-
-			/* Standard subtraction */
-			vm->reg[c->reg0] = tmp2;
+			SUB_BO(vm, c);
 			break;
 		}
 		case 0x08: /* SUB.BIO */
@@ -387,29 +197,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUB.BIO", 19);
 			#endif
-			btmp1 = (int64_t)(vm->reg[c->reg1]);
-			tmp1 = (int32_t)(vm->reg[c->reg2]);
-			tmp2 = (int32_t)(btmp1 - tmp1);
 
-			/* If subtraction goes below int32_t MIN set borrow */
-			if(btmp1 != (tmp2 + tmp1))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
-			}
-
-			/* If borrow bit was set prior to operation subtract out the borrow */
-			if(1 == B)
-			{
-				vm->reg[c->reg0] = tmp2 - 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp2;
-			}
+			SUB_BIO(vm, c);
 			break;
 		}
 		case 0x09: /* SUBU.BI */
@@ -417,18 +206,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUBU.BI", 19);
 			#endif
-			utmp1 = vm->reg[c->reg1];
-			utmp2 = vm->reg[c->reg2];
 
-			/* If borrow bit set subtract out the borrow */
-			if(1 == B)
-			{
-				vm->reg[c->reg0] = utmp1 - utmp2 - 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = utmp1 - utmp2;
-			}
+			SUBU_BI(vm, c);
 			break;
 		}
 		case 0x0A: /* SUBU.BO */
@@ -436,22 +215,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUBU.BO", 19);
 			#endif
-			utmp1 = vm->reg[c->reg1];
-			utmp2 = vm->reg[c->reg2];
-			ubtmp1 = (uint64_t)(utmp1 - utmp2);
 
-			/* If subtraction goes below uint32_t MIN set borrow */
-			if(utmp1 != (ubtmp1 + utmp2))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
-			}
-
-			/* Standard subtraction */
-			vm->reg[c->reg0] = (utmp1 - utmp2);
+			SUBU_BO(vm, c);
 			break;
 		}
 		case 0x0B: /* SUBU.BIO */
@@ -459,29 +224,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUBU.BIO", 19);
 			#endif
-			utmp1 = vm->reg[c->reg1];
-			utmp2 = vm->reg[c->reg2];
-			ubtmp1 = (uint64_t)(utmp1 - utmp2);
 
-			/* If subtraction goes below uint32_t MIN set borrow */
-			if(utmp1 != (ubtmp1 + utmp2))
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] | Borrow;
-			}
-			else
-			{
-				vm->reg[c->reg3] = vm->reg[c->reg3] & ~(Borrow);
-			}
-
-			/* If borrow bit was set prior to operation subtract out the borrow */
-			if(1 == B)
-			{
-				vm->reg[c->reg0] = utmp1 - utmp2 - 1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = utmp1 - utmp2;
-			}
+			SUBU_BIO(vm, c);
 			break;
 		}
 		case 0x0C: /* MULTIPLY */
@@ -489,11 +233,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MULTIPLY", 19);
 			#endif
-			tmp1 = (int32_t)(vm->reg[c->reg2]);
-			tmp2 = (int32_t)( vm->reg[c->reg3]);
-			btmp1 = ((int64_t)tmp1) * ((int64_t)tmp2);
-			vm->reg[c->reg0] = (int32_t)(btmp1 % 0x100000000);
-			vm->reg[c->reg1] = (int32_t)(btmp1 / 0x100000000);
+
+			MULTIPLY(vm, c);
 			break;
 		}
 		case 0x0D: /* MULTIPLYU */
@@ -501,9 +242,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MULTIPLYU", 19);
 			#endif
-			ubtmp1 = (uint64_t)(vm->reg[c->reg2]) * (uint64_t)(vm->reg[c->reg3]);
-			vm->reg[c->reg0] = ubtmp1 % 0x100000000;
-			vm->reg[c->reg1] = ubtmp1 / 0x100000000;
+
+			MULTIPLYU(vm, c);
 			break;
 		}
 		case 0x0E: /* DIVIDE */
@@ -511,10 +251,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "DIVIDE", 19);
 			#endif
-			tmp1 = (int32_t)(vm->reg[c->reg2]);
-			tmp2 = (int32_t)(vm->reg[c->reg3]);
-			vm->reg[c->reg0] = tmp1 / tmp2;
-			vm->reg[c->reg1] = tmp1 % tmp2;
+
+			DIVIDE(vm, c);
 			break;
 		}
 		case 0x0F: /* DIVIDEU */
@@ -522,10 +260,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "DIVIDEU", 19);
 			#endif
-			utmp1 = vm->reg[c->reg2];
-			utmp2 = vm->reg[c->reg3];
-			vm->reg[c->reg0] = utmp1 / utmp2;
-			vm->reg[c->reg1] = utmp1 % utmp2;
+
+			DIVIDEU(vm, c);
 			break;
 		}
 		case 0x10: /* MUX */
@@ -533,8 +269,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MUX", 19);
 			#endif
-			vm->reg[c->reg0] = ((vm->reg[c->reg2] & ~(vm->reg[c->reg1])) |
-								(vm->reg[c->reg3] & vm->reg[c->reg1]));
+
+			MUX(vm, c);
 			break;
 		}
 		case 0x11: /* NMUX */
@@ -542,8 +278,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "NMUX", 19);
 			#endif
-			vm->reg[c->reg0] = ((vm->reg[c->reg2] & vm->reg[c->reg1]) |
-								(vm->reg[c->reg3] & ~(vm->reg[c->reg1])));
+
+			NMUX(vm, c);
 			break;
 		}
 		case 0x12: /* SORT */
@@ -551,19 +287,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SORT", 19);
 			#endif
-			tmp1 = (int32_t)(vm->reg[c->reg2]);
-			tmp2 = (int32_t)(vm->reg[c->reg3]);
 
-			if(tmp1 > tmp2)
-			{
-				vm->reg[c->reg0] = tmp1;
-				vm->reg[c->reg1] = tmp2;
-			}
-			else
-			{
-				vm->reg[c->reg1] = tmp1;
-				vm->reg[c->reg0] = tmp2;
-			}
+			SORT(vm, c);
 			break;
 		}
 		case 0x13: /* SORTU */
@@ -571,19 +296,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SORTU", 19);
 			#endif
-			utmp1 = vm->reg[c->reg2];
-			utmp2 = vm->reg[c->reg3];
 
-			if(utmp1 > utmp2)
-			{
-				vm->reg[c->reg0] = utmp1;
-				vm->reg[c->reg1] = utmp2;
-			}
-			else
-			{
-				vm->reg[c->reg1] = utmp1;
-				vm->reg[c->reg0] = utmp2;
-			}
+			SORTU(vm, c);
 			break;
 		}
 		default: return true;
@@ -597,16 +311,9 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 3OP Integer instructions */
 bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	uint32_t utmp1, utmp2;
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_3OP";
 	#endif
-
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
-	utmp1 = vm->reg[c->reg1];
-	utmp2 = vm->reg[c->reg2];
 
 	switch(c->raw_XOP)
 	{
@@ -615,7 +322,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADD", 19);
 			#endif
-			vm->reg[c->reg0] = (int32_t)(tmp1 + tmp2);
+
+			ADD(vm, c);
 			break;
 		}
 		case 0x001: /* ADDU */
@@ -623,7 +331,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADDU", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 + utmp2;
+
+			ADDU(vm, c);
 			break;
 		}
 		case 0x002: /* SUB */
@@ -631,7 +340,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUB", 19);
 			#endif
-			vm->reg[c->reg0] = (int32_t)(tmp1 - tmp2);
+
+			SUB(vm, c);
 			break;
 		}
 		case 0x003: /* SUBU */
@@ -639,7 +349,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUBU", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 - utmp2;
+
+			SUBU(vm, c);
 			break;
 		}
 		case 0x004: /* CMP */
@@ -647,20 +358,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "CMP", 19);
 			#endif
-			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
-			if(tmp1 > tmp2)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
-			}
-			else if(tmp1 == tmp2)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
-			}
-			else
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
-			}
+
+			CMP(vm, c);
 			break;
 		}
 		case 0x005: /* CMPU */
@@ -668,20 +367,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "CMPU", 19);
 			#endif
-			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
-			if(utmp1 > utmp2)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
-			}
-			else if(utmp1 == utmp2)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
-			}
-			else
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
-			}
+
+			CMPU(vm, c);
 			break;
 		}
 		case 0x006: /* MUL */
@@ -689,9 +376,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MUL", 19);
 			#endif
-			int64_t sum = tmp1 * tmp2;
-			/* We only want the bottom 32bits */
-			vm->reg[c->reg0] = sum % 0x100000000;
+
+			MUL(vm, c);
 			break;
 		}
 		case 0x007: /* MULH */
@@ -699,9 +385,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MULH", 19);
 			#endif
-			int64_t sum = tmp1 * tmp2;
-			/* We only want the top 32bits */
-			vm->reg[c->reg0] = sum / 0x100000000;
+
+			MULH(vm, c);
 			break;
 		}
 		case 0x008: /* MULU */
@@ -709,9 +394,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MULU", 19);
 			#endif
-			uint64_t sum = tmp1 * tmp2;
-			/* We only want the bottom 32bits */
-			vm->reg[c->reg0] = sum % 0x100000000;
+
+			MULU(vm, c);
 			break;
 		}
 		case 0x009: /* MULUH */
@@ -719,9 +403,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MULUH", 19);
 			#endif
-			uint64_t sum = tmp1 * tmp2;
-			/* We only want the top 32bits */
-			vm->reg[c->reg0] = sum / 0x100000000;
+
+			MULUH(vm, c);
 			break;
 		}
 		case 0x00A: /* DIV */
@@ -729,7 +412,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "DIV", 19);
 			#endif
-			vm->reg[c->reg0] = tmp1 / tmp2;
+
+			DIV(vm, c);
 			break;
 		}
 		case 0x00B: /* MOD */
@@ -737,7 +421,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MOD", 19);
 			#endif
-			vm->reg[c->reg0] = tmp1 % tmp2;
+
+			MOD(vm, c);
 			break;
 		}
 		case 0x00C: /* DIVU */
@@ -745,7 +430,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "DIVU", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 / utmp2;
+
+			DIVU(vm, c);
 			break;
 		}
 		case 0x00D: /* MODU */
@@ -753,7 +439,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MODU", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 % utmp2;
+
+			MODU(vm, c);
 			break;
 		}
 		case 0x010: /* MAX */
@@ -761,14 +448,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MAX", 19);
 			#endif
-			if(tmp1 > tmp2)
-			{
-				vm->reg[c->reg0] = tmp1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp2;
-			}
+
+			MAX(vm, c);
 			break;
 		}
 		case 0x011: /* MAXU */
@@ -776,14 +457,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MAXU", 19);
 			#endif
-			if(utmp1 > utmp2)
-			{
-				vm->reg[c->reg0] = utmp1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = utmp2;
-			}
+
+			MAXU(vm, c);
 			break;
 		}
 		case 0x012: /* MIN */
@@ -791,14 +466,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MIN", 19);
 			#endif
-			if(tmp1 < tmp2)
-			{
-				vm->reg[c->reg0] = tmp1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp2;
-			}
+
+			MIN(vm, c);
 			break;
 		}
 		case 0x013: /* MINU */
@@ -806,14 +475,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MINU", 19);
 			#endif
-			if(utmp1 < utmp2)
-			{
-				vm->reg[c->reg0] = utmp1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = utmp2;
-			}
+
+			MINU(vm, c);
 			break;
 		}
 		case 0x014: /* PACK */
@@ -821,6 +484,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PACK", 19);
 			#endif
+
+			PACK(vm, c);
 			break;
 		}
 		case 0x015: /* UNPACK */
@@ -828,6 +493,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "UNPACK", 19);
 			#endif
+
+			UNPACK(vm, c);
 			break;
 		}
 		case 0x016: /* PACK8.CO */
@@ -835,6 +502,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PACK8.CO", 19);
 			#endif
+
+			PACK8_CO(vm, c);
 			break;
 		}
 		case 0x017: /* PACK8U.CO */
@@ -842,6 +511,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PACK8U.CO", 19);
 			#endif
+
+			PACK8U_CO(vm, c);
 			break;
 		}
 		case 0x018: /* PACK16.CO */
@@ -849,6 +520,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PACK16.CO", 19);
 			#endif
+
+			PACK16_CO(vm, c);
 			break;
 		}
 		case 0x019: /* PACK16U.CO */
@@ -856,6 +529,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PACK16U.CO", 19);
 			#endif
+
+			PACK16U_CO(vm, c);
 			break;
 		}
 		case 0x01A: /* PACK32.CO */
@@ -863,6 +538,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PACK32.CO", 19);
 			#endif
+
+			PACK32_CO(vm, c);
 			break;
 		}
 		case 0x01B: /* PACK32U.CO */
@@ -870,6 +547,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PACK32U.CO", 19);
 			#endif
+
+			PACK32U_CO(vm, c);
 			break;
 		}
 		case 0x020: /* AND */
@@ -877,7 +556,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "AND", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 & utmp2;
+
+			AND(vm, c);
 			break;
 		}
 		case 0x021: /* OR */
@@ -885,7 +565,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "OR", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 | utmp2;
+
+			OR(vm, c);
 			break;
 		}
 		case 0x022: /* XOR */
@@ -893,7 +574,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "XOR", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 ^ utmp2;
+
+			XOR(vm, c);
 			break;
 		}
 		case 0x023: /* NAND */
@@ -901,7 +583,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "NAND", 19);
 			#endif
-			vm->reg[c->reg0] = ~(utmp1 & utmp2);
+
+			NAND(vm, c);
 			break;
 		}
 		case 0x024: /* NOR */
@@ -909,7 +592,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "NOR", 19);
 			#endif
-			vm->reg[c->reg0] = ~(utmp1 | utmp2);
+
+			NOR(vm, c);
 			break;
 		}
 		case 0x025: /* XNOR */
@@ -917,7 +601,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "XNOR", 19);
 			#endif
-			vm->reg[c->reg0] = ~(utmp1 ^ utmp2);
+
+			XNOR(vm, c);
 			break;
 		}
 		case 0x026: /* MPQ */
@@ -925,7 +610,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MPQ", 19);
 			#endif
-			vm->reg[c->reg0] = (~utmp1) & utmp2;
+
+			MPQ(vm, c);
 			break;
 		}
 		case 0x027: /* LPQ */
@@ -933,7 +619,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LPQ", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 & (~utmp2);
+
+			LPQ(vm, c);
 			break;
 		}
 		case 0x028: /* CPQ */
@@ -941,7 +628,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "CPQ", 19);
 			#endif
-			vm->reg[c->reg0] = (~utmp1) | utmp2;
+
+			CPQ(vm, c);
 			break;
 		}
 		case 0x029: /* BPQ */
@@ -949,7 +637,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "BPQ", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 | (~utmp2);
+
+			BPQ(vm, c);
 			break;
 		}
 		case 0x030: /* SAL */
@@ -957,7 +646,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SAL", 19);
 			#endif
-			vm->reg[c->reg0] = vm->reg[c->reg1] << vm->reg[c->reg2];
+
+			SAL(vm, c);
 			break;
 		}
 		case 0x031: /* SAR */
@@ -965,7 +655,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SAR", 19);
 			#endif
-			vm->reg[c->reg0] = vm->reg[c->reg1] >> vm->reg[c->reg2];
+
+			SAR(vm, c);
 			break;
 		}
 		case 0x032: /* SL0 */
@@ -973,7 +664,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SL0", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], true, true);
+
+			SL0(vm, c);
 			break;
 		}
 		case 0x033: /* SR0 */
@@ -981,7 +673,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SR0", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], false, true);
+
+			SR0(vm, c);
 			break;
 		}
 		case 0x034: /* SL1 */
@@ -989,7 +682,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SL1", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], true, false);
+
+			SL1(vm, c);
 			break;
 		}
 		case 0x035: /* SR1 */
@@ -997,7 +691,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SR1", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg1], vm->reg[c->reg2], false, false);
+
+			SR1(vm, c);
 			break;
 		}
 		case 0x036: /* ROL */
@@ -1005,6 +700,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ROL", 19);
 			#endif
+
+			ROL(vm, c);
 			break;
 		}
 		case 0x037: /* ROR */
@@ -1012,6 +709,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ROR", 19);
 			#endif
+
+			ROR(vm, c);
 			break;
 		}
 		case 0x038: /* LOADX */
@@ -1019,7 +718,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADX", 19);
 			#endif
-			vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2]);
+
+			LOADX(vm, c);
 			break;
 		}
 		case 0x039: /* LOADX8 */
@@ -1027,7 +727,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADX8", 19);
 			#endif
-			vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true);
+
+			LOADX8(vm, c);
 			break;
 		}
 		case 0x03A: /* LOADXU8 */
@@ -1035,7 +736,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADXU8", 19);
 			#endif
-			vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], false);
+
+			LOADXU8(vm, c);
 			break;
 		}
 		case 0x03B: /* LOADX16 */
@@ -1043,7 +745,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADX16", 19);
 			#endif
-			vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true);
+
+			LOADX16(vm, c);
 			break;
 		}
 		case 0x03C: /* LOADXU16 */
@@ -1051,7 +754,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADXU16", 19);
 			#endif
-			vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], false);
+
+			LOADXU16(vm, c);
 			break;
 		}
 		case 0x03D: /* LOADX32 */
@@ -1059,7 +763,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADX32", 19);
 			#endif
-			vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2]);
+
+			LOADX32(vm, c);
 			break;
 		}
 		case 0x03E: /* LOADXU32 */
@@ -1067,7 +772,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADXU32", 19);
 			#endif
-			vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2]);
+
+			LOADXU32(vm, c);
 			break;
 		}
 		case 0x048: /* STOREX */
@@ -1075,7 +781,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STOREX", 19);
 			#endif
-			writeout_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+
+			STOREX(vm, c);
 			break;
 		}
 		case 0x049: /* STOREX8 */
@@ -1083,7 +790,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STOREX8", 19);
 			#endif
-			writeout_byte(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+
+			STOREX8(vm, c);
 			break;
 		}
 		case 0x04A: /* STOREX16 */
@@ -1091,7 +799,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STOREX16", 19);
 			#endif
-			writeout_doublebyte(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+
+			STOREX16(vm, c);
 			break;
 		}
 		case 0x04B: /* STOREX32 */
@@ -1099,7 +808,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STOREX32", 19);
 			#endif
-			writeout_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+
+			STOREX32(vm, c);
 			break;
 		}
 		default: return true;
@@ -1126,7 +836,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "NEG", 19);
 			#endif
-			vm->reg[c->reg0] = tmp1*-1;
+
+			NEG(vm, c);
 			break;
 		}
 		case 0x0001: /* ABS */
@@ -1134,14 +845,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ABS", 19);
 			#endif
-			if(0 <= tmp1)
-			{
-				vm->reg[c->reg0] = tmp1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp1*-1;
-			}
+
+			ABS(vm, c);
 			break;
 		}
 		case 0x0002: /* NABS */
@@ -1149,14 +854,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "NABS", 19);
 			#endif
-			if(0 > tmp1)
-			{
-				vm->reg[c->reg0] = tmp1;
-			}
-			else
-			{
-				vm->reg[c->reg0] = tmp1*-1;
-			}
+
+			NABS(vm, c);
 			break;
 		}
 		case 0x0003: /* SWAP */
@@ -1164,8 +863,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SWAP", 19);
 			#endif
-			vm->reg[c->reg1] = vm->reg[c->reg0];
-			vm->reg[c->reg0] = utmp1;
+
+			SWAP(vm, c);
 			break;
 		}
 		case 0x0004: /* COPY */
@@ -1173,7 +872,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "COPY", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1;
+
+			COPY(vm, c);
 			break;
 		}
 		case 0x0005: /* MOVE */
@@ -1181,8 +881,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "MOVE", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1;
-			vm->reg[c->reg1] = 0;
+
+			MOVE(vm, c);
 			break;
 		}
 		case 0x0100: /* BRANCH */
@@ -1190,11 +890,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "BRANCH", 19);
 			#endif
-			/* Write out the PC */
-			writeout_Reg(vm, vm->reg[c->reg1], vm->ip);
 
-			/* Update PC */
-			vm->ip = vm->reg[c->reg0];
+			BRANCH(vm, c);
 			break;
 		}
 		case 0x0101: /* CALL */
@@ -1202,14 +899,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "CALL", 19);
 			#endif
-			/* Write out the PC */
-			writeout_Reg(vm, vm->reg[c->reg1], vm->ip);
 
-			/* Update our index */
-			vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
-
-			/* Update PC */
-			vm->ip = vm->reg[c->reg0];
+			CALL(vm, c);
 			break;
 		}
 		default: return true;
@@ -1233,7 +924,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "READPC", 19);
 			#endif
-			vm->reg[c->reg0] = vm->ip;
+
+			READPC(vm, c);
 			break;
 		}
 		case 0x00001: /* READSCID */
@@ -1241,8 +933,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "READSCID", 19);
 			#endif
-			/* We only support Base 8,16 and 32*/
-			vm->reg[c->reg0] = 0x00000007;
+
+			READSCID(vm, c);
 			break;
 		}
 		case 0x00002: /* FALSE */
@@ -1250,7 +942,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "FALSE", 19);
 			#endif
-			vm->reg[c->reg0] = 0;
+
+			FALSE(vm, c);
 			break;
 		}
 		case 0x00003: /* TRUE */
@@ -1258,7 +951,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "TRUE", 19);
 			#endif
-			vm->reg[c->reg0] = 0xFFFFFFFF;
+
+			TRUE(vm, c);
 			break;
 		}
 		case 0x01000: /* JSR_COROUTINE */
@@ -1266,7 +960,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JSR_COROUTINE", 19);
 			#endif
-			vm->ip = vm->reg[c->reg0];
+
+			JSR_COROUTINE(vm, c);
 			break;
 		}
 		case 0x01001: /* RET */
@@ -1274,14 +969,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "RET", 19);
 			#endif
-			/* Update our index */
-			vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
 
-			/* Read in the new PC */
-			vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
-
-			/* Clear Stack Values */
-			writeout_Reg(vm, vm->reg[c->reg0], 0);
+			RET(vm, c);
 			break;
 		}
 		case 0x02000: /* PUSHPC */
@@ -1289,11 +978,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "PUSHPC", 19);
 			#endif
-			/* Write out the PC */
-			writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
 
-			/* Update our index */
-			vm->reg[c->reg0] = vm->reg[c->reg0] + 4;
+			PUSHPC(vm, c);
 			break;
 		}
 		case 0x02001: /* POPPC */
@@ -1301,11 +987,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "POPPC", 19);
 			#endif
-			/* Read in the new PC */
-			vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
 
-			/* Update our index */
-			vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
+			POPPC(vm, c);
 			break;
 		}
 		default: return true;
@@ -1319,15 +1002,9 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 /* Process 2OPI Integer instructions */
 bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1;
-	uint32_t utmp1;
-	uint8_t raw0, raw1;
 	#ifdef DEBUG
 	char Name[20] = "ILLEGAL_2OPI";
 	#endif
-
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	utmp1 = vm->reg[c->reg1];
 
 	/* 0x0E ... 0x2B */
 	switch(c->raw0)
@@ -1337,7 +1014,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADDI", 19);
 			#endif
-			vm->reg[c->reg0] = (int32_t)(tmp1 + c->raw_Immediate);
+
+			ADDI(vm, c);
 			break;
 		}
 		case 0x0F: /* ADDUI */
@@ -1345,7 +1023,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "ADDUI", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 + c->raw_Immediate;
+
+			ADDUI(vm, c);
 			break;
 		}
 		case 0x10: /* SUBI */
@@ -1353,7 +1032,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUBI", 19);
 			#endif
-			vm->reg[c->reg0] = (int32_t)(tmp1 - c->raw_Immediate);
+
+			SUBI(vm, c);
 			break;
 		}
 		case 0x11: /* SUBUI */
@@ -1361,7 +1041,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SUBUI", 19);
 			#endif
-			vm->reg[c->reg0] = utmp1 + c->raw_Immediate;
+
+			SUBUI(vm, c);
 			break;
 		}
 		case 0x12: /* CMPI */
@@ -1369,20 +1050,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "CMPI", 19);
 			#endif
-			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
-			if(tmp1 > c->raw_Immediate)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
-			}
-			else if(tmp1 == c->raw_Immediate)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
-			}
-			else
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
-			}
+
+			CMPI(vm, c);
 			break;
 		}
 		case 0x13: /* LOAD */
@@ -1390,7 +1059,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOAD", 19);
 			#endif
-			vm->reg[c->reg0] = readin_Reg(vm, (utmp1 + c->raw_Immediate));
+
+			LOAD(vm, c);
 			break;
 		}
 		case 0x14: /* LOAD8 */
@@ -1398,7 +1068,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOAD8", 19);
 			#endif
-			vm->reg[c->reg0] = readin_byte(vm, utmp1 + c->raw_Immediate, true);
+
+			LOAD8(vm, c);
 			break;
 		}
 		case 0x15: /* LOADU8 */
@@ -1406,7 +1077,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADU8", 19);
 			#endif
-			vm->reg[c->reg0] = readin_byte(vm, utmp1 + c->raw_Immediate, false);
+
+			LOADU8(vm, c);
 			break;
 		}
 		case 0x16: /* LOAD16 */
@@ -1414,7 +1086,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOAD16", 19);
 			#endif
-			vm->reg[c->reg0] = readin_doublebyte(vm, utmp1 + c->raw_Immediate, true);
+
+			LOAD16(vm, c);
 			break;
 		}
 		case 0x17: /* LOADU16 */
@@ -1422,7 +1095,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADU16", 19);
 			#endif
-			vm->reg[c->reg0] = readin_doublebyte(vm, utmp1 + c->raw_Immediate, false);
+
+			LOADU16(vm, c);
 			break;
 		}
 		case 0x18: /* LOAD32 */
@@ -1430,7 +1104,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOAD32", 19);
 			#endif
-			vm->reg[c->reg0] = readin_Reg(vm, (utmp1 + c->raw_Immediate));
+
+			LOAD32(vm, c);
 			break;
 		}
 		case 0x19: /* LOADU32 */
@@ -1438,7 +1113,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADU32", 19);
 			#endif
-			vm->reg[c->reg0] = readin_Reg(vm, (utmp1 + c->raw_Immediate));
+
+			LOADU32(vm, c);
 			break;
 		}
 		case 0x1F: /* CMPUI */
@@ -1446,20 +1122,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "CMPUI", 19);
 			#endif
-			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
-			if(utmp1 > (uint32_t)c->raw_Immediate)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
-			}
-			else if(utmp1 == (uint32_t)c->raw_Immediate)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
-			}
-			else
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
-			}
+
+			CMPUI(vm, c);
 			break;
 		}
 		case 0x20: /* STORE */
@@ -1467,7 +1131,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STORE", 19);
 			#endif
-			writeout_Reg(vm, (utmp1 + c->raw_Immediate), vm->reg[c->reg0]);
+
+			STORE(vm, c);
 			break;
 		}
 		case 0x21: /* STORE8 */
@@ -1475,7 +1140,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STORE8", 19);
 			#endif
-			writeout_byte(vm, utmp1 + c->raw_Immediate, vm->reg[c->reg0]);
+
+			STORE8(vm, c);
 			break;
 		}
 		case 0x22: /* STORE16 */
@@ -1483,7 +1149,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STORE16", 19);
 			#endif
-			writeout_doublebyte(vm, utmp1 + c->raw_Immediate, vm->reg[c->reg0]);
+
+			STORE16(vm, c);
 			break;
 		}
 		case 0x23: /* STORE32 */
@@ -1491,7 +1158,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "STORE32", 19);
 			#endif
-			writeout_Reg(vm, (utmp1 + c->raw_Immediate), vm->reg[c->reg0]);
+
+			STORE32(vm, c);
 			break;
 		}
 		default: return true;
@@ -1528,11 +1196,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.C", 19);
 			#endif
-			if(1 == C)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_C(vm, c);
 			break;
 		}
 		case 0x1: /* JUMP.B */
@@ -1540,11 +1205,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.B", 19);
 			#endif
-			if(1 == B)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_B(vm, c);
 			break;
 		}
 		case 0x2: /* JUMP.O */
@@ -1552,11 +1214,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.O", 19);
 			#endif
-			if(1 == O)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_O(vm, c);
 			break;
 		}
 		case 0x3: /* JUMP.G */
@@ -1564,11 +1223,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.G", 19);
 			#endif
-			if(1 == GT)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_G(vm, c);
 			break;
 		}
 		case 0x4: /* JUMP.GE */
@@ -1576,11 +1232,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.GE", 19);
 			#endif
-			if((1 == GT) || (1 == EQ))
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_GE(vm, c);
 			break;
 		}
 		case 0x5: /* JUMP.E */
@@ -1588,11 +1241,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.E", 19);
 			#endif
-			if(1 == EQ)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_E(vm, c);
 			break;
 		}
 		case 0x6: /* JUMP.NE */
@@ -1600,11 +1250,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NE", 19);
 			#endif
-			if(1 != EQ)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_NE(vm, c);
 			break;
 		}
 		case 0x7: /* JUMP.LE */
@@ -1612,11 +1259,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.LE", 19);
 			#endif
-			if((1 == EQ) || (1 == LT))
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_LE(vm, c);
 			break;
 		}
 		case 0x8: /* JUMP.L */
@@ -1624,11 +1268,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.L", 19);
 			#endif
-			if(1 == LT)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_L(vm, c);
 			break;
 		}
 		case 0x9: /* JUMP.Z */
@@ -1636,11 +1277,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.Z", 19);
 			#endif
-			if(0 == tmp)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_Z(vm, c);
 			break;
 		}
 		case 0xA: /* JUMP.NZ */
@@ -1648,11 +1286,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NZ", 19);
 			#endif
-			if(0 != tmp)
-			{
-				/* Adust the IP relative the the start of this instruction*/
-				vm->ip = vm->ip + c->raw_Immediate - 4;
-			}
+
+			JUMP_NZ(vm, c);
 			break;
 		}
 		default: return true;
@@ -1675,15 +1310,8 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "CALLI", 19);
 			#endif
-			/* Write out the PC */
-			writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
 
-			/* Update our index */
-			vm->reg[c->reg0] = vm->reg[c->reg0] + 4;
-
-			/* Update PC */
-			vm->ip = vm->ip + c->raw_Immediate - 4;
-
+			CALLI(vm, c);
 			break;
 		}
 		case 0x1: /* LOADI */
@@ -1691,15 +1319,17 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "LOADI", 19);
 			#endif
-			vm->reg[c->reg0] = (int16_t)c->raw_Immediate;
+
+			LOADI(vm, c);
 			break;
 		}
 		case 0x2: /* LOADUI*/
 		{
 			#ifdef DEBUG
-			strncpy(Name, "LOADU", 19);
+			strncpy(Name, "LOADUI", 19);
 			#endif
-			vm->reg[c->reg0] = c->raw_Immediate;
+
+			LOADUI(vm, c);
 			break;
 		}
 		case 0x3: /* SALI */
@@ -1707,7 +1337,8 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SALI", 19);
 			#endif
-			vm->reg[c->reg0] = vm->reg[c->reg0] << c->raw_Immediate;
+
+			SALI(vm, c);
 			break;
 		}
 		case 0x4: /* SARI */
@@ -1715,7 +1346,8 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SARI", 19);
 			#endif
-			vm->reg[c->reg0] = vm->reg[c->reg0] >> c->raw_Immediate;
+
+			SARI(vm, c);
 			break;
 		}
 		case 0x5: /* SL0I */
@@ -1723,7 +1355,8 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SL0I", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, true, true);
+
+			SL0I(vm, c);
 			break;
 		}
 		case 0x6: /* SR0I */
@@ -1731,7 +1364,8 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SR0I", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, false, true);
+
+			SR0I(vm, c);
 			break;
 		}
 		case 0x7: /* SL1I */
@@ -1739,7 +1373,8 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SL1I", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, true, false);
+
+			SL1I(vm, c);
 			break;
 		}
 		case 0x8: /* SR1I */
@@ -1747,7 +1382,8 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "SR1I", 19);
 			#endif
-			vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, false, false);
+
+			SR1I(vm, c);
 			break;
 		}
 		default: return true;
@@ -1771,7 +1407,8 @@ bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 			#ifdef DEBUG
 			strncpy(Name, "JUMP", 19);
 			#endif
-			vm->ip = vm->ip + c->raw_Immediate - 4;
+
+			JUMP(vm, c);
 			break;
 		}
 		default: return true;
@@ -1801,42 +1438,42 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		{
 			return;
 		}
-		case 0x01:
+		case 0x01: /* Integer 4OP */
 		{
 			decode_4OP(current);
 			invalid = eval_4OP_Int(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x05:
+		case 0x05: /* Integer 3OP */
 		{
 			decode_3OP(current);
 			invalid = eval_3OP_Int(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x09:
+		case 0x09: /* Integer 2OP */
 		{
 			decode_2OP(current);
 			invalid = eval_2OP_Int(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x0D:
+		case 0x0D: /* Integer 1OP */
 		{
 			decode_1OP(current);
 			invalid = eval_1OP_Int(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x0E ... 0x2B:
+		case 0x0E ... 0x2B: /* Integer 2OPI */
 		{
 			decode_2OPI(current);
 			invalid = eval_2OPI_Int(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x2C:
+		case 0x2C: /* Integer 1OPI */
 		{
 			decode_1OPI(current);
 			invalid = eval_Integer_1OPI(vm, current);
@@ -1850,7 +1487,7 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x3C: /* JUMP */
+		case 0x3C: /* Integer 0OPI */
 		{
 			decode_0OPI(current);
 			invalid = eval_Integer_0OPI(vm, current);
