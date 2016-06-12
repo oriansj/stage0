@@ -46,9 +46,11 @@
 | 01 13 ab cd | SORTU a b c d | a = MAX(c, d); b = MIN(c, d) [unsigned] |
 
 **** Reserved Block
-01 14 xx xx # Reserved
-...
-01 FF xx xx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 01 14 xx xx | Reserved |
+| ...         | Reserved |
+| 01 FF xx xx | Reserved |
 
 *** 02 nn ab cd :: 4OP Floating group
 *** 03 nn ab cd :: 4OP SIMD group
@@ -58,106 +60,128 @@
 3OP nn n is the XOP, a = b OP c
 *** 05 nn na bc :: 3OP Integer group
 **** Turing group
-05 00 0a bc # ADD a b c :: a = b + c [signed]
-05 00 1a bc # ADDU a b c :: a = b + c [unsigned]
-05 00 2a bc # SUB a b c :: a = b - c [signed]
-05 00 3a bc # SUBU a b c :: a = b - c [unsigned]
-05 00 4a bc # CMP a b c :: a = b CMP c [signed]
-05 00 5a bc # CMPU a b c :: a = b CMP c [unsigned]
+| Hex         | Name       | Comment                |
+|-------------+------------+------------------------|
+| 05 00 0a bc | ADD a b c  | a = b + c [signed]     |
+| 05 00 1a bc | ADDU a b c | a = b + c [unsigned]   |
+| 05 00 2a bc | SUB a b c  | a = b - c [signed]     |
+| 05 00 3a bc | SUBU a b c | a = b - c [unsigned]   |
+| 05 00 4a bc | CMP a b c  | a = b CMP c [signed]   |
+| 05 00 5a bc | CMPU a b c | a = b CMP c [unsigned] |
 
 **** Convience group
-05 00 6a bc # MUL a b c :: a = b * c [signed] bottom n bits
-05 00 7a bc # MULH a b c :: a = (b * c) >> n [signed] top n bits
-05 00 8a bc # MULU a b c :: a = b * c [unsigned] bottom n bits
-05 00 9a bc # MULUH a b c :: a = (b * c) >> n [unsigned] top n bits
-05 00 Aa bc # DIV a b c :: a = b / c [signed]
-05 00 Ba bc # MOD a b c :: a = b % c [signed]
-05 00 Ca bc # DIVU a b c :: a = b / c [unsigned]
-05 00 Da bc # MODU a b c :: a = b % c [unsigned]
+| Hex         | Name        | Comment                                |
+|-------------+-------------+----------------------------------------|
+| 05 00 6a bc | MUL a b c   | a = b * c [signed] bottom n bits       |
+| 05 00 7a bc | MULH a b c  | a = (b * c) >> n [signed] top n bits   |
+| 05 00 8a bc | MULU a b c  | a = b * c [unsigned] bottom n bits     |
+| 05 00 9a bc | MULUH a b c | a = (b * c) >> n [unsigned] top n bits |
+| 05 00 Aa bc | DIV a b c   | a = b / c [signed]                     |
+| 05 00 Ba bc | MOD a b c   | a = b % c [signed]                     |
+| 05 00 Ca bc | DIVU a b c  | a = b / c [unsigned]                   |
+| 05 00 Da bc | MODU a b c  | a = b % c [unsigned]                   |
 
 **** Reserved group 0
-05 00 Ex xx # Reserved
-05 00 Fx xx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 05 00 Ex xx | Reserved |
+| 05 00 Fx xx | Reserved |
 
 **** Sort group
-05 01 0a bc # MAX a b c :: a = MAX(b, c) [signed]
-05 01 1a bc # MAXU a b c :: a = MAX(b, c) [unsigned]
-05 01 2a bc # MIN a b c :: a = MIN(b, c) [signed]
-05 01 3a bc # MINU a b c :: a = MIN(b, c) [unsigned]
+| Hex         | Name       | Comment                  |
+|-------------+------------+--------------------------|
+| 05 01 0a bc | MAX a b c  | a = MAX(b, c) [signed]   |
+| 05 01 1a bc | MAXU a b c | a = MAX(b, c) [unsigned] |
+| 05 01 2a bc | MIN a b c  | a = MIN(b, c) [signed]   |
+| 05 01 3a bc | MINU a b c | a = MIN(b, c) [unsigned] |
 
 **** Binary packing group
-05 01 4a bc # PACK a b c :: a = PACK(b, c)
-05 01 5a bc # UNPACK a b c :: a = UNPACK(b, c)
-05 01 6a bc # PACK8.CO a b c :: a = PACK(b) c = Overload? [signed]
-05 01 7a bc # PACK8U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
-05 01 8a bc # PACK16.CO a b c :: a = PACK(b) c = Overload? [signed]
-05 01 9a bc # PACK16U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
-05 01 Aa bc # PACK32.CO a b c :: a = PACK(b) c = Overload? [signed]
-05 01 Ba bc # PACK32U.CO a b c :: a = PACK(b) c = Overload? [unsigned]
-05 01 Ca bc # Reserved
-05 01 Da bc # Reserved
-05 01 Ex xx # Reserved
-05 01 Fx xx # Reserved
+| Hex         | Name             | Comment                              |
+|-------------+------------------+--------------------------------------|
+| 05 01 4a bc | PACK a b c       | a = PACK(b, c)                       |
+| 05 01 5a bc | UNPACK a b c     | a = UNPACK(b, c)                     |
+| 05 01 6a bc | PACK8.CO a b c   | a = PACK(b) c = Overload? [signed]   |
+| 05 01 7a bc | PACK8U.CO a b c  | a = PACK(b) c = Overload? [unsigned] |
+| 05 01 8a bc | PACK16.CO a b c  | a = PACK(b) c = Overload? [signed]   |
+| 05 01 9a bc | PACK16U.CO a b c | a = PACK(b) c = Overload? [unsigned] |
+| 05 01 Aa bc | PACK32.CO a b c  | a = PACK(b) c = Overload? [signed]   |
+| 05 01 Ba bc | PACK32U.CO a b c | a = PACK(b) c = Overload? [unsigned] |
+| 05 01 Ca bc | Reserved         |                                      |
+| 05 01 Da bc | Reserved         |                                      |
+| 05 01 Ex xx | Reserved         |                                      |
+| 05 01 Fx xx | Reserved         |                                      |
 
 **** Logical group
-05 02 0a bc # AND a b c :: a = b & c
-05 02 1a bc # OR a b c :: a = b | c
-05 02 2a bc # XOR a b c :: a = b XOR c
-05 02 3a bc # NAND a b c :: a != b & c
-05 02 4a bc # NOR a b c :: a != b | c
-05 02 5a bc # XNOR a b c :: a != b XOR c
-05 02 6a bc # MPQ a b c :: a = b MPQ c [Converse Nonimplication]
-05 02 7a bc # LPQ a b c :: a = b LPQ c [Material Nonimplication]
-05 02 8a bc # CPQ a b c :: a = b CPQ c [Material Implication]
-05 02 9a bc # BPQ a b c :: a = b BPQ c [Converse Implication]
+| Hex         | Name       | Comment                               |
+|-------------+------------+---------------------------------------|
+| 05 02 0a bc | AND a b c  | a = b & c                             |
+| 05 02 1a bc | OR a b c   | a = b \vert c                         |
+| 05 02 2a bc | XOR a b c  | a = b XOR c                           |
+| 05 02 3a bc | NAND a b c | a != b & c                            |
+| 05 02 4a bc | NOR a b c  | a != b \vert c                        |
+| 05 02 5a bc | XNOR a b c | a != b XOR c                          |
+| 05 02 6a bc | MPQ a b c  | a = b MPQ c [Converse Nonimplication] |
+| 05 02 7a bc | LPQ a b c  | a = b LPQ c [Material Nonimplication] |
+| 05 02 8a bc | CPQ a b c  | a = b CPQ c [Material Implication]    |
+| 05 02 9a bc | BPQ a b c  | a = b BPQ c [Converse Implication]    |
 
 **** Reserved group 1
-05 02 Ax xx # Reserved
-...
-05 02 Fx xx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 05 02 Ax xx | Reserved |
+| ...         | Reserved |
+| 05 02 Fx xx | Reserved |
 
 **** Bit rotation group
-05 03 0a bc # SAL a b c :: a = b << c [arithmetically]
-05 03 1a bc # SAR a b c :: a = b >> c [arithmetically]
-05 03 2a bc # SL0 a b c :: a = b << c [Fill with zeros]
-05 03 3a bc # SR0 a b c :: a = b >> c [Fill with zeros]
-05 03 4a bc # SL1 a b c :: a = b << c [Fill with ones]
-05 03 5a bc # SR1 a b c :: a = b >> c [Fill with ones]
-05 03 6a bc # ROL a b c :: a = ROL(b, c) [Circular rotate left]
-05 03 7a bc # ROR a b c :: a = ROR(b, c) [Circular rotate right]
+| Hex         | Name      | Comment                               |
+|-------------+-----------+---------------------------------------|
+| 05 03 0a bc | SAL a b c | a = b << c [arithmetically]           |
+| 05 03 1a bc | SAR a b c | a = b >> c [arithmetically]           |
+| 05 03 2a bc | SL0 a b c | a = b << c [Fill with zeros]          |
+| 05 03 3a bc | SR0 a b c | a = b >> c [Fill with zeros]          |
+| 05 03 4a bc | SL1 a b c | a = b << c [Fill with ones]           |
+| 05 03 5a bc | SR1 a b c | a = b >> c [Fill with ones]           |
+| 05 03 6a bc | ROL a b c | a = ROL(b, c) [Circular rotate left]  |
+| 05 03 7a bc | ROR a b c | a = ROR(b, c) [Circular rotate right] |
 
 **** Load group
-05 03 8a bc # LOADX a b c :: a = MEM[b+c]
-05 03 9a bc # LOADX8 a b c :: a = MEM[b+c] [signed 8bits]
-05 03 Aa bc # LOADXU8 a b c :: a = MEM[b+c] [unsigned 8bits]
-05 03 Ba bc # LOADX16 a b c :: a = MEM[b+c] [signed 16bits]
-05 03 Ca bc # LOADXU16 a b c :: a = MEM[b+c] [unsigned 16bits]
-05 03 Da bc # LOADX32 a b c :: a = MEM[b+c] [signed 32bits]
-05 03 Ea bc # LOADXU32 a b c :: a = MEM[b+c] [unsigned 32bits]
-05 03 Fx xx # Reserved
-05 04 0x xx # Reserved
-05 04 1x xx # Reserved
-05 04 2x xx # Reserved
-05 04 3x xx # Reserved
-05 04 4x xx # Reserved
-05 04 5x xx # Reserved
-05 04 6x xx # Reserved
-05 04 7x xx # Reserved
+| Hex         | Name           | Comment                        |
+|-------------+----------------+--------------------------------|
+| 05 03 8a bc | LOADX a b c    | a = MEM[b+c]                   |
+| 05 03 9a bc | LOADX8 a b c   | a = MEM[b+c] [signed 8bits]    |
+| 05 03 Aa bc | LOADXU8 a b c  | a = MEM[b+c] [unsigned 8bits]  |
+| 05 03 Ba bc | LOADX16 a b c  | a = MEM[b+c] [signed 16bits]   |
+| 05 03 Ca bc | LOADXU16 a b c | a = MEM[b+c] [unsigned 16bits] |
+| 05 03 Da bc | LOADX32 a b c  | a = MEM[b+c] [signed 32bits]   |
+| 05 03 Ea bc | LOADXU32 a b c | a = MEM[b+c] [unsigned 32bits] |
+| 05 03 Fx xx | Reserved       |                                |
+| 05 04 0x xx | Reserved       |                                |
+| 05 04 1x xx | Reserved       |                                |
+| 05 04 2x xx | Reserved       |                                |
+| 05 04 3x xx | Reserved       |                                |
+| 05 04 4x xx | Reserved       |                                |
+| 05 04 5x xx | Reserved       |                                |
+| 05 04 6x xx | Reserved       |                                |
+| 05 04 7x xx | Reserved       |                                |
 
 **** Store group
-05 04 8a bc # STOREX a b c :: MEM[b+c] = a
-05 04 9a bc # STOREX8 a b c :: MEM[b+c] = a [8bits]
-05 04 Aa bc # STOREX16 a b c :: MEM[b+c] = a [16bits]
-05 04 Ba bc # STOREX32 a b c :: MEM[b+c] = a [32bits]
-05 04 Cx xx # Reserved
-05 04 Dx xx # Reserved
-05 04 Ex xx # Reserved
-05 04 Fx xx # Reserved
+| Hex         | Name           | Comment               |
+|-------------+----------------+-----------------------|
+| 05 04 8a bc | STOREX a b c   | MEM[b+c] = a          |
+| 05 04 9a bc | STOREX8 a b c  | MEM[b+c] = a [8bits]  |
+| 05 04 Aa bc | STOREX16 a b c | MEM[b+c] = a [16bits] |
+| 05 04 Ba bc | STOREX32 a b c | MEM[b+c] = a [32bits] |
+| 05 04 Cx xx | Reserved       |                       |
+| 05 04 Dx xx | Reserved       |                       |
+| 05 04 Ex xx | Reserved       |                       |
+| 05 04 Fx xx | Reserved       |                       |
 
 **** Reserved group 2
-05 05 0x xx # Reserved
-...
-05 FF Fx xx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 05 05 0x xx | Reserved |
+| ...         | Reserved |
+| 05 FF Fx xx | Reserved |
 
 *** 06 nn na bc :: 3OP Floating group
 *** 07 nn na bc :: 3OP SIMD group
@@ -167,28 +191,39 @@
 2OP nn nn is the XOP, a = OP b
 
 *** 09 nn nn ab :: 2OP Integer group
-**** Numeric subgroup
-09 00 00 ab # NEG a b :: a = (b > 0) ? -b : b
-09 00 01 ab # ABS a b :: a = |b|
-09 00 02 ab # NABS a b :: a = -|b|
+**** Numeric group
+| Hex         | Name     | Comment              |
+|-------------+----------+----------------------|
+| 09 00 00 ab | NEG a b  | a = (b > 0) ? -b : b |
+| 09 00 01 ab | ABS a b  | a = \vert b \vert    |
+| 09 00 02 ab | NABS a b | a = - \vert b \vert  |
 
-**** Movement subgroup
-09 00 03 ab # SWAP a b :: a <=> b
-09 00 04 ab # COPY a b :: a = b
-09 00 05 ab # MOVE a b :: a = b; b = 0
+**** Movement group
+| Hex         | Name     | Comment      |
+|-------------+----------+--------------|
+| 09 00 03 ab | SWAP a b | a <=> b      |
+| 09 00 04 ab | COPY a b | a = b        |
+| 09 00 05 ab | MOVE a b | a = b; b = 0 |
 
 **** Reserved Block 0
-09 00 06 xx # Reserved
-...
-09 00 FF xx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 09 00 06 xx | Reserved |
+| ...         | Reserved |
+| 09 00 FF xx | Reserved |
 
-**** Function call subgroup
-09 01 00 ab # BRANCH a b :: MEM[b] = PC; PC = a
-09 01 01 ab # CALL a b :: MEM[b] = PC; b = b + (register size in bytes); PC = a
+**** Function call group
+| Hex         | Name       | Comment                                               |
+|-------------+------------+-------------------------------------------------------|
+| 09 01 00 ab | BRANCH a b | MEM[b] = PC; PC = a                                   |
+| 09 01 01 ab | CALL a b   | MEM[b] = PC; b = b + (register size in bytes); PC = a |
+
 **** Reserved Block 1
-09 01 02 xx # Reserved
-...
-09 FF FF xx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 09 01 02 xx | Reserved |
+| ...         | Reserved |
+| 09 FF FF xx | Reserved |
 
 *** 0A nn nn ab :: 2OP Floating group
 *** 0B nn nn ab :: 2OP SIMD group
@@ -198,131 +233,165 @@
 1OP nn nn n is the XOP, a = OP a
 
 *** 0D nn nn na :: 1OP group
-**** State subgroup
-0D 00 00 0a # READPC a :: a = PC
-0D 00 00 1a # READSCID a :: a = SCID
-0D 00 00 2a # FALSE a :: a = 0
-0D 00 00 3a # TRUE a :: a = FF ... FF
+**** State group
+| Hex         | Name       | Comment       |
+|-------------+------------+---------------|
+| 0D 00 00 0a | READPC a   | a = PC        |
+| 0D 00 00 1a | READSCID a | a = SCID      |
+| 0D 00 00 2a | FALSE a    | a = 0         |
+| 0D 00 00 3a | TRUE a     | a = FF ... FF |
 
 **** Reserved block 0
-0D 00 00 4x # Reserved
-...
-0D 00 FF Fx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 0D 00 00 4x | Reserved |
+| ...         | Reserved |
+| 0D 00 FF Fx | Reserved |
 
-**** Function return subgroup
-0D 01 00 0a # JSR_COROUTINE a; PC = a
-0D 01 00 1a # RET a :: PC = MEM[a]; a = a - (register size in bytes)
+**** Function return group
+| Hex         | Name            | Comment                                       |
+|-------------+-----------------+-----------------------------------------------|
+| 0D 01 00 0a | JSR_COROUTINE a | PC = a                                        |
+| 0D 01 00 1a | RET a           | PC = MEM[a]; a = a - (register size in bytes) |
 
 **** Reserved block 1
-0D 01 00 2x # Reserved
-...
-0D 01 FF Fx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 0D 01 00 2x | Reserved |
+| ...         | Reserved |
+| 0D 01 FF Fx | Reserved |
 
-**** Stack state Subgroup
-0D 02 00 0a # PUSHPC a :: MEM[a] = PC; a = a + (register size in bytes)
-0D 02 00 1a # POPPC a :: PC = MEM[a]; a = a - (register size in bytes)
+**** Stack state group
+| Hex         | Name     | Comment                                       |
+|-------------+----------+-----------------------------------------------|
+| 0D 02 00 0a | PUSHPC a | MEM[a] = PC; a = a + (register size in bytes) |
+| 0D 02 00 1a | POPPC a  | PC = MEM[a]; a = a - (register size in bytes) |
 
 **** Reserved
-0D 02 00 2x # Reserved
-...
-0D FF FF Fx # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 0D 02 00 2x | Reserved |
+| ...         | Reserved |
+| 0D FF FF Fx | Reserved |
 
 ** 2OPI Groups
 2OPI ii ii is the Immediate, a = b OP ii ii
 
 *** 2OPI Integer
-0E ab ii ii # ADDI a b ii ii :: a = b + ii ii [signed]
-0F ab ii ii # ADDUI a b ii ii :: a = b + ii ii [unsigned]
-10 ab ii ii # SUBI a b ii ii :: a = b - ii ii [signed]
-11 ab ii ii # SUBUI a b ii ii :: a = b - ii ii [unsigned]
+| Hex         | Name            | Comment                  |
+|-------------+-----------------+--------------------------|
+| 0E ab ii ii | ADDI a b ii ii  | a = b + ii ii [signed]   |
+| 0F ab ii ii | ADDUI a b ii ii | a = b + ii ii [unsigned] |
+| 10 ab ii ii | SUBI a b ii ii  | a = b - ii ii [signed]   |
+| 11 ab ii ii | SUBUI a b ii ii | a = b - ii ii [unsigned] |
 
 *** 2OPI Integer signed compare
-12 ab ii ii # CMPI a b ii ii :: a = b CMP ii ii [signed]
+| Hex         | Name           | Comment                  |
+|-------------+----------------+--------------------------|
+| 12 ab ii ii | CMPI a b ii ii | a = b CMP ii ii [signed] |
 
 *** 2OPI Integer Load
-13 ab ii ii # LOAD a b ii ii :: a = MEM[b + ii ii]
-14 ab ii ii # LOAD8 a b ii ii :: a = MEM[b + ii ii] [signed 8bits]
-15 ab ii ii # LOADU8 a b ii ii :: a = MEM[b + ii ii] [unsigned 8bits]
-16 ab ii ii # LOAD16 a b ii ii :: a = MEM[b + ii ii] [signed 16bits]
-17 ab ii ii # LOADU16 a b ii ii :: a = MEM[b + ii ii] [unsigned 16bits]
-18 ab ii ii # LOAD32 a b ii ii :: a = MEM[b + ii ii] [signed 32bits]
-19 ab ii ii # LOADU32 a b ii ii :: a = MEM[b + ii ii] [unsigned 32bits]
-1A ab ii ii # Reserved
-1B ab ii ii # Reserved
-1C ab ii ii # Reserved
-1D ab ii ii # Reserved
-1E ab ii ii # Reserved
+| Hex         | Name              | Comment                              |
+|-------------+-------------------+--------------------------------------|
+| 13 ab ii ii | LOAD a b ii ii    | a = MEM[b + ii ii]                   |
+| 14 ab ii ii | LOAD8 a b ii ii   | a = MEM[b + ii ii] [signed 8bits]    |
+| 15 ab ii ii | LOADU8 a b ii ii  | a = MEM[b + ii ii] [unsigned 8bits]  |
+| 16 ab ii ii | LOAD16 a b ii ii  | a = MEM[b + ii ii] [signed 16bits]   |
+| 17 ab ii ii | LOADU16 a b ii ii | a = MEM[b + ii ii] [unsigned 16bits] |
+| 18 ab ii ii | LOAD32 a b ii ii  | a = MEM[b + ii ii] [signed 32bits]   |
+| 19 ab ii ii | LOADU32 a b ii ii | a = MEM[b + ii ii] [unsigned 32bits] |
+| 1A ab ii ii | Reserved          |                                      |
+| 1B ab ii ii | Reserved          |                                      |
+| 1C ab ii ii | Reserved          |                                      |
+| 1D ab ii ii | Reserved          |                                      |
+| 1E ab ii ii | Reserved          |                                      |
 
 *** 2OPI Integer unsigned compare
-1F ab ii ii # CMPUI a b ii ii :: a = b CMP ii ii [unsigned]
+| Hex         | Name            | Comment                    |
+|-------------+-----------------+----------------------------|
+| 1F ab ii ii | CMPUI a b ii ii | a = b CMP ii ii [unsigned] |
 
 *** 2OPI Integer store
-20 ab ii ii # STORE a b ii :: MEM[b + ii ii] = a
-21 ab ii ii # STORE8 a b ii :: MEM[b + ii ii] = a [signed 8bits]
-22 ab ii ii # STORE16 a b ii :: MEM[b + ii ii] = a [signed 16bits]
-23 ab ii ii # STORE32 a b ii :: MEM[b + ii ii] = a [signed 32bits]
-24 ab ii ii # Reserved
-25 ab ii ii # Reserved
-26 ab ii ii # Reserved
-27 ab ii ii # Reserved
-28 ab ii ii # Reserved
-29 ab ii ii # Reserved
-2A ab ii ii # Reserved
-2B ab ii ii # Reserved
+| Hex         | Name           | Comment                            |
+|-------------+----------------+------------------------------------|
+| 20 ab ii ii | STORE a b ii   | MEM[b + ii ii] = a                 |
+| 21 ab ii ii | STORE8 a b ii  | MEM[b + ii ii] = a [signed 8bits]  |
+| 22 ab ii ii | STORE16 a b ii | MEM[b + ii ii] = a [signed 16bits] |
+| 23 ab ii ii | STORE32 a b ii | MEM[b + ii ii] = a [signed 32bits] |
+| 24 ab ii ii | Reserved       |                                    |
+| 25 ab ii ii | Reserved       |                                    |
+| 26 ab ii ii | Reserved       |                                    |
+| 27 ab ii ii | Reserved       |                                    |
+| 28 ab ii ii | Reserved       |                                    |
+| 29 ab ii ii | Reserved       |                                    |
+| 2A ab ii ii | Reserved       |                                    |
+| 2B ab ii ii | Reserved       |                                    |
 
 ** 1OPI Groups
 1OPI i ii ii is the Immediate, a = a OP i ii ii
 
 *** Conditional Integer Jumps
-2C 0a ii ii # JUMP.C a ii ii :: Carry? a; PC = PC + i ii ii
-2C 1a ii ii # JUMP.B a ii ii :: Borrow? a; PC = PC + i ii ii
-2C 2a ii ii # JUMP.O a ii ii :: Overflow? a; PC = PC + i ii ii
-2C 3a ii ii # JUMP.G a ii ii :: GT? a; PC = PC + i ii ii
-2C 4a ii ii # JUMP.GE a ii ii :: GT? a | EQ? a; PC = PC + i ii ii
-2C 5a ii ii # JUMP.E a ii ii :: EQ? a; PC = PC + i ii ii
-2C 6a ii ii # JUMP.NE a ii ii :: NEQ? a; PC = PC + i ii ii
-2C 7a ii ii # JUMP.LE a ii ii :: LT? a | EQ? a; PC = PC + i ii ii
-2C 8a ii ii # JUMP.L a ii ii :: LT? a; PC = PC + i ii ii
-2C 9a ii ii # JUMP.Z a ii ii :: ZERO? a; PC = PC + i ii ii
-2C Aa ii ii # JUMP.NZ a ii ii :: NZERO? a; PC = PC + i ii ii
-2C Bx xx xx # Reserved
-2C Cx xx xx # Reserved
-2C Dx xx xx # Reserved
-2C Ex xx xx # Reserved
-2C Fx xx xx # Reserved
+| Hex         | Name            | Comment                              |
+|-------------+-----------------+--------------------------------------|
+| 2C 0a ii ii | JUMP.C a ii ii  | Carry? a; PC = PC + i ii ii          |
+| 2C 1a ii ii | JUMP.B a ii ii  | Borrow? a; PC = PC + i ii ii         |
+| 2C 2a ii ii | JUMP.O a ii ii  | Overflow? a; PC = PC + i ii ii       |
+| 2C 3a ii ii | JUMP.G a ii ii  | GT? a; PC = PC + i ii ii             |
+| 2C 4a ii ii | JUMP.GE a ii ii | GT? a \vert EQ? a; PC = PC + i ii ii |
+| 2C 5a ii ii | JUMP.E a ii ii  | EQ? a; PC = PC + i ii ii             |
+| 2C 6a ii ii | JUMP.NE a ii ii | NEQ? a; PC = PC + i ii ii            |
+| 2C 7a ii ii | JUMP.LE a ii ii | LT? a \vert EQ? a; PC = PC + i ii ii |
+| 2C 8a ii ii | JUMP.L a ii ii  | LT? a; PC = PC + i ii ii             |
+| 2C 9a ii ii | JUMP.Z a ii ii  | ZERO? a; PC = PC + i ii ii           |
+| 2C Aa ii ii | JUMP.NZ a ii ii | NZERO? a; PC = PC + i ii ii          |
+| 2C Bx xx xx | Reserved        |                                      |
+| 2C Cx xx xx | Reserved        |                                      |
+| 2C Dx xx xx | Reserved        |                                      |
+| 2C Ex xx xx | Reserved        |                                      |
+| 2C Fx xx xx | Reserved        |                                      |
 
 *** Branch Immediates
-2D 0a ii ii # CALLI a ii ii :: MEM[a] = PC; a = a + (register size in bytes); PC = PC + ii ii
-2D 1a ii ii # LOADI a ii ii :: a = ii ii (signed)
-2D 2a ii ii # LOADUI a ii ii :: a = ii ii (unsigned)
-2D 3a ii ii # SALI a ii ii :: a = a << ii ii [arithmetically]
-2D 4a ii ii # SARI a ii ii :: a = a >> ii ii [arithmetically]
-2D 5a ii ii # SL0I a ii ii :: a = a << ii ii [Fill with zeros]
-2D 6a ii ii # SR0I a ii ii :: a = a >> ii ii [Fill with zeros]
-2D 7a ii ii # SL1I a ii ii :: a = a << ii ii [Fill with ones]
-2D 8a ii ii # SR1I a ii ii :: a = a >> ii ii [Fill with ones]
+| Hex         | Name           | Comment                                                        |
+|-------------+----------------+----------------------------------------------------------------|
+| 2D 0a ii ii | CALLI a ii ii  | MEM[a] = PC; a = a + (register size in bytes); PC = PC + ii ii |
+| 2D 1a ii ii | LOADI a ii ii  | a = ii ii (signed)                                             |
+| 2D 2a ii ii | LOADUI a ii ii | a = ii ii (unsigned)                                           |
+| 2D 3a ii ii | SALI a ii ii   | a = a << ii ii [arithmetically]                                |
+| 2D 4a ii ii | SARI a ii ii   | a = a >> ii ii [arithmetically]                                |
+| 2D 5a ii ii | SL0I a ii ii   | a = a << ii ii [Fill with zeros]                               |
+| 2D 6a ii ii | SR0I a ii ii   | a = a >> ii ii [Fill with zeros]                               |
+| 2D 7a ii ii | SL1I a ii ii   | a = a << ii ii [Fill with ones]                                |
+| 2D 8a ii ii | SR1I a ii ii   | a = a >> ii ii [Fill with ones]                                |
 
 ** 0OPI group
 0OPI ii ii is the Immediate, OP ii ii
 
 *** Unconditional jumps
-3C 00 ii ii # JUMP ii ii :: PC = PC + ii ii
+| Hex         | Name       | Comment         |
+|-------------+------------+-----------------|
+| 3C 00 ii ii | JUMP ii ii | PC = PC + ii ii |
 
 ** Reserved Block 0
 At this time these instructions only produce a warning; but could do anything.
 DO NOT USE.
-3D 00 00 00 # Reserved
-...
-41 FF FF FF # Reserve
+
+| Hex         | Name     |
+|-------------+----------|
+| 3D 00 00 00 | Reserved |
+| ...         | Reserved |
+| 41 FF FF FF | Reserve  |
 
 ** HALCODE Group
 42 hh hh hh is the HALCODE callID, invalid HALCODE SHOULD NOT BE USED.
 
 *** HALCODE Reserved for Operating Systems
 The following block contains both instructions that are reserved for Operating systems and for internal use by Operating systems
-42 00 xx xx # Reserved
-...
-42 0F xx xx # Reserved
+
+| Hex         | Name     |
+|-------------+----------|
+| 42 00 xx xx | Reserved |
+| ...         | Reserved |
+| 42 0F xx xx | Reserved |
 
 *** Tape console HALCODE
 This HALCODE is used for interacting with any tape console attached to the system.
@@ -335,54 +404,92 @@ Padding with Zeros til start/end of page/segment however is acceptable.
 
 **** Standard compatibility requirements
 The following 3 devices must exist with the following exact IDs
-Keyboard/tty :: 00 00 00 00
-Tape 1 :: 00 00 11 00
-Tape 2 :: 00 00 11 01
+| Interface Name | ID          |
+|----------------+-------------|
+| Keyboard/tty   | 00 00 00 00 |
+| Tape 1         | 00 00 11 00 |
+| Tape 2         | 00 00 11 01 |
 
 **** Required Device HALCODE
-42 10 00 00 # FOPEN :: Feed on device who's ID matches the contents register 0 until first non-zero byte is found.
-42 10 00 01 # FCLOSE :: Close out writes to device who's ID matches the contents of register 0.
-42 10 00 02 # FSEEK :: seek forward or backward the number of bytes specified in register 1 on the device who's ID matches the contents of register 0.
-42 10 00 03 # REWIND :: rewind back to first non-zero byte found on tape.
+| Hex         | Name   | Comment                                                                                                                          |
+|-------------+--------+----------------------------------------------------------------------------------------------------------------------------------|
+| 42 10 00 00 | FOPEN  | Feed on device who's ID matches the contents register 0 until first non-zero byte is found.                                      |
+| 42 10 00 01 | FCLOSE | Close out writes to device who's ID matches the contents of register 0.                                                          |
+| 42 10 00 02 | FSEEK  | seek forward or backward the number of bytes specified in register 1 on the device who's ID matches the contents of register 0. |
+| 42 10 00 03 | REWIND | rewind back to first non-zero byte found on tape.                                                                                |
 
 **** Reserved Block for Hardware specific implementation details
-42 10 00 04 # Reserved
-...
-42 10 00 FF # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 42 10 00 04 | Reserved |
+| ...         | Reserved |
+| 42 10 00 FF | Reserved |
 
 **** Required Device capability HALCODE
 ***** Device Read HALCODE
-42 10 01 00 # FGETC :: read 1 byte into register 0 from device who's ID is in register 1
+| Hex         | Name  | Comment                                                           |
+|-------------+-------+-------------------------------------------------------------------|
+| 42 10 01 00 | FGETC | read 1 byte into register 0 from device who's ID is in register 1 |
 
 ***** Reserved Block for Hardware specific implementation details
-42 10 01 01 # Reserved
-...
-42 10 01 FF # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 42 10 01 01 | Reserved |
+| ...         | Reserved |
+| 42 10 01 FF | Reserved |
 
 ***** Device Write HALCODE
-42 10 02 00 # FPUTC :: write 1 byte from register 0 to device who's ID is in register 1
+| Hex         | Name  | Comment                                                          |
+|-------------+-------+------------------------------------------------------------------|
+| 42 10 02 00 | FPUTC | write 1 byte from register 0 to device who's ID is in register 1 |
+
 ***** Reserved Block for Hardware specific implementation details
-42 10 02 01 # Reserved
-...
-42 10 02 FF # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 42 10 02 01 | Reserved |
+| ...         | Reserved |
+| 42 10 02 FF | Reserved |
 
 **** Reserved Block for Future HALCODE Expansion
-42 10 03 00 # Reserved
-...
-42 FF FF FF # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 42 10 03 00 | Reserved |
+| ...         | Reserved |
+| 42 FF FF FF | Reserved |
 
 ** Reserved Block 1
 At this time these instructions only produce a warning; but could do anything.
 DO NOT USE.
-43 00 00 00 # Reserved
-...
-FE FF FF FF # Reserved
+| Hex         | Name     |
+|-------------+----------|
+| 43 00 00 00 | Reserved |
+| ...         | Reserved |
+| FE FF FF FF | Reserved |
 
 ** 0OP
-FF xx xx xx # HALT equivelent, although these instructions will all be treated as HALTs. DO NOT USE THEM.
-FF FF FF FF # Proper HALT
+| Hex         | Name             | Comment                                                                    |
+|-------------+------------------+----------------------------------------------------------------------------|
+| FF xx xx xx | HALT equivelent. | Although these instructions will all be treated as HALTs. DO NOT USE THEM. |
+| FF FF FF FF | Proper HALT      |                                                                            |
 
 * Encoding/Decoding Reference
 ** Registers
 There is a direct and consistent relationship between the nybbles and the registers.
-Reg0 -> 0, Reg1 -> 1, ... Reg14 -> E, Reg15 -> F
+| Hex | Name  |
+|-----+-------|
+|   0 | REG0  |
+|   1 | REG1  |
+|   2 | REG2  |
+|   3 | REG3  |
+|   4 | REG4  |
+|   5 | REG5  |
+|   6 | REG6  |
+|   7 | REG7  |
+|   8 | REG8  |
+|   9 | REG9  |
+|   A | REG10 |
+|   B | REG11 |
+|   C | REG12 |
+|   D | REG13 |
+|   E | REG14 |
+|   F | REG15 |
