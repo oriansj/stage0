@@ -717,42 +717,139 @@ void MINU(struct lilith* vm, struct Instruction* c)
 
 void PACK(struct lilith* vm, struct Instruction* c)
 {
+	uint8_t i;
+	bool bit1, bit2;
+	vm->reg[c->reg0] = 0;
 
+	for(i = 31; i > 0; i = i - 1)
+	{
+		bit1 = (vm->reg[c->reg1] >> i) & 1;
+		bit2 = (vm->reg[c->reg2] >> i) & 1;
+
+		if(bit1)
+		{
+			if(bit2)
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] * 2 + 1;
+			}
+			else
+			{
+				vm->reg[c->reg0] = vm->reg[c->reg0] * 2;
+			}
+		}
+	}
 }
 
 void UNPACK(struct lilith* vm, struct Instruction* c)
 {
+	uint8_t i;
+	bool bit1, bit2;
 
+	vm->reg[c->reg0] = 0;
+	for(i = 0; i < 32; i = i + 1)
+	{
+		bit1 = (vm->reg[c->reg1] >> (31 - i)) & 1;
+		bit2 = (vm->reg[c->reg2] >> (31 - i)) & 1;
+
+		if(bit1)
+		{
+			vm->reg[c->reg0] = vm->reg[c->reg0] * 2 + bit2;
+		}
+		else
+		{
+			vm->reg[c->reg0] = vm->reg[c->reg0] * 2;
+		}
+	}
 }
 
 void PACK8_CO(struct lilith* vm, struct Instruction* c)
 {
-
+	if(0x7F < (int32_t)(vm->reg[c->reg1]))
+	{
+		/* Saturate in the event of Overflow */
+		vm->reg[c->reg0] = 0x7F;
+		vm->reg[c->reg2] = vm->reg[c->reg2] | Overflow;
+	}
+	else if (-128 > (int32_t)(vm->reg[c->reg1]))
+	{
+		/* Saturate in the event of Underflow */
+		vm->reg[c->reg0] = 0x80;
+		vm->reg[c->reg2] = vm->reg[c->reg2] | Overflow;
+	}
+	else
+	{
+		/* Unset Overflow bit if set */
+		vm->reg[c->reg0] = vm->reg[c->reg1];
+		vm->reg[c->reg2] = vm->reg[c->reg2] & ~(Overflow);
+	}
 }
 
 void PACK8U_CO(struct lilith* vm, struct Instruction* c)
 {
-
+	if(0xFF < vm->reg[c->reg1])
+	{
+		/* Saturate in the event of Overflow */
+		vm->reg[c->reg0] = 0xFF;
+		vm->reg[c->reg2] = vm->reg[c->reg2] | Overflow;
+	}
+	else
+	{
+		/* Unset Overflow bit if set */
+		vm->reg[c->reg0] = vm->reg[c->reg1];
+		vm->reg[c->reg2] = vm->reg[c->reg2] & ~(Overflow);
+	}
 }
 
 void PACK16_CO(struct lilith* vm, struct Instruction* c)
 {
-
+	if(0x7FFF < (int32_t)(vm->reg[c->reg1]))
+	{
+		/* Saturate in the event of Overflow */
+		vm->reg[c->reg0] = 0x7FFF;
+		vm->reg[c->reg2] = vm->reg[c->reg2] | Overflow;
+	}
+	else if (-32768 > (int32_t)(vm->reg[c->reg1]))
+	{
+		/* Saturate in the event of Underflow */
+		vm->reg[c->reg0] = 0x8000;
+		vm->reg[c->reg2] = vm->reg[c->reg2] | Overflow;
+	}
+	else
+	{
+		/* Unset Overflow bit if set */
+		vm->reg[c->reg0] = vm->reg[c->reg1];
+		vm->reg[c->reg2] = vm->reg[c->reg2] & ~(Overflow);
+	}
 }
 
 void PACK16U_CO(struct lilith* vm, struct Instruction* c)
 {
-
+	if(0xFFFF < vm->reg[c->reg1])
+	{
+		/* Saturate in the event of Overflow */
+		vm->reg[c->reg0] = 0xFFFF;
+		vm->reg[c->reg2] = vm->reg[c->reg2] | Overflow;
+	}
+	else
+	{
+		/* Unset Overflow bit if set */
+		vm->reg[c->reg0] = vm->reg[c->reg1];
+		vm->reg[c->reg2] = vm->reg[c->reg2] & ~(Overflow);
+	}
 }
 
 void PACK32_CO(struct lilith* vm, struct Instruction* c)
 {
-
+		/* Unset Overflow bit if set */
+		vm->reg[c->reg0] = vm->reg[c->reg1];
+		vm->reg[c->reg2] = vm->reg[c->reg2] & ~(Overflow);
 }
 
 void PACK32U_CO(struct lilith* vm, struct Instruction* c)
 {
-
+		/* Unset Overflow bit if set */
+		vm->reg[c->reg0] = vm->reg[c->reg1];
+		vm->reg[c->reg2] = vm->reg[c->reg2] & ~(Overflow);
 }
 
 void AND(struct lilith* vm, struct Instruction* c)
@@ -837,12 +934,32 @@ void SR1(struct lilith* vm, struct Instruction* c)
 
 void ROL(struct lilith* vm, struct Instruction* c)
 {
+	uint32_t i, tmp;
+	bool bit;
 
+	tmp = vm->reg[c->reg1];
+	for(i = vm->reg[c->reg2]; i > 0; i = i - 1)
+	{
+		bit = (tmp & 1);
+		tmp = (tmp / 2) + (bit << 31);
+	}
+
+	vm->reg[c->reg0] = tmp;
 }
 
 void ROR(struct lilith* vm, struct Instruction* c)
 {
+	uint32_t i, tmp;
+	bool bit;
 
+	tmp = vm->reg[c->reg1];
+	for(i = vm->reg[c->reg2]; i > 0; i = i - 1)
+	{
+		bit = ((tmp >> 31) & 1);
+		tmp = (tmp * 2) + bit;
+	}
+
+	vm->reg[c->reg0] = tmp;
 }
 
 void LOADX(struct lilith* vm, struct Instruction* c)
