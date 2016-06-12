@@ -3,7 +3,8 @@
 uint32_t performance_counter;
 
 /* Prototypes for functions in vm_instructions.c*/
-void vm_FOPEN(struct lilith* vm);
+void vm_FOPEN_READ(struct lilith* vm);
+void vm_FOPEN_WRITE(struct lilith* vm);
 void vm_FCLOSE(struct lilith* vm);
 void vm_FSEEK(struct lilith* vm);
 void vm_REWIND(struct lilith* vm);
@@ -318,31 +319,31 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 
 	switch(c->HAL_CODE)
 	{
-		case 0x100000: /* fopen */
+		case 0x100000: /* fopen_read */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "FOPEN", 19);
+			strncpy(Name, "FOPEN_READ", 19);
 			#endif
 
-			vm_FOPEN(vm);
+			vm_FOPEN_READ(vm);
 			break;
 		}
-		case 0x100001: /* fclose */
+		case 0x100001: /* fopen_write */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "FOPEN_WRITE", 19);
+			#endif
+
+			vm_FOPEN_WRITE(vm);
+			break;
+		}
+		case 0x100002: /* fclose */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FCLOSE", 19);
 			#endif
 
 			vm_FCLOSE(vm);
-			break;
-		}
-		case 0x100002: /* fseek */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "FSEEK", 19);
-			#endif
-
-			vm_FSEEK(vm);
 			break;
 		}
 		case 0x100003: /* rewind */
@@ -352,6 +353,15 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			#endif
 
 			vm_REWIND(vm);
+			break;
+		}
+		case 0x100004: /* fseek */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "FSEEK", 19);
+			#endif
+
+			vm_FSEEK(vm);
 			break;
 		}
 		case 0x100100: /* fgetc */

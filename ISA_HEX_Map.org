@@ -411,12 +411,14 @@ The following 3 devices must exist with the following exact IDs
 | Tape 2         | 00 00 11 01 |
 
 **** Required Device HALCODE
-| Hex         | Name   | Comment                                                                                                                          |
-|-------------+--------+----------------------------------------------------------------------------------------------------------------------------------|
-| 42 10 00 00 | FOPEN  | Feed on device who's ID matches the contents register 0 until first non-zero byte is found.                                      |
-| 42 10 00 01 | FCLOSE | Close out writes to device who's ID matches the contents of register 0.                                                          |
-| 42 10 00 02 | FSEEK  | seek forward or backward the number of bytes specified in register 1 on the device who's ID matches the contents of register 0. |
-| 42 10 00 03 | REWIND | rewind back to first non-zero byte found on tape.                                                                                |
+| Hex         | Name        | Comment                                                                                        |
+|-------------+-------------+------------------------------------------------------------------------------------------------|
+| 42 10 00 00 | FOPEN_READ  | Feed on device who's ID matches the contents of register 0 until first non-zero byte is found. |
+| 42 10 00 01 | FOPEN_WRITE | Feed on device who's ID matches the contents of register 0 until first zero byte is found      |
+| 42 10 00 02 | FCLOSE      | Close out writes to device who's ID matches the contents of register 0.                        |
+| 42 10 00 03 | REWIND      | rewind back to first non-zero byte found on tape.                                              |
+| 42 10 00 04 | FSEEK       | seek forward or backward the number of bytes specified in register 1 on                        |
+|             |             | the device who's ID matches the contents of register 0.                                        |
 
 **** Reserved Block for Hardware specific implementation details
 | Hex         | Name     |

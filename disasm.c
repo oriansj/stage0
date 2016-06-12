@@ -980,24 +980,29 @@ void decode_HALCODE(struct Instruction* c)
 	/* Convert to Human readable form */
 	switch(c->HAL_CODE)
 	{
-		case 0x100000: /* FOPEN */
+		case 0x100000: /* FOPEN_READ */
 		{
-			strncpy(Name, "FOPEN", 19);
+			strncpy(Name, "FOPEN_READ", 19);
 			break;
 		}
-		case 0x100001: /* FCLOSE */
+		case 0x100001: /* FOPEN_WRITE */
+		{
+			strncpy(Name, "FOPEN_WRITE", 19);
+			break;
+		}
+		case 0x100002: /* FCLOSE */
 		{
 			strncpy(Name, "FCLOSE", 19);
-			break;
-		}
-		case 0x100002: /* FSEEK */
-		{
-			strncpy(Name, "FSEEK", 19);
 			break;
 		}
 		case 0x100003: /* REWIND */
 		{
 			strncpy(Name, "REWIND", 19);
+			break;
+		}
+		case 0x100004: /* FSEEK */
+		{
+			strncpy(Name, "FSEEK", 19);
 			break;
 		}
 		case 0x100100: /* FGETC */

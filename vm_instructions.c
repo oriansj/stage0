@@ -128,11 +128,24 @@ uint32_t shift_register(uint32_t source, uint32_t amount, bool left, bool zero)
 	return tmp;
 }
 
-void vm_FOPEN(struct lilith* vm)
+void vm_FOPEN_READ(struct lilith* vm)
 {
 	if(0x00001100 == vm->reg[0])
 	{
 		tape_01 = fopen("tape_01", "r");
+	}
+
+	if (0x00001101 == vm->reg[0])
+	{
+		tape_02 = fopen("tape_02", "r");
+	}
+}
+
+void vm_FOPEN_WRITE(struct lilith* vm)
+{
+	if(0x00001100 == vm->reg[0])
+	{
+		tape_01 = fopen("tape_01", "w");
 	}
 
 	if (0x00001101 == vm->reg[0])

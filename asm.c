@@ -309,14 +309,14 @@ void assemble(struct Token* p)
 	setExpression(p, "JUMP", "3C00", 4);
 
 	/* HALCODE Group */
-	setExpression(p, "FOPEN", "42100000", 4);
-	setExpression(p, "FCLOSE", "42100001", 4);
-	setExpression(p, "FSEEK", "42100002", 4);
+	setExpression(p, "FOPEN_READ", "42100000", 4);
+	setExpression(p, "FOPEN_WRITE", "42100001", 4);
+	setExpression(p, "FCLOSE", "42100002", 4);
 	setExpression(p, "REWIND", "42100003", 4);
+	setExpression(p, "FSEEK", "42100004", 4);
 	setExpression(p, "FGETC", "42100100", 4);
 	setExpression(p, "FPUTC", "42100200", 4);
 
-	//setExpression(p, "", "");
 	/* 0OP Group*/
 	setExpression(p, "NOP", "00000000", 4);
 	setExpression(p, "HALT", "FFFFFFFF", 4);
