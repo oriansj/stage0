@@ -1378,7 +1378,7 @@ void CMPUI(struct lilith* vm, struct Instruction* c)
 	{
 		vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
 	}
-	else if(vm->reg[c->reg0] == (uint32_t)c->raw_Immediate)
+	else if(vm->reg[c->reg1] == (uint32_t)c->raw_Immediate)
 	{
 		vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
 	}
