@@ -1,5 +1,5 @@
 #include "vm.h"
-#define DEBUG true
+//#define DEBUG true
 uint32_t performance_counter;
 
 /* Prototypes for functions in vm_instructions.c*/
@@ -1693,14 +1693,17 @@ bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 void eval_instruction(struct lilith* vm, struct Instruction* current)
 {
 	bool invalid = false;
-	fprintf(stdout, "Executing: %s\n", current->operation);
-	//usleep(1000);
 	performance_counter = performance_counter + 1;
+
+	#ifdef DEBUG
+	fprintf(stdout, "Executing: %s\n", current->operation);
+	usleep(1000);
 
 	if(1000000 == performance_counter)
 	{
 		current->raw0 = 0xFF;
 	}
+	#endif
 
 	switch(current->raw0)
 	{
