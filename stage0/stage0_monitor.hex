@@ -1,0 +1,111 @@
+# start
+2D2A000f	# LOADUI R10 0x0F ; Byte mask
+2D2B0001	# LOADUI R11 1 ; Our toggle
+2D2D0600	# LOADUI R13 0x600 ; Where we are starting our Stack
+# ;;  R14 will be storing our condition
+0D00002F	# FALSE R15 ; Our holder
+
+# ;; Prep TAPE_01
+2D201100	# LOADUI R0 0x1100
+42100001	# FOPEN_WRITE
+
+# ;; Prep TAPE_02
+2D201101	# LOADUI R0 0x1101
+42100001	# FOPEN_WRITE
+
+# loop
+2D210000	# LOADUI R1 0 ; Read from tty
+42100100	# FGETC ; Read a Char
+
+# ;; Check for Ctrl-D
+1FE00004	# CMPUI R14 R0 4
+2C6E0008	# JUMP.NE R14 @.L0
+2D0D00d0	# CALLI R13 @finish
+
+# .L0
+# ;; Check for EOF
+12E0ffff	# CMPI R14 R0 -1
+2C6E0008	# JUMP.NE R14 @.L1
+2D0D00c4	# CALLI R13 @finish
+
+# .L1
+2D211101	# LOADUI R1 0x1101 ; Write to TAPE_02
+42100200	# FPUTC ; Print the Char
+2D0D0038	# CALLI R13 @hex ; Convert it
+12E00000	# CMPI R14 R0 0 ; Check if it is hex
+2C8Effd0	# JUMP.L R14 @loop ; Don't use nonhex chars
+2C9B0010	# JUMP.Z R11 @.L99 ; Jump if toggled
+
+# ;; Process first byte of pair
+05020F0A	# AND R15 R0 R10 ; Store First nibble
+0D00002B	# FALSE R11 ; Flip the toggle
+3C00ffc0	# JUMP @loop
+
+# .L99
+2D5F0004	# SL0I R15 4 ; Shift our first nibble
+0502000A	# AND R0 R0 R10 ; Mask out top
+0500000F	# ADD R0 R0 R15 ; Combine nibbles
+2D1B0001	# LOADI R11 1 ; Flip the toggle
+2D211100	# LOADUI R1 0x1100 ; Write the combined byte
+42100200	# FPUTC ; To TAPE_01
+3C00ffa4	# JUMP @loop ; Try to get more bytes
+
+# hex
+# ;; Deal with line comments starting with #
+1FE00023	# CMPUI R14 R0 35
+2C5E0060	# JUMP.E R14 @ascii_comment
+# ;; Deal with line comments starting with ;
+1FE0003b	# CMPUI R14 R0 59
+2C5E0058	# JUMP.E R14 @ascii_comment
+# ;; Deal with all ascii less than '0'
+1FE00030	# CMPUI R14 R0 48
+2C8E0048	# JUMP.L R14 @ascii_other
+# ;; Deal with '0'-'9'
+1FE00039	# CMPUI R14 R0 57
+2C7E0028	# JUMP.LE R14 @ascii_num
+# ;; Deal with all ascii less than 'A'
+1FE00041	# CMPUI R14 R0 65
+2C8E0038	# JUMP.L R14 @ascii_other
+# ;; Deal with 'A'-'F'
+1FE00046	# CMPUI R14 R0 70
+2C7E0028	# JUMP.LE R14 @ascii_high
+# ;; Deal with all ascii less than 'a'
+1FE00061	# CMPUI R14 R0 97
+2C8E0028	# JUMP.L R14 @ascii_other
+# ;;  Deal with 'a'-'f'
+1FE00066	# CMPUI R14 R0 102
+2C7E0010	# JUMP.LE R14 @ascii_low
+# ;; Ignore the rest
+3C00001c	# JUMP @ascii_other
+
+# ascii_num
+11000030	# SUBUI R0 R0 48
+0D01001D	# RET R13
+
+# ascii_low
+11000057	# SUBUI R0 R0 87
+0D01001D	# RET R13
+
+# ascii_high
+11000037	# SUBUI R0 R0 55
+0D01001D	# RET R13
+
+# ascii_other
+0D000030	# TRUE R0
+0D01001D	# RET R13
+
+# ascii_comment
+2D210000	# LOADUI R1 0 ; Read from tty
+42100100	# FGETC ; Read another char
+1FE0000a	# CMPUI R14 R0 10 ; Stop at the end of line
+2D211101	# LOADUI R1 0x1101 ; Write to TAPE_02
+42100200	# FPUTC ; The char we just read
+2C6Effec	# JUMP.NE R14 @ascii_comment ; Otherwise keep looping
+3C00ffe0	# JUMP @ascii_other
+
+# finish
+2D201100	# LOADUI R0 0x1100 ; Close TAPE_01
+42100002	# FCLOSE
+2D201101	# LOADUI R0 0x1101 ; Close TAPE_02
+42100002	# FCLOSE
+FFFFFFFF	# HALT
