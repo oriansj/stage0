@@ -363,6 +363,46 @@
 | 2D 7a ii ii | SL1I a ii ii   | a = a << ii ii [Fill with ones]                                |
 | 2D 8a ii ii | SR1I a ii ii   | a = a >> ii ii [Fill with ones]                                |
 
+*** Relative Loads
+| Hex         | Name             | Comment                                |
+|-------------+------------------+----------------------------------------|
+| 2E 0a ii ii | LOADR a ii ii    | a = MEM[ip + ii ii]                    |
+| 2E 1a ii ii | LOADR8 a ii ii   | a = MEM[ip + ii ii] [signed 8 bits]    |
+| 2E 2a ii ii | LOADRU8 a ii ii  | a = MEM[ip + ii ii] [unsigned 8 bits]  |
+| 2E 3a ii ii | LOADR16 a ii ii  | a = MEM[ip + ii ii] [signed 16 bits]   |
+| 2E 4a ii ii | LOADRU16 a ii ii | a = MEM[ip + ii ii] [unsigned 16 bits] |
+| 2E 5a ii ii | LOADR32 a ii ii  | a = MEM[ip + ii ii] [signed 32 bits]   |
+| 2E 6a ii ii | LOADRU32 a ii ii | a = MEM[ip + ii ii] [unsigned 32 bits] |
+| 2E 7a ii ii | Reserved         |                                        |
+| 2E 8a ii ii | Reserved         |                                        |
+| 2E 9a ii ii | Reserved         |                                        |
+| 2E Aa ii ii | Reserved         |                                        |
+| 2E Ba ii ii | Reserved         |                                        |
+| 2E Ca ii ii | Reserved         |                                        |
+| 2E Da ii ii | Reserved         |                                        |
+| 2E Ea ii ii | Reserved         |                                        |
+| 2E Fa ii ii | Reserved         |                                        |
+
+*** Relative Stores
+| Hex         | Name             | Comment                              |
+|-------------+------------------+--------------------------------------|
+| 2F 0a ii ii | STORER a ii ii   | MEM[ip + ii ii] = a                  |
+| 2F 1a ii ii | STORER8 a ii ii  | MEM[ip + ii ii] = a [signed 8 bits]  |
+| 2F 2a ii ii | STORER16 a ii ii | MEM[ip + ii ii] = a [signed 16 bits] |
+| 2F 3a ii ii | STORER32 a ii ii | MEM[ip + ii ii] = a [signed 32 bits] |
+| 2F 4a ii ii | Reserved         |                                      |
+| 2F 5a ii ii | Reserved         |                                      |
+| 2F 6a ii ii | Reserved         |                                      |
+| 2F 7a ii ii | Reserved         |                                      |
+| 2F 8a ii ii | Reserved         |                                      |
+| 2F 9a ii ii | Reserved         |                                      |
+| 2F Aa ii ii | Reserved         |                                      |
+| 2F Ba ii ii | Reserved         |                                      |
+| 2F Ca ii ii | Reserved         |                                      |
+| 2F Da ii ii | Reserved         |                                      |
+| 2F Ea ii ii | Reserved         |                                      |
+| 2F Fa ii ii | Reserved         |                                      |
+
 ** 0OPI group
 0OPI ii ii is the Immediate, OP ii ii
 

@@ -138,6 +138,17 @@ void SL0I(struct lilith* vm, struct Instruction* c);
 void SR0I(struct lilith* vm, struct Instruction* c);
 void SL1I(struct lilith* vm, struct Instruction* c);
 void SR1I(struct lilith* vm, struct Instruction* c);
+void LOADR(struct lilith* vm, struct Instruction* c);
+void LOADR8(struct lilith* vm, struct Instruction* c);
+void LOADRU8(struct lilith* vm, struct Instruction* c);
+void LOADR16(struct lilith* vm, struct Instruction* c);
+void LOADRU16(struct lilith* vm, struct Instruction* c);
+void LOADR32(struct lilith* vm, struct Instruction* c);
+void LOADRU32(struct lilith* vm, struct Instruction* c);
+void STORER(struct lilith* vm, struct Instruction* c);
+void STORER8(struct lilith* vm, struct Instruction* c);
+void STORER16(struct lilith* vm, struct Instruction* c);
+void STORER32(struct lilith* vm, struct Instruction* c);
 void JUMP(struct lilith* vm, struct Instruction* c);
 
 /* Allocate and intialize memory/state */
@@ -1663,6 +1674,139 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 	return false;
 }
 
+/* LOAD 1OPI */
+bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
+{
+	#ifdef DEBUG
+	char Name[20] = "ILLEGAL_1OPI";
+	#endif
+
+	switch(c->raw_XOP)
+	{
+		case 0x0: /* LOADR */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "LOADR", 19);
+			#endif
+
+			LOADR(vm, c);
+			break;
+		}
+		case 0x1: /* LOADR8 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "LOADR8", 19);
+			#endif
+
+			LOADR8(vm, c);
+			break;
+		}
+		case 0x2: /* LOADRU8 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "LOADRU8", 19);
+			#endif
+
+			LOADRU8(vm, c);
+			break;
+		}
+		case 0x3: /* LOADR16 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "LOADR16", 19);
+			#endif
+
+			LOADR16(vm, c);
+			break;
+		}
+		case 0x4: /* LOADRU16 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "LOADRU16", 19);
+			#endif
+
+			LOADRU16(vm, c);
+			break;
+		}
+		case 0x5: /* LOADR32 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "LOADR32", 19);
+			#endif
+
+			LOADR32(vm, c);
+			break;
+		}
+		case 0x6: /* LOADRU32 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "LOADRU32", 19);
+			#endif
+
+			LOADRU32(vm, c);
+			break;
+		}
+		default: return true;
+	}
+	#ifdef DEBUG
+	fprintf(stdout, "# %s reg%u %d\n", Name, c->reg0, c->raw_Immediate);
+	#endif
+	return false;
+}
+
+/* STORE 1OPI */
+bool eval_Store_1OPI(struct lilith* vm, struct Instruction* c)
+{
+	#ifdef DEBUG
+	char Name[20] = "ILLEGAL_1OPI";
+	#endif
+
+	switch(c->raw_XOP)
+	{
+		case 0x0: /* STORER */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "STORER", 19);
+			#endif
+
+			STORER(vm, c);
+			break;
+		}
+		case 0x1: /* STORER8 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "STORER8", 19);
+			#endif
+
+			STORER8(vm, c);
+			break;
+		}
+		case 0x2: /* STORER16 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "STORER16", 19);
+			#endif
+
+			STORER16(vm, c);
+			break;
+		}
+		case 0x3: /* STORER32 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "STORER32", 19);
+			#endif
+
+			STORER32(vm, c);
+			break;
+		}
+		default: return true;
+	}
+	#ifdef DEBUG
+	fprintf(stdout, "# %s reg%u %d\n", Name, c->reg0, c->raw_Immediate);
+	#endif
+	return false;
+}
+
 /* Process 0OPI Integer instructions */
 bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 {
@@ -1757,6 +1901,20 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		{
 			decode_1OPI(current);
 			invalid = eval_branch_1OPI(vm, current);
+			if ( invalid) goto fail;
+			break;
+		}
+		case 0x2E:
+		{
+			decode_1OPI(current);
+			invalid = eval_Load_1OPI(vm, current);
+			if ( invalid) goto fail;
+			break;
+		}
+		case 0x2F:
+		{
+			decode_1OPI(current);
+			invalid = eval_Store_1OPI(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}

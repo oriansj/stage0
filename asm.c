@@ -304,6 +304,17 @@ void assemble(struct Token* p)
 	setExpression(p, "SR0I", "2D6", 4);
 	setExpression(p, "SL1I", "2D7", 4);
 	setExpression(p, "SR1I", "2D8", 4);
+	setExpression(p, "LOADR", "2E0", 4);
+	setExpression(p, "LOADR8", "2E1", 4);
+	setExpression(p, "LOADRU8", "2E2", 4);
+	setExpression(p, "LOADR16", "2E3", 4);
+	setExpression(p, "LOADRU16", "2E4", 4);
+	setExpression(p, "LOADR32", "2E5", 4);
+	setExpression(p, "LOADRU32", "2E6", 4);
+	setExpression(p, "STORER", "2F0", 4);
+	setExpression(p, "STORER8", "2F1", 4);
+	setExpression(p, "STORER16", "2F2", 4);
+	setExpression(p, "STORER32", "2F3", 4);
 
 	/* 0OPI Group */
 	setExpression(p, "JUMP", "3C00", 4);

@@ -1559,6 +1559,59 @@ void SR1I(struct lilith* vm, struct Instruction* c)
 	vm->reg[c->reg0] = shift_register(vm->reg[c->reg0], c->raw_Immediate, false, false);
 }
 
+void LOADR(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = readin_Reg(vm, (vm->ip + c->raw_Immediate -4));
+}
+void LOADR8(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = readin_byte(vm, (vm->ip + c->raw_Immediate -4), true);
+}
+
+void LOADRU8(struct lilith* vm, struct Instruction* c)
+{
+vm->reg[c->reg0] = readin_byte(vm, (vm->ip + c->raw_Immediate -4), false);
+}
+
+void LOADR16(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = readin_doublebyte(vm, (vm->ip + c->raw_Immediate -4), true);
+}
+
+void LOADRU16(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = readin_doublebyte(vm, (vm->ip + c->raw_Immediate -4), false);
+}
+
+void LOADR32(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = readin_Reg(vm, (vm->ip + c->raw_Immediate -4));
+}
+void LOADRU32(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = readin_Reg(vm, (vm->ip + c->raw_Immediate -4));
+}
+
+void STORER(struct lilith* vm, struct Instruction* c)
+{
+	writeout_Reg(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+}
+
+void STORER8(struct lilith* vm, struct Instruction* c)
+{
+	writeout_byte(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+}
+
+void STORER16(struct lilith* vm, struct Instruction* c)
+{
+	writeout_doublebyte(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+}
+
+void STORER32(struct lilith* vm, struct Instruction* c)
+{
+	writeout_Reg(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+}
+
 void JUMP(struct lilith* vm, struct Instruction* c)
 {
 	vm->ip = vm->ip + c->raw_Immediate - 4;

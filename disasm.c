@@ -937,6 +937,117 @@ void decode_Branch_1OPI(struct Instruction* c)
 	fprintf(stdout, "# %s\n", c->operation);
 }
 
+void decode_Load_1OPI(struct Instruction* c)
+{
+	/* Parse Raw Data */
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->Immediate[0] = c->operation[3];
+	c->Immediate[1] = c->operation[4];
+	c->Immediate[2] = c->operation[5];
+	c->Immediate[3] = c->operation[6];
+	c->Immediate[4] = c->operation[7];
+	c->HAL_CODE = 0;
+	c->raw_XOP = c->raw1/16;
+	c->reg0 = c->raw1%16;
+
+	char Name[20] = "ILLEGAL_1OPI";
+
+	/* Convert to Human readable form */
+	switch(c->raw_XOP)
+	{
+		case 0x0: /* LOADR */
+		{
+			strncpy(Name, "LOADR", 19);
+			break;
+		}
+		case 0x1: /* LOADR8 */
+		{
+			strncpy(Name, "LOADR8", 19);
+			break;
+		}
+		case 0x2: /* LOADRU8 */
+		{
+			strncpy(Name, "LOADRU8", 19);
+			break;
+		}
+		case 0x3: /* LOADR16 */
+		{
+			strncpy(Name, "LOADR16", 19);
+			break;
+		}
+		case 0x4: /* LOADRU16 */
+		{
+			strncpy(Name, "LOADRU16", 19);
+			break;
+		}
+		case 0x5: /* LOADR32 */
+		{
+			strncpy(Name, "LOADR32", 19);
+			break;
+		}
+		case 0x6: /* LOADRU32 */
+		{
+			strncpy(Name, "LOADRU32", 19);
+			break;
+		}
+		default: /* Unknown 1OPI*/
+		{
+			break;
+		}
+	}
+
+	fprintf(stdout, "%s reg%u %d\t", Name, c->reg0, c->raw_Immediate);
+	fprintf(stdout, "# %s\n", c->operation);
+}
+
+void decode_Store_1OPI(struct Instruction* c)
+{
+	/* Parse Raw Data */
+	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->Immediate[0] = c->operation[3];
+	c->Immediate[1] = c->operation[4];
+	c->Immediate[2] = c->operation[5];
+	c->Immediate[3] = c->operation[6];
+	c->Immediate[4] = c->operation[7];
+	c->HAL_CODE = 0;
+	c->raw_XOP = c->raw1/16;
+	c->reg0 = c->raw1%16;
+
+	char Name[20] = "ILLEGAL_1OPI";
+
+	/* Convert to Human readable form */
+	switch(c->raw_XOP)
+	{
+		case 0x0: /* STORER */
+		{
+			strncpy(Name, "STORER", 19);
+			break;
+		}
+		case 0x1: /* STORER8 */
+		{
+			strncpy(Name, "STORER8", 19);
+			break;
+		}
+		case 0x2: /* STORER16 */
+		{
+			strncpy(Name, "STORER16", 19);
+			break;
+		}
+		case 0x3: /* STORER32 */
+		{
+			strncpy(Name, "STORER32", 19);
+			break;
+		}
+		default: /* Unknown 1OPI*/
+		{
+			break;
+		}
+	}
+
+	fprintf(stdout, "%s reg%u %d\t", Name, c->reg0, c->raw_Immediate);
+	fprintf(stdout, "# %s\n", c->operation);
+}
+
 void decode_0OPI(struct Instruction* c)
 {
 	/* Parse Raw Data */
@@ -1062,6 +1173,16 @@ void eval_instruction(struct Instruction* c)
 		case 0x2D: /* Branch 1OPI*/
 		{
 			decode_Branch_1OPI(c);
+			break;
+		}
+		case 0x2E: /* LOADR 1OPI */
+		{
+			decode_Load_1OPI(c);
+			break;
+		}
+		case 0x2F: /* STORER 1OPI*/
+		{
+			decode_Store_1OPI(c);
 			break;
 		}
 		case 0x3C: /* Core 0OPI */
