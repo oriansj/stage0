@@ -1570,10 +1570,11 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 	char Name[20] = "ILLEGAL_1OPI";
 	#endif
 
-	/* 0x2C */
-	switch(c->raw_XOP)
+	uint32_t Opcode = (c->raw0 * 16) + c->raw_XOP;
+
+	switch(Opcode)
 	{
-		case 0x0: /* JUMP.C */
+		case 0x2C0: /* JUMP.C */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.C", 19);
@@ -1582,7 +1583,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_C(vm, c);
 			break;
 		}
-		case 0x1: /* JUMP.B */
+		case 0x2C1: /* JUMP.B */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.B", 19);
@@ -1591,7 +1592,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_B(vm, c);
 			break;
 		}
-		case 0x2: /* JUMP.O */
+		case 0x2C2: /* JUMP.O */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.O", 19);
@@ -1600,7 +1601,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_O(vm, c);
 			break;
 		}
-		case 0x3: /* JUMP.G */
+		case 0x2C3: /* JUMP.G */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.G", 19);
@@ -1609,7 +1610,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_G(vm, c);
 			break;
 		}
-		case 0x4: /* JUMP.GE */
+		case 0x2C4: /* JUMP.GE */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.GE", 19);
@@ -1618,7 +1619,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_GE(vm, c);
 			break;
 		}
-		case 0x5: /* JUMP.E */
+		case 0x2C5: /* JUMP.E */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.E", 19);
@@ -1627,7 +1628,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_E(vm, c);
 			break;
 		}
-		case 0x6: /* JUMP.NE */
+		case 0x2C6: /* JUMP.NE */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NE", 19);
@@ -1636,7 +1637,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_NE(vm, c);
 			break;
 		}
-		case 0x7: /* JUMP.LE */
+		case 0x2C7: /* JUMP.LE */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.LE", 19);
@@ -1645,7 +1646,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_LE(vm, c);
 			break;
 		}
-		case 0x8: /* JUMP.L */
+		case 0x2C8: /* JUMP.L */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.L", 19);
@@ -1654,7 +1655,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_L(vm, c);
 			break;
 		}
-		case 0x9: /* JUMP.Z */
+		case 0x2C9: /* JUMP.Z */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.Z", 19);
@@ -1663,7 +1664,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_Z(vm, c);
 			break;
 		}
-		case 0xA: /* JUMP.NZ */
+		case 0x2CA: /* JUMP.NZ */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NZ", 19);
@@ -1672,7 +1673,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_NZ(vm, c);
 			break;
 		}
-		case 0xB: /* JUMP.P */
+		case 0x2CB: /* JUMP.P */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.P", 19);
@@ -1681,7 +1682,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_P(vm, c);
 			break;
 		}
-		case 0xC: /* JUMP.NP */
+		case 0x2CC: /* JUMP.NP */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NP", 19);
@@ -1690,23 +1691,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			JUMP_NP(vm, c);
 			break;
 		}
-		default: return true;
-	}
-	#ifdef DEBUG
-	fprintf(stdout, "# %s reg%u %d\n", Name, c->reg0, c->raw_Immediate);
-	#endif
-	return false;
-}
-
-bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
-{
-	#ifdef DEBUG
-	char Name[20] = "ILLEGAL_1OPI";
-	#endif
-
-	switch(c->raw_XOP)
-	{
-		case 0x0: /* CALLI */
+		case 0x2D0: /* CALLI */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CALLI", 19);
@@ -1715,7 +1700,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			CALLI(vm, c);
 			break;
 		}
-		case 0x1: /* LOADI */
+		case 0x2D1: /* LOADI */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADI", 19);
@@ -1724,7 +1709,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADI(vm, c);
 			break;
 		}
-		case 0x2: /* LOADUI*/
+		case 0x2D2: /* LOADUI*/
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADUI", 19);
@@ -1733,7 +1718,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADUI(vm, c);
 			break;
 		}
-		case 0x3: /* SALI */
+		case 0x2D3: /* SALI */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SALI", 19);
@@ -1742,7 +1727,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			SALI(vm, c);
 			break;
 		}
-		case 0x4: /* SARI */
+		case 0x2D4: /* SARI */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SARI", 19);
@@ -1751,7 +1736,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			SARI(vm, c);
 			break;
 		}
-		case 0x5: /* SL0I */
+		case 0x2D5: /* SL0I */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SL0I", 19);
@@ -1760,7 +1745,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			SL0I(vm, c);
 			break;
 		}
-		case 0x6: /* SR0I */
+		case 0x2D6: /* SR0I */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SR0I", 19);
@@ -1769,7 +1754,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			SR0I(vm, c);
 			break;
 		}
-		case 0x7: /* SL1I */
+		case 0x2D7: /* SL1I */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SL1I", 19);
@@ -1778,7 +1763,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			SL1I(vm, c);
 			break;
 		}
-		case 0x8: /* SR1I */
+		case 0x2D8: /* SR1I */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SR1I", 19);
@@ -1787,24 +1772,7 @@ bool eval_branch_1OPI(struct lilith* vm, struct Instruction* c)
 			SR1I(vm, c);
 			break;
 		}
-		default: return true;
-	}
-	#ifdef DEBUG
-	fprintf(stdout, "# %s reg%u %d\n", Name, c->reg0, c->raw_Immediate);
-	#endif
-	return false;
-}
-
-/* LOAD 1OPI */
-bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
-{
-	#ifdef DEBUG
-	char Name[20] = "ILLEGAL_1OPI";
-	#endif
-
-	switch(c->raw_XOP)
-	{
-		case 0x0: /* LOADR */
+		case 0x2E0: /* LOADR */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR", 19);
@@ -1813,7 +1781,7 @@ bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADR(vm, c);
 			break;
 		}
-		case 0x1: /* LOADR8 */
+		case 0x2E1: /* LOADR8 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR8", 19);
@@ -1822,7 +1790,7 @@ bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADR8(vm, c);
 			break;
 		}
-		case 0x2: /* LOADRU8 */
+		case 0x2E2: /* LOADRU8 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADRU8", 19);
@@ -1831,7 +1799,7 @@ bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADRU8(vm, c);
 			break;
 		}
-		case 0x3: /* LOADR16 */
+		case 0x2E3: /* LOADR16 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR16", 19);
@@ -1840,7 +1808,7 @@ bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADR16(vm, c);
 			break;
 		}
-		case 0x4: /* LOADRU16 */
+		case 0x2E4: /* LOADRU16 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADRU16", 19);
@@ -1849,7 +1817,7 @@ bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADRU16(vm, c);
 			break;
 		}
-		case 0x5: /* LOADR32 */
+		case 0x2E5: /* LOADR32 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR32", 19);
@@ -1858,7 +1826,7 @@ bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADR32(vm, c);
 			break;
 		}
-		case 0x6: /* LOADRU32 */
+		case 0x2E6: /* LOADRU32 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADRU32", 19);
@@ -1867,24 +1835,7 @@ bool eval_Load_1OPI(struct lilith* vm, struct Instruction* c)
 			LOADRU32(vm, c);
 			break;
 		}
-		default: return true;
-	}
-	#ifdef DEBUG
-	fprintf(stdout, "# %s reg%u %d\n", Name, c->reg0, c->raw_Immediate);
-	#endif
-	return false;
-}
-
-/* STORE 1OPI */
-bool eval_Store_1OPI(struct lilith* vm, struct Instruction* c)
-{
-	#ifdef DEBUG
-	char Name[20] = "ILLEGAL_1OPI";
-	#endif
-
-	switch(c->raw_XOP)
-	{
-		case 0x0: /* STORER */
+		case 0x2F0: /* STORER */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER", 19);
@@ -1893,7 +1844,7 @@ bool eval_Store_1OPI(struct lilith* vm, struct Instruction* c)
 			STORER(vm, c);
 			break;
 		}
-		case 0x1: /* STORER8 */
+		case 0x2F1: /* STORER8 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER8", 19);
@@ -1902,7 +1853,7 @@ bool eval_Store_1OPI(struct lilith* vm, struct Instruction* c)
 			STORER8(vm, c);
 			break;
 		}
-		case 0x2: /* STORER16 */
+		case 0x2F2: /* STORER16 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER16", 19);
@@ -1911,7 +1862,7 @@ bool eval_Store_1OPI(struct lilith* vm, struct Instruction* c)
 			STORER16(vm, c);
 			break;
 		}
-		case 0x3: /* STORER32 */
+		case 0x2F3: /* STORER32 */
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER32", 19);
@@ -1963,11 +1914,6 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 	#ifdef DEBUG
 	fprintf(stdout, "Executing: %s\n", current->operation);
 	usleep(1000);
-
-	if(1000000 == performance_counter)
-	{
-		current->raw0 = 0xFF;
-	}
 	#endif
 
 	switch(current->raw0)
@@ -2012,31 +1958,10 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 			if ( invalid) goto fail;
 			break;
 		}
-		case 0x2C: /* Integer 1OPI */
+		case 0x2C ... 0x2F: /* Integer 1OPI */
 		{
 			decode_1OPI(current);
 			invalid = eval_Integer_1OPI(vm, current);
-			if ( invalid) goto fail;
-			break;
-		}
-		case 0x2D:
-		{
-			decode_1OPI(current);
-			invalid = eval_branch_1OPI(vm, current);
-			if ( invalid) goto fail;
-			break;
-		}
-		case 0x2E:
-		{
-			decode_1OPI(current);
-			invalid = eval_Load_1OPI(vm, current);
-			if ( invalid) goto fail;
-			break;
-		}
-		case 0x2F:
-		{
-			decode_1OPI(current);
-			invalid = eval_Store_1OPI(vm, current);
 			if ( invalid) goto fail;
 			break;
 		}
@@ -2070,6 +1995,11 @@ fail:
 			fprintf(stderr, "Unable to execute the following instruction:\n%c %c %c %c\n", current->raw0, current->raw1, current->raw2, current->raw3);
 			fprintf(stderr, "%s\n", current->operation);
 			current->invalid = true;
+
+			#ifdef DEBUG
+			vm->halted = true;
+			fprintf(stderr, "Computer Program has Halted\n");
+			#endif
 			break;
 		}
 	}
