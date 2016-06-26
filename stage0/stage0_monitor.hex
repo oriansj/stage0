@@ -20,26 +20,24 @@
 # ;; Check for Ctrl-D
 1FE00004	# CMPUI R14 R0 4
 2C6E0008	# JUMP.NE R14 @.L0
-2D0D00d0	# CALLI R13 @finish
+2D0D00c8	# CALLI R13 @finish
 
 # .L0
 # ;; Check for EOF
-12E0ffff	# CMPI R14 R0 -1
-2C6E0008	# JUMP.NE R14 @.L1
-2D0D00c4	# CALLI R13 @finish
+2CB00008	# JUMP.P R0 @.L1
+2D0D00c0	# CALLI R13 @finish
 
 # .L1
 2D211101	# LOADUI R1 0x1101 ; Write to TAPE_02
 42100200	# FPUTC ; Print the Char
-2D0D0038	# CALLI R13 @hex ; Convert it
-12E00000	# CMPI R14 R0 0 ; Check if it is hex
-2C8Effd0	# JUMP.L R14 @loop ; Don't use nonhex chars
+2D0D0034	# CALLI R13 @hex ; Convert it
+2CC0ffd8	# JUMP.NP R0 @loop ; Don't use nonhex chars
 2C9B0010	# JUMP.Z R11 @.L99 ; Jump if toggled
 
 # ;; Process first byte of pair
 05020F0A	# AND R15 R0 R10 ; Store First nibble
 0D00002B	# FALSE R11 ; Flip the toggle
-3C00ffc0	# JUMP @loop
+3C00ffc8	# JUMP @loop
 
 # .L99
 2D5F0004	# SL0I R15 4 ; Shift our first nibble
@@ -48,7 +46,7 @@
 2D1B0001	# LOADI R11 1 ; Flip the toggle
 2D211100	# LOADUI R1 0x1100 ; Write the combined byte
 42100200	# FPUTC ; To TAPE_01
-3C00ffa4	# JUMP @loop ; Try to get more bytes
+3C00ffac	# JUMP @loop ; Try to get more bytes
 
 # hex
 # ;; Deal with line comments starting with #

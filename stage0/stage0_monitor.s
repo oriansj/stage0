@@ -24,16 +24,14 @@ loop
 
 .L0
 	;; Check for EOF
-	CMPI R14 R0 -1
-	JUMP.NE R14 @.L1
+	JUMP.P R0 @.L1
 	CALLI R13 @finish
 
 .L1
 	LOADUI R1 0x1101			; Write to TAPE_02
 	FPUTC						; Print the Char
 	CALLI R13 @hex				; Convert it
-	CMPI R14 R0 0				; Check if it is hex
-	JUMP.L R14 @loop			; Don't use nonhex chars
+	JUMP.NP R0 @loop			; Don't use nonhex chars
 	JUMP.Z R11 @.L99			; Jump if toggled
 
 	;; Process first byte of pair
