@@ -344,8 +344,8 @@
 | 2C 8a ii ii | JUMP.L a ii ii  | LT? a; PC = PC + i ii ii             |
 | 2C 9a ii ii | JUMP.Z a ii ii  | ZERO? a; PC = PC + i ii ii           |
 | 2C Aa ii ii | JUMP.NZ a ii ii | NZERO? a; PC = PC + i ii ii          |
-| 2C Bx xx xx | Reserved        |                                      |
-| 2C Cx xx xx | Reserved        |                                      |
+| 2C Ba ii ii | JUMP.P          | POSITIVE? a; PC = PC + ii ii         |
+| 2C Ca ii ii | JUMP.NP         | NEGATIVE? a; PC = PC + ii ii         |
 | 2C Dx xx xx | Reserved        |                                      |
 | 2C Ex xx xx | Reserved        |                                      |
 | 2C Fx xx xx | Reserved        |                                      |
@@ -505,6 +505,37 @@ DO NOT USE.
 | Hex         | Name     |
 |-------------+----------|
 | 43 00 00 00 | Reserved |
+| ...         | Reserved |
+| BF FF FF FF | Reserved |
+
+** CMPJUMP Group
+| Hex         | Name        | Comment                             |
+|-------------+-------------+-------------------------------------|
+| C0 ab ii ii | CMPJUMP.G   | a > b ? PC = PC + ii ii             |
+| C1 ab ii ii | CMPJUMP.GE  | a >= b ? PC = PC + ii ii            |
+| C2 ab ii ii | CMPJUMP.E   | a == b ? PC = PC + ii ii            |
+| C3 ab ii ii | CMPJUMP.NE  | a != b ? PC = PC + ii ii            |
+| C4 ab ii ii | CMPJUMP.LE  | a <= b ? PC = PC + ii ii            |
+| C5 ab ii ii | CMPJUMP.L   | a < b ? PC = PC + ii ii             |
+| C6 ab ii ii | Reserved    |                                     |
+| ...         | Reserved    |                                     |
+| CF ab ii ii | Reserved    |                                     |
+| D0 ab ii ii | CMPJUMPU.G  | a > b ? PC = PC + ii ii (unsigned)  |
+| D1 ab ii ii | CMPJUMPU.GE | a >= b ? PC = PC + ii ii (unsigned) |
+| D2 ab ii ii | Reserved    |                                     |
+| D3 ab ii ii | Reserved    |                                     |
+| D4 ab ii ii | CMPJUMPU.LE | a <= b ? PC = PC + ii ii (unsigned) |
+| D5 ab ii ii | CMPJUMPU.L  | a < b ? PC = PC + ii ii (unsigned)  |
+| D6 ab ii ii | Reserved    |                                     |
+| ...         | Reserved    |                                     |
+| DF ab ii ii | Reserved    |                                     |
+
+** Reserved Block 2
+At this time these instructions only produce a warning; but could do anything.
+DO NOT USE.
+| Hex         | Name     |
+|-------------+----------|
+| E0 00 00 00 | Reserved |
 | ...         | Reserved |
 | FE FF FF FF | Reserved |
 

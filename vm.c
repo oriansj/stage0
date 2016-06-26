@@ -150,6 +150,18 @@ void STORER8(struct lilith* vm, struct Instruction* c);
 void STORER16(struct lilith* vm, struct Instruction* c);
 void STORER32(struct lilith* vm, struct Instruction* c);
 void JUMP(struct lilith* vm, struct Instruction* c);
+void JUMP_P(struct lilith* vm, struct Instruction* c);
+void JUMP_NP(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_G(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_GE(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_E(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_NE(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_LE(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_L(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_G(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_L(struct lilith* vm, struct Instruction* c);
 
 /* Allocate and intialize memory/state */
 struct lilith* create_vm(size_t size)
@@ -1297,6 +1309,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 	#endif
 
 	/* 0x0E ... 0x2B */
+	/* 0xC0 ... 0xDF */
 	switch(c->raw0)
 	{
 		case 0x0E: /* ADDI */
@@ -1452,6 +1465,96 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			STORE32(vm, c);
 			break;
 		}
+		case 0xC0: /* CMPJUMP.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.G", 19);
+			#endif
+
+			CMPJUMP_G(vm, c);
+			break;
+		}
+		case 0xC1: /* CMPJUMP.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.GE", 19);
+			#endif
+
+			CMPJUMP_GE(vm, c);
+			break;
+		}
+		case 0xC2: /* CMPJUMP.E */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.E", 19);
+			#endif
+
+			CMPJUMP_E(vm, c);
+			break;
+		}
+		case 0xC3: /* CMPJUMP.NE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.NE", 19);
+			#endif
+
+			CMPJUMP_NE(vm, c);
+			break;
+		}
+		case 0xC4: /* CMPJUMP.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.LE", 19);
+			#endif
+
+			CMPJUMP_LE(vm, c);
+			break;
+		}
+		case 0xC5: /* CMPJUMP.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.L", 19);
+			#endif
+
+			CMPJUMP_L(vm, c);
+			break;
+		}
+		case 0xD0: /* CMPJUMPU.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.G", 19);
+			#endif
+
+			CMPJUMPU_G(vm, c);
+			break;
+		}
+		case 0xD1: /* CMPJUMPU.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.GE", 19);
+			#endif
+
+			CMPJUMPU_GE(vm, c);
+			break;
+		}
+		case 0xD4: /* CMPJUMPU.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.LE", 19);
+			#endif
+
+			CMPJUMPU_LE(vm, c);
+			break;
+		}
+		case 0xD5: /* CMPJUMPU.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.L", 19);
+			#endif
+
+			CMPJUMPU_L(vm, c);
+			break;
+		}
 		default: return true;
 	}
 	#ifdef DEBUG
@@ -1567,6 +1670,24 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			#endif
 
 			JUMP_NZ(vm, c);
+			break;
+		}
+		case 0xB: /* JUMP.P */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "JUMP.P", 19);
+			#endif
+
+			JUMP_P(vm, c);
+			break;
+		}
+		case 0xC: /* JUMP.NP */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "JUMP.NP", 19);
+			#endif
+
+			JUMP_NP(vm, c);
 			break;
 		}
 		default: return true;
@@ -1884,6 +2005,7 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 			break;
 		}
 		case 0x0E ... 0x2B: /* Integer 2OPI */
+		case 0xC0 ... 0xDF:
 		{
 			decode_2OPI(current);
 			invalid = eval_2OPI_Int(vm, current);

@@ -771,6 +771,56 @@ void decode_Integer_2OPI(struct Instruction* c)
 			strncpy(Name, "STORE32", 19);
 			break;
 		}
+		case 0xC0: /* CMPJUMP.G */
+		{
+			strncpy(Name, "CMPJUMP.G", 19);
+			break;
+		}
+		case 0xC1: /* CMPJUMP.GE */
+		{
+			strncpy(Name, "CMPJUMP.GE", 19);
+			break;
+		}
+		case 0xC2: /* CMPJUMP.E */
+		{
+			strncpy(Name, "CMPJUMP.E", 19);
+			break;
+		}
+		case 0xC3: /* CMPJUMP.NE */
+		{
+			strncpy(Name, "CMPJUMP.NE", 19);
+			break;
+		}
+		case 0xC4: /* CMPJUMP.LE */
+		{
+			strncpy(Name, "CMPJUMP.LE", 19);
+			break;
+		}
+		case 0xC5: /* CMPJUMP.L */
+		{
+			strncpy(Name, "CMPJUMP.L", 19);
+			break;
+		}
+		case 0xD0: /* CMPJUMPU.G */
+		{
+			strncpy(Name, "CMPJUMPU.G", 19);
+			break;
+		}
+		case 0xD1: /* CMPJUMPU.GE */
+		{
+			strncpy(Name, "CMPJUMPU.GE", 19);
+			break;
+		}
+		case 0xD4: /* CMPJUMPU.LE */
+		{
+			strncpy(Name, "CMPJUMPU.LE", 19);
+			break;
+		}
+		case 0xD5: /* CMPJUMPU.L */
+		{
+			strncpy(Name, "CMPJUMPU.L", 19);
+			break;
+		}
 		default: /* Unknown 2OPI*/
 		{
 			break;
@@ -852,6 +902,16 @@ void decode_1OPI(struct Instruction* c)
 		case 0xA: /* JUMP.NZ */
 		{
 			strncpy(Name, "JUMP.NZ", 19);
+			break;
+		}
+		case 0xB: /* JUMP.P */
+		{
+			strncpy(Name, "JUMP.P", 19);
+			break;
+		}
+		case 0xC: /* JUMP.NP */
+		{
+			strncpy(Name, "JUMP.NP", 19);
 			break;
 		}
 		default: /* Unknown 1OPI*/
@@ -1161,6 +1221,7 @@ void eval_instruction(struct Instruction* c)
 			break;
 		}
 		case 0x0E ... 0x2B: /* Core 2OPI */
+		case 0xC0 ... 0xDF:
 		{
 			decode_Integer_2OPI(c);
 			break;
