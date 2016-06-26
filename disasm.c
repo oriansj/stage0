@@ -845,257 +845,224 @@ void decode_1OPI(struct Instruction* c)
 	c->reg0 = c->raw1%16;
 
 	char Name[20] = "ILLEGAL_1OPI";
+	uint32_t Opcode = (c->raw0 * 16) + c->raw_XOP;
 
 	/* Convert to Human readable form */
-	switch(c->raw_XOP)
+	switch(Opcode)
 	{
-		case 0x0: /* JUMP.C */
+		case 0x2C0: /* JUMP.C */
 		{
 			strncpy(Name, "JUMP.C", 19);
 			break;
 		}
-		case 0x1: /* JUMP.B */
+		case 0x2C1: /* JUMP.B */
 		{
 			strncpy(Name, "JUMP.B", 19);
 			break;
 		}
-		case 0x2: /* JUMP.O */
+		case 0x2C2: /* JUMP.O */
 		{
 			strncpy(Name, "JUMP.O", 19);
 			break;
 		}
-		case 0x3: /* JUMP.G */
+		case 0x2C3: /* JUMP.G */
 		{
 			strncpy(Name, "JUMP.G", 19);
 			break;
 		}
-		case 0x4: /* JUMP.GE */
+		case 0x2C4: /* JUMP.GE */
 		{
 			strncpy(Name, "JUMP.GE", 19);
 			break;
 		}
-		case 0x5: /* JUMP.E */
+		case 0x2C5: /* JUMP.E */
 		{
 			strncpy(Name, "JUMP.E", 19);
 			break;
 		}
-		case 0x6: /* JUMP.NE */
+		case 0x2C6: /* JUMP.NE */
 		{
 			strncpy(Name, "JUMP.NE", 19);
 			break;
 		}
-		case 0x7: /* JUMP.LE */
+		case 0x2C7: /* JUMP.LE */
 		{
 			strncpy(Name, "JUMP.LE", 19);
 			break;
 		}
-		case 0x8: /* JUMP.L */
+		case 0x2C8: /* JUMP.L */
 		{
 			strncpy(Name, "JUMP.L", 19);
 			break;
 		}
-		case 0x9: /* JUMP.Z */
+		case 0x2C9: /* JUMP.Z */
 		{
 			strncpy(Name, "JUMP.Z", 19);
 			break;
 		}
-		case 0xA: /* JUMP.NZ */
+		case 0x2CA: /* JUMP.NZ */
 		{
 			strncpy(Name, "JUMP.NZ", 19);
 			break;
 		}
-		case 0xB: /* JUMP.P */
+		case 0x2CB: /* JUMP.P */
 		{
 			strncpy(Name, "JUMP.P", 19);
 			break;
 		}
-		case 0xC: /* JUMP.NP */
+		case 0x2CC: /* JUMP.NP */
 		{
 			strncpy(Name, "JUMP.NP", 19);
 			break;
 		}
-		default: /* Unknown 1OPI*/
-		{
-			break;
-		}
-	}
-
-	fprintf(stdout, "%s reg%u %d\t", Name, c->reg0, c->raw_Immediate);
-	fprintf(stdout, "# %s\n", c->operation);
-}
-
-void decode_Branch_1OPI(struct Instruction* c)
-{
-	/* Parse Raw Data */
-	c->raw_Immediate = c->raw2*0x100 + c->raw3;
-	c->Immediate[0] = c->operation[3];
-	c->Immediate[1] = c->operation[4];
-	c->Immediate[2] = c->operation[5];
-	c->Immediate[3] = c->operation[6];
-	c->Immediate[4] = c->operation[7];
-	c->HAL_CODE = 0;
-	c->raw_XOP = c->raw1/16;
-	c->reg0 = c->raw1%16;
-
-	char Name[20] = "ILLEGAL_1OPI";
-
-	/* Convert to Human readable form */
-	switch(c->raw_XOP)
-	{
-		case 0x0: /* CALLI */
+		case 0x2D0: /* CALLI */
 		{
 			strncpy(Name, "CALLI", 19);
 			break;
 		}
-		case 0x1: /* LOADI */
+		case 0x2D1: /* LOADI */
 		{
 			strncpy(Name, "LOADI", 19);
 			break;
 		}
-		case 0x2: /* LOADUI */
+		case 0x2D2: /* LOADUI*/
 		{
 			strncpy(Name, "LOADUI", 19);
 			break;
 		}
-		case 0x3: /* SALI */
+		case 0x2D3: /* SALI */
 		{
 			strncpy(Name, "SALI", 19);
 			break;
 		}
-		case 0x4: /* SARI */
+		case 0x2D4: /* SARI */
 		{
 			strncpy(Name, "SARI", 19);
 			break;
 		}
-		case 0x5: /* SL0I */
+		case 0x2D5: /* SL0I */
 		{
 			strncpy(Name, "SL0I", 19);
 			break;
 		}
-		case 0x6: /* SR0I */
+		case 0x2D6: /* SR0I */
 		{
 			strncpy(Name, "SR0I", 19);
 			break;
 		}
-		case 0x7: /* SL1I */
+		case 0x2D7: /* SL1I */
 		{
 			strncpy(Name, "SL1I", 19);
 			break;
 		}
-		case 0x8: /* SR1I */
+		case 0x2D8: /* SR1I */
 		{
 			strncpy(Name, "SR1I", 19);
 			break;
 		}
-		default: /* Unknown 1OPI*/
-		{
-			break;
-		}
-	}
-
-	fprintf(stdout, "%s reg%u %d\t", Name, c->reg0, c->raw_Immediate);
-	fprintf(stdout, "# %s\n", c->operation);
-}
-
-void decode_Load_1OPI(struct Instruction* c)
-{
-	/* Parse Raw Data */
-	c->raw_Immediate = c->raw2*0x100 + c->raw3;
-	c->Immediate[0] = c->operation[3];
-	c->Immediate[1] = c->operation[4];
-	c->Immediate[2] = c->operation[5];
-	c->Immediate[3] = c->operation[6];
-	c->Immediate[4] = c->operation[7];
-	c->HAL_CODE = 0;
-	c->raw_XOP = c->raw1/16;
-	c->reg0 = c->raw1%16;
-
-	char Name[20] = "ILLEGAL_1OPI";
-
-	/* Convert to Human readable form */
-	switch(c->raw_XOP)
-	{
-		case 0x0: /* LOADR */
+		case 0x2E0: /* LOADR */
 		{
 			strncpy(Name, "LOADR", 19);
 			break;
 		}
-		case 0x1: /* LOADR8 */
+		case 0x2E1: /* LOADR8 */
 		{
 			strncpy(Name, "LOADR8", 19);
 			break;
 		}
-		case 0x2: /* LOADRU8 */
+		case 0x2E2: /* LOADRU8 */
 		{
 			strncpy(Name, "LOADRU8", 19);
 			break;
 		}
-		case 0x3: /* LOADR16 */
+		case 0x2E3: /* LOADR16 */
 		{
 			strncpy(Name, "LOADR16", 19);
 			break;
 		}
-		case 0x4: /* LOADRU16 */
+		case 0x2E4: /* LOADRU16 */
 		{
 			strncpy(Name, "LOADRU16", 19);
 			break;
 		}
-		case 0x5: /* LOADR32 */
+		case 0x2E5: /* LOADR32 */
 		{
 			strncpy(Name, "LOADR32", 19);
 			break;
 		}
-		case 0x6: /* LOADRU32 */
+		case 0x2E6: /* LOADRU32 */
 		{
 			strncpy(Name, "LOADRU32", 19);
 			break;
 		}
-		default: /* Unknown 1OPI*/
-		{
-			break;
-		}
-	}
-
-	fprintf(stdout, "%s reg%u %d\t", Name, c->reg0, c->raw_Immediate);
-	fprintf(stdout, "# %s\n", c->operation);
-}
-
-void decode_Store_1OPI(struct Instruction* c)
-{
-	/* Parse Raw Data */
-	c->raw_Immediate = c->raw2*0x100 + c->raw3;
-	c->Immediate[0] = c->operation[3];
-	c->Immediate[1] = c->operation[4];
-	c->Immediate[2] = c->operation[5];
-	c->Immediate[3] = c->operation[6];
-	c->Immediate[4] = c->operation[7];
-	c->HAL_CODE = 0;
-	c->raw_XOP = c->raw1/16;
-	c->reg0 = c->raw1%16;
-
-	char Name[20] = "ILLEGAL_1OPI";
-
-	/* Convert to Human readable form */
-	switch(c->raw_XOP)
-	{
-		case 0x0: /* STORER */
+		case 0x2F0: /* STORER */
 		{
 			strncpy(Name, "STORER", 19);
 			break;
 		}
-		case 0x1: /* STORER8 */
+		case 0x2F1: /* STORER8 */
 		{
 			strncpy(Name, "STORER8", 19);
 			break;
 		}
-		case 0x2: /* STORER16 */
+		case 0x2F2: /* STORER16 */
 		{
 			strncpy(Name, "STORER16", 19);
 			break;
 		}
-		case 0x3: /* STORER32 */
+		case 0x2F3: /* STORER32 */
 		{
 			strncpy(Name, "STORER32", 19);
+			break;
+		}
+		case 0xA00: /* CMPSKIP.G */
+		{
+			strncpy(Name, "CMPSKIP.G", 19);
+			break;
+		}
+		case 0xA01: /* CMPSKIP.GE */
+		{
+			strncpy(Name, "CMPSKIP.GE", 19);
+			break;
+		}
+		case 0xA02: /* CMPSKIP.E */
+		{
+			strncpy(Name, "CMPSKIP.E", 19);
+			break;
+		}
+		case 0xA03: /* CMPSKIP.NE */
+		{
+			strncpy(Name, "CMPSKIP.NE", 19);
+			break;
+		}
+		case 0xA04: /* CMPSKIP.LE */
+		{
+			strncpy(Name, "CMPSKIP.LE", 19);
+			break;
+		}
+		case 0xA05: /* CMPSKIP.L */
+		{
+			strncpy(Name, "CMPSKIP.L", 19);
+			break;
+		}
+		case 0xA10: /* CMPSKIPU.G */
+		{
+			strncpy(Name, "CMPSKIPU.G", 19);
+			break;
+		}
+		case 0xA11: /* CMPSKIPU.GE */
+		{
+			strncpy(Name, "CMPSKIPU.GE", 19);
+			break;
+		}
+		case 0xA14: /* CMPSKIPU.LE */
+		{
+			strncpy(Name, "CMPSKIPU.LE", 19);
+			break;
+		}
+		case 0xA15: /* CMPSKIPU.L */
+		{
+			strncpy(Name, "CMPSKIPU.L", 19);
 			break;
 		}
 		default: /* Unknown 1OPI*/
@@ -1220,30 +1187,16 @@ void eval_instruction(struct Instruction* c)
 			decode_1OP(c);
 			break;
 		}
-		case 0x0E ... 0x2B: /* Core 2OPI */
+		case 0x0E ... 0x2B: /* 2OPI */
 		case 0xC0 ... 0xDF:
 		{
 			decode_Integer_2OPI(c);
 			break;
 		}
-		case 0x2C: /* Core 1OPI */
+		case 0x2C ... 0x2F: /* 1OPI */
+		case 0xA0 ... 0xA1:
 		{
 			decode_1OPI(c);
-			break;
-		}
-		case 0x2D: /* Branch 1OPI*/
-		{
-			decode_Branch_1OPI(c);
-			break;
-		}
-		case 0x2E: /* LOADR 1OPI */
-		{
-			decode_Load_1OPI(c);
-			break;
-		}
-		case 0x2F: /* STORER 1OPI*/
-		{
-			decode_Store_1OPI(c);
 			break;
 		}
 		case 0x3C: /* Core 0OPI */

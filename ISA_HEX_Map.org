@@ -506,6 +506,37 @@ DO NOT USE.
 |-------------+----------|
 | 43 00 00 00 | Reserved |
 | ...         | Reserved |
+| 9F FF FF FF | Reserved |
+
+** CMPSKIP Group
+| Hex         | Name        | Comment                            |
+|-------------+-------------+------------------------------------|
+| A0 0a ii ii | CMPSKIP.G   | a > ii ii ? Skip Next instruction  |
+| A0 1a ii ii | CMPSKIP.GE  | a >= ii ii ? Skip Next instruction |
+| A0 2a ii ii | CMPSKIP.E   | a == ii ii ? Skip Next instruction |
+| A0 3a ii ii | CMPSKIP.NE  | a != ii ii ? Skip Next instruction |
+| A0 4a ii ii | CMPSKIP.LE  | a <= ii ii ? Skip Next instruction |
+| A0 5a ii ii | CMPSKIP.L   | a < ii ii ? Skip Next instruction  |
+| A0 6a ii ii | Reserved    |                                    |
+| ...         | Reserved    |                                    |
+| A0 Fa ii ii | Reserved    |                                    |
+| A1 0a ii ii | CMPSKIPU.G  | a > ii ii ? Skip Next instruction  |
+| A1 1a ii ii | CMPSKIPU.GE | a >= ii ii ? Skip Next instruction |
+| A1 2a ii ii | Reserved    |                                    |
+| A1 3a ii ii | Reserved    |                                    |
+| A1 4a ii ii | CMPSKIPU.LE | a <= ii ii ? Skip Next instruction |
+| A1 5a ii ii | CMPSKIPU.L  | a < ii ii ? Skip Next instruction  |
+| A1 6a ii ii | Reserved    |                                    |
+| ...         | Reserved    |                                    |
+| A1 Fa ii ii | Reserved    |                                    |
+
+** Reserved Block 2
+At this time these instructions only produce a warning; but could do anything.
+DO NOT USE.
+| Hex         | Name     |
+|-------------+----------|
+| B0 00 00 00 | Reserved |
+| ...         | Reserved |
 | BF FF FF FF | Reserved |
 
 ** CMPJUMP Group
@@ -530,7 +561,7 @@ DO NOT USE.
 | ...         | Reserved    |                                     |
 | DF ab ii ii | Reserved    |                                     |
 
-** Reserved Block 2
+** Reserved Block 3
 At this time these instructions only produce a warning; but could do anything.
 DO NOT USE.
 | Hex         | Name     |

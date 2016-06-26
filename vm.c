@@ -162,6 +162,16 @@ void CMPJUMPU_G(struct lilith* vm, struct Instruction* c);
 void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c);
 void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c);
 void CMPJUMPU_L(struct lilith* vm, struct Instruction* c);
+void CMPSKIP_G(struct lilith* vm, struct Instruction* c);
+void CMPSKIP_GE(struct lilith* vm, struct Instruction* c);
+void CMPSKIP_E(struct lilith* vm, struct Instruction* c);
+void CMPSKIP_NE(struct lilith* vm, struct Instruction* c);
+void CMPSKIP_LE(struct lilith* vm, struct Instruction* c);
+void CMPSKIP_L(struct lilith* vm, struct Instruction* c);
+void CMPSKIPU_G(struct lilith* vm, struct Instruction* c);
+void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c);
+void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c);
+void CMPSKIPU_L(struct lilith* vm, struct Instruction* c);
 
 /* Allocate and intialize memory/state */
 struct lilith* create_vm(size_t size)
@@ -1871,6 +1881,96 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			STORER32(vm, c);
 			break;
 		}
+		case 0xA00: /* CMPSKIP.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.G", 19);
+			#endif
+
+			CMPSKIP_G(vm, c);
+			break;
+		}
+		case 0xA01: /* CMPSKIP.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.GE", 19);
+			#endif
+
+			CMPSKIP_GE(vm, c);
+			break;
+		}
+		case 0xA02: /* CMPSKIP.E */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.E", 19);
+			#endif
+
+			CMPSKIP_E(vm, c);
+			break;
+		}
+		case 0xA03: /* CMPSKIP.NE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.NE", 19);
+			#endif
+
+			CMPSKIP_NE(vm, c);
+			break;
+		}
+		case 0xA04: /* CMPSKIP.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.LE", 19);
+			#endif
+
+			CMPSKIP_LE(vm, c);
+			break;
+		}
+		case 0xA05: /* CMPSKIP.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.L", 19);
+			#endif
+
+			CMPSKIP_L(vm, c);
+			break;
+		}
+		case 0xA10: /* CMPSKIPU.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.G", 19);
+			#endif
+
+			CMPSKIPU_G(vm, c);
+			break;
+		}
+		case 0xA11: /* CMPSKIPU.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.GE", 19);
+			#endif
+
+			CMPSKIPU_GE(vm, c);
+			break;
+		}
+		case 0xA14: /* CMPSKIPU.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.LE", 19);
+			#endif
+
+			CMPSKIPU_LE(vm, c);
+			break;
+		}
+		case 0xA15: /* CMPSKIPU.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.L", 19);
+			#endif
+
+			CMPSKIPU_L(vm, c);
+			break;
+		}
 		default: return true;
 	}
 	#ifdef DEBUG
@@ -1959,6 +2059,7 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 			break;
 		}
 		case 0x2C ... 0x2F: /* Integer 1OPI */
+		case 0xA0 ... 0xA1:
 		{
 			decode_1OPI(current);
 			invalid = eval_Integer_1OPI(vm, current);

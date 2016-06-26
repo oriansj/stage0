@@ -1728,3 +1728,123 @@ void CMPJUMPU_L(struct lilith* vm, struct Instruction* c)
 		vm->ip = vm->ip + c->raw_Immediate - 4;
 	}
 }
+
+void CMPSKIP_G(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(c->raw_Immediate);
+
+	if(tmp1 > tmp2)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIP_GE(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(c->raw_Immediate);
+
+	if(tmp1 >= tmp2)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIP_E(struct lilith* vm, struct Instruction* c)
+{
+	uint16_t utmp1;
+
+	utmp1 = (uint16_t)(c->raw_Immediate);
+
+	if((vm->reg[c->reg0]) == utmp1)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIP_NE(struct lilith* vm, struct Instruction* c)
+{
+	uint16_t utmp1;
+
+	utmp1 = (uint16_t)(c->raw_Immediate);
+
+	if((vm->reg[c->reg0]) != utmp1)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIP_LE(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(c->raw_Immediate);
+
+	if(tmp1 <= tmp2)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIP_L(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(c->raw_Immediate);
+
+	if(tmp1 < tmp2)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIPU_G(struct lilith* vm, struct Instruction* c)
+{
+	uint16_t utmp1;
+
+	utmp1 = (uint16_t)(c->raw_Immediate);
+
+	if((vm->reg[c->reg0]) > utmp1)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c)
+{
+	uint16_t utmp1;
+
+	utmp1 = (uint16_t)(c->raw_Immediate);
+
+	if((vm->reg[c->reg0]) >= utmp1)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c)
+{
+	uint16_t utmp1;
+
+	utmp1 = (uint16_t)(c->raw_Immediate);
+
+	if((vm->reg[c->reg0]) <= utmp1)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPSKIPU_L(struct lilith* vm, struct Instruction* c)
+{
+	uint16_t utmp1;
+
+	utmp1 = (uint16_t)(c->raw_Immediate);
+
+	if((vm->reg[c->reg0]) < utmp1)
+	{
+		vm->ip = vm->ip + 4;
+	}
+}

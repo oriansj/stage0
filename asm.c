@@ -327,6 +327,16 @@ void assemble(struct Token* p)
 	setExpression(p, "STORER8", "2F1", 4);
 	setExpression(p, "STORER16", "2F2", 4);
 	setExpression(p, "STORER32", "2F3", 4);
+	setExpression(p, "CMPSKIP.G", "A00", 4);
+	setExpression(p, "CMPSKIP.GE", "A01", 4);
+	setExpression(p, "CMPSKIP.E", "A02", 4);
+	setExpression(p, "CMPSKIP.NE", "A03", 4);
+	setExpression(p, "CMPSKIP.LE", "A04", 4);
+	setExpression(p, "CMPSKIP.L", "A05", 4);
+	setExpression(p, "CMPSKIPU.G", "A10", 4);
+	setExpression(p, "CMPSKIPU.GE", "A11", 4);
+	setExpression(p, "CMPSKIPU.LE", "A14", 4);
+	setExpression(p, "CMPSKIPU.L", "A15", 4);
 
 	/* 0OPI Group */
 	setExpression(p, "JUMP", "3C00", 4);
