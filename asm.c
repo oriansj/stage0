@@ -11,20 +11,20 @@ uint32_t ip;
 
 struct Token
 {
-	char Text[max_string + 1];
-	char Expression[max_string + 1];
+	struct Token* next;
+	struct Token* prev;
 	uint32_t type;
 	uint32_t size;
 	uint32_t address;
-	struct Token* next;
-	struct Token* prev;
+	char Text[max_string + 1];
+	char Expression[max_string + 1];
 };
 
 enum type
 {
 	EOL = 1,
 	comment = (1 << 1),
-	address = (1 << 2)
+	label = (1 << 2)
 };
 
 struct Token* newToken()
@@ -111,6 +111,11 @@ Restart:
 		else if((!(p->type & comment )) && ((35 == c) ||(59 == c)))
 		{
 			p->type = p->type | comment;
+			store[i] = (char)c;
+		}
+		else if((!(p->type & comment )) && (58 == c))
+		{
+			p->type = p->type | label;
 			store[i] = (char)c;
 		}
 		else
@@ -379,7 +384,7 @@ void assign_addresses(struct Token* p)
 
 uint32_t get_address(struct Token* p, char match[])
 {
-	if(0 == strncmp(p->Text, match, max_string))
+	if((label & p->type) && (0 == strncmp(p->Text, match, max_string)))
 	{
 		return p->address;
 	}
@@ -396,9 +401,13 @@ void update_jumps(struct Token* head, struct Token* p)
 {
 	uint32_t dest = -1;
 
+
 	if('@' == p->Text[0])
 	{
-		dest = get_address(head, p->Text + 1);
+		char temp[256] = {0};
+		strncpy(temp, p->Text, max_string);
+		temp[0] = ':';
+		dest = get_address(head, temp);
 	}
 
 	if(-1 != (int32_t)dest)

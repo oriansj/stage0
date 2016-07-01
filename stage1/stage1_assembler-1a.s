@@ -1,4 +1,4 @@
-start
+:start
 	LOADUI R8 @table			; Where we are putting our address pointers
 	LOADUI R9 0xFF				; Byte mask
 	LOADUI R10 0x0F			; nybble mask
@@ -17,7 +17,7 @@ start
 	FOPEN_WRITE
 
 ;; Function for collecting the address of all labels
-getLables
+:getLables
 	LOADUI R1 0x1100			; Read from tape_01
 	FGETC						; Read a Char
 
@@ -40,7 +40,7 @@ getLables
 	ADDUI R12 R12 2			; The pointer will end up taking 2 bytes
 	JUMP @getLables
 
-.L0
+:.L0
 	;; Otherwise attempt to process
 	CALLI R13 @hex				; Convert it
 	CMPSKIP.GE R0 0			; Don't record, nonhex values
@@ -53,14 +53,14 @@ getLables
 	FALSE R11					; Flip the toggle
 	JUMP @getLables
 
-.L1
+:.L1
 	;; Deal with case of second half of byte
 	TRUE R11					; Flip the toggle
 	ADDUI R12 R12 1			; increment PC now that we have a full byte
 	JUMP @getLables
 
 ;; Function for storing the address of the label
-storeLabel
+:storeLabel
 	;; Get the char of the Label
 	LOADUI R1 0x1100			; Read from tape_01
 	FGETC						; Read a Char
@@ -75,7 +75,7 @@ storeLabel
 	RET R13
 
 ;; Main Functionality
-stage2
+:stage2
 	;; We first need to rewind tape_01 to perform our second pass
 	LOADUI R0 0x1100
 	REWIND
@@ -84,7 +84,7 @@ stage2
 	LOADUI R11 1				; Our toggle
 	FALSE R12					; Our PC counter
 
-loop
+:loop
 	LOADUI R1 0x1100			; Read from tape_01
 	FGETC						; Read a Char
 
@@ -101,14 +101,14 @@ loop
 	FGETC						; Read a Char
 	JUMP @loop
 
-.L97
+:.L97
 	;; Check for Pointer
 	CMPUI R14 R0 64			; If it is a pointer Deal with it
 	JUMP.NE R14 @.L98			; Otherwise attempt to process it
 	CALLI R13 @storePointer
 	JUMP @loop
 
-.L98
+:.L98
 	;; Process Char
 	LOADUI R1 0				; Write to Char to TTY
 	FPUTC						; Print the Char
@@ -122,7 +122,7 @@ loop
 	FALSE R11					; Flip the toggle
 	JUMP @loop
 
-.L99
+:.L99
 	SL0I R15 4					; Shift our first nibble
 	AND R0 R0 R10				; Mask out top
 	ADD R0 R0 R15				; Combine nibbles
@@ -132,7 +132,7 @@ loop
 	ADDUI R12 R12 1			; increment PC now that we have a full byte
 	JUMP @loop					; Try to get more bytes
 
-storePointer
+:storePointer
 	;; Correct the PC to reflect the size of the pointer
 	ADDUI R12 R12 2			; Exactly 2 bytes
 
@@ -160,7 +160,7 @@ storePointer
 	FPUTC						; Write the byte to TAPE_02
 	RET R13
 
-hex
+:hex
 	;; Deal with line comments starting with #
 	CMPUI R14 R0 35
 	JUMP.E R14 @ascii_comment
@@ -188,19 +188,19 @@ hex
 	;; Ignore the rest
 	JUMP @ascii_other
 
-ascii_num
+:ascii_num
 	SUBUI R0 R0 48
 	RET R13
-ascii_low
+:ascii_low
 	SUBUI R0 R0 87
 	RET R13
-ascii_high
+:ascii_high
 	SUBUI R0 R0 55
 	RET R13
-ascii_other
+:ascii_other
 	TRUE R0
 	RET R13
-ascii_comment
+:ascii_comment
 	LOADUI R1 0x1100			; Read from TAPE_01
 	FGETC						; Read another char
 	CMPUI R14 R0 10			; Stop at the end of line
@@ -209,7 +209,7 @@ ascii_comment
 	JUMP.NE R14 @ascii_comment	; Otherwise keep looping
 	JUMP @ascii_other
 
-finish
+:finish
 	LOADUI R0 0x1100			; Close TAPE_01
 	FCLOSE
 	LOADUI R0 0x1101			; Close TAPE_02
@@ -217,4 +217,4 @@ finish
 	HALT
 
 	;; Where all of our pointers will be stored for our locations
-table
+:table

@@ -1,4 +1,4 @@
-start
+:start
 	LOADUI R10 0x0F			; Byte mask
 	LOADUI R11 1				; Our toggle
 	LOADUI R13 0x600			; Where we are starting our Stack
@@ -13,7 +13,7 @@ start
 	LOADUI R0 0x1101
 	FOPEN_WRITE
 
-loop
+:loop
 	LOADUI R1 0				; Read from tty
 	FGETC						; Read a Char
 
@@ -22,12 +22,12 @@ loop
 	JUMP.NE R14 @.L0
 	CALLI R13 @finish
 
-.L0
+:.L0
 	;; Check for EOF
 	JUMP.P R0 @.L1
 	CALLI R13 @finish
 
-.L1
+:.L1
 	LOADUI R1 0x1101			; Write to TAPE_02
 	FPUTC						; Print the Char
 	CALLI R13 @hex				; Convert it
@@ -39,7 +39,7 @@ loop
 	FALSE R11					; Flip the toggle
 	JUMP @loop
 
-.L99
+:.L99
 	SL0I R15 4					; Shift our first nibble
 	AND R0 R0 R10				; Mask out top
 	ADD R0 R0 R15				; Combine nibbles
@@ -48,7 +48,7 @@ loop
 	FPUTC						; To TAPE_01
 	JUMP @loop					; Try to get more bytes
 
-hex
+:hex
 	;; Deal with line comments starting with #
 	CMPUI R14 R0 35
 	JUMP.E R14 @ascii_comment
@@ -76,19 +76,19 @@ hex
 	;; Ignore the rest
 	JUMP @ascii_other
 
-ascii_num
+:ascii_num
 	SUBUI R0 R0 48
 	RET R13
-ascii_low
+:ascii_low
 	SUBUI R0 R0 87
 	RET R13
-ascii_high
+:ascii_high
 	SUBUI R0 R0 55
 	RET R13
-ascii_other
+:ascii_other
 	TRUE R0
 	RET R13
-ascii_comment
+:ascii_comment
 	LOADUI R1 0				; Read from tty
 	FGETC						; Read another char
 	CMPUI R14 R0 10			; Stop at the end of line
@@ -97,7 +97,7 @@ ascii_comment
 	JUMP.NE R14 @ascii_comment	; Otherwise keep looping
 	JUMP @ascii_other
 
-finish
+:finish
 	LOADUI R0 0x1100			; Close TAPE_01
 	FCLOSE
 	LOADUI R0 0x1101			; Close TAPE_02
