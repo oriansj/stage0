@@ -83,13 +83,7 @@ Then after testing is validated, I begin the pain staking process of manually co
 
 What I however require is someone with a completely alien platform verify the compiled hex for the stage0_monitor.
 
-Which has the following checksum values:
-
-| Name   | Value                                                            |
-|--------+------------------------------------------------------------------|
-| md5    | 9e29544f0220636437741cb5092cc411                                 |
-| sha1   | b26c72762d2f77d8634cb532d581c1e76adceb3f                         |
-| sha256 | 045ef96e1c8fb011cba89f268f823c06b21f91270fb9afb0af42a1ac8c3ee44b |
+Which is listed along with all of the checksums of the validated binaries produced thus far in the file Checksums.org
 
 If your compiled hex is different in any way, please let me know as the process should produce bit idential binaries.
 
