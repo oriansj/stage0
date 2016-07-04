@@ -98,8 +98,8 @@
 **** Binary packing group
 | Hex         | Name             | Comment                              |
 |-------------+------------------+--------------------------------------|
-| 05 01 4a bc | PACK a b c       | a = PACK(b, c)                       |
-| 05 01 5a bc | UNPACK a b c     | a = UNPACK(b, c)                     |
+| 05 01 4a bc | PACK a b c       | a = PACK(b, c) [[./img/pack.gif]]        |
+| 05 01 5a bc | UNPACK a b c     | a = UNPACK(b, c)  [[./img/unpack.gif]]   |
 | 05 01 6a bc | PACK8.CO a b c   | a = PACK(b) c = Overload? [signed]   |
 | 05 01 7a bc | PACK8U.CO a b c  | a = PACK(b) c = Overload? [unsigned] |
 | 05 01 8a bc | PACK16.CO a b c  | a = PACK(b) c = Overload? [signed]   |
