@@ -24,7 +24,8 @@ enum type
 {
 	EOL = 1,
 	comment = (1 << 1),
-	label = (1 << 2)
+	label = (1 << 2),
+	string = (1 << 3)
 };
 
 struct Token* newToken()
@@ -97,7 +98,7 @@ Restart:
 				goto Token_complete;
 			}
 		}
-		else if((!(p->type & comment)) && ((32 == c) || (9 == c)))
+		else if((!(p->type & comment) && !(p->type & string)) && ((32 == c) || (9 == c)))
 		{
 			if(1 > i)
 			{
@@ -108,15 +109,24 @@ Restart:
 				goto Token_complete;
 			}
 		}
-		else if((!(p->type & comment )) && ((35 == c) ||(59 == c)))
+		else if((!(p->type & comment ) && !(p->type & string)) && ((35 == c) ||(59 == c)))
 		{
 			p->type = p->type | comment;
 			store[i] = (char)c;
 		}
-		else if((!(p->type & comment )) && (58 == c))
+		else if((!(p->type & comment ) && !(p->type & string)) && ((34 == c) ||(39 == c)))
+		{
+			p->type = p->type | string;
+			store[i] = (char)c;
+		}
+		else if((!(p->type & comment ) && !(p->type & string)) && (58 == c))
 		{
 			p->type = p->type | label;
 			store[i] = (char)c;
+		}
+		else if((p->type & string) && ((34 == c) ||(39 == c)))
+		{
+			goto Token_complete;
 		}
 		else
 		{
@@ -423,6 +433,48 @@ void update_jumps(struct Token* head, struct Token* p)
 	}
 }
 
+char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
+
+void hexify_string(char* s, char* d, int max)
+{
+	int i = 0;
+	while( i < max)
+	{
+		if(0 == s[i])
+		{
+			i = max;
+		}
+		else
+		{
+			d[2*i]  = table[s[i] / 16];
+			d[2*i + 1] = table[s[i] % 16];
+			i = i + 1;
+		}
+	}
+}
+
+void process_string(struct Token* p)
+{
+	if(p->type & string)
+	{
+		if('\'' == p->Text[0])
+		{
+			strncpy(p->Expression, p->Text + 1, max_string);
+			p->size = strnlen(p->Expression, max_string)/2;
+		}
+		else if('"' == p->Text[0])
+		{
+			hexify_string(p->Text + 1, p->Expression, max_string/2);
+			p->size = strnlen(p->Expression, max_string)/2;
+		}
+	}
+
+	if(NULL != p->next)
+	{
+		process_string(p->next);
+	}
+}
+
 uint16_t numerate_string(char a[])
 {
 	char *ptr;
@@ -453,6 +505,14 @@ void eval_immediates(struct Token* p)
 void print_text(struct Token* p)
 {
 	fprintf(stdout, " %s", p->Text);
+	if(34 == p->Text[0])
+	{
+		fprintf(stdout, "\"");
+	}
+	else if(39 == p->Text[0])
+	{
+		fprintf(stdout, "'");
+	}
 
 	if((NULL != p->next) && !((p->type & EOL)))
 	{
@@ -515,6 +575,7 @@ int main(int argc, char **argv)
 	}
 
 	assemble(head);
+	process_string(head);
 	assign_addresses(head);
 	update_jumps(head, head);
 	eval_immediates(head);
