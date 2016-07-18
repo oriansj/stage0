@@ -13,6 +13,7 @@
 
 bool Reached_EOF;
 char temp[max_string + 1];
+char tty_getchar();
 
 struct Line
 {
@@ -20,6 +21,16 @@ struct Line
 	struct Line* next;
 	struct Line* prev;
 };
+
+int get_linenum(struct Line* p)
+{
+	if(NULL == p->prev)
+	{
+		return 0;
+	}
+
+	return get_linenum(p->prev) + 1;
+}
 
 struct Line* newLine()
 {
@@ -32,6 +43,7 @@ struct Line* newLine()
 		exit (EXIT_FAILURE);
 	}
 
+	p->Text[0] = '\n';
 	return p;
 }
 
@@ -128,10 +140,13 @@ struct Line* RemoveLine(struct Line* p)
 	if(NULL != p->prev)
 	{
 		p->prev->next = p->next;
-		return p->prev;
 	}
 
-	return p->next;
+	if(NULL != p->next)
+	{
+		return p->next;
+	}
+	return p->prev;
 }
 
 struct Line* InsertLine(struct Line* head)
@@ -176,10 +191,9 @@ struct Line* AppendLine(struct Line* head)
 	return head;
 }
 
-void Editor_loop(struct Line* head, FILE* source_file)
+void Editor_loop(struct Line* head, char* file_name)
 {
-	Readline(stdin);
-	switch(temp[0])
+	switch(tty_getchar())
 	{
 		case 'a':
 		{
@@ -190,7 +204,7 @@ void Editor_loop(struct Line* head, FILE* source_file)
 		{
 			if(NULL != head->prev)
 			{
-				Editor_loop(head->prev, source_file);
+				Editor_loop(head->prev, file_name);
 			}
 			break;
 		}
@@ -209,7 +223,7 @@ void Editor_loop(struct Line* head, FILE* source_file)
 		{
 			if(NULL != head->next)
 			{
-				Editor_loop(head->next, source_file);
+				Editor_loop(head->next, file_name);
 			}
 			break;
 		}
@@ -220,6 +234,7 @@ void Editor_loop(struct Line* head, FILE* source_file)
 		}
 		case 'p':
 		{
+			printf("Showing contents of line %04x:\n", get_linenum(head));
 			fputs(head->Text, stdout);
 			break;
 		}
@@ -229,8 +244,10 @@ void Editor_loop(struct Line* head, FILE* source_file)
 		}
 		case 'w':
 		{
-			rewind(source_file);
+			FILE* source_file;
+			source_file = fopen(file_name, "w");
 			WriteOut(GetHead(head), source_file);
+			fclose(source_file);
 			break;
 		}
 		case '?':
@@ -240,7 +257,7 @@ void Editor_loop(struct Line* head, FILE* source_file)
 		}
 	}
 
-	Editor_loop(head,source_file);
+	Editor_loop(head, file_name);
 }
 
 /* Standard C main program */
@@ -254,7 +271,10 @@ int main(int argc, char **argv)
 	}
 
 	FILE* source_file;
-	source_file = fopen(argv[1], "rw+");
+	char file_name[256] = {0};
+
+	strncpy(file_name, argv[1], 255);
+	source_file = fopen(file_name, "rw+");
 
 	Reached_EOF = false;
 	struct Line* head = NULL;
@@ -267,7 +287,9 @@ int main(int argc, char **argv)
 		head = addLine(head, p);
 	}
 
-	Editor_loop(head, source_file);
+	fclose(source_file);
+
+	Editor_loop(head, file_name);
 
 	return EXIT_SUCCESS;
 }
