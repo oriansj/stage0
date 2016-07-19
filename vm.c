@@ -1,5 +1,4 @@
 #include "vm.h"
-//#define DEBUG true
 uint32_t performance_counter;
 
 /* Prototypes for functions in vm_instructions.c*/

@@ -8,6 +8,7 @@
  * wish to use. Please note that they contain bugs  *
  ****************************************************/
 
+#define tty_lib true
 
 /* In order to restore at exit.*/
 static struct termios orig_termios;

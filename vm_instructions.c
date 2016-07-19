@@ -2,6 +2,10 @@
 FILE* tape_01;
 FILE* tape_02;
 
+#ifdef tty_lib
+char tty_getchar();
+#endif
+
 /* Correctly write out bytes on little endian hardware */
 void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 {
@@ -199,7 +203,12 @@ void vm_FGETC(struct lilith* vm)
 
 	if (0x00000000 == vm->reg[1])
 	{
+		#ifdef tty_lib
+		byte = tty_getchar();
+		#endif
+		#ifndef tty_lib
 		byte = fgetc(stdin);
+		#endif
 	}
 
 	if(0x00001100 == vm->reg[1])
