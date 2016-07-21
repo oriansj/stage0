@@ -1,0 +1,68 @@
+@font-face {
+	font-family: 'TTY';
+	src: url("Glass_TTY_VT220.ttf");
+	font-weight: normal;
+}
+
+* {
+	font-family: TTY, monospace;
+}
+
+.Memory {
+	float: left;
+	border:solid 1px;
+	width:100%;
+}
+
+.Memory td {
+	border:solid 1px;
+}
+
+.Memory .cellEditing {
+	padding: 0;
+}
+
+.Memory .cellEditing input[type=text]{
+	width:100%;
+	border:0;
+	background-color:rgb(255,253,210);
+}
+
+.Registers {
+	float: left;
+	border:solid 1px;
+	width:15%
+}
+
+.Registers td {
+	border:solid 1px;
+}
+
+.Registers .cellEditing {
+	padding: 0;
+}
+
+.Registers .cellEditing input[type=text]{
+	width:100%;
+	border:0;
+	background-color:rgb(255,253,210);
+}
+
+.Debug {
+	border:solid 1px;
+	width:100%;
+}
+
+tr:nth-child(even) {
+	background-color: #D9EAF3;
+}
+
+.current td{
+	border:solid 1px;
+	background-color: #FFAAAA;
+}
+
+.breakpoint td
+{
+	background-color: #FF0000;
+}
