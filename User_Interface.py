@@ -5,10 +5,15 @@ import re
 subprocess.call("./bin/dis foo | sponge z_disassembled", shell=True)
 vm = ctypes.CDLL('./libvm.so')
 
-vm.initialize_lilith()
-Current_IP = 0
-Watchpoints = {0}
-vm.load_lilith(ctypes.create_string_buffer("foo".encode('ascii')))
+
+def Reset_lilith():
+	vm.initialize_lilith()
+	global Current_IP
+	Current_IP = 0
+	global Watchpoints
+	Watchpoints = {0}
+	vm.load_lilith(ctypes.create_string_buffer("foo".encode('ascii')))
+
 
 def Step_lilith():
 	global Current_IP
@@ -17,7 +22,7 @@ def Step_lilith():
 	return
 
 def returnPage():
-	return get_header() + (vm.get_memory(0)).decode('utf-8') + get_spacer1() + get_registers(0) + get_registers(8) + get_spacer2() + get_disassembled() + get_footer()
+	return get_header() + (vm.get_memory(Current_Page)).decode('utf-8') + get_spacer1() + get_registers(0) + get_registers(8) + get_spacer2() + get_disassembled() + get_footer()
 
 vm.get_memory.argtype = ctypes.c_uint
 vm.get_memory.restype = ctypes.c_char_p
@@ -58,9 +63,10 @@ def get_header():
 <body>
 	<div>
 		<a href="RUN"><button type="button">RUN</button></a>
-		<a href="STEP"><button type="button">STEP</button></a>
 		<a href="STOP"><button type="button">STOP</button></a>
-		<a href="PAUSE"><button type="button">PAUSE</button></a>
+		<a href="PAGEDOWN"><button type="button">PAGE DOWN</button></a>
+		<a href="PAGEUP"><button type="button">PAGE UP</button></a>
+		<a href="STEP"><button type="button">STEP</button></a>
 		<a href="RESET"><button type="button">RESET</button></a>
 	</div>
 	<div>
@@ -114,7 +120,7 @@ def get_registers(index):
 		<tbody>"""
 
 	for i in range(0,8):
-		temp = temp + """<tr"><td>R""" + str(index + i) + "</td><td>" + formatRegister(vm.get_register(index + i)) + "</td></tr>\n"
+		temp = temp + """<tr><td>R""" + str(index + i) + "</td><td>" + formatRegister(vm.get_register(index + i)) + "</td></tr>\n"
 
 	return temp + """		</tbody>
 	</table> """
@@ -153,3 +159,8 @@ def get_footer():
 </body>
 </html>
 """
+
+Current_IP = 0
+Current_Page = 0
+Watchpoints = {0}
+Reset_lilith()

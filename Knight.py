@@ -42,17 +42,26 @@ class StringGenerator(object):
 		return UI.returnPage()
 
 	@cherrypy.expose
-	def PAUSE(self):
-		return UI.returnPage()
-
-	@cherrypy.expose
 	def RESET(self):
+		UI.Reset_lilith()
 		return UI.returnPage()
 
 	@cherrypy.expose
 	def DEBUG(self, Inst=""):
 		UI.Watchpoints
 		UI.Watchpoints.add(int(Inst, 16))
+		return UI.returnPage()
+
+	@cherrypy.expose
+	def PAGEDOWN(self):
+		UI.Current_Page = UI.Current_Page + 4096
+		return UI.returnPage()
+
+	@cherrypy.expose
+	def PAGEUP(self):
+		UI.Current_Page = UI.Current_Page - 4096
+		if 0 > UI.Current_Page:
+			UI.Current_Page = 0
 		return UI.returnPage()
 
 if __name__ == '__main__':
