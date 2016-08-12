@@ -57,6 +57,16 @@ unsigned int get_register(unsigned int reg)
 	return Globalvm->reg[reg];
 }
 
+void set_register(unsigned int reg, unsigned int value)
+{
+	Globalvm->reg[reg] = value;
+}
+
+void set_memory(unsigned int address, unsigned char value)
+{
+	Globalvm->memory[address] = value;
+}
+
 unsigned char get_byte(unsigned int add)
 {
 	return Globalvm->memory[add];

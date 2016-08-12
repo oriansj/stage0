@@ -5,6 +5,11 @@ import re
 subprocess.call("./bin/dis foo | sponge z_disassembled", shell=True)
 vm = ctypes.CDLL('./libvm.so')
 
+vm.get_memory.argtype = ctypes.c_uint
+vm.get_memory.restype = ctypes.c_char_p
+vm.step_lilith.restype = ctypes.c_uint
+vm.set_register.argtype = (ctypes.c_uint, ctypes.c_uint)
+vm.set_memory.argtype = (ctypes.c_uint, ctypes.c_ubyte)
 
 def Reset_lilith():
 	vm.initialize_lilith()
@@ -14,18 +19,21 @@ def Reset_lilith():
 	Watchpoints = {0}
 	vm.load_lilith(ctypes.create_string_buffer("foo".encode('ascii')))
 
-
 def Step_lilith():
 	global Current_IP
-	vm.step_lilith.restype = ctypes.c_uint
 	Current_IP = vm.step_lilith()
+	return
+
+def Set_Memory(address, value):
+	vm.set_memory(address, value)
+	return
+
+def Set_Register(register, value):
+	vm.set_register(register, value)
 	return
 
 def returnPage():
 	return get_header() + (vm.get_memory(Current_Page)).decode('utf-8') + get_spacer1() + get_registers(0) + get_registers(8) + get_spacer2() + get_disassembled() + get_footer()
-
-vm.get_memory.argtype = ctypes.c_uint
-vm.get_memory.restype = ctypes.c_char_p
 
 hexlookup = { 0 : '0', 1 : '1', 2 : '2', 3 : '3', 4 : '4', 5 : '5', 6 : '6', 7 : '7', 8 : '8', 9 : '9', 10 : 'A', 11 : 'B', 12 : 'C', 13 : 'D', 14 : 'E', 15 : 'F' }
 

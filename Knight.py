@@ -16,13 +16,12 @@ class StringGenerator(object):
 			return "Out of range"
 		if int(value, 16) > 255:
 			return "Too big"
-
+		UI.Set_Memory(int(col)+(int(row) * 16) + UI.Current_Page , int(value, 16))
 		return UI.returnPage()
 
 	@cherrypy.expose
 	def Register(self, Reg="", value=0):
-		index = int(Reg[1:])
-		registers = int(value, 16)
+		UI.Set_Register(int(Reg[1:]), int(value, 16))
 		return UI.returnPage()
 
 	@cherrypy.expose
