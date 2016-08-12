@@ -552,6 +552,61 @@ void decode_Integer_2OP(struct Instruction* c)
 			strncpy(Name, "CALL", 19);
 			break;
 		}
+		case 0x0200: /* PUSHR */
+		{
+			strncpy(Name, "PUSHR", 19);
+			break;
+		}
+		case 0x0201: /* PUSH8 */
+		{
+			strncpy(Name, "PUSH8", 19);
+			break;
+		}
+		case 0x0202: /* PUSH16 */
+		{
+			strncpy(Name, "PUSH16", 19);
+			break;
+		}
+		case 0x0203: /* PUSH32 */
+		{
+			strncpy(Name, "PUSH32", 19);
+			break;
+		}
+		case 0x0280: /* POPR */
+		{
+			strncpy(Name, "POPR", 19);
+			break;
+		}
+		case 0x0281: /* POP8 */
+		{
+			strncpy(Name, "POP8", 19);
+			break;
+		}
+		case 0x0282: /* POPU8 */
+		{
+			strncpy(Name, "POPU8", 19);
+			break;
+		}
+		case 0x0283: /* POP16 */
+		{
+			strncpy(Name, "POP16", 19);
+			break;
+		}
+		case 0x0284: /* POPU16 */
+		{
+			strncpy(Name, "POPU16", 19);
+			break;
+		}
+		case 0x0285: /* POP32 */
+		{
+			strncpy(Name, "POP32", 19);
+			break;
+		}
+		case 0x0286: /* POPU32 */
+		{
+			strncpy(Name, "POPU32", 19);
+			break;
+		}
 		default: /* Unknown 2OP*/
 		{
 			break;

@@ -203,6 +203,18 @@ void CMPSKIPU_G(struct lilith* vm, struct Instruction* c);
 void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c);
 void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c);
 void CMPSKIPU_L(struct lilith* vm, struct Instruction* c);
+void PUSHR(struct lilith* vm, struct Instruction* c);
+void PUSH8(struct lilith* vm, struct Instruction* c);
+void PUSH16(struct lilith* vm, struct Instruction* c);
+void PUSH32(struct lilith* vm, struct Instruction* c);
+void POPR(struct lilith* vm, struct Instruction* c);
+void POP8(struct lilith* vm, struct Instruction* c);
+void POPU8(struct lilith* vm, struct Instruction* c);
+void POP16(struct lilith* vm, struct Instruction* c);
+void POPU16(struct lilith* vm, struct Instruction* c);
+void POP32(struct lilith* vm, struct Instruction* c);
+void POPU32(struct lilith* vm, struct Instruction* c);
+
 
 /* Prototypes for functions in vm_decode.c*/
 struct lilith* create_vm(size_t size);

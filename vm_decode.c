@@ -1026,6 +1026,105 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			CALL(vm, c);
 			break;
 		}
+		case 0x0200: /* PUSHR */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "PUSHR", 19);
+			#endif
+
+			PUSHR(vm, c);
+			break;
+		}
+		case 0x0201: /* PUSH8 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "PUSH8", 19);
+			#endif
+
+			PUSH8(vm, c);
+			break;
+		}
+		case 0x0202: /* PUSH16 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "PUSH16", 19);
+			#endif
+
+			PUSH16(vm, c);
+			break;
+		}
+		case 0x0203: /* PUSH32 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "PUSH32", 19);
+			#endif
+
+			PUSH32(vm, c);
+			break;
+		}
+		case 0x0280: /* POPR */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "POPR", 19);
+			#endif
+
+			POPR(vm, c);
+			break;
+		}
+		case 0x0281: /* POP8 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "POP8", 19);
+			#endif
+
+			POP8(vm, c);
+			break;
+		}
+		case 0x0282: /* POPU8 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "POPU8", 19);
+			#endif
+
+			POPU8(vm, c);
+			break;
+		}
+		case 0x0283: /* POP16 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "POP16", 19);
+			#endif
+
+			POP16(vm, c);
+			break;
+		}
+		case 0x0284: /* POPU16 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "POPU16", 19);
+			#endif
+
+			POPU16(vm, c);
+			break;
+		}
+		case 0x0285: /* POP32 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "POP32", 19);
+			#endif
+
+			POP32(vm, c);
+			break;
+		}
+		case 0x0286: /* POPU32 */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "POPU32", 19);
+			#endif
+
+			POPU32(vm, c);
+			break;
+		}
 		default: return true;
 	}
 	#ifdef DEBUG

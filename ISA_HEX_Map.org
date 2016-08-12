@@ -218,10 +218,28 @@
 | 09 01 00 ab | BRANCH a b | MEM[b] = PC; PC = a                                   |
 | 09 01 01 ab | CALL a b   | MEM[b] = PC; b = b + (register size in bytes); PC = a |
 
+**** Stack group
+| Hex         | Name       | Comment                                                   |
+|-------------+------------+-----------------------------------------------------------|
+| 09 02 00 ab | PUSHR a b  | MEM[b] = a; b = b + (register size in bytes)          |
+| 09 02 01 ab | PUSH8 a b  | MEM[b] = bottom_8_bits(a); b = b + 1                  |
+| 09 02 02 ab | PUSH16 a b | MEM[b] = bottome_16_bits(a); b = b + 2                |
+| 09 02 03 ab | PUSH32 a b | MEM[b] = bottome_32_bits(a); b = b + 4                |
+| 09 02 04 xx | Reserved   |                                                           |
+| ...         | Reserved   |                                                           |
+| 09 02 7F xx | Reserved   |                                                           |
+| 09 02 80 ab | POPR a b   | a = MEM[b]; MEM[b] = 0;  b = b - (register size in bytes) |
+| 09 02 81 ab | POP8 a b   | a = MEM[b] (signed); MEM[b] = 0;  b = b - 1             |
+| 09 02 82 ab | POPU8 a b  | a = MEM[b] (unsigned); MEM[b] = 0;  b = b - 1           |
+| 09 02 83 ab | POP16 a b  | a = MEM[b] (signed); MEM[b] = 0;  b = b - 2             |
+| 09 02 84 ab | POPU16 a b | a = MEM[b] (unsigned); MEM[b] = 0;  b = b - 2           |
+| 09 02 85 ab | POP32 a b  | a = MEM[b] (signed); MEM[b] = 0;  b = b - 4             |
+| 09 02 86 ab | POPU32 a b | a = MEM[b] (signed); MEM[b] = 0;  b = b - 4             |
+
 **** Reserved Block 1
 | Hex         | Name     |
 |-------------+----------|
-| 09 01 02 xx | Reserved |
+| 09 02 87 xx | Reserved |
 | ...         | Reserved |
 | 09 FF FF xx | Reserved |
 

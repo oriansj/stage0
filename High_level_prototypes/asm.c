@@ -268,6 +268,17 @@ void assemble(struct Token* p)
 	setExpression(p, "MOVE", "090005", 4);
 	setExpression(p, "BRANCH", "090100", 4);
 	setExpression(p, "CALL", "090101", 4);
+	setExpression(p, "PUSHR", "090200", 4);
+	setExpression(p, "PUSH8", "090201", 4);
+	setExpression(p, "PUSH16", "090202", 4);
+	setExpression(p, "PUSH32", "090203", 4);
+	setExpression(p, "POPR", "090280", 4);
+	setExpression(p, "POP8", "090281", 4);
+	setExpression(p, "POPU8", "090282", 4);
+	setExpression(p, "POP16", "090283", 4);
+	setExpression(p, "POPU16", "090284", 4);
+	setExpression(p, "POP32", "090285", 4);
+	setExpression(p, "POPU32", "090286", 4);
 
 	/* 1OP Group */
 	setExpression(p, "READPC", "0D00000", 4);

@@ -1858,3 +1858,66 @@ void CMPSKIPU_L(struct lilith* vm, struct Instruction* c)
 		vm->ip = vm->ip + 4;
 	}
 }
+
+void PUSHR(struct lilith* vm, struct Instruction* c)
+{
+	writeout_Reg(vm, vm->reg[c->reg1], vm->reg[c->reg0]);
+	vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
+}
+void PUSH8(struct lilith* vm, struct Instruction* c)
+{
+	writeout_byte(vm, vm->reg[c->reg1] , vm->reg[c->reg0]);
+	vm->reg[c->reg1] = vm->reg[c->reg1] + 1;
+}
+void PUSH16(struct lilith* vm, struct Instruction* c)
+{
+	writeout_doublebyte(vm, vm->reg[c->reg1] , vm->reg[c->reg0]);
+	vm->reg[c->reg1] = vm->reg[c->reg1] + 2;
+}
+void PUSH32(struct lilith* vm, struct Instruction* c)
+{
+	writeout_Reg(vm, vm->reg[c->reg1] , vm->reg[c->reg0]);
+	vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
+}
+void POPR(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
+	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1]);
+	writeout_Reg(vm, vm->reg[c->reg1], 0);
+}
+void POP8(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg1] = vm->reg[c->reg1] - 1;
+	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1], true);
+	writeout_byte(vm, vm->reg[c->reg1], 0);
+}
+void POPU8(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg1] = vm->reg[c->reg1] - 1;
+	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1], false);
+	writeout_byte(vm, vm->reg[c->reg1], 0);
+}
+void POP16(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg1] = vm->reg[c->reg1] - 2;
+	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1], true);
+	writeout_doublebyte(vm, vm->reg[c->reg1], 0);
+}
+void POPU16(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg1] = vm->reg[c->reg1] - 2;
+	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1], false);
+	writeout_doublebyte(vm, vm->reg[c->reg1], 0);
+}
+void POP32(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
+	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1]);
+	writeout_Reg(vm, vm->reg[c->reg1], 0);
+}
+void POPU32(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
+	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1]);
+	writeout_Reg(vm, vm->reg[c->reg1], 0);
+}
