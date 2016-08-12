@@ -698,41 +698,42 @@ void SUBU(struct lilith* vm, struct Instruction* c)
 void CMP(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
+	uint32_t result = 0;
 
 	tmp1 = (int32_t)(vm->reg[c->reg1]);
 	tmp2 = (int32_t)(vm->reg[c->reg2]);
 
-	/* Clear bottom 3 bits of condition register */
-	vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
+	/* Set condition bits accordingly*/
 	if(tmp1 > tmp2)
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
+		vm->reg[c->reg0] = result | GreaterThan;
 	}
 	else if(tmp1 == tmp2)
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
+		vm->reg[c->reg0] = result | EQual;
 	}
 	else
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
+		vm->reg[c->reg0] = result | LessThan;
 	}
 }
 
 void CMPU(struct lilith* vm, struct Instruction* c)
 {
-	/* Clear bottom 3 bits of condition register */
+	uint32_t result = 0;
+
 	vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
 	if(vm->reg[c->reg1] > vm->reg[c->reg2])
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
+		vm->reg[c->reg0] = result | GreaterThan;
 	}
 	else if(vm->reg[c->reg1] == vm->reg[c->reg2])
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
+		vm->reg[c->reg0] = result | EQual;
 	}
 	else
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
+		vm->reg[c->reg0] = result | LessThan;
 	}
 }
 
@@ -1328,20 +1329,20 @@ void SUBUI(struct lilith* vm, struct Instruction* c)
 
 void CMPI(struct lilith* vm, struct Instruction* c)
 {
-			/* Clear bottom 3 bits of condition register */
-			vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
-			if((int32_t)(vm->reg[c->reg1]) > c->raw_Immediate)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
-			}
-			else if((int32_t)(vm->reg[c->reg1]) == c->raw_Immediate)
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
-			}
-			else
-			{
-				vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
-			}
+	uint32_t result = 0;
+
+	if((int32_t)(vm->reg[c->reg1]) > c->raw_Immediate)
+	{
+		vm->reg[c->reg0] = result | GreaterThan;
+	}
+	else if((int32_t)(vm->reg[c->reg1]) == c->raw_Immediate)
+	{
+		vm->reg[c->reg0] = result | EQual;
+	}
+	else
+	{
+		vm->reg[c->reg0] = result | LessThan;
+	}
 }
 
 void LOAD(struct lilith* vm, struct Instruction* c)
@@ -1381,19 +1382,19 @@ void LOADU32(struct lilith* vm, struct Instruction* c)
 
 void CMPUI(struct lilith* vm, struct Instruction* c)
 {
-	/* Clear bottom 3 bits of condition register */
-	vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
+	uint32_t result = 0;
+
 	if(vm->reg[c->reg1] > (uint32_t)c->raw_Immediate)
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | GreaterThan;
+		vm->reg[c->reg0] = result | GreaterThan;
 	}
 	else if(vm->reg[c->reg1] == (uint32_t)c->raw_Immediate)
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | EQual;
+		vm->reg[c->reg0] = result | EQual;
 	}
 	else
 	{
-		vm->reg[c->reg0] = vm->reg[c->reg0] | LessThan;
+		vm->reg[c->reg0] = result | LessThan;
 	}
 }
 
