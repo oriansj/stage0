@@ -1,0 +1,54 @@
+* What the heck is this folder anyway?
+This folder contains the prototype C code generated while attempting to determine a minimal complexity for implementing some functionality.
+
+There will be false starts, faulty assumptions and lessons learned along the way.
+The primary purpose of the code here is to allow me to experiment with what the resulting end user interaction and determining if it is sufficient or requires real improvement.
+
+* Current thought structure
+** Stage0
+Stage0 is the bare minimal code which is useful but compact enough to examine in a day. This is our core bootstrap code.
+
+All later pieces are bootstrapped from it. If the hardware is trustworthy and the code for stage0 is without trusting trust attacks, we can bootstrap an entire system and thus all systems, provided their code is available for review.
+
+The expected interactions with Stage0 is the following:
+User types in all code in hex without mistakes, whitespace and line comments are not converted to hex. All user input is stored in TAPE_02 and the compiled hex is stored in TAPE_01.
+
+** Stage1
+Stage1 is a minimal set of tools required to have a moderately productive development environment, that saves alot of manual steps.
+*** Tape Editor
+The High Level prototype SET.c is the current example.
+The functionality is rather simple, it reads in a tape as a series of strings tracked via a doubly linked list and provides the ability to print, replace, insert and append lines.
+It is very inefficient and a terrible text editor, hence the name Shitty Expensive Typewriter (SET).
+
+*** Hex Assembler
+Since the task of writing a hex assembler in hex is a massive pain in the ass, I have broken it into 3 steps.
+**** Part 0
+Part 0 is a hex assembler that simply reads hex0 format paper tapes and converts them to binary and writes them out. This code must be hand written within the stage0 monitor but once that it is done, its source tape can be self compiled.
+This part will only be used for the creation of Part 1. It is only able to compile .hex0 files
+
+**** Part 1
+Part 1 is a hex assembler that supports 1 character label and pointer names. Which when using a-z, A-Z and 0-9; gives us 62 labels to work with. Which isn't enough for a real program but enough for us to bootstrap itself and part 2.
+
+It is able to compile both .hex0 and .hex1 files
+[It is written as both a .hex0 and .hex1 file]
+
+**** Part 2
+Part 2 is a hex assembler that supports 60 char long label and pointer names. Which is more than sufficient for any program in Stage 1 and Stage2.
+By combining this with the output of the Line Macro program, a rather complete and easy to expand assembler will be approximated.
+
+It is able to compile .hex0, .hex1 and .hex2 files.
+[It is written as both a .hex1 and a .hex2 file]
+
+*** Line Macro
+The High Level prototype M0-macro.c is the current example
+The Line Macro assembler is rather stupid, it simply does the following steps:
+reads in a file, producing a linked list of objects
+Line comments are simply dropped
+If the text in an object is DEFINE, the next object is defined by the object after it.
+That definition is then enforced on the rest of the nodes.
+This of course is wildly inefficiently done. [But it is rather simple]
+Then the resulting mess is simply dumped to tape.
+By simply appending a list of defintions to the start of a .s file, one should be able to to produce a .hex2 output file which can be assembled by any assembler that supports .hex2 files
+
+** Stage2
+TBD
