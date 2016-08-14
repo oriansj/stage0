@@ -15,7 +15,7 @@
 	HALT
 	NOP
 
-;;  Our simple string compare function
+;;  Our simple string clear function
 :clear_string
 	;; Preserve registers
 	PUSHR R0 R15

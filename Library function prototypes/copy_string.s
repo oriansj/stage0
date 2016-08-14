@@ -14,7 +14,7 @@
 	HALT
 	NOP
 
-;;  Our simple string compare function
+;;  Our simple string copy function
 :copy_string
 	;; Preserve registers
 	PUSHR R0 R15
