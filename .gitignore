@@ -1,2 +1,7 @@
 bin/
 tmp/
+__pycache__/
+libvm.so
+tape_*
+z_disassembled
+
