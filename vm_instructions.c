@@ -722,7 +722,6 @@ void CMPU(struct lilith* vm, struct Instruction* c)
 {
 	uint32_t result = 0;
 
-	vm->reg[c->reg0] = vm->reg[c->reg0] & 0xFFFFFFF8;
 	if(vm->reg[c->reg1] > vm->reg[c->reg2])
 	{
 		vm->reg[c->reg0] = result | GreaterThan;
