@@ -3,5 +3,5 @@ tmp/
 __pycache__/
 libvm.so
 tape_*
+rom
 z_disassembled
-

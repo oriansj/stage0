@@ -2,7 +2,7 @@ import subprocess
 import ctypes
 import re
 
-subprocess.call("./bin/dis foo | sponge z_disassembled", shell=True)
+subprocess.call("./bin/dis rom | sponge z_disassembled", shell=True)
 vm = ctypes.CDLL('./libvm.so')
 
 vm.get_memory.argtype = ctypes.c_uint
