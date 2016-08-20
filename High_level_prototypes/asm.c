@@ -87,7 +87,7 @@ Restart:
 			goto Token_complete;
 		}
 		else if((10 == c) || (13 == c))
-		{
+		{ /* Deal with \n and \r */
 			p->type = p->type | EOL;
 			if(1 > i)
 			{
@@ -99,7 +99,7 @@ Restart:
 			}
 		}
 		else if((!(p->type & comment) && !(p->type & string)) && ((32 == c) || (9 == c)))
-		{
+		{ /* Deal with " " and \t */
 			if(1 > i)
 			{
 				goto Restart;
@@ -110,17 +110,17 @@ Restart:
 			}
 		}
 		else if((!(p->type & comment ) && !(p->type & string)) && ((35 == c) ||(59 == c)))
-		{
+		{ /* Deal with # and ; */
 			p->type = p->type | comment;
 			store[i] = (char)c;
 		}
 		else if((!(p->type & comment ) && !(p->type & string)) && ((34 == c) ||(39 == c)))
-		{
+		{ /* Deal with " and ' */
 			p->type = p->type | string;
 			store[i] = (char)c;
 		}
 		else if((!(p->type & comment ) && !(p->type & string)) && (58 == c))
-		{
+		{ /* Deal with : */
 			p->type = p->type | label;
 			store[i] = (char)c;
 		}
@@ -423,7 +423,7 @@ void update_jumps(struct Token* head, struct Token* p)
 	uint32_t dest = -1;
 
 
-	if('@' == p->Text[0])
+	if(('@' == p->Text[0]) || ('$' == p->Text[0]))
 	{
 		char temp[256] = {0};
 		strncpy(temp, p->Text, max_string);
@@ -434,7 +434,16 @@ void update_jumps(struct Token* head, struct Token* p)
 	if(-1 != (int32_t)dest)
 	{
 		int16_t dist = 0;
-		dist = dest - p->address + 4;
+		if('@' == p->Text[0])
+		{
+			dist = dest - p->address + 4;
+		}
+
+		if('$' == p->Text[0])
+		{
+			dist = dest;
+		}
+
 		sprintf(p->Expression, "%04x", (uint16_t)dist);
 	}
 

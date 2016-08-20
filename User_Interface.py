@@ -17,7 +17,7 @@ def Reset_lilith():
 	Current_IP = 0
 	global Watchpoints
 	Watchpoints = {0}
-	vm.load_lilith(ctypes.create_string_buffer("foo".encode('ascii')))
+	vm.load_lilith(ctypes.create_string_buffer("rom".encode('ascii')))
 
 def Step_lilith():
 	global Current_IP
