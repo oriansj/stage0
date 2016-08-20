@@ -4,7 +4,7 @@
 
 /****************************************************
  * To make effective use of this library function:  *
- * add prototypes for the bellow functions that you *
+ * add prototypes for the below functions that you  *
  * wish to use. Please note that they contain bugs  *
  ****************************************************/
 
