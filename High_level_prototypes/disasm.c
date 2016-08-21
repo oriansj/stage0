@@ -1272,8 +1272,7 @@ void eval_instruction(struct Instruction* c)
 		}
 		default: /* Not supported by this disassembler */
 		{
-			fprintf(stderr, "Unable to decode the following instruction:\n%c %c %c %c\n", c->raw0, c->raw1, c->raw2, c->raw3);
-			fprintf(stderr, "%s\n\n", c->operation);
+			fprintf(stdout, "ILLEGAL INSTRUCTION\t# %s\n", c->operation);
 		}
 	}
 }
