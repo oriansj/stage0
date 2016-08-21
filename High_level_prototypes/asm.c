@@ -456,7 +456,14 @@ void update_jumps(struct Token* head, struct Token* p)
 void hexify_string(char* s, char* d, int max)
 {
 	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
-	int i = 0;
+	int i = ((strnlen(s, max)/4) + 1) * 8;
+
+	while(0 < i)
+	{
+		i = i - 1;
+		d[i] = 0x30;
+	}
+
 	while( i < max)
 	{
 		if(0 == s[i])
