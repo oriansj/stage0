@@ -1,10 +1,10 @@
 all: libvm vm
 
 libvm: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	gcc -ggdb -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
+	gcc -ggdb -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c
-	gcc -ggdb vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+	gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
 production: libvm-production vm-production
 
