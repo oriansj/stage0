@@ -1,7 +1,7 @@
 /****************************************
- * Shitty Expensive Typewriter			*
- * A more shitty remake of the PDP-1's	*
- * Expensive Typewriter program		*
+ * Shitty Expensive Typewriter          *
+ * A more shitty remake of the PDP-1's  *
+ * Expensive Typewriter program         *
  ****************************************/
 
 #include <stdio.h>
@@ -17,9 +17,9 @@ char tty_getchar();
 
 struct Line
 {
-	char Text[max_string + 1];
 	struct Line* next;
 	struct Line* prev;
+	char* Text;
 };
 
 int get_linenum(struct Line* p)
@@ -43,13 +43,7 @@ struct Line* newLine()
 		exit (EXIT_FAILURE);
 	}
 
-	p->Text[0] = '\n';
 	return p;
-}
-
-void setText(struct Line* p, char Text[])
-{
-	strncpy(p->Text, Text, max_string);
 }
 
 struct Line* addLine(struct Line* head, struct Line* p)
@@ -70,9 +64,9 @@ struct Line* addLine(struct Line* head, struct Line* p)
 	return head;
 }
 
-void Readline(FILE* source_file)
+void Readline(struct Line* p,  FILE* source_file)
 {
-	char store[max_string + 1] = {0};
+	char* store = calloc(max_string + 1, sizeof(char));
 	int32_t c;
 	uint32_t i;
 
@@ -96,7 +90,7 @@ void Readline(FILE* source_file)
 	}
 
 Line_complete:
-	strncpy(temp, store, max_string);
+	p->Text = store;
 }
 
 void WriteOut(struct Line* head, FILE* source_file)
@@ -106,7 +100,14 @@ void WriteOut(struct Line* head, FILE* source_file)
 		return;
 	}
 
-	fputs(head->Text, source_file);
+	if(NULL != head->Text)
+	{
+		fputs(head->Text, source_file);
+	}
+	else
+	{
+		fputc(10, source_file);
+	}
 	WriteOut(head->next, source_file);
 }
 
@@ -215,8 +216,7 @@ void Editor_loop(struct Line* head, char* file_name)
 		}
 		case 'e':
 		{
-			Readline(stdin);
-			setText(head, temp);
+			Readline(head, stdin);
 			break;
 		}
 		case 'f':
@@ -281,9 +281,8 @@ int main(int argc, char **argv)
 	struct Line* p = NULL;
 	while(!Reached_EOF)
 	{
-		Readline(source_file);
 		p = newLine();
-		setText(p, temp);
+		Readline(p, source_file);
 		head = addLine(head, p);
 	}
 
