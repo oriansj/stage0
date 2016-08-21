@@ -76,6 +76,7 @@ def get_header():
 		<a href="PAGEUP"><button type="button">PAGE UP</button></a>
 		<a href="STEP"><button type="button">STEP</button></a>
 		<a href="RESET"><button type="button">RESET</button></a>
+		<a href="SPEEDBREAKPOINT"><button type="button">Run Until Breakpoint</button></a>
 	</div>
 	<div>
 	<div style="height:230px; width:60%; float:left; overflow-y: scroll;">
