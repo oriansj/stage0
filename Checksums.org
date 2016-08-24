@@ -11,13 +11,24 @@
 
 * Knight
 ** stage0
-| Filename           | compiled binary sha256sum                                        | compiled binary sha1sum                  | compiled binary md5sum           |
-|--------------------+------------------------------------------------------------------+------------------------------------------+----------------------------------|
-| stage0_monitor.hex | 7314d72708a732a16c566344d9aa3711a80c62405324fc7e12703cad02741a67 | cb2cad1bc77b3bdaee72852cf994bfd30655da9c | 960c6143076d522af176de82257514cc |
+| Filename            | compiled binary sha256sum                                        | compiled binary sha1sum                  | compiled binary md5sum           |
+|---------------------+------------------------------------------------------------------+------------------------------------------+----------------------------------|
+| stage0_monitor.hex0 | 7314d72708a732a16c566344d9aa3711a80c62405324fc7e12703cad02741a67 | cb2cad1bc77b3bdaee72852cf994bfd30655da9c | 960c6143076d522af176de82257514cc |
 
 ** stage1
 | Filename                | compiled binary sha256sum                                        | compiled binary sha1sum                  | compiled binary md5sum           |
 |-------------------------+------------------------------------------------------------------+------------------------------------------+----------------------------------|
-| stage1_assembler-0.hex  | f8289dfa9dd92e8a1a48f9a624d5d19e4f312b91bc3d1e0796474b46157ec47a | 10b1490182ba3122cd80b1afe9ca11dfa71f2ce4 | a6e0f5348dbb9b049c65b467cf6033e4 |
-| stage1_assembler-1a.hex | e4f0ed6e78ae79bb5e4a4fbde36f085dd0469cd6ae036dce5953b3d1c89801ce | 358a22c6996808ef44a9596ce714970837b53379 | 5c26294c7c59b250fd00d5c3559e68d8 |
-| stage1_assembler-1b.hex | e4f0ed6e78ae79bb5e4a4fbde36f085dd0469cd6ae036dce5953b3d1c89801ce | 358a22c6996808ef44a9596ce714970837b53379 | 5c26294c7c59b250fd00d5c3559e68d8 |
+| stage1_assembler-0.hex0 | f8289dfa9dd92e8a1a48f9a624d5d19e4f312b91bc3d1e0796474b46157ec47a | 10b1490182ba3122cd80b1afe9ca11dfa71f2ce4 | a6e0f5348dbb9b049c65b467cf6033e4 |
+| stage1_assembler-1.hex0 | e4f0ed6e78ae79bb5e4a4fbde36f085dd0469cd6ae036dce5953b3d1c89801ce | 358a22c6996808ef44a9596ce714970837b53379 | 5c26294c7c59b250fd00d5c3559e68d8 |
+| stage1_assembler-1.hex1 | e4f0ed6e78ae79bb5e4a4fbde36f085dd0469cd6ae036dce5953b3d1c89801ce | 358a22c6996808ef44a9596ce714970837b53379 | 5c26294c7c59b250fd00d5c3559e68d8 |
+| stage1_assembler-2.hex1 | 2f41f370d552470e4f8f0f9bb01cd93d743f1eaa07239c8f87f234e3f56095c7 | 517eccc78a850f013f4fbb1891b1af81ecc3e58b | b0c376e8c2f4dbc37d6f30f1548cebca |
+| stage1_assembler-2.hex2 | 2f41f370d552470e4f8f0f9bb01cd93d743f1eaa07239c8f87f234e3f56095c7 | 517eccc78a850f013f4fbb1891b1af81ecc3e58b | b0c376e8c2f4dbc37d6f30f1548cebca |
+
+| Filename                | Compiled by        | Number of instructions Executed |
+| stage1_assembler-0.hex0 | stage1_assembler-0 |                           28430 |
+| stage1_assembler-1.hex0 | stage1_assembler-0 |                           62292 |
+| stage1_assembler-1.hex0 | stage1_assembler-1 |                          125636 |
+| stage1_assembler-1.hex1 | stage1_assembler-1 |                          122210 |
+| stage1_assembler-2.hex1 | stage1_assembler-1 |                          253383 |
+| stage1_assembler-2.hex1 | stage1_assembler-2 |                          220567 |
+| stage1_assembler-2.hex2 | stage1_assembler-2 |                          241000 |

@@ -6,13 +6,13 @@ libvm: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c
 	gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
-production: libvm-production vm-production
+production: libvm-production vm-production asm dis
 
 libvm-production: wrapper.c vm_instructions.c vm_decode.c vm.h
 	gcc -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c
-	gcc vm.h vm.c vm_instructions.c vm_decode.c -o vm
+	gcc vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm
 
 development: vm libvm asm dis
 
