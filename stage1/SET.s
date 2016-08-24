@@ -64,7 +64,7 @@
 	PUSHR R4 R15
 	;; Initialize
 	MOVE R4 R0
-	LOADUI R0 256
+	FALSE R0					; Get where space is free
 	CALLI R15 @malloc
 	MOVE R2 R0
 	FALSE R3
@@ -98,21 +98,23 @@
 	;; Store the Byte
 	STOREX8 R0 R2 R3
 
+	;; Prep for next loop
+	ADDUI R3 R3 1
+
 	;; Check for EOL
 	CMPSKIP.NE R0 10
 	JUMP @Readline_2
 
-	;; Prevent lines from exceeding 255 chars
-	CMPSKIP.LE R3 255
-	JUMP @Readline_2
-
-	;; Prep for next loop
-	ADDUI R3 R3 1
+	;; Otherwise loop
 	JUMP @Readline_0
 
 :Readline_2
 	;; Set Text pointer
+	CMPSKIP.E R3 0				; Don't bother for Empty strings
 	STORE32 R2 R4 8
+	;; Correct Malloc
+	MOVE R0 R3					; Ensure actually allocates exactly
+	CALLI R15 @malloc			; the amount of space required
 	;; Restore Registers
 	POPR R4 R15
 	POPR R3 R15
@@ -150,8 +152,12 @@
 
 :addline_1
 	;; Handle case of Head->next not being NULL
-	LOAD32 R0 R0 0
-	CALLI R15 @addline
+	LOAD32 R0 R0 0				; Move to next node
+	LOAD32 R2 R0 0				; Get node->next
+	CMPSKIP.E R2 0				; If it is not null
+	JUMP @addline_1			; Move to the next node and try again
+	JUMP @addline_0			; Else simply act as if we got this node
+								; in the first place
 
 :addline_2
 	;; Restore registers
