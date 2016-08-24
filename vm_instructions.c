@@ -231,6 +231,9 @@ void vm_FPUTC(struct lilith* vm)
 	if (0x00000000 == vm->reg[1])
 	{
 		fputc(byte, stdout);
+		#ifdef tty_lib
+		fflush(stdout);
+		#endif
 	}
 
 	if(0x00001100 == vm->reg[1])

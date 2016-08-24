@@ -1998,7 +1998,7 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		case 0xFF: /* Deal with HALT */
 		{
 			vm->halted = true;
-			fprintf(stderr, "Computer Program has Halted\n");
+			fprintf(stderr, "Computer Program has Halted\nAfter Executing %i instructions\n", performance_counter);
 			break;
 		}
 		default: /* Deal with illegal instruction */

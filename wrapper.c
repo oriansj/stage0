@@ -48,7 +48,10 @@ void load_lilith(char* name)
 
 unsigned int step_lilith()
 {
-	execute_vm(Globalvm);
+	if(!Globalvm->halted)
+	{
+		execute_vm(Globalvm);
+	}
 	return Globalvm->ip;
 }
 
