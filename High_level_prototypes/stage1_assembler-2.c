@@ -51,7 +51,7 @@ void storeLabel()
 	table[index].target = ip;
 }
 
-void storePointer()
+void storePointer(char ch)
 {
 	ip = ip + 2;
 	int c = fgetc(source_file);
@@ -74,8 +74,16 @@ void storePointer()
 
 	int target = GetTarget(temp);
 	uint8_t first, second;
-	first = (target - ip + 4)/256;
-	second = (target - ip + 4)%256;
+	if(36 == ch)
+	{
+		first = target/256;
+		second = target%256;
+	}
+	else
+	{
+		first = (target - ip + 4)/256;
+		second = (target - ip + 4)%256;
+	}
 	printf("%c%c", first, second );
 }
 
@@ -162,9 +170,9 @@ void second_pass()
 				c = fgetc(source_file);
 			}
 		}
-		else if(64 == c)
+		else if((64 == c) || (36 == c))
 		{
-			storePointer();
+			storePointer(c);
 		}
 		else
 		{

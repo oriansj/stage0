@@ -20,6 +20,7 @@ struct Token
 enum type
 {
 	macro = 1,
+	str = (1 << 1)
 };
 
 struct Token* newToken()
@@ -62,57 +63,72 @@ void purge_lineComment()
 	}
 }
 
-struct Token* Tokenize_Line(struct Token* head)
+char* store_atom(char c)
 {
 	char* store = calloc(max_string + 1, sizeof(char));
-	int32_t c;
-	uint32_t i;
-	struct Token* p = newToken();
-
-Restart:
-	for(i = 0; i < max_string; i = i + 1)
+	int32_t ch;
+	uint32_t i = 0;
+	ch = c;
+	do
 	{
-		c = fgetc(source_file);
-		if(-1 == c)
-		{
-			Reached_EOF = true;
-			goto Token_complete;
-		}
-		else if((10 == c) || (13 == c))
-		{
-			if(1 > i)
-			{
-				goto Restart;
-			}
-			else
-			{
-				goto Token_complete;
-			}
-		}
-		else if((35 == c) || (59 == c))
-		{
-			purge_lineComment();
-			goto Restart;
-		}
-		else if((32 == c) || (9 == c))
-		{
-			if(1 > i)
-			{
-				goto Restart;
-			}
-			else
-			{
-				goto Token_complete;
-			}
-		}
-		else
-		{
-			store[i] = (char)c;
-		}
+		store[i] = (char)ch;
+		ch = fgetc(source_file);
+		i = i + 1;
+	} while ((9 != ch) && (10 != ch) && (32 != ch));
+
+	return store;
+}
+
+char* store_string(char c)
+{
+	char* store = calloc(max_string + 1, sizeof(char));
+	int32_t ch;
+	uint32_t i = 0;
+	ch = c;
+	do
+	{
+		store[i] = (char)ch;
+		i = i + 1;
+		ch = fgetc(source_file);
+	} while(ch != c);
+
+	return store;
+}
+
+struct Token* Tokenize_Line(struct Token* head)
+{
+
+	int32_t c;
+	c = fgetc(source_file);
+
+	if((35 == c) || (59 == c))
+	{
+		purge_lineComment();
+		return Tokenize_Line(head);
 	}
 
-Token_complete:
-	p->Text = store;
+	if((9 == c) || (10 == c) || (32 == c))
+	{
+		return Tokenize_Line(head);
+	}
+
+	struct Token* p = newToken();
+	if(-1 == c)
+	{
+		Reached_EOF = true;
+		free(p);
+		return head;
+	}
+	else if((34 == c) || (39 == c))
+	{
+		p->Text = store_string(c);
+		p->type = str;
+	}
+	else
+	{
+		p->Text = store_atom(c);
+	}
+
 	return addToken(head, p);
 }
 
@@ -163,6 +179,56 @@ void line_macro(struct Token* p)
 		line_macro(p->next);
 	}
 }
+
+void hexify_string(struct Token* p)
+{
+	char table[16] = {0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46};
+	int i = ((strnlen(p->Text + 1 , max_string)/4) + 1) * 8;
+
+	char* d = calloc(max_string, sizeof(char));
+	p->Expression = d;
+
+	while(0 < i)
+	{
+		i = i - 1;
+		d[i] = 0x30;
+	}
+
+	while( i < max_string)
+	{
+		if(0 == p->Text[i+1])
+		{
+			i = max_string;
+		}
+		else
+		{
+			d[2*i]  = table[p->Text[i+1] / 16];
+			d[2*i + 1] = table[p->Text[i+1] % 16];
+			i = i + 1;
+		}
+	}
+}
+
+void process_string(struct Token* p)
+{
+	if(p->type & str)
+	{
+		if('\'' == p->Text[0])
+		{
+			p->Expression = p->Text + 1;
+		}
+		else if('"' == p->Text[0])
+		{
+			hexify_string(p);
+		}
+	}
+
+	if(NULL != p->next)
+	{
+		process_string(p->next);
+	}
+}
+
 
 void preserve_other(struct Token* p)
 {
@@ -243,6 +309,7 @@ int main(int argc, char **argv)
 
 	identify_macros(head);
 	line_macro(head);
+	process_string(head);
 	eval_immediates(head);
 	preserve_other(head);
 	print_hex(head);
