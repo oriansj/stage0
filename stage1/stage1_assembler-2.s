@@ -113,6 +113,9 @@
 	CMPSKIP.NE R0 36			; $ for absolute
 	JUMP @StoreAbsolutePointer
 
+	CMPSKIP.NE R0 38			; & for address
+	JUMP @StoreAbsoluteAddress
+
 	;; Process everything else
 	CALLI R15 @hex				; Attempt to Convert it
 	CMPSKIP.GE R0 0			; Don't record, nonhex values
