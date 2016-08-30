@@ -54,16 +54,22 @@
 	CMPSKIP.GE R0 0
 	RET R15
 
-	;; Check for and deal with label
+	;; Check for and deal with label (:)
 	CMPSKIP.NE R0 58
 	JUMP @storeLabel
 
 	;; Check for and deal with pointers to labels
+	;; Starting with (@)
 	CMPSKIP.NE R0 64
 	JUMP @ThrowAwayPointer
 
+	;; Then dealing with ($)
 	CMPSKIP.NE R0 36
 	JUMP @ThrowAwayPointer
+
+	;; Now check for absolute addresses (&)
+	CMPSKIP.NE R0 38
+	JUMP @ThrowAwayAddress
 
 	;; Otherwise attempt to process
 	CALLI R15 @hex				; Convert it
@@ -196,6 +202,32 @@
 	CALLI R15 @Match_string	; Find the Match
 	LOAD32 R0 R0 -4			; Get the value we care about
 	CALLI R15 @ProcessImmediate ; Write out the value
+	JUMP @second_pass
+
+;; StoreAbsoluteAddress function
+;; Deal with the special case of absolute Addresses
+;; Clear Temp
+;; Stores string in Temp
+;; Finds match in Table
+;; Writes out the full absolute address [32 bit machine]
+;; Modifies R0 R11
+;; Jumpbacs back into Pass2
+:StoreAbsoluteAddress
+	;; COrrect the PC to reflect the size of the address
+	ADDUI R11 R11 4			; 4 Bytes on 32bit machines
+	LOADUI R0 $Temp			; Set where we ant to shove our string
+	CALLI R15 @Clear_string	; Clear it
+	CALLI R15 @writeout_token	; Write it
+	CALLI R15 @Match_string	; Find the Match
+	PUSHR R14 R15				; Get a temp storage place
+	LOAD32 R14 R0 -4			; Get the value we care about
+	COPY R0 R14				; We need to print the top 2 bytes first
+	SARI R0 16					; Drop bottom 16 bits
+	CALLI R15 @ProcessImmediate ; Write out top 2 bytes
+	LOADUI R0 0xFFFF			; Provide mask to keep bottom 2 bytes
+	AND R0 R0 R14				; Drop top 16 bits
+	POPR R14 R15				; Restore R14
+	CALLI R15 @ProcessImmediate ; Write out bottom 2 bytes
 	JUMP @second_pass
 
 ;; Writeout Token Function
@@ -365,6 +397,16 @@
 ;; Never call this function, only jump to it
 :ThrowAwayPointer
 	ADDUI R11 R11 2			; Pointers always take up 2 bytes
+	CALLI R15 @throwAwayToken	; Get rid of rest of token
+	JUMP @first_pass			; Then return to the proper place
+
+;; ThrowAwayAddress function
+;; Handle the case of a 32bit absolute address storage
+;; for Pass1, Will update R11 and modify R0
+;; Will return to the start of first_pass
+;; Never call this function, conly jump to it
+:ThrowAwayAddress
+	ADDUI R11 R11 4			; Addresses on 32bit systems take up 4 bytes
 	CALLI R15 @throwAwayToken	; Get rid of rest of token
 	JUMP @first_pass			; Then return to the proper place
 
