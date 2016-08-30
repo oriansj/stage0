@@ -25,7 +25,8 @@ enum type
 	EOL = 1,
 	comment = (1 << 1),
 	label = (1 << 2),
-	string = (1 << 3)
+	string = (1 << 3),
+	absolute_address = (1 << 4)
 };
 
 struct Token* newToken()
@@ -122,6 +123,11 @@ Restart:
 		else if((!(p->type & comment ) && !(p->type & string)) && (58 == c))
 		{ /* Deal with : */
 			p->type = p->type | label;
+			store[i] = (char)c;
+		}
+		else if((!(p->type & comment ) && !(p->type & string)) && (38 == c))
+		{ /* Deal with & */
+			p->type = p->type | absolute_address;
 			store[i] = (char)c;
 		}
 		else if((p->type & string) && ((34 == c) ||(39 == c)))
@@ -422,8 +428,8 @@ void update_jumps(struct Token* head, struct Token* p)
 {
 	uint32_t dest = -1;
 
-
-	if(('@' == p->Text[0]) || ('$' == p->Text[0]))
+	/* Find matching label */
+	if(('@' == p->Text[0]) || ('$' == p->Text[0]) || ('&' == p->Text[0]))
 	{
 		char temp[256] = {0};
 		strncpy(temp, p->Text, max_string);
@@ -431,20 +437,30 @@ void update_jumps(struct Token* head, struct Token* p)
 		dest = get_address(head, temp);
 	}
 
+	/* If match is found */
 	if(-1 != (int32_t)dest)
 	{
-		int16_t dist = 0;
+		/* Deal with Relative 16bit jumps */
 		if('@' == p->Text[0])
 		{
+			int16_t dist = 0;
 			dist = dest - p->address + 4;
+			sprintf(p->Expression, "%04x", (uint16_t)dist);
 		}
 
+		/* Deal with Absolute 16bit jumps */
 		if('$' == p->Text[0])
 		{
+			int16_t dist = 0;
 			dist = dest;
+			sprintf(p->Expression, "%04x", (uint16_t)dist);
 		}
 
-		sprintf(p->Expression, "%04x", (uint16_t)dist);
+		/* Deal with storing Pointers to absolute addresses */
+		if('&' == p->Text[0])
+		{
+			sprintf(p->Expression, "%08x", dest);
+		}
 	}
 
 	if(NULL != p->next)
@@ -481,18 +497,26 @@ void hexify_string(char* s, char* d, int max)
 
 void process_string(struct Token* p)
 {
+	/* Adjust hex and ascii strings */
 	if(p->type & string)
 	{
 		if('\'' == p->Text[0])
-		{
+		{ /* Handle Hex strings */
 			strncpy(p->Expression, p->Text + 1, max_string);
 			p->size = strnlen(p->Expression, max_string)/2;
 		}
 		else if('"' == p->Text[0])
-		{
+		{ /* Handle ASCII strings */
 			hexify_string(p->Text + 1, p->Expression, max_string/2);
 			p->size = strnlen(p->Expression, max_string)/2;
 		}
+	}
+
+	/* Deal with special case of absolute addresses */
+	if(p->type & absolute_address)
+	{	/* Absolute addresses are always the Register size */
+		p->size = 4;
+		/* Values are set when jumps are calculated */
 	}
 
 	if(NULL != p->next)
