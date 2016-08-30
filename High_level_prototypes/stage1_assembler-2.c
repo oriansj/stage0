@@ -53,7 +53,14 @@ void storeLabel()
 
 void storePointer(char ch)
 {
-	ip = ip + 2;
+	if(38 == ch)
+	{
+		ip = ip + 4;
+	}
+	else
+	{
+		ip = ip + 2;
+	}
 	int c = fgetc(source_file);
 	int i = 0;
 
@@ -75,16 +82,26 @@ void storePointer(char ch)
 	int target = GetTarget(temp);
 	uint8_t first, second;
 	if(36 == ch)
-	{
+	{ /* Deal with $ */
 		first = target/256;
 		second = target%256;
+		printf("%c%c", first, second );
 	}
-	else
-	{
+	else if(64 == ch)
+	{ /* Deal with @ */
 		first = (target - ip + 4)/256;
 		second = (target - ip + 4)%256;
+		printf("%c%c", first, second );
 	}
-	printf("%c%c", first, second );
+	else if(38 == ch)
+	{
+		uint8_t third, fourth;
+		first = target >> 24;
+		second = (target >> 16)%256;
+		third = (target >> 8)%256;
+		fourth = target%256;
+		printf("%c%c%c%c", first, second, third, fourth);
+	}
 }
 
 void line_Comment()
@@ -134,14 +151,22 @@ void first_pass()
 			storeLabel();
 		}
 
-		/* check for and deal with pointers to labels */
-		if(64 == c)
-		{
+		/* check for and deal with relative pointers to labels */
+		if((64 == c) || (36 == c))
+		{ /* deal with @ and $ */
 			while((' ' != c) && ('\t' != c) && ('\n' != c))
 			{
 				c = fgetc(source_file);
 			}
 			ip = ip + 2;
+		}
+		else if(38 == c)
+		{ /* deal with & */
+			while((' ' != c) && ('\t' != c) && ('\n' != c))
+			{
+				c = fgetc(source_file);
+			}
+			ip = ip + 4;
 		}
 		else
 		{
@@ -164,14 +189,14 @@ void second_pass()
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
 		if(58 == c)
-		{
+		{ /* Deal with : */
 			while((' ' != c) && ('\t' != c) && ('\n' != c))
 			{
 				c = fgetc(source_file);
 			}
 		}
-		else if((64 == c) || (36 == c))
-		{
+		else if((64 == c) || (36 == c) || (38 == c))
+		{ /* Deal with @, $ and & */
 			storePointer(c);
 		}
 		else
