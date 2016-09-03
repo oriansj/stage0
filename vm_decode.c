@@ -1,6 +1,11 @@
 #include "vm.h"
 uint32_t performance_counter;
 
+#ifdef TRACE
+void record_trace(char* c);
+void print_traces();
+#endif
+
 /* Allocate and intialize memory/state */
 struct lilith* create_vm(size_t size)
 {
@@ -168,6 +173,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FOPEN_READ", 19);
+			#elif TRACE
+			record_trace("FOPEN_READ");
 			#endif
 
 			vm_FOPEN_READ(vm);
@@ -177,6 +184,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FOPEN_WRITE", 19);
+			#elif TRACE
+			record_trace("FOPEN_WRITE");
 			#endif
 
 			vm_FOPEN_WRITE(vm);
@@ -186,6 +195,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FCLOSE", 19);
+			#elif TRACE
+			record_trace("FCLOSE");
 			#endif
 
 			vm_FCLOSE(vm);
@@ -195,6 +206,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "REWIND", 19);
+			#elif TRACE
+			record_trace("REWIND");
 			#endif
 
 			vm_REWIND(vm);
@@ -204,6 +217,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FSEEK", 19);
+			#elif TRACE
+			record_trace("FSEEK");
 			#endif
 
 			vm_FSEEK(vm);
@@ -213,6 +228,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FGETC", 19);
+			#elif TRACE
+			record_trace("FGETC");
 			#endif
 
 			vm_FGETC(vm);
@@ -222,6 +239,8 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FPUTC", 19);
+			#elif TRACE
+			record_trace("FPUTC");
 			#endif
 
 			vm_FPUTC(vm);
@@ -249,6 +268,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADD.CI", 19);
+			#elif TRACE
+			record_trace("ADD.CI");
 			#endif
 
 			ADD_CI(vm, c);
@@ -258,6 +279,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADD.CO", 19);
+			#elif TRACE
+			record_trace("ADD.CO");
 			#endif
 
 			ADD_CO(vm, c);
@@ -267,6 +290,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADD.CIO", 19);
+			#elif TRACE
+			record_trace("ADD.CIO");
 			#endif
 
 			ADD_CIO(vm, c);
@@ -276,6 +301,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADDU.CI", 19);
+			#elif TRACE
+			record_trace("ADDU.CI");
 			#endif
 
 			ADDU_CI(vm, c);
@@ -285,6 +312,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADDU.CO", 19);
+			#elif TRACE
+			record_trace("ADDU.CO");
 			#endif
 
 			ADDU_CO(vm, c);
@@ -294,6 +323,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADDU.CIO", 19);
+			#elif TRACE
+			record_trace("ADDU.CIO");
 			#endif
 
 			ADDU_CIO(vm, c);
@@ -303,6 +334,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUB.BI", 19);
+			#elif TRACE
+			record_trace("SUB.BI");
 			#endif
 
 			SUB_BI(vm, c);
@@ -312,6 +345,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUB.BO", 19);
+			#elif TRACE
+			record_trace("SUB.BO");
 			#endif
 
 			SUB_BO(vm, c);
@@ -321,6 +356,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUB.BIO", 19);
+			#elif TRACE
+			record_trace("SUB.BIO");
 			#endif
 
 			SUB_BIO(vm, c);
@@ -330,6 +367,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUBU.BI", 19);
+			#elif TRACE
+			record_trace("SUBU.BI");
 			#endif
 
 			SUBU_BI(vm, c);
@@ -339,6 +378,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUBU.BO", 19);
+			#elif TRACE
+			record_trace("SUBU.BO");
 			#endif
 
 			SUBU_BO(vm, c);
@@ -348,6 +389,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUBU.BIO", 19);
+			#elif TRACE
+			record_trace("SUBU.BIO");
 			#endif
 
 			SUBU_BIO(vm, c);
@@ -357,6 +400,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MULTIPLY", 19);
+			#elif TRACE
+			record_trace("MULTIPLY");
 			#endif
 
 			MULTIPLY(vm, c);
@@ -366,6 +411,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MULTIPLYU", 19);
+			#elif TRACE
+			record_trace("MULTIPLYU");
 			#endif
 
 			MULTIPLYU(vm, c);
@@ -375,6 +422,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "DIVIDE", 19);
+			#elif TRACE
+			record_trace("DIVIDE");
 			#endif
 
 			DIVIDE(vm, c);
@@ -384,6 +433,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "DIVIDEU", 19);
+			#elif TRACE
+			record_trace("DIVIDEU");
 			#endif
 
 			DIVIDEU(vm, c);
@@ -393,6 +444,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MUX", 19);
+			#elif TRACE
+			record_trace("MUX");
 			#endif
 
 			MUX(vm, c);
@@ -402,6 +455,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "NMUX", 19);
+			#elif TRACE
+			record_trace("NMUX");
 			#endif
 
 			NMUX(vm, c);
@@ -411,6 +466,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SORT", 19);
+			#elif TRACE
+			record_trace("SORT");
 			#endif
 
 			SORT(vm, c);
@@ -420,6 +477,8 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SORTU", 19);
+			#elif TRACE
+			record_trace("SORTU");
 			#endif
 
 			SORTU(vm, c);
@@ -446,6 +505,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADD", 19);
+			#elif TRACE
+			record_trace("ADD");
 			#endif
 
 			ADD(vm, c);
@@ -455,6 +516,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADDU", 19);
+			#elif TRACE
+			record_trace("ADDU");
 			#endif
 
 			ADDU(vm, c);
@@ -464,6 +527,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUB", 19);
+			#elif TRACE
+			record_trace("SUB");
 			#endif
 
 			SUB(vm, c);
@@ -473,6 +538,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUBU", 19);
+			#elif TRACE
+			record_trace("SUBU");
 			#endif
 
 			SUBU(vm, c);
@@ -482,6 +549,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMP", 19);
+			#elif TRACE
+			record_trace("CMP");
 			#endif
 
 			CMP(vm, c);
@@ -491,6 +560,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPU", 19);
+			#elif TRACE
+			record_trace("CMPU");
 			#endif
 
 			CMPU(vm, c);
@@ -500,6 +571,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MUL", 19);
+			#elif TRACE
+			record_trace("MUL");
 			#endif
 
 			MUL(vm, c);
@@ -509,6 +582,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MULH", 19);
+			#elif TRACE
+			record_trace("MULH");
 			#endif
 
 			MULH(vm, c);
@@ -518,6 +593,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MULU", 19);
+			#elif TRACE
+			record_trace("MULU");
 			#endif
 
 			MULU(vm, c);
@@ -527,6 +604,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MULUH", 19);
+			#elif TRACE
+			record_trace("MULUH");
 			#endif
 
 			MULUH(vm, c);
@@ -536,6 +615,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "DIV", 19);
+			#elif TRACE
+			record_trace("DIV");
 			#endif
 
 			DIV(vm, c);
@@ -545,6 +626,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MOD", 19);
+			#elif TRACE
+			record_trace("MOD");
 			#endif
 
 			MOD(vm, c);
@@ -554,6 +637,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "DIVU", 19);
+			#elif TRACE
+			record_trace("DIVU");
 			#endif
 
 			DIVU(vm, c);
@@ -563,6 +648,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MODU", 19);
+			#elif TRACE
+			record_trace("MODU");
 			#endif
 
 			MODU(vm, c);
@@ -572,6 +659,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MAX", 19);
+			#elif TRACE
+			record_trace("MAX");
 			#endif
 
 			MAX(vm, c);
@@ -581,6 +670,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MAXU", 19);
+			#elif TRACE
+			record_trace("MAXU");
 			#endif
 
 			MAXU(vm, c);
@@ -590,6 +681,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MIN", 19);
+			#elif TRACE
+			record_trace("MIN");
 			#endif
 
 			MIN(vm, c);
@@ -599,6 +692,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MINU", 19);
+			#elif TRACE
+			record_trace("MINU");
 			#endif
 
 			MINU(vm, c);
@@ -608,6 +703,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PACK", 19);
+			#elif TRACE
+			record_trace("PACK");
 			#endif
 
 			PACK(vm, c);
@@ -617,6 +714,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "UNPACK", 19);
+			#elif TRACE
+			record_trace("UNPACK");
 			#endif
 
 			UNPACK(vm, c);
@@ -626,6 +725,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PACK8.CO", 19);
+			#elif TRACE
+			record_trace("PACK8.CO");
 			#endif
 
 			PACK8_CO(vm, c);
@@ -635,6 +736,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PACK8U.CO", 19);
+			#elif TRACE
+			record_trace("PACK8U.CO");
 			#endif
 
 			PACK8U_CO(vm, c);
@@ -644,6 +747,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PACK16.CO", 19);
+			#elif TRACE
+			record_trace("PACK16.CO");
 			#endif
 
 			PACK16_CO(vm, c);
@@ -653,6 +758,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PACK16U.CO", 19);
+			#elif TRACE
+			record_trace("PACK16U.CO");
 			#endif
 
 			PACK16U_CO(vm, c);
@@ -662,6 +769,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PACK32.CO", 19);
+			#elif TRACE
+			record_trace("PACK32.CO");
 			#endif
 
 			PACK32_CO(vm, c);
@@ -671,6 +780,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PACK32U.CO", 19);
+			#elif TRACE
+			record_trace("PACK32U.CO");
 			#endif
 
 			PACK32U_CO(vm, c);
@@ -680,6 +791,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "AND", 19);
+			#elif TRACE
+			record_trace("AND");
 			#endif
 
 			AND(vm, c);
@@ -689,6 +802,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "OR", 19);
+			#elif TRACE
+			record_trace("OR");
 			#endif
 
 			OR(vm, c);
@@ -698,6 +813,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "XOR", 19);
+			#elif TRACE
+			record_trace("XOR");
 			#endif
 
 			XOR(vm, c);
@@ -707,6 +824,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "NAND", 19);
+			#elif TRACE
+			record_trace("NAND");
 			#endif
 
 			NAND(vm, c);
@@ -716,6 +835,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "NOR", 19);
+			#elif TRACE
+			record_trace("NOR");
 			#endif
 
 			NOR(vm, c);
@@ -725,6 +846,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "XNOR", 19);
+			#elif TRACE
+			record_trace("XNOR");
 			#endif
 
 			XNOR(vm, c);
@@ -734,6 +857,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MPQ", 19);
+			#elif TRACE
+			record_trace("MPQ");
 			#endif
 
 			MPQ(vm, c);
@@ -743,6 +868,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LPQ", 19);
+			#elif TRACE
+			record_trace("LPQ");
 			#endif
 
 			LPQ(vm, c);
@@ -752,6 +879,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CPQ", 19);
+			#elif TRACE
+			record_trace("CPQ");
 			#endif
 
 			CPQ(vm, c);
@@ -761,6 +890,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "BPQ", 19);
+			#elif TRACE
+			record_trace("BPQ");
 			#endif
 
 			BPQ(vm, c);
@@ -770,6 +901,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SAL", 19);
+			#elif TRACE
+			record_trace("SAL");
 			#endif
 
 			SAL(vm, c);
@@ -779,6 +912,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SAR", 19);
+			#elif TRACE
+			record_trace("SAR");
 			#endif
 
 			SAR(vm, c);
@@ -788,6 +923,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SL0", 19);
+			#elif TRACE
+			record_trace("SL0");
 			#endif
 
 			SL0(vm, c);
@@ -797,6 +934,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SR0", 19);
+			#elif TRACE
+			record_trace("SR0");
 			#endif
 
 			SR0(vm, c);
@@ -806,6 +945,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SL1", 19);
+			#elif TRACE
+			record_trace("SL1");
 			#endif
 
 			SL1(vm, c);
@@ -815,6 +956,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SR1", 19);
+			#elif TRACE
+			record_trace("SR1");
 			#endif
 
 			SR1(vm, c);
@@ -824,6 +967,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ROL", 19);
+			#elif TRACE
+			record_trace("ROL");
 			#endif
 
 			ROL(vm, c);
@@ -833,6 +978,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ROR", 19);
+			#elif TRACE
+			record_trace("ROR");
 			#endif
 
 			ROR(vm, c);
@@ -842,6 +989,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADX", 19);
+			#elif TRACE
+			record_trace("LOADX");
 			#endif
 
 			LOADX(vm, c);
@@ -851,6 +1000,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADX8", 19);
+			#elif TRACE
+			record_trace("LOADX8");
 			#endif
 
 			LOADX8(vm, c);
@@ -860,6 +1011,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADXU8", 19);
+			#elif TRACE
+			record_trace("LOADXU8");
 			#endif
 
 			LOADXU8(vm, c);
@@ -869,6 +1022,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADX16", 19);
+			#elif TRACE
+			record_trace("LOADX16");
 			#endif
 
 			LOADX16(vm, c);
@@ -878,6 +1033,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADXU16", 19);
+			#elif TRACE
+			record_trace("LOADXU16");
 			#endif
 
 			LOADXU16(vm, c);
@@ -887,6 +1044,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADX32", 19);
+			#elif TRACE
+			record_trace("LOADX32");
 			#endif
 
 			LOADX32(vm, c);
@@ -896,6 +1055,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADXU32", 19);
+			#elif TRACE
+			record_trace("LOADXU32");
 			#endif
 
 			LOADXU32(vm, c);
@@ -905,6 +1066,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STOREX", 19);
+			#elif TRACE
+			record_trace("STOREX");
 			#endif
 
 			STOREX(vm, c);
@@ -914,6 +1077,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STOREX8", 19);
+			#elif TRACE
+			record_trace("STOREX8");
 			#endif
 
 			STOREX8(vm, c);
@@ -923,6 +1088,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STOREX16", 19);
+			#elif TRACE
+			record_trace("STOREX16");
 			#endif
 
 			STOREX16(vm, c);
@@ -932,6 +1099,8 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STOREX32", 19);
+			#elif TRACE
+			record_trace("STOREX32");
 			#endif
 
 			STOREX32(vm, c);
@@ -958,6 +1127,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "NEG", 19);
+			#elif TRACE
+			record_trace("NEG");
 			#endif
 
 			NEG(vm, c);
@@ -967,6 +1138,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ABS", 19);
+			#elif TRACE
+			record_trace("ABS");
 			#endif
 
 			ABS(vm, c);
@@ -976,6 +1149,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "NABS", 19);
+			#elif TRACE
+			record_trace("NABS");
 			#endif
 
 			NABS(vm, c);
@@ -985,6 +1160,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SWAP", 19);
+			#elif TRACE
+			record_trace("SWAP");
 			#endif
 
 			SWAP(vm, c);
@@ -994,6 +1171,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "COPY", 19);
+			#elif TRACE
+			record_trace("COPY");
 			#endif
 
 			COPY(vm, c);
@@ -1003,6 +1182,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "MOVE", 19);
+			#elif TRACE
+			record_trace("MOVE");
 			#endif
 
 			MOVE(vm, c);
@@ -1012,6 +1193,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "BRANCH", 19);
+			#elif TRACE
+			record_trace("BRANCH");
 			#endif
 
 			BRANCH(vm, c);
@@ -1021,6 +1204,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CALL", 19);
+			#elif TRACE
+			record_trace("CALL");
 			#endif
 
 			CALL(vm, c);
@@ -1030,6 +1215,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PUSHR", 19);
+			#elif TRACE
+			record_trace("PUSHR");
 			#endif
 
 			PUSHR(vm, c);
@@ -1039,6 +1226,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PUSH8", 19);
+			#elif TRACE
+			record_trace("PUSH8");
 			#endif
 
 			PUSH8(vm, c);
@@ -1048,6 +1237,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PUSH16", 19);
+			#elif TRACE
+			record_trace("PUSH16");
 			#endif
 
 			PUSH16(vm, c);
@@ -1057,6 +1248,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PUSH32", 19);
+			#elif TRACE
+			record_trace("PUSH32");
 			#endif
 
 			PUSH32(vm, c);
@@ -1066,6 +1259,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POPR", 19);
+			#elif TRACE
+			record_trace("POPR");
 			#endif
 
 			POPR(vm, c);
@@ -1075,6 +1270,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POP8", 19);
+			#elif TRACE
+			record_trace("POP8");
 			#endif
 
 			POP8(vm, c);
@@ -1084,6 +1281,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POPU8", 19);
+			#elif TRACE
+			record_trace("POPU8");
 			#endif
 
 			POPU8(vm, c);
@@ -1093,6 +1292,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POP16", 19);
+			#elif TRACE
+			record_trace("POP16");
 			#endif
 
 			POP16(vm, c);
@@ -1102,6 +1303,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POPU16", 19);
+			#elif TRACE
+			record_trace("POPU16");
 			#endif
 
 			POPU16(vm, c);
@@ -1111,6 +1314,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POP32", 19);
+			#elif TRACE
+			record_trace("POP32");
 			#endif
 
 			POP32(vm, c);
@@ -1120,6 +1325,8 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POPU32", 19);
+			#elif TRACE
+			record_trace("POPU32");
 			#endif
 
 			POPU32(vm, c);
@@ -1146,6 +1353,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "READPC", 19);
+			#elif TRACE
+			record_trace("READPC");
 			#endif
 
 			READPC(vm, c);
@@ -1155,6 +1364,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "READSCID", 19);
+			#elif TRACE
+			record_trace("READSCID");
 			#endif
 
 			READSCID(vm, c);
@@ -1164,6 +1375,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "FALSE", 19);
+			#elif TRACE
+			record_trace("FALSE");
 			#endif
 
 			FALSE(vm, c);
@@ -1173,6 +1386,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "TRUE", 19);
+			#elif TRACE
+			record_trace("TRUE");
 			#endif
 
 			TRUE(vm, c);
@@ -1182,6 +1397,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JSR_COROUTINE", 19);
+			#elif TRACE
+			record_trace("JSR_COROUTINE");
 			#endif
 
 			JSR_COROUTINE(vm, c);
@@ -1191,6 +1408,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "RET", 19);
+			#elif TRACE
+			record_trace("RET");
 			#endif
 
 			RET(vm, c);
@@ -1200,6 +1419,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "PUSHPC", 19);
+			#elif TRACE
+			record_trace("PUSHPC");
 			#endif
 
 			PUSHPC(vm, c);
@@ -1209,6 +1430,8 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "POPPC", 19);
+			#elif TRACE
+			record_trace("POPPC");
 			#endif
 
 			POPPC(vm, c);
@@ -1237,6 +1460,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADDI", 19);
+			#elif TRACE
+			record_trace("ADDI");
 			#endif
 
 			ADDI(vm, c);
@@ -1246,6 +1471,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "ADDUI", 19);
+			#elif TRACE
+			record_trace("ADDUI");
 			#endif
 
 			ADDUI(vm, c);
@@ -1255,6 +1482,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUBI", 19);
+			#elif TRACE
+			record_trace("SUBI");
 			#endif
 
 			SUBI(vm, c);
@@ -1264,6 +1493,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SUBUI", 19);
+			#elif TRACE
+			record_trace("SUBUI");
 			#endif
 
 			SUBUI(vm, c);
@@ -1273,6 +1504,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPI", 19);
+			#elif TRACE
+			record_trace("CMPI");
 			#endif
 
 			CMPI(vm, c);
@@ -1282,6 +1515,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOAD", 19);
+			#elif TRACE
+			record_trace("LOAD");
 			#endif
 
 			LOAD(vm, c);
@@ -1291,6 +1526,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOAD8", 19);
+			#elif TRACE
+			record_trace("LOAD8");
 			#endif
 
 			LOAD8(vm, c);
@@ -1300,6 +1537,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADU8", 19);
+			#elif TRACE
+			record_trace("LOADU8");
 			#endif
 
 			LOADU8(vm, c);
@@ -1309,6 +1548,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOAD16", 19);
+			#elif TRACE
+			record_trace("LOAD16");
 			#endif
 
 			LOAD16(vm, c);
@@ -1318,6 +1559,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADU16", 19);
+			#elif TRACE
+			record_trace("LOADU16");
 			#endif
 
 			LOADU16(vm, c);
@@ -1327,6 +1570,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOAD32", 19);
+			#elif TRACE
+			record_trace("LOAD32");
 			#endif
 
 			LOAD32(vm, c);
@@ -1336,6 +1581,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADU32", 19);
+			#elif TRACE
+			record_trace("LOADU32");
 			#endif
 
 			LOADU32(vm, c);
@@ -1345,6 +1592,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPUI", 19);
+			#elif TRACE
+			record_trace("CMPUI");
 			#endif
 
 			CMPUI(vm, c);
@@ -1354,6 +1603,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORE", 19);
+			#elif TRACE
+			record_trace("STORE");
 			#endif
 
 			STORE(vm, c);
@@ -1363,6 +1614,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORE8", 19);
+			#elif TRACE
+			record_trace("STORE8");
 			#endif
 
 			STORE8(vm, c);
@@ -1372,6 +1625,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORE16", 19);
+			#elif TRACE
+			record_trace("STORE16");
 			#endif
 
 			STORE16(vm, c);
@@ -1381,6 +1636,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORE32", 19);
+			#elif TRACE
+			record_trace("STORE32");
 			#endif
 
 			STORE32(vm, c);
@@ -1390,6 +1647,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMP.G", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.G");
 			#endif
 
 			CMPJUMP_G(vm, c);
@@ -1399,6 +1658,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMP.GE", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.GE");
 			#endif
 
 			CMPJUMP_GE(vm, c);
@@ -1408,6 +1669,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMP.E", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.E");
 			#endif
 
 			CMPJUMP_E(vm, c);
@@ -1417,6 +1680,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMP.NE", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.NE");
 			#endif
 
 			CMPJUMP_NE(vm, c);
@@ -1426,6 +1691,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMP.LE", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.LE");
 			#endif
 
 			CMPJUMP_LE(vm, c);
@@ -1435,6 +1702,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMP.L", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.L");
 			#endif
 
 			CMPJUMP_L(vm, c);
@@ -1444,6 +1713,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMPU.G", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.G");
 			#endif
 
 			CMPJUMPU_G(vm, c);
@@ -1453,6 +1724,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMPU.GE", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.GE");
 			#endif
 
 			CMPJUMPU_GE(vm, c);
@@ -1462,6 +1735,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMPU.LE", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.LE");
 			#endif
 
 			CMPJUMPU_LE(vm, c);
@@ -1471,6 +1746,8 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPJUMPU.L", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.L");
 			#endif
 
 			CMPJUMPU_L(vm, c);
@@ -1499,6 +1776,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.C", 19);
+			#elif TRACE
+			record_trace("JUMP.C");
 			#endif
 
 			JUMP_C(vm, c);
@@ -1508,6 +1787,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.B", 19);
+			#elif TRACE
+			record_trace("JUMP.B");
 			#endif
 
 			JUMP_B(vm, c);
@@ -1517,6 +1798,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.O", 19);
+			#elif TRACE
+			record_trace("JUMP.O");
 			#endif
 
 			JUMP_O(vm, c);
@@ -1526,6 +1809,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.G", 19);
+			#elif TRACE
+			record_trace("JUMP.G");
 			#endif
 
 			JUMP_G(vm, c);
@@ -1535,6 +1820,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.GE", 19);
+			#elif TRACE
+			record_trace("JUMP.GE");
 			#endif
 
 			JUMP_GE(vm, c);
@@ -1544,6 +1831,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.E", 19);
+			#elif TRACE
+			record_trace("JUMP.E");
 			#endif
 
 			JUMP_E(vm, c);
@@ -1553,6 +1842,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NE", 19);
+			#elif TRACE
+			record_trace("JUMP.NE");
 			#endif
 
 			JUMP_NE(vm, c);
@@ -1562,6 +1853,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.LE", 19);
+			#elif TRACE
+			record_trace("JUMP.LE");
 			#endif
 
 			JUMP_LE(vm, c);
@@ -1571,6 +1864,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.L", 19);
+			#elif TRACE
+			record_trace("JUMP.L");
 			#endif
 
 			JUMP_L(vm, c);
@@ -1580,6 +1875,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.Z", 19);
+			#elif TRACE
+			record_trace("JUMP.Z");
 			#endif
 
 			JUMP_Z(vm, c);
@@ -1589,6 +1886,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NZ", 19);
+			#elif TRACE
+			record_trace("JUMP.NZ");
 			#endif
 
 			JUMP_NZ(vm, c);
@@ -1598,6 +1897,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.P", 19);
+			#elif TRACE
+			record_trace("JUMP.P");
 			#endif
 
 			JUMP_P(vm, c);
@@ -1607,6 +1908,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP.NP", 19);
+			#elif TRACE
+			record_trace("JUMP.NP");
 			#endif
 
 			JUMP_NP(vm, c);
@@ -1616,6 +1919,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CALLI", 19);
+			#elif TRACE
+			record_trace("CALLI");
 			#endif
 
 			CALLI(vm, c);
@@ -1625,6 +1930,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADI", 19);
+			#elif TRACE
+			record_trace("LOADI");
 			#endif
 
 			LOADI(vm, c);
@@ -1634,6 +1941,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADUI", 19);
+			#elif TRACE
+			record_trace("LOADUI");
 			#endif
 
 			LOADUI(vm, c);
@@ -1643,6 +1952,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SALI", 19);
+			#elif TRACE
+			record_trace("SALI");
 			#endif
 
 			SALI(vm, c);
@@ -1652,6 +1963,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SARI", 19);
+			#elif TRACE
+			record_trace("SARI");
 			#endif
 
 			SARI(vm, c);
@@ -1661,6 +1974,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SL0I", 19);
+			#elif TRACE
+			record_trace("SL0I");
 			#endif
 
 			SL0I(vm, c);
@@ -1670,6 +1985,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SR0I", 19);
+			#elif TRACE
+			record_trace("SR0I");
 			#endif
 
 			SR0I(vm, c);
@@ -1679,6 +1996,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SL1I", 19);
+			#elif TRACE
+			record_trace("SL1I");
 			#endif
 
 			SL1I(vm, c);
@@ -1688,6 +2007,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "SR1I", 19);
+			#elif TRACE
+			record_trace("SR1I");
 			#endif
 
 			SR1I(vm, c);
@@ -1697,6 +2018,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR", 19);
+			#elif TRACE
+			record_trace("LOADR");
 			#endif
 
 			LOADR(vm, c);
@@ -1706,6 +2029,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR8", 19);
+			#elif TRACE
+			record_trace("LOADR8");
 			#endif
 
 			LOADR8(vm, c);
@@ -1715,6 +2040,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADRU8", 19);
+			#elif TRACE
+			record_trace("LOADRU8");
 			#endif
 
 			LOADRU8(vm, c);
@@ -1724,6 +2051,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR16", 19);
+			#elif TRACE
+			record_trace("LOADR16");
 			#endif
 
 			LOADR16(vm, c);
@@ -1733,6 +2062,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADRU16", 19);
+			#elif TRACE
+			record_trace("LOADRU16");
 			#endif
 
 			LOADRU16(vm, c);
@@ -1742,6 +2073,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADR32", 19);
+			#elif TRACE
+			record_trace("LOADR32");
 			#endif
 
 			LOADR32(vm, c);
@@ -1751,6 +2084,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "LOADRU32", 19);
+			#elif TRACE
+			record_trace("LOADRU32");
 			#endif
 
 			LOADRU32(vm, c);
@@ -1760,6 +2095,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER", 19);
+			#elif TRACE
+			record_trace("STORER");
 			#endif
 
 			STORER(vm, c);
@@ -1769,6 +2106,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER8", 19);
+			#elif TRACE
+			record_trace("STORER8");
 			#endif
 
 			STORER8(vm, c);
@@ -1778,6 +2117,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER16", 19);
+			#elif TRACE
+			record_trace("STORER16");
 			#endif
 
 			STORER16(vm, c);
@@ -1787,6 +2128,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "STORER32", 19);
+			#elif TRACE
+			record_trace("STORER32");
 			#endif
 
 			STORER32(vm, c);
@@ -1796,6 +2139,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIP.G", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.G");
 			#endif
 
 			CMPSKIP_G(vm, c);
@@ -1805,6 +2150,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIP.GE", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.GE");
 			#endif
 
 			CMPSKIP_GE(vm, c);
@@ -1814,6 +2161,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIP.E", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.E");
 			#endif
 
 			CMPSKIP_E(vm, c);
@@ -1823,6 +2172,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIP.NE", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.NE");
 			#endif
 
 			CMPSKIP_NE(vm, c);
@@ -1832,6 +2183,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIP.LE", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.LE");
 			#endif
 
 			CMPSKIP_LE(vm, c);
@@ -1841,6 +2194,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIP.L", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.L");
 			#endif
 
 			CMPSKIP_L(vm, c);
@@ -1850,6 +2205,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIPU.G", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.G");
 			#endif
 
 			CMPSKIPU_G(vm, c);
@@ -1859,6 +2216,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIPU.GE", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.GE");
 			#endif
 
 			CMPSKIPU_GE(vm, c);
@@ -1868,6 +2227,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIPU.LE", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.LE");
 			#endif
 
 			CMPSKIPU_LE(vm, c);
@@ -1877,6 +2238,8 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "CMPSKIPU.L", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.L");
 			#endif
 
 			CMPSKIPU_L(vm, c);
@@ -1903,6 +2266,8 @@ bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 		{
 			#ifdef DEBUG
 			strncpy(Name, "JUMP", 19);
+			#elif TRACE
+			record_trace("JUMP");
 			#endif
 
 			JUMP(vm, c);
@@ -1999,6 +2364,11 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		{
 			vm->halted = true;
 			fprintf(stderr, "Computer Program has Halted\nAfter Executing %i instructions\n", performance_counter);
+
+			#ifdef TRACE
+			record_trace("HALT");
+			print_traces();
+			#endif
 			break;
 		}
 		default: /* Deal with illegal instruction */
