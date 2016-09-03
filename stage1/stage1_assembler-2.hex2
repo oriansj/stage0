@@ -3,6 +3,7 @@
 # ;; We will be using R14 for our condition codes
 2D2F7fff	# LOADUI R15 0x7FFF ; We will be using R15 for our stack
 
+
 # ;; Main program functionality
 # ;; Reads in Tape_01 and writes out results onto Tape_02
 # ;; Accepts no arguments and HALTS when done
@@ -36,6 +37,7 @@
 42100002	# FCLOSE
 FFFFFFFF	# HALT
 
+
 # ;; First pass function
 # ;; Reads Tape_01 and creates our label table
 # ;; Will Overwrite R0 R10 R11
@@ -46,14 +48,19 @@ FFFFFFFF	# HALT
 # ;; Check for EOF
 A0100000	# CMPSKIP.GE R0 0
 0D01001F	# RET R15
-# ;; Check for and deal with label
+# ;; Check for and deal with label (:)
 A030003a	# CMPSKIP.NE R0 58
 3C00 @storeLabel	# JUMP @storeLabel
 # ;; Check for and deal with pointers to labels
+# ;; Starting with (@)
 A0300040	# CMPSKIP.NE R0 64
 3C00 @ThrowAwayPointer	# JUMP @ThrowAwayPointer
+# ;; Then dealing with ($)
 A0300024	# CMPSKIP.NE R0 36
 3C00 @ThrowAwayPointer	# JUMP @ThrowAwayPointer
+# ;; Now check for absolute addresses (&)
+A0300026	# CMPSKIP.NE R0 38
+3C00 @ThrowAwayAddress	# JUMP @ThrowAwayAddress
 # ;; Otherwise attempt to process
 2D0F @hex	# CALLI R15 @hex ; Convert it
 A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
@@ -68,6 +75,7 @@ A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
 0D00003A	# TRUE R10 ; Flip the toggle
 0FBB0001	# ADDUI R11 R11 1 ; increment PC now that that we have a full byte
 3C00 @first_pass	# JUMP @first_pass
+
 
 # ;; Second pass function
 # ;; Reads from Tape_01 and uses the values in the table
@@ -88,6 +96,8 @@ A0300040	# CMPSKIP.NE R0 64 ; @ for relative
 3C00 @StoreRelativePointer	# JUMP @StoreRelativePointer
 A0300024	# CMPSKIP.NE R0 36 ; $ for absolute
 3C00 @StoreAbsolutePointer	# JUMP @StoreAbsolutePointer
+A0300026	# CMPSKIP.NE R0 38 ; & for address
+3C00 @StoreAbsoluteAddress	# JUMP @StoreAbsoluteAddress
 # ;; Process everything else
 2D0F @hex	# CALLI R15 @hex ; Attempt to Convert it
 A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
@@ -108,6 +118,7 @@ A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
 42100200	# FPUTC ; To TAPE_02
 0FBB0001	# ADDUI R11 R11 1 ; increment PC now that that we have a full byte
 3C00 @second_pass	# JUMP @second_pass
+
 
 # ;; Store Label function
 # ;; Writes out the token and the current PC value
@@ -132,6 +143,7 @@ A0300000	# CMPSKIP.NE R0 0 ; If zero intialize from R13
 :current_index
 00000000	# NOP
 
+
 # ;; StoreRelativepointer function
 # ;; Deals with the special case of relative pointers
 # ;; Clears Temp
@@ -153,6 +165,7 @@ A0300000	# CMPSKIP.NE R0 0 ; If zero intialize from R13
 2D0F @ProcessImmediate	# CALLI R15 @ProcessImmediate ; Write out the value
 3C00 @second_pass	# JUMP @second_pass
 
+
 # ;; StoreAbsolutepointer function
 # ;; Deals with the special case of absolute pointers
 # ;; Clears Temp
@@ -171,6 +184,34 @@ A0300000	# CMPSKIP.NE R0 0 ; If zero intialize from R13
 1800fffc	# LOAD32 R0 R0 -4 ; Get the value we care about
 2D0F @ProcessImmediate	# CALLI R15 @ProcessImmediate ; Write out the value
 3C00 @second_pass	# JUMP @second_pass
+
+
+# ;; StoreAbsoluteAddress function
+# ;; Deal with the special case of absolute Addresses
+# ;; Clear Temp
+# ;; Stores string in Temp
+# ;; Finds match in Table
+# ;; Writes out the full absolute address [32 bit machine]
+# ;; Modifies R0 R11
+# ;; Jumpbacs back into Pass2
+:StoreAbsoluteAddress
+# ;; COrrect the PC to reflect the size of the address
+0FBB0004	# ADDUI R11 R11 4 ; 4 Bytes on 32bit machines
+2D20 $Temp	# LOADUI R0 $Temp ; Set where we ant to shove our string
+2D0F @Clear_string	# CALLI R15 @Clear_string ; Clear it
+2D0F @writeout_token	# CALLI R15 @writeout_token ; Write it
+2D0F @Match_string	# CALLI R15 @Match_string ; Find the Match
+090200EF	# PUSHR R14 R15 ; Get a temp storage place
+18E0fffc	# LOAD32 R14 R0 -4 ; Get the value we care about
+0900040E	# COPY R0 R14 ; We need to print the top 2 bytes first
+2D400010	# SARI R0 16 ; Drop bottom 16 bits
+2D0F @ProcessImmediate	# CALLI R15 @ProcessImmediate ; Write out top 2 bytes
+2D20ffff	# LOADUI R0 0xFFFF ; Provide mask to keep bottom 2 bytes
+0502000E	# AND R0 R0 R14 ; Drop top 16 bits
+090280EF	# POPR R14 R15 ; Restore R14
+2D0F @ProcessImmediate	# CALLI R15 @ProcessImmediate ; Write out bottom 2 bytes
+3C00 @second_pass	# JUMP @second_pass
+
 
 # ;; Writeout Token Function
 # ;; Writes the Token [minus first char] to the address
@@ -208,6 +249,7 @@ A030000a	# CMPSKIP.NE R0 10 ; Finished if newline
 # ;; And be done
 0D01001F	# RET R15
 
+
 # ;; Clear string function
 # ;; Clears string pointed at by the value of R0
 # ;; Until a null character is reached
@@ -235,6 +277,7 @@ A030000a	# CMPSKIP.NE R0 10 ; Finished if newline
 0902801F	# POPR R1 R15
 0902800F	# POPR R0 R15
 0D01001F	# RET R15
+
 
 # ;; Match string function
 # ;; Walks down table until match is found
@@ -265,6 +308,7 @@ A030000a	# CMPSKIP.NE R0 10 ; Finished if newline
 0902801F	# POPR R1 R15
 0D01001F	# RET R15
 
+
 # ;; Our simple string compare function
 # ;; Recieves two pointers in R0 and R1
 # ;; Returns the difference between the strings in R0
@@ -294,6 +338,7 @@ A0200000	# CMPSKIP.E R0 0 ; Stop if byte is NULL
 0902802F	# POPR R2 R15
 0D01001F	# RET R15
 
+
 # ;; Processimmediate Function
 # ;; Recieves an integer value in R0
 # ;; Writes out the values to Tape_02
@@ -322,6 +367,7 @@ A0200000	# CMPSKIP.E R0 0 ; Stop if byte is NULL
 # ;; Be Done
 0D01001F	# RET R15
 
+
 # ;; ThrowAwaypointer function
 # ;; Handle the special case of a generic problem
 # ;; for Pass1, Will update R11 and modify R0
@@ -331,6 +377,18 @@ A0200000	# CMPSKIP.E R0 0 ; Stop if byte is NULL
 0FBB0002	# ADDUI R11 R11 2 ; Pointers always take up 2 bytes
 2D0F @throwAwayToken	# CALLI R15 @throwAwayToken ; Get rid of rest of token
 3C00 @first_pass	# JUMP @first_pass ; Then return to the proper place
+
+
+# ;; ThrowAwayAddress function
+# ;; Handle the case of a 32bit absolute address storage
+# ;; for Pass1, Will update R11 and modify R0
+# ;; Will return to the start of first_pass
+# ;; Never call this function, conly jump to it
+:ThrowAwayAddress
+0FBB0004	# ADDUI R11 R11 4 ; Addresses on 32bit systems take up 4 bytes
+2D0F @throwAwayToken	# CALLI R15 @throwAwayToken ; Get rid of rest of token
+3C00 @first_pass	# JUMP @first_pass ; Then return to the proper place
+
 
 # ;; ThrowAwaylabel function
 # ;; Handle the special case of a generic problem
@@ -414,6 +472,7 @@ A030000a	# CMPSKIP.NE R0 10
 2C6E @ascii_comment	# JUMP.NE R14 @ascii_comment ; Otherwise keep looping
 3C00 @ascii_other	# JUMP @ascii_other
 
+
 # ;; Where we are storing our Temp
 :Temp
 00000000	# NOP
@@ -432,6 +491,7 @@ A030000a	# CMPSKIP.NE R0 10
 00000000	# NOP
 00000000	# NOP
 00000000	# NOP
+
 
 # ;; Where we will putting our Table
 :table
