@@ -1,0 +1,97 @@
+# :start
+0D00002E	# FALSE R14 ; R14 will be storing our current address
+2D2F00e0	# LOADUI R15 $end ; We will be using R15 for our stack
+
+
+# ;; Main program functionality
+# ;; Reads in Tape_01 and writes out results to Tape_02
+# ;; Accepts no arguments and HALTS when done
+# :main
+# ;; Prep TAPE_01
+2D201100	# LOADUI R0 0x1100
+42100000	# FOPEN_READ
+# ;; Prep TAPE_02
+2D201101	# LOADUI R0 0x1101
+42100001	# FOPEN_WRITE
+# ;; Perform main loop
+# :main_0
+2D211100	# LOADUI R1 0x1100 ; Read from tape_01
+42100100	# FGETC ; Read a Char
+# ;; Check for EOF
+A0100000	# CMPSKIP.GE R0 0
+3C000010	# JUMP @main_1
+# ;; Process that byte
+2D0F0020	# CALLI R15 @dehex
+# ;; Increment address
+0FEE0001	# ADDUI R14 R14 1
+# ;; Get next byte
+3C00ffe8	# JUMP @main_0
+# :main_1
+# ;; Close up as we are done
+2D201100	# LOADUI R0 0x1100 ; Close TAPE_01
+42100002	# FCLOSE
+2D201101	# LOADUI R0 0x1101 ; Close TAPE_02
+42100002	# FCLOSE
+FFFFFFFF	# HALT
+
+
+# ;; Dehex functionality
+# ;; Accepts byte in R0
+# ;; Prints address every 4th byte
+# ;; Alters R0
+# ;; Returns to whatever called it
+# :dehex
+0902001F	# PUSHR R1 R15 ; Preserve R1
+0902000F	# PUSHR R0 R15 ; Save byte until after address
+B00E0003	# ANDI R0 R14 3 ; Get mod 4 of address
+2D211101	# LOADUI R1 0x1101 ; We want it on TAPE_02
+A0200000	# CMPSKIP.E R0 0 ; if not zero
+3C000024	# JUMP @dehex_0 ; Skip placing address
+# ;; Prepend new line
+2D20000a	# LOADUI R0 10 ; First print line feed
+42100200	# FPUTC ; Write it
+# ;; Write out address
+0900040E	# COPY R0 R14 ; Prep for call
+2D0F002c	# CALLI R15 @hex32 ; Let it handle the details
+# ;; Write out : char
+2D20003a	# LOADUI R0 58 ; Prep
+42100200	# FPUTC ; Write it
+# ;; Write out tab
+2D200009	# LOADUI R0 9 ; Prep
+42100200	# FPUTC ; Write it
+# :dehex_0
+0902800F	# POPR R0 R15 ; Restore byte recieved
+2D0F0034	# CALLI R15 @hex8 ; Use a subset
+2D200020	# LOADUI R0 32 ; Prep for writing space
+42100200	# FPUTC ; Write it
+0902801F	# POPR R1 R15 ; Restore R1
+0D01001F	# RET R15 ; Return to caller
+
+
+# ;; hex32 functionality
+# ;; Accepts 32bit value in R0
+# ;; Require R1 to be the device to write the results
+# ;; Returns to whatever called it
+# :hex32
+0902000F	# PUSHR R0 R15
+2D600010	# SR0I R0 16 ; Do high word first
+2D0F0008	# CALLI R15 @hex16
+0902800F	# POPR R0 R15
+# :hex16
+0902000F	# PUSHR R0 R15
+2D600008	# SR0I R0 8 ; Do high byte first
+2D0F0008	# CALLI R15 @hex8
+0902800F	# POPR R0 R15
+# :hex8
+0902000F	# PUSHR R0 R15
+2D600004	# SR0I R0 4 ; Do high nybble first
+2D0F0008	# CALLI R15 @hex4
+0902800F	# POPR R0 R15
+# :hex4
+B000000f	# ANDI R0 R0 0x000F ; isolate nybble
+0F000030	# ADDUI R0 R0 48 ; convert to ascii
+A0400039	# CMPSKIP.LE R0 57 ; If nybble was greater than '9'
+0F000007	# ADDUI R0 R0 7 ; Shift it into 'A' range of ascii
+42100200	# FPUTC ; Print char
+0D01001F	# RET R15 ; Get next nybble or return if done
+# :end
