@@ -1453,7 +1453,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 	#endif
 
 	/* 0x0E ... 0x2B */
-	/* 0xC0 ... 0xDF */
+	/* 0xB0 ... 0xDF */
 	switch(c->raw0)
 	{
 		case 0x0E: /* ADDI */
@@ -1641,6 +1641,72 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			#endif
 
 			STORE32(vm, c);
+			break;
+		}
+		case 0xB0: /* ANDI */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "ANDI", 19);
+			#elif TRACE
+			record_trace("ANDI");
+			#endif
+
+			ANDI(vm, c);
+			break;
+		}
+		case 0xB1: /* ORI */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "ORI", 19);
+			#elif TRACE
+			record_trace("ORI");
+			#endif
+
+			ORI(vm, c);
+			break;
+		}
+		case 0xB2: /* XORI */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "XORI", 19);
+			#elif TRACE
+			record_trace("XORI");
+			#endif
+
+			XORI(vm, c);
+			break;
+		}
+		case 0xB3: /* NANDI */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "NANDI", 19);
+			#elif TRACE
+			record_trace("NANDI");
+			#endif
+
+			NANDI(vm, c);
+			break;
+		}
+		case 0xB4: /* NORI */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "NORI", 19);
+			#elif TRACE
+			record_trace("NORI");
+			#endif
+
+			NORI(vm, c);
+			break;
+		}
+		case 0xB5: /* XNORI */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "XNORI", 19);
+			#elif TRACE
+			record_trace("XNORI");
+			#endif
+
+			XNORI(vm, c);
 			break;
 		}
 		case 0xC0: /* CMPJUMP.G */
@@ -2327,7 +2393,7 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 			break;
 		}
 		case 0x0E ... 0x2B: /* Integer 2OPI */
-		case 0xC0 ... 0xDF:
+		case 0xB0 ... 0xDF:
 		{
 			decode_2OPI(current);
 			invalid = eval_2OPI_Int(vm, current);

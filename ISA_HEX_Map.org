@@ -527,57 +527,70 @@ DO NOT USE.
 | 9F FF FF FF | Reserved |
 
 ** CMPSKIP Group
-| Hex         | Name        | Comment                            |
-|-------------+-------------+------------------------------------|
-| A0 0a ii ii | CMPSKIP.G   | a > ii ii ? Skip Next instruction  |
-| A0 1a ii ii | CMPSKIP.GE  | a >= ii ii ? Skip Next instruction |
-| A0 2a ii ii | CMPSKIP.E   | a == ii ii ? Skip Next instruction |
-| A0 3a ii ii | CMPSKIP.NE  | a != ii ii ? Skip Next instruction |
-| A0 4a ii ii | CMPSKIP.LE  | a <= ii ii ? Skip Next instruction |
-| A0 5a ii ii | CMPSKIP.L   | a < ii ii ? Skip Next instruction  |
-| A0 6a ii ii | Reserved    |                                    |
-| ...         | Reserved    |                                    |
-| A0 Fa ii ii | Reserved    |                                    |
-| A1 0a ii ii | CMPSKIPU.G  | a > ii ii ? Skip Next instruction  |
-| A1 1a ii ii | CMPSKIPU.GE | a >= ii ii ? Skip Next instruction |
-| A1 2a ii ii | Reserved    |                                    |
-| A1 3a ii ii | Reserved    |                                    |
-| A1 4a ii ii | CMPSKIPU.LE | a <= ii ii ? Skip Next instruction |
-| A1 5a ii ii | CMPSKIPU.L  | a < ii ii ? Skip Next instruction  |
-| A1 6a ii ii | Reserved    |                                    |
-| ...         | Reserved    |                                    |
-| A1 Fa ii ii | Reserved    |                                    |
+| Hex         | Name                | Comment                            |
+|-------------+---------------------+------------------------------------|
+| A0 0a ii ii | CMPSKIP.G a ii ii   | a > ii ii ? Skip Next instruction  |
+| A0 1a ii ii | CMPSKIP.GE a ii ii  | a >= ii ii ? Skip Next instruction |
+| A0 2a ii ii | CMPSKIP.E a ii ii   | a == ii ii ? Skip Next instruction |
+| A0 3a ii ii | CMPSKIP.NE a ii ii  | a != ii ii ? Skip Next instruction |
+| A0 4a ii ii | CMPSKIP.LE a ii ii  | a <= ii ii ? Skip Next instruction |
+| A0 5a ii ii | CMPSKIP.L a ii ii   | a < ii ii ? Skip Next instruction  |
+| A0 6a ii ii | Reserved            |                                    |
+| ...         | Reserved            |                                    |
+| A0 Fa ii ii | Reserved            |                                    |
+| A1 0a ii ii | CMPSKIPU.G a ii ii  | a > ii ii ? Skip Next instruction  |
+| A1 1a ii ii | CMPSKIPU.GE a ii ii | a >= ii ii ? Skip Next instruction |
+| A1 2a ii ii | Reserved            |                                    |
+| A1 3a ii ii | Reserved            |                                    |
+| A1 4a ii ii | CMPSKIPU.LE a ii ii | a <= ii ii ? Skip Next instruction |
+| A1 5a ii ii | CMPSKIPU.L a ii ii  | a < ii ii ? Skip Next instruction  |
+| A1 6a ii ii | Reserved            |                                    |
+| ...         | Reserved            |                                    |
+| A1 Fa ii ii | Reserved            |                                    |
 
 ** Reserved Block 2
 At this time these instructions only produce a warning; but could do anything.
 DO NOT USE.
 | Hex         | Name     |
 |-------------+----------|
-| B0 00 00 00 | Reserved |
+| A2 00 00 00 | Reserved |
 | ...         | Reserved |
-| BF FF FF FF | Reserved |
+| AF FF FF FF | Reserved |
+
+** Bit optimization group
+| Hex         | Name            | Comment            |
+|-------------+-----------------+--------------------|
+| B0 ab ii ii | ANDI a b ii ii  | a = b & ii ii      |
+| B1 ab ii ii | ORI a b ii ii   | a = b \vert ii ii  |
+| B2 ab ii ii | XORI a b ii ii  | a = b XOR ii ii    |
+| B3 ab ii ii | NANDI a b ii ii | a != b && ii ii    |
+| B4 ab ii ii | NORI a b ii ii  | a != b \vert ii ii |
+| B5 ab ii ii | XNORI a b ii ii | a != b XOR ii ii   |
+| B6 00 00 00 | Reserved        |                    |
+| ...         | Reserved        |                    |
+| BF FF FF FF | Reserved        |                    |
 
 ** CMPJUMP Group
-| Hex         | Name        | Comment                             |
-|-------------+-------------+-------------------------------------|
-| C0 ab ii ii | CMPJUMP.G   | a > b ? PC = PC + ii ii             |
-| C1 ab ii ii | CMPJUMP.GE  | a >= b ? PC = PC + ii ii            |
-| C2 ab ii ii | CMPJUMP.E   | a == b ? PC = PC + ii ii            |
-| C3 ab ii ii | CMPJUMP.NE  | a != b ? PC = PC + ii ii            |
-| C4 ab ii ii | CMPJUMP.LE  | a <= b ? PC = PC + ii ii            |
-| C5 ab ii ii | CMPJUMP.L   | a < b ? PC = PC + ii ii             |
-| C6 ab ii ii | Reserved    |                                     |
-| ...         | Reserved    |                                     |
-| CF ab ii ii | Reserved    |                                     |
-| D0 ab ii ii | CMPJUMPU.G  | a > b ? PC = PC + ii ii (unsigned)  |
-| D1 ab ii ii | CMPJUMPU.GE | a >= b ? PC = PC + ii ii (unsigned) |
-| D2 ab ii ii | Reserved    |                                     |
-| D3 ab ii ii | Reserved    |                                     |
-| D4 ab ii ii | CMPJUMPU.LE | a <= b ? PC = PC + ii ii (unsigned) |
-| D5 ab ii ii | CMPJUMPU.L  | a < b ? PC = PC + ii ii (unsigned)  |
-| D6 ab ii ii | Reserved    |                                     |
-| ...         | Reserved    |                                     |
-| DF ab ii ii | Reserved    |                                     |
+| Hex         | Name                  | Comment                             |
+|-------------+-----------------------+-------------------------------------|
+| C0 ab ii ii | CMPJUMP.G a b ii ii   | a > b ? PC = PC + ii ii             |
+| C1 ab ii ii | CMPJUMP.GE a b ii ii  | a >= b ? PC = PC + ii ii            |
+| C2 ab ii ii | CMPJUMP.E a b ii ii   | a == b ? PC = PC + ii ii            |
+| C3 ab ii ii | CMPJUMP.NE a b ii ii  | a != b ? PC = PC + ii ii            |
+| C4 ab ii ii | CMPJUMP.LE a b ii ii  | a <= b ? PC = PC + ii ii            |
+| C5 ab ii ii | CMPJUMP.L a b ii ii   | a < b ? PC = PC + ii ii             |
+| C6 ab ii ii | Reserved              |                                     |
+| ...         | Reserved              |                                     |
+| CF ab ii ii | Reserved              |                                     |
+| D0 ab ii ii | CMPJUMPU.G a b ii ii  | a > b ? PC = PC + ii ii (unsigned)  |
+| D1 ab ii ii | CMPJUMPU.GE a b ii ii | a >= b ? PC = PC + ii ii (unsigned) |
+| D2 ab ii ii | Reserved              |                                     |
+| D3 ab ii ii | Reserved              |                                     |
+| D4 ab ii ii | CMPJUMPU.LE a b ii ii | a <= b ? PC = PC + ii ii (unsigned) |
+| D5 ab ii ii | CMPJUMPU.L a b ii ii  | a < b ? PC = PC + ii ii (unsigned)  |
+| D6 ab ii ii | Reserved              |                                     |
+| ...         | Reserved              |                                     |
+| DF ab ii ii | Reserved              |                                     |
 
 ** Reserved Block 3
 At this time these instructions only produce a warning; but could do anything.

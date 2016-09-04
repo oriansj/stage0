@@ -826,6 +826,36 @@ void decode_Integer_2OPI(struct Instruction* c)
 			strncpy(Name, "STORE32", 19);
 			break;
 		}
+		case 0xB0: /* ANDI */
+		{
+			strncpy(Name, "ANDI", 19);
+			break;
+		}
+		case 0xB1: /* ORI */
+		{
+			strncpy(Name, "ORI", 19);
+			break;
+		}
+		case 0xB2: /* XORI */
+		{
+			strncpy(Name, "XORI", 19);
+			break;
+		}
+		case 0xB3: /* NANDI */
+		{
+			strncpy(Name, "NANDI", 19);
+			break;
+		}
+		case 0xB4: /* NORI */
+		{
+			strncpy(Name, "NORI", 19);
+			break;
+		}
+		case 0xB5: /* XNORI */
+		{
+			strncpy(Name, "XNORI", 19);
+			break;
+		}
 		case 0xC0: /* CMPJUMP.G */
 		{
 			strncpy(Name, "CMPJUMP.G", 19);
@@ -1243,7 +1273,7 @@ void eval_instruction(struct Instruction* c)
 			break;
 		}
 		case 0x0E ... 0x2B: /* 2OPI */
-		case 0xC0 ... 0xDF:
+		case 0xB0 ... 0xDF:
 		{
 			decode_Integer_2OPI(c);
 			break;

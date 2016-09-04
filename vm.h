@@ -214,7 +214,12 @@ void POP16(struct lilith* vm, struct Instruction* c);
 void POPU16(struct lilith* vm, struct Instruction* c);
 void POP32(struct lilith* vm, struct Instruction* c);
 void POPU32(struct lilith* vm, struct Instruction* c);
-
+void ANDI(struct lilith* vm, struct Instruction* c);
+void ORI(struct lilith* vm, struct Instruction* c);
+void XORI(struct lilith* vm, struct Instruction* c);
+void NANDI(struct lilith* vm, struct Instruction* c);
+void NORI(struct lilith* vm, struct Instruction* c);
+void XNORI(struct lilith* vm, struct Instruction* c);
 
 /* Prototypes for functions in vm_decode.c*/
 struct lilith* create_vm(size_t size);

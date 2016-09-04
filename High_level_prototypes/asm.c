@@ -314,6 +314,12 @@ void assemble(struct Token* p)
 	setExpression(p, "STORE8", "21", 4);
 	setExpression(p, "STORE16", "22", 4);
 	setExpression(p, "STORE32", "23", 4);
+	setExpression(p, "ANDI", "B0", 4);
+	setExpression(p, "ORI", "B1", 4);
+	setExpression(p, "XORI", "B2", 4);
+	setExpression(p, "NANDI", "B3", 4);
+	setExpression(p, "NORI", "B4", 4);
+	setExpression(p, "XNORI", "B5", 4);
 	setExpression(p, "CMPJUMP.G", "C0", 4);
 	setExpression(p, "CMPJUMP.GE", "C1", 4);
 	setExpression(p, "CMPJUMP.E", "C2", 4);

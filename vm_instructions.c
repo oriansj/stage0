@@ -1923,3 +1923,33 @@ void POPU32(struct lilith* vm, struct Instruction* c)
 	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
 }
+
+void ANDI(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = vm->reg[c->reg1] & c->raw_Immediate;
+}
+
+void ORI(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = vm->reg[c->reg1] | c->raw_Immediate;
+}
+
+void XORI(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = vm->reg[c->reg1] ^ c->raw_Immediate;
+}
+
+void NANDI(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = ~(vm->reg[c->reg1] & c->raw_Immediate);
+}
+
+void NORI(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = ~(vm->reg[c->reg1] | c->raw_Immediate);
+}
+
+void XNORI(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = ~(vm->reg[c->reg1] ^ c->raw_Immediate);
+}
