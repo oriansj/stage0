@@ -1,0 +1,30 @@
+# :start
+2D22000a	# LOADUI R2 10 ; We will be using R2 for our counter
+# ;; Prep TAPE_01
+2D201100	# LOADUI R0 0x1100
+42100000	# FOPEN_READ
+# :main
+# ;; Read a byte
+2D211100	# LOADUI R1 0x1100
+42100100	# FGETC
+# ;; Check for EOF
+A0100000	# CMPSKIP.GE R0 0
+3C000028	# JUMP @main_1
+# ;; Write the Byte
+0D000021	# FALSE R1
+42100200	# FPUTC
+# ;; Check for LF
+A030000a	# CMPSKIP.NE R0 10 ; Skip if not line feed
+10220001	# SUBI R2 R2 1 ; Decrement on line feed
+# ;; Loop if not Zero
+A0220000	# CMPSKIP.E R2 0 ; Skip if counter is zero
+3C00ffdc	# JUMP @main
+# ;; Otherwise provide main loop functionality
+42100100	# FGETC ; Wait for key press
+2D22000a	# LOADUI R2 10 ; Reset counter
+3C00ffd0	# JUMP @main ; And loop
+# :main_1
+# ;; Close up as we are done
+2D201100	# LOADUI R0 0x1100 ; Close TAPE_01
+42100002	# FCLOSE
+FFFFFFFF	# HALT
