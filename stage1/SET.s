@@ -1,7 +1,8 @@
 :start
-	LOADUI R15 $stack			; Put stack at end of program
+	LOADUI R15 $stack           ; Put stack at end of program
 	;; We will be using R14 for our condition codes
 	;; We will be using R13 for storage of Head
+
 
 ;; Main program
 ;; Reads contents of Tape_01 and writes desired contents onto Tape_02
@@ -17,15 +18,16 @@
 	CALLI R15 @ReadFile
 
 	;; Done reading File
-	LOADUI R0 0x1100			; Close TAPE_01
+	LOADUI R0 0x1100            ; Close TAPE_01
 	FCLOSE
 
 	;; Enter Editor Loop
-	MOVE R13 R1				; Set R13 to Head
+	MOVE R13 R1                 ; Set R13 to Head
 	CALLI R15 @EditorLoop
 
 	;; And We are Done
 	HALT
+
 
 ;; Readfile function
 ;; Recieves pointer to head in R1
@@ -38,7 +40,7 @@
 	CALLI R15 @malloc
 	;; Get another line into list
 	PUSHR R1 R15
-	LOADUI R1 0x1100			; Read from tape_01
+	LOADUI R1 0x1100            ; Read from tape_01
 	CALLI R15 @Readline
 	POPR R1 R15
 	SWAP R0 R1
@@ -47,6 +49,7 @@
 	;; Loop if not reached EOF
 	JUMP.Z R14 @ReadFile
 	RET R15
+
 
 ;; Readline function
 ;; Recieves Pointer to node in R0
@@ -64,12 +67,12 @@
 	PUSHR R4 R15
 	;; Initialize
 	MOVE R4 R0
-	FALSE R0					; Get where space is free
+	FALSE R0                    ; Get where space is free
 	CALLI R15 @malloc
 	MOVE R2 R0
 	FALSE R3
 :Readline_0
-	FGETC						; Read a Char
+	FGETC                       ; Read a Char
 
 	;; Flag if reached EOF
 	CMPSKIP.GE R0 0
@@ -110,11 +113,11 @@
 
 :Readline_2
 	;; Set Text pointer
-	CMPSKIP.E R3 0				; Don't bother for Empty strings
+	CMPSKIP.E R3 0              ; Don't bother for Empty strings
 	STORE32 R2 R4 8
 	;; Correct Malloc
-	MOVE R0 R3					; Ensure actually allocates exactly
-	CALLI R15 @malloc			; the amount of space required
+	MOVE R0 R3                  ; Ensure actually allocates exactly
+	CALLI R15 @malloc           ; the amount of space required
 	;; Restore Registers
 	POPR R4 R15
 	POPR R3 R15
@@ -122,6 +125,7 @@
 	POPR R1 R15
 	POPR R0 R15
 	RET R15
+
 
 ;; addline Function
 ;; Recieves pointers in R0 R1
@@ -152,12 +156,12 @@
 
 :addline_1
 	;; Handle case of Head->next not being NULL
-	LOAD32 R0 R0 0				; Move to next node
-	LOAD32 R2 R0 0				; Get node->next
-	CMPSKIP.E R2 0				; If it is not null
-	JUMP @addline_1			; Move to the next node and try again
-	JUMP @addline_0			; Else simply act as if we got this node
-								; in the first place
+	LOAD32 R0 R0 0              ; Move to next node
+	LOAD32 R2 R0 0              ; Get node->next
+	CMPSKIP.E R2 0              ; If it is not null
+	JUMP @addline_1             ; Move to the next node and try again
+	JUMP @addline_0             ; Else simply act as if we got this node
+	                            ; in the first place
 
 :addline_2
 	;; Restore registers
@@ -165,6 +169,7 @@
 	POPR R1 R15
 	POPR R2 R15
 	RET R15
+
 
 ;; Primative malloc function
 ;; Recieves number of bytes to allocate in R0
@@ -176,7 +181,7 @@
 	;; Get current malloc pointer
 	LOADR R1 @malloc_pointer
 	;; Deal with special case
-	CMPSKIP.NE R1 0			; If Zero set to our start of heap space
+	CMPSKIP.NE R1 0             ; If Zero set to our start of heap space
 	LOADUI R1 0x4000
 
 	;; update malloc pointer
@@ -192,14 +197,15 @@
 :malloc_pointer
 	NOP
 
-	;; Editor Loop
-	;; Provides user interaction
-	;; Requires R13 to be pointer to Head
-	;; Internally loops
-	;; Returns nothing
+
+;; Editor Loop
+;; Provides user interaction
+;; Requires R13 to be pointer to Head
+;; Internally loops
+;; Returns nothing
 :EditorLoop
-	FALSE R1					; Read from tty
-	FGETC						; Read a Char
+	FALSE R1                    ; Read from tty
+	FGETC                       ; Read a Char
 
 	;; Quit if q
 	CMPSKIP.NE R0 113
@@ -217,7 +223,7 @@
 	;; Move forward if f
 	CMPUI R14 R0 102
 	JUMP.NE R14 @EditorLoop_1
-	LOAD32 R0 R13 0			; Load head->next
+	LOAD32 R0 R13 0             ; Load head->next
 
 	;; If head->next isn't null make it the new head
 	CMPSKIP.E R0 0
@@ -228,7 +234,7 @@
 	;; Move backward if b
 	CMPUI R14 R0 98
 	JUMP.NE R14 @EditorLoop_2
-	LOAD32 R0 R13 4			; Load head->prev
+	LOAD32 R0 R13 4             ; Load head->prev
 
 	;; If head->prev isn't null make it the new head
 	CMPSKIP.E R0 0
@@ -242,7 +248,7 @@
 
 	;; Change Head's Text
 	COPY R0 R13
-	FALSE R1					; Read from tty
+	FALSE R1                    ; Read from tty
 	CALLI R15 @Readline
 
 	JUMP @EditorLoop
@@ -261,7 +267,7 @@
 	CALLI R15 @GetRoot
 	CALLI R15 @PrintAll
 
-	LOADUI R0 0x1101			; Close TAPE_02
+	LOADUI R0 0x1101            ; Close TAPE_02
 	FCLOSE
 	JUMP @EditorLoop
 
@@ -293,6 +299,7 @@
 :EditorLoop_7
 	JUMP @EditorLoop
 
+
 ;; GetRoot function
 ;; Walks backwards through nodes until beginning
 ;; Recieves node pointer in R0 and Returns result in R0
@@ -315,6 +322,7 @@
 	POPR R1 R15
 	RET R15
 
+
 ;; Printall Function
 ;; Prints all lines to Interface in R1
 ;; Starting at node in R0
@@ -326,19 +334,20 @@
 	PUSHR R1 R15
 	PUSHR R2 R15
 :PrintAll_0
-	LOAD32 R2 R0 0				; Store Head->Next in R2
-	LOAD32 R0 R0 8				; Set R0 to Head->Text
-	CALLI R15 @PrintLine		; Prints Head->Text
-	CMPSKIP.NE R2 0			; If Head->Next is NULL
-	JUMP @PrintAll_1			; Stop Looping
-	MOVE R0 R2					; Otherwise Move to Next Node
-	JUMP @PrintAll_0			; And Loop
+	LOAD32 R2 R0 0              ; Store Head->Next in R2
+	LOAD32 R0 R0 8              ; Set R0 to Head->Text
+	CALLI R15 @PrintLine        ; Prints Head->Text
+	CMPSKIP.NE R2 0             ; If Head->Next is NULL
+	JUMP @PrintAll_1            ; Stop Looping
+	MOVE R0 R2                  ; Otherwise Move to Next Node
+	JUMP @PrintAll_0            ; And Loop
 :PrintAll_1
 	;; Restore registers
 	POPR R2 R15
 	POPR R1 R15
 	POPR R0 R15
 	RET R15
+
 
 ;; Printline function
 ;; Recieves a string pointer in R0
@@ -358,13 +367,13 @@
 	CMPSKIP.NE R2 0
 	JUMP @PrintLine_1
 :PrintLine_0
-	LOADXU8 R0 R2 R3			; Load char from string
+	LOADXU8 R0 R2 R3            ; Load char from string
 	;; Don't print NULLs
 	CMPSKIP.NE R0 0
 	JUMP @PrintLine_1
 
-	FPUTC						; Print the char
-	ADDUI R3 R3 1				; Prep for next loop
+	FPUTC                       ; Print the char
+	ADDUI R3 R3 1               ; Prep for next loop
 	JUMP @PrintLine_0
 
 :PrintLine_1
@@ -374,6 +383,7 @@
 	POPR R1 R15
 	POPR R0 R15
 	RET R15
+
 
 ;; AppendLine Function
 ;; Recieves a Node in R0
@@ -393,19 +403,20 @@
 
 	;; Check if head->Next is null
 	LOAD32 R2 R1 0
-	CMPSKIP.E R2 0				; If head->Next is something
-	STORE32 R0 R2 4			; Set head->next->prev to p
+	CMPSKIP.E R2 0              ; If head->Next is something
+	STORE32 R0 R2 4             ; Set head->next->prev to p
 
 	;; Setup p and head
-	STORE32 R2 R0 0			; p->next = head->next
-	STORE32 R1 R0 4			; p->prev = head
-	STORE32 R0 R1 0			; head->next = p
+	STORE32 R2 R0 0             ; p->next = head->next
+	STORE32 R1 R0 4             ; p->prev = head
+	STORE32 R0 R1 0             ; head->next = p
 
 	;; Restore Registers
 	POPR R2 R15
 	POPR R1 R15
 	POPR R0 R15
 	RET R15
+
 
 ;; InsertLine Function
 ;; Recieves a Node in R0
@@ -425,13 +436,13 @@
 
 	;; Check if Head->Prev is Null
 	LOAD32 R2 R1 4
-	CMPSKIP.E R2 0				; If head->prev is something
-	STORE32 R0 R2 0			; Set head->prev->next to p
+	CMPSKIP.E R2 0              ; If head->prev is something
+	STORE32 R0 R2 0             ; Set head->prev->next to p
 
 	;; Setup p and head
-	STORE32 R2 R0 4			; p->prev = head->prev
-	STORE32 R1 R0 0			; p->next = head
-	STORE32 R0 R1 4			; head->prev = p
+	STORE32 R2 R0 4             ; p->prev = head->prev
+	STORE32 R1 R0 0             ; p->next = head
+	STORE32 R0 R1 4             ; head->prev = p
 
 	;; Restore Registers
 	POPR R2 R15
@@ -450,24 +461,25 @@
 	PUSHR R2 R15
 	;; Initialize
 	MOVE R1 R0
-	LOAD32 R0 R1 4				; put p->prev in R0
-	LOAD32 R2 R1 0				; put p->next in R2
+	LOAD32 R0 R1 4              ; put p->prev in R0
+	LOAD32 R2 R1 0              ; put p->next in R2
 
 	;; Keep links
-	CMPSKIP.E R0 0				; If p->prev is not null
-	STORE32 R2 R0 0			; p->prev->next = p->next
+	CMPSKIP.E R0 0              ; If p->prev is not null
+	STORE32 R2 R0 0             ; p->prev->next = p->next
 
-	CMPSKIP.E R2 0				; If p->next is not null
-	STORE32 R0 R2 4			; p->next->prev = p->prev
+	CMPSKIP.E R2 0              ; If p->next is not null
+	STORE32 R0 R2 4             ; p->next->prev = p->prev
 
 	;; Attempt to save what is left of the list
-	CMPSKIP.NE R0 0			; If p->prev is null
-	MOVE R0 R2					; return p->next
+	CMPSKIP.NE R0 0             ; If p->prev is null
+	MOVE R0 R2                  ; return p->next
 
 	;; Restore Registers
 	POPR R2 R15
 	POPR R1 R15
 	RET R15
+
 
 ;; Where our stack begins
 :stack
