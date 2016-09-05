@@ -1,9 +1,9 @@
 :start
-	LOADUI R10 0x0F			; Byte mask
-	LOADUI R11 1				; Our toggle
-	LOADUI R13 0x600			; Where we are starting our Stack
+	LOADUI R10 0x0F             ; Byte mask
+	LOADUI R11 1                ; Our toggle
+	LOADUI R13 0x600            ; Where we are starting our Stack
 	;;  R14 will be storing our condition
-	FALSE R15					; Our holder
+	FALSE R15                   ; Our holder
 
 	;; Prep TAPE_01
 	LOADUI R0 0x1100
@@ -14,13 +14,13 @@
 	FOPEN_WRITE
 
 :loop
-	LOADUI R1 0				; Read from tty
-	FGETC						; Read a Char
+	LOADUI R1 0                 ; Read from tty
+	FGETC                       ; Read a Char
 
-	CMPSKIP.NE R0 13			; Replace all CR
-	LOADUI R0 10				; WIth LF
+	CMPSKIP.NE R0 13            ; Replace all CR
+	LOADUI R0 10                ; WIth LF
 
-	FPUTC						; Display the Char to User
+	FPUTC                       ; Display the Char to User
 
 	;; Check for Ctrl-D
 	CMPSKIP.NE R0 4
@@ -30,25 +30,25 @@
 	JUMP.NP R0 @finish
 
 :.L1
-	LOADUI R1 0x1101			; Write to TAPE_02
-	FPUTC						; Print the Char
-	CALLI R13 @hex				; Convert it
-	JUMP.NP R0 @loop			; Don't use nonhex chars
-	JUMP.Z R11 @.L99			; Jump if toggled
+	LOADUI R1 0x1101            ; Write to TAPE_02
+	FPUTC                       ; Print the Char
+	CALLI R13 @hex              ; Convert it
+	JUMP.NP R0 @loop            ; Don't use nonhex chars
+	JUMP.Z R11 @.L99            ; Jump if toggled
 
 	;; Process first byte of pair
-	AND R15 R0 R10				; Store First nibble
-	FALSE R11					; Flip the toggle
+	AND R15 R0 R10              ; Store First nibble
+	FALSE R11                   ; Flip the toggle
 	JUMP @loop
 
 :.L99
-	SL0I R15 4					; Shift our first nibble
-	AND R0 R0 R10				; Mask out top
-	ADD R0 R0 R15				; Combine nibbles
-	LOADI R11 1				; Flip the toggle
-	LOADUI R1 0x1100			; Write the combined byte
-	FPUTC						; To TAPE_01
-	JUMP @loop					; Try to get more bytes
+	SL0I R15 4                  ; Shift our first nibble
+	AND R0 R0 R10               ; Mask out top
+	ADD R0 R0 R15               ; Combine nibbles
+	LOADI R11 1                 ; Flip the toggle
+	LOADUI R1 0x1100            ; Write the combined byte
+	FPUTC                       ; To TAPE_01
+	JUMP @loop                  ; Try to get more bytes
 
 :hex
 	;; Deal with line comments starting with #
@@ -91,20 +91,20 @@
 	TRUE R0
 	RET R13
 :ascii_comment
-	LOADUI R1 0				; Read from tty
-	FGETC						; Read another char
-	CMPSKIP.NE R0 13			; Replace all CR
-	LOADUI R0 10				; WIth LF
-	FPUTC						; Let the user see it
-	CMPUI R14 R0 10			; Stop at the end of line
-	LOADUI R1 0x1101			; Write to TAPE_02
-	FPUTC						; The char we just read
-	JUMP.NE R14 @ascii_comment	; Otherwise keep looping
+	LOADUI R1 0                 ; Read from tty
+	FGETC                       ; Read another char
+	CMPSKIP.NE R0 13            ; Replace all CR
+	LOADUI R0 10                ; WIth LF
+	FPUTC                       ; Let the user see it
+	CMPUI R14 R0 10             ; Stop at the end of line
+	LOADUI R1 0x1101            ; Write to TAPE_02
+	FPUTC                       ; The char we just read
+	JUMP.NE R14 @ascii_comment  ; Otherwise keep looping
 	JUMP @ascii_other
 
 :finish
-	LOADUI R0 0x1100			; Close TAPE_01
+	LOADUI R0 0x1100            ; Close TAPE_01
 	FCLOSE
-	LOADUI R0 0x1101			; Close TAPE_02
+	LOADUI R0 0x1101            ; Close TAPE_02
 	FCLOSE
 	HALT
