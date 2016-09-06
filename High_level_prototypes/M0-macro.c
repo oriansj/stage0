@@ -7,7 +7,6 @@
 
 FILE* source_file;
 bool Reached_EOF;
-uint32_t ip;
 
 struct Token
 {
@@ -300,7 +299,6 @@ int main(int argc, char **argv)
 	source_file = fopen(argv[1], "r");
 
 	Reached_EOF = false;
-	ip = 0;
 	struct Token* head = NULL;
 	while(!Reached_EOF)
 	{
