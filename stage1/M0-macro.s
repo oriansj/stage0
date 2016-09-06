@@ -106,10 +106,10 @@
 	JUMP @Tokenize_Line_Done
 
 	;; Allocate a new Node
-	MOVE R2 R0					; Get Char out the way
-	LOADUI R0 16				; Allocate 16 Bytes
-	CALLI R15 @malloc			; Get address of new Node
-	SWAP R2 R0					; Store Pointer in R2
+	MOVE R2 R0                  ; Get Char out the way
+	LOADUI R0 16                ; Allocate 16 Bytes
+	CALLI R15 @malloc           ; Get address of new Node
+	SWAP R2 R0                  ; Store Pointer in R2
 
 	;; Deal with Strings wrapped in "
 	CMPSKIP.NE R0 34
@@ -148,9 +148,131 @@
 	JUMP @Tokenize_Line_0       ; Return as if this never happened
 
 
-	;; Store_String function
-	;; Recieves Char in R0, desired input in R1
-	;; And node pointer in R2
+;; Store_String function
+;; Recieves Char in R0, desired input in R1
+;; And node pointer in R2
+;; Modifies node Text to point to string and sets
+;; Type to string.
+:Store_String
+	;; Preserve registers
+	PUSHR R4 R15
+	PUSHR R5 R15
+	PUSHR R6 R15
+
+	;; Initialize
+	MOVE R6 R0                  ; Get R0 out of the way
+	CALLI R15 @malloc           ; Get where space is free
+	MOVE R4 R0                  ; Put pointer someplace safe
+	FALSE R5                    ; Start at index 0
+	COPY R0 R6                  ; Copy Char back into R0
+
+	;; Primary Loop
+:Store_String_0
+	STOREX8 R0 R4 R5            ; Store the Byte
+	FGETC                       ; Get next Byte
+	ADDUI R5 R5 1               ; Prep for next loop
+	CMPJUMP.NE R0 R6 @Store_String_0 ; Loop if matching not found
+
+	;; Clean up
+	STORE32 R4 R2 8             ; Set Text pointer
+	MOVE R0 R5                  ; Correct Malloc
+	CALLI R15 @malloc           ; To the amount of space used
+	LOADUI R0 2                 ; Using type string
+	STORE32 R0 R2 4             ; Set node type
+
+	;; Restore Registers
+	POPR R6 R15
+	POPR R5 R15
+	POPR R4 R15
+	JUMP @Tokenize_Line_Done
+
+
+;; Store_Atom function
+;; Recieves Char in R0, desired input in R1
+;; And node pointer in R2
+;; Modifies node Text to point to string
+:Store_Atom
+	;; Preserve registers
+	PUSHR R4 R15
+	PUSHR R5 R15
+
+	;; Initialize
+	MOVE R5 R0                  ; Get R0 out of the way
+	CALLI R15 @malloc           ; Get where space is free
+	MOVE R4 R0                  ; Put pointer someplace safe
+	MOVE R0 R5                  ; Copy Char back and Set index to 0
+
+	;; Primary Loop
+:Store_Atom_0
+	STOREX8 R0 R4 R5            ; Store the Byte
+	FGETC                       ; Get next Byte
+	ADDUI R5 R5 1               ; Prep for next loop
+
+	CMPSKIP.NE R0 9             ; If char is Tab
+	JUMP @Store_Atom_Done       ; Be done
+
+	CMPSKIP.NE R0 10            ; If char is LF
+	JUMP @Store_Atom_Done       ; Be done
+
+	CMPSKIP.NE R0 32            ; If char is Space
+	JUMP @Store_Atom_Done       ; Be done
+
+	;; Otherwise loop
+	JUMP @Store_Atom_0
+
+:Store_Atom_Done
+	;; Cleanup
+	STORE32 R4 R2 8             ; Set Text pointer
+	MOVE R0 R5                  ; Correct Malloc
+	CALLI R15 @malloc           ; To the amount of space used
+
+	;; Restore Registers
+	POPR R5 R15
+	POPR R4 R15
+	RET R15
+
+
+	;; Add_Token Function
+	;; Recieves pointers in R0 R1
+	;; Alters R0 if NULL
+	;; Appends nodes together
+	;; Returns to whatever called it
+:Add_Token
+		;; Preserve Registers
+	PUSHR R2 R15
+	PUSHR R1 R15
+	PUSHR R0 R15
+
+	;; Handle if Head is NULL
+	JUMP.NZ R0 @Add_Token_0
+	POPR R0 R15
+	PUSHR R1 R15
+	JUMP @Add_Token_2
+
+:Add_Token_0
+	;; Handle if Head->next is NULL
+	LOAD32 R2 R0 0
+	JUMP.NZ R2 @Add_Token_1
+	;; Set head->next = p
+	STORE32 R1 R0 0
+	JUMP @Add_Token_2
+
+:Add_Token_1
+	;; Handle case of Head->next not being NULL
+	LOAD32 R0 R0 0              ; Move to next node
+	LOAD32 R2 R0 0              ; Get node->next
+	CMPSKIP.E R2 0              ; If it is not null
+	JUMP @Add_Token_1           ; Move to the next node and try again
+	JUMP @Add_Token_0           ; Else simply act as if we got this node
+	                            ; in the first place
+
+:Add_Token_2
+	;; Restore registers
+	POPR R0 R15
+	POPR R1 R15
+	POPR R2 R15
+	RET R15
+
 
 ;; Where we are putting the start of our stack
 :stack
