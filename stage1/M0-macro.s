@@ -273,6 +273,96 @@
 	POPR R2 R15
 	RET R15
 
+;; strcmp function
+;; Recieves pointers to null terminated strings
+;; In R0 and R1
+;; Returns if they are equal in R0
+;; Returns to whatever called it
+:strcmp
+	;; Preserve registers
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+	;; Setup registers
+	MOVE R2 R0                  ; Put R0 in a safe place
+	MOVE R3 R1                  ; Put R1 in a safe place
+	LOADUI R4 0                 ; Starting at index 0
+:cmpbyte
+	LOADXU8 R0 R2 R4            ; Get a byte of our first string
+	LOADXU8 R1 R3 R4            ; Get a byte of our second string
+	ADDUI R4 R4 1               ; Prep for next loop
+	CMP R1 R0 R1                ; Compare the bytes
+	CMPSKIP.E R0 0              ; Stop if byte is NULL
+	JUMP.E R1 @cmpbyte          ; Loop if bytes are equal
+;; Done
+	MOVE R0 R1                  ; Prepare for return
+	;; Restore registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	RET R15
+
+
+;; Identify_Macros Function
+;; Recieves a pointer to a node in R0
+;; If the text stored in its Text segment matches
+;; DEFINE, flag it and its next two nodes as macro
+;; Loop until all nodes are checked
+;; Return to whatever called it
+:Identify_Macros
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+
+	;; Main Loop
+:Identify_Macros_0
+	MOVE R1 R0
+	LOADUI R0 $Identify_Macros_string
+	CALLI R15 @strcmp
+	JUMP.NE R0 @Identify_Macros_1
+
+	;; It is a definition
+	LOADUI R0 1                 ; The Enum value for macro
+	STORE32 R0 R1 4             ; Set node type
+	LOAD32 R2 R1 0              ; Get Next
+	STORE32 R0 R2 4             ; Set its node type
+	LOAD32 R2 R2 0              ; Get Next
+	STORE32 R0 R2 4             ; Set its node type
+
+:Identify_Macros_1
+	LOAD32 R0 R1 0              ; Get node->next
+	CMPSKIP.NE R0 0             ; If node->next is NULL
+	JUMP @Identify_Macros_Done  ; Be done
+
+	;; Otherwise keep looping
+	JUMP @Identify_Macros_0
+
+:Identify_Macros_Done
+	;; Restore registers
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET R15
+
+:Identify_Macros_string
+"DEFINE"
+
+
+	;; Line_Macro Function
+	;; Recieves a node pointer in R0
+	;; Causes macros to be applied
+	;; Returns to whatever called it
+:Line_Macro
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+
+:Line_Macro_0
+	MOVE R1 R0
+	LOADUI R0 $Identify_Macros_string
+	CALLI R15 @strcmp
 
 ;; Where we are putting the start of our stack
 :stack
