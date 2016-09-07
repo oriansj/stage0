@@ -175,7 +175,7 @@
 
 	;; Clean up
 	STORE32 R4 R2 8             ; Set Text pointer
-	MOVE R0 R5                  ; Correct Malloc
+	ADDUI R0 R5 4               ; Correct Malloc
 	CALLI R15 @malloc           ; To the amount of space used
 	LOADUI R0 2                 ; Using type string
 	STORE32 R0 R2 4             ; Set node type
@@ -454,7 +454,7 @@
 
 :Process_String_0
 	;; Deal with "
-	CALLI R15 Hexify_String
+	CALLI R15 @Hexify_String
 
 :Process_String_Done
 	LOAD32 R0 R0 0				; Load Next
@@ -466,6 +466,81 @@
 	POPR R1 R15
 	POPR R0 R15
 	RET R15
+
+
+;; Hexify_String Function
+;; Recieves a node pointer in R0
+;; Converts Quoted text to Hex values
+;; Pads values up to multiple of 4 bytes
+;; Doesn't modify registers
+;; Returns to whatever called it
+:Hexify_String
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+
+	;; Initialize
+	MOVE R2 R0                  ; Move R0 out of the way
+	CALLI R15 @malloc           ; Get address of new Node
+	MOVE R1 R0                  ; Prep For Hex32
+	STORE32 R1 R2 12            ; Set node expression pointer
+	LOAD32 R2 R2 8              ; Load Text pointer into R2
+	FALSE R4                    ; Set counter for malloc to Zero
+
+	;; Main Loop
+:Hexify_String_0
+	LOAD32 R0 R2 0              ; Load 4 bytes into R0 from Text
+	ANDI R3 R0 0xFF             ; Preserve byte to check for NULL
+	CALLI R15 @hex32            ; Convert to hex and store in Expression
+	ADDUI R2 R2 4               ; Pointer Text pointer to next 4 bytes
+	ADDUI R4 R4 8               ; Increment storage space required
+	CMPSKIP.E R3 0              ; If byte was NULL
+	JUMP @Hexify_String
+
+	;; Done
+	ADDUI R0 R4 1               ; Lead space for NULL terminator
+	CALLI R15 @malloc           ; Correct malloc value
+
+	;; Restore Registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET
+
+
+;; hex32 functionality
+;; Accepts 32bit value in R0
+;; Require R1 to be a pointer to place to store hex16
+;; WILL ALTER R1 !
+;; Returns to whatever called it
+:hex32
+	PUSHR R0 R15
+	SR0I R0 16                  ; Do high word first
+	CALLI R15 @hex16
+	POPR R0 R15
+:hex16
+	PUSHR R0 R15
+	SR0I R0 8                   ; Do high byte first
+	CALLI R15 @hex8
+	POPR R0 R15
+:hex8
+	PUSHR R0 R15
+	SR0I R0 4                   ; Do high nybble first
+	CALLI R15 @hex4
+	POPR R0 R15
+:hex4
+	ANDI R0 R0 0x000F           ; isolate nybble
+	ADDUI R0 R0 48              ; convert to ascii
+	CMPSKIP.LE R0 57            ; If nybble was greater than '9'
+	ADDUI R0 R0 7               ; Shift it into 'A' range of ascii
+	STORE8 R0 R1 0              ; Store Hex Char
+	ADDUI R1 R1 1               ; Increment address pointer
+	RET R15                     ; Get next nybble or return if done
 
 
 ;; Where we are putting the start of our stack
