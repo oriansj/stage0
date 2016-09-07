@@ -156,8 +156,9 @@ void identify_macros(struct Token* p)
 	if(0 == strncmp(p->Text, "DEFINE", max_string))
 	{
 		p->type = macro;
-		p->next->type = macro;
-		p->next->next->type = macro;
+		p->Text = p->next->Text;
+		p->Expression = p->next->next->Text;
+		p->next = p->next->next->next;
 	}
 
 	if(NULL != p->next)
@@ -168,9 +169,9 @@ void identify_macros(struct Token* p)
 
 void line_macro(struct Token* p)
 {
-	if(0 == strncmp(p->Text, "DEFINE", max_string))
+	if(p->type & macro)
 	{
-		setExpression(p, p->next->Text, p->next->next->Text);
+		setExpression(p->next, p->Text, p->Expression);
 	}
 
 	if(NULL != p->next)
@@ -271,7 +272,7 @@ void eval_immediates(struct Token* p)
 
 void print_hex(struct Token* p)
 {
-	if(NULL != p->Expression)
+	if(p->type ^ macro)
 	{
 		fprintf(stdout, "\n%s", p->Expression);
 	}
