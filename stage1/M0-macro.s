@@ -423,5 +423,50 @@
 	POPR R0 R15
 	RET R15
 
+
+;; Process_String Function
+;; Recieves a Node in R0
+;; Doesn't modify registers
+;; Returns back to whatever called it
+:Process_String
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+
+	;; Get node type
+	LOAD32 R1 R0 4              ; Load Type
+	CMPSKIP.E R1 2              ; If not a string
+	JUMP @Process_String_Done   ; Just go to next
+
+	;; Its a string
+	LOAD32 R1 R0 8              ; Get Text pointer
+	LOAD32 R2 R1 0              ; Get first char of Text
+
+	;; Deal with '
+	CMPSKIP.E R2 39             ; If char is not '
+	JUMP @Process_String_0      ; Move to next label
+
+	;; Simply use Hex strings as is
+	ADDUI R1 R1 1               ; Move Text pointer by 1
+	STORE32 R1 R0 12            ; Set expression to Text + 1
+	JUMP @Process_String_Done   ; And move on
+
+:Process_String_0
+	;; Deal with "
+	CALLI R15 Hexify_String
+
+:Process_String_Done
+	LOAD32 R0 R0 0				; Load Next
+	CMPSKIP.E R0 0				; If Next isn't NULL
+	CALLI R15 @Process_String	; Recurse down list
+
+	;; Restore registers
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET R15
+
+
 ;; Where we are putting the start of our stack
 :stack
