@@ -323,12 +323,23 @@
 	JUMP.NE R0 @Identify_Macros_1
 
 	;; It is a definition
+	;; Set p->Type = macro
 	LOADUI R0 1                 ; The Enum value for macro
 	STORE32 R0 R1 4             ; Set node type
+
+	;; Set p->Text = p->Next->Text
 	LOAD32 R2 R1 0              ; Get Next
-	STORE32 R0 R2 4             ; Set its node type
-	LOAD32 R2 R2 0              ; Get Next
-	STORE32 R0 R2 4             ; Set its node type
+	LOAD32 R0 R2 8              ; Get Next->Text
+	STORE32 R0 R1 8             ; Set Text = Next->Text
+
+	;; Set p->Expression = p->next->next->Text
+	LOAD32 R2 R2 0              ; Get Next->Next
+	LOAD32 R0 R2 8              ; Get Next->Next->Text
+	STORE32 R0 R1 12            ; Set Expression = Next->Next->Text
+
+	;; Set p->Next = p->Next->Next->Next
+	LOAD32 R0 R2 0              ; Get Next->Next->Next
+	STORE32 R0 R1 0             ; Set Next = Next->Next->Next
 
 :Identify_Macros_1
 	LOAD32 R0 R1 0              ; Get node->next
@@ -358,11 +369,59 @@
 	PUSHR R0 R15
 	PUSHR R1 R15
 	PUSHR R2 R15
+	PUSHR R3 R15
 
+	;; Main loop
 :Line_Macro_0
-	MOVE R1 R0
-	LOADUI R0 $Identify_Macros_string
-	CALLI R15 @strcmp
+	LOAD32 R3 R0 4              ; Load Node type
+	LOAD32 R2 R0 12             ; Load Expression pointer
+	LOAD32 R1 R0 8              ; Load Text pointer
+	LOAD32 R0 R0 0              ; Load Next pointer
+	CMPSKIP.NE R3 1             ; If a macro
+	CALLI R15 @setExpression    ; Apply to other nodes
+	CMPSKIP.E R0 0              ; If Next is Null
+	JUMP @Line_Macro_0          ; Don't loop
+
+	;; Clean up
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET R15
+
+
+;; setExpression Function
+;; Recieves a node pointer in R0
+;; A string pointer to compare against in R1
+;; A string pointer for replacement in R2
+;; Doesn't modify any registers
+;; Returns to whatever called it
+:setExpression
+	;; Preserve registers
+	PUSHR R0 R15
+	PUSHR R3 R15
+
+	LOAD32 R3 R0 0              ; Load Next
+	SWAP R0 R3                  ; Protect R0
+	CMPSKIP.E R0 0              ; if Next is Null
+	CALLI R15 @setExpression    ; Don't recurse
+	MOVE R0 R3                  ; Restore R0
+	LOAD32 R3 R0 4              ; Load type into R3
+	CMPSKIP.NE R3 1             ; If Node is a macro
+	JUMP @setExpression_Done    ; Be done
+	LOAD32 R3 R0 8              ; Load Text into R3
+	SWAP R0 R3                  ; Prepare for strncmp
+	CALLI R15 @strcmp           ; compare Text and Macro Text
+	JUMP.NE R0 @setExpression_Done
+
+	;; Node matches
+	STORE32 R2 R3 12            ; Set node->Expression = Exp
+
+:setExpression_Done
+	;; Restore registers
+	POPR R3 R15
+	POPR R0 R15
+	RET R15
 
 ;; Where we are putting the start of our stack
 :stack
