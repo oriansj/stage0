@@ -220,6 +220,7 @@ void XORI(struct lilith* vm, struct Instruction* c);
 void NANDI(struct lilith* vm, struct Instruction* c);
 void NORI(struct lilith* vm, struct Instruction* c);
 void XNORI(struct lilith* vm, struct Instruction* c);
+void NOT(struct lilith* vm, struct Instruction* c);
 
 /* Prototypes for functions in vm_decode.c*/
 struct lilith* create_vm(size_t size);

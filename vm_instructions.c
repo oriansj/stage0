@@ -1953,3 +1953,8 @@ void XNORI(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = ~(vm->reg[c->reg1] ^ c->raw_Immediate);
 }
+
+void NOT(struct lilith* vm, struct Instruction* c)
+{
+	vm->reg[c->reg0] = ~(vm->reg[c->reg1]);
+}

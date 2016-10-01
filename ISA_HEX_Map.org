@@ -204,11 +204,12 @@
 | 09 00 03 ab | SWAP a b | a <=> b      |
 | 09 00 04 ab | COPY a b | a = b        |
 | 09 00 05 ab | MOVE a b | a = b; b = 0 |
+| 09 00 06 ab | NOT a b  | a = !b       |
 
 **** Reserved Block 0
 | Hex         | Name     |
 |-------------+----------|
-| 09 00 06 xx | Reserved |
+| 09 00 07 xx | Reserved |
 | ...         | Reserved |
 | 09 00 FF xx | Reserved |
 

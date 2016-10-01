@@ -1189,6 +1189,17 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			MOVE(vm, c);
 			break;
 		}
+		case 0x0006: /* NOT */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "NOT", 19);
+			#elif TRACE
+			record_trace("NOT");
+			#endif
+
+			NOT(vm, c);
+			break;
+		}
 		case 0x0100: /* BRANCH */
 		{
 			#ifdef DEBUG
