@@ -272,6 +272,7 @@ void assemble(struct Token* p)
 	setExpression(p, "SWAP", "090003", 4);
 	setExpression(p, "COPY", "090004", 4);
 	setExpression(p, "MOVE", "090005", 4);
+	setExpression(p, "NOT", "090006", 4);
 	setExpression(p, "BRANCH", "090100", 4);
 	setExpression(p, "CALL", "090101", 4);
 	setExpression(p, "PUSHR", "090200", 4);

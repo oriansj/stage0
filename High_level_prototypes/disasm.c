@@ -542,6 +542,11 @@ void decode_Integer_2OP(struct Instruction* c)
 			strncpy(Name, "MOVE", 19);
 			break;
 		}
+		case 0x0006: /* NOT */
+		{
+			strncpy(Name, "NOT", 19);
+			break;
+		}
 		case 0x0100: /* BRANCH */
 		{
 			strncpy(Name, "BRANCH", 19);
