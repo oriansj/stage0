@@ -23,13 +23,22 @@
 	LOADUI R0 0x1100            ; Close TAPE_01
 	FCLOSE
 
-
+	COPY R0 R13                 ; Prepare for function
 	CALLI R15 @Identify_Macros  ; Tag all nodes that are macros
 	CALLI R15 @Line_Macro       ; Apply macros down nodes
 	CALLI R15 @Process_String   ; Convert string values to Hex16
 	CALLI R15 @Eval_Immediates  ; Convert numbers to hex
 	CALLI R15 @Preserve_Other   ; Ensure labels/Pointers aren't lost
+
+	;; Prep TAPE_02
+	LOADUI R0 0x1101
+	FOPEN_WRITE
+
 	CALLI R15 @Print_Hex        ; Write Nodes to Tape_02
+
+	;; Done writing File
+	LOADUI R0 0x1101            ; Close TAPE_01
+	FCLOSE
 	HALT                        ; We are Done
 
 
@@ -73,7 +82,7 @@
 	PUSHR R4 R15
 
 	;; Initialize
-	MOVE R4 R0                  ; Get Head pointer out of the way
+	COPY R4 R13                 ; Get Head pointer out of the way
 :Tokenize_Line_0
 	FGETC                       ; Get a Char
 
@@ -123,6 +132,8 @@
 	CALLI R15 @Store_Atom
 
 :Tokenize_Line_Done
+	MOVE R1 R2                  ; Put Node pointer we are working on into R1
+	COPY R0 R13                 ; Get current HEAD
 	CALLI R15 @Add_Token        ; Append new token to Head
 
 	;; Restore registers
@@ -223,7 +234,7 @@
 :Store_Atom_Done
 	;; Cleanup
 	STORE32 R4 R2 8             ; Set Text pointer
-	MOVE R0 R5                  ; Correct Malloc
+	ADDUI R0 R5 1               ; Correct Malloc
 	CALLI R15 @malloc           ; To the amount of space used
 
 	;; Restore Registers
@@ -308,7 +319,7 @@
 ;; Identify_Macros Function
 ;; Recieves a pointer to a node in R0
 ;; If the text stored in its Text segment matches
-;; DEFINE, flag it and its next two nodes as macro
+;; DEFINE, flag it and Collapse it down to a single Node
 ;; Loop until all nodes are checked
 ;; Return to whatever called it
 :Identify_Macros
@@ -319,9 +330,11 @@
 
 	;; Main Loop
 :Identify_Macros_0
-	MOVE R1 R0
+	MOVE R2 R0
+	LOAD32 R1 R2 8              ; Get Pointer to Text
 	LOADUI R0 $Identify_Macros_string
 	CALLI R15 @strcmp
+	MOVE R1 R2
 	JUMP.NE R0 @Identify_Macros_1
 
 	;; It is a definition
@@ -512,7 +525,7 @@
 	POPR R2 R15
 	POPR R1 R15
 	POPR R0 R15
-	RET
+	RET R15
 
 
 ;; hex32 functionality
@@ -560,6 +573,7 @@
 	PUSHR R6 R15
 
 	;; Initialize
+	COPY R0 R13                 ; Start with Head
 	FALSE R5                    ; Zero for checking return of numerate_string
 
 ;; Process Text
@@ -571,6 +585,7 @@
 	LOAD32 R1 R0 8              ; Load Text pointer
 	JUMP.NZ R2 @Eval_Immediates_1 ; Don't do anything if Expression is set
 	JUMP.NZ R3 @Eval_Immediates_1 ; Don't do anything if Typed
+	COPY R0 R1                  ; Put Text pointer into R0
 	CALLI R15 @numerate_string  ; Convert to number in R0
 	LOAD8 R1 R1 0               ; Get first char of Text
 	CMPSKIP.E R1 48             ; Skip next comparision if '0'
@@ -598,7 +613,7 @@
 	POPR R2 R15
 	POPR R1 R15
 	POPR R0 R15
-	RET
+	RET R15
 
 
 ;; numerate_string function
@@ -606,7 +621,186 @@
 ;; Returns number in R0 equal to value of string
 ;; Or Zero in the event of invalid string
 :numerate_string
-	
+	;; Preserve Registers
+	PUSHR R1 R15
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+
+	;; Initialize
+	MOVE R1 R0                  ; Get Text pointer out of the way
+	FALSE R2                    ; Set Negative flag to false
+	FALSE R3                    ; Set current count to Zero
+	LOAD8 R0 R1 1               ; Get second byte
+	CMPSKIP.NE R0 120           ; If the second byte is x
+	JUMP @numerate_string_hex   ; treat string like hex
+
+	;; Deal with Decimal input
+	LOADUI R4 10                ; Multiply by 10
+:numerate_string_dec
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIP.NE R2 45            ; If - flip negative flag
+	NOT R2 R2                   ; So that multiple cancel out
+
+	CMPSKIP.NE R0 0             ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	MUL R3 R3 R4                ; Shift counter by 10
+	SUBI R0 R0 48               ; Convert ascii to number
+	CMPSKIP.L R0 0              ; If not a number
+	ADDU R3 R3 R0               ; Don't add to the count
+
+	ADDUI R1 R1 1               ; Move onto next byte
+	JUMP @numerate_string_dec
+
+	;; Deal with Hex input
+:numerate_string_hex
+	ADDUI R1 R1 2               ; Move to after leading 0x
+:numerate_string_hex_0
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIP.NE R0 0             ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	SL0I R3 4                   ; Shift counter by 16
+	SUBI R0 R0 48               ; Convert ascii number to number
+	CMPSKIP.L R0 10             ; If A-F
+	SUBI R0 R0 7                ; Shove into Range
+	CMPSKIP.L R0 16             ; If a-f
+	SUBI R0 R0 32               ; Shove into Range
+	ADDU R3 R3 R0               ; Add to the count
+	JUMP @numerate_string_hex_0
+
+;; Clean up
+:numerate_string_done
+	CMPSKIP.NE R2 0             ; If Negate flag has been set
+	NEG R3 R3                   ; Make the number negative
+	MOVE R0 R3                  ; Put number in R0
+
+	;; Restore Registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	RET R15
+
+
+;; Preserve_Other function
+;; Sets Expression pointer to Text pointer value
+;; For all unset nodes
+:Preserve_Other
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+
+	;; Initialize
+	COPY R0 R13                 ; Start with HEAD
+
+;; Process Node
+:Preserve_Other_0
+	LOAD32 R4 R0 0              ; Load Node->Next
+	LOAD32 R3 R0 4              ; Load Node type
+	LOAD32 R2 R0 12             ; Load Expression pointer
+	LOAD32 R1 R0 8              ; Load Text pointer
+	JUMP.NZ R2 @Preserve_Other_1 ; Don't do anything if Expression is set
+	JUMP.NZ R3 @Preserve_Other_1 ; Don't do anything if Typed
+	STORE32 R3 R0 12            ; Set Expression pointer to Text pointer
+
+;; Loop through nodes
+:Preserve_Other_1
+	MOVE R0 R4                  ; Prepare for next loop
+	JUMP.NZ R0 @Preserve_Other_0
+
+;; Clean up
+:Preserve_Other_Done
+	;; Restore Registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET R15
+
+;; Print_Hex Function
+;; Print all of the expressions
+;; Starting with HEAD
+:Print_Hex
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+
+	;; Initialize
+	COPY R0 R13                 ; Start with HEAD
+
+:Print_Hex_0
+	LOAD32 R2 R0 0              ; Load Node->Next
+	LOAD32 R1 R0 4              ; Load Node type
+	LOAD32 R0 R0 12             ; Load Expression pointer
+
+	SUBI R1 R1 1                ; Check for Macros
+	JUMP.Z R1 @Print_Hex_1      ; Don't print Macros
+	LOADUI R1 0x1101            ; Write to Tape_02
+	CALLI R15 @Print_Line       ; Print the Expression
+
+;; Loop down the nodes
+:Print_Hex_1
+	MOVE R0 R2                  ; Prepare for next loop
+	JUMP.NZ R0 @Print_Hex_0     ; Keep looping if not NULL
+
+;; Clean up
+:Print_Hex_Done
+	;; Restore Registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET R15
+
+
+;; Print_Line Function
+;; Receives a pointer to a string in R0
+;; And an interface in R1
+;; Writes all Chars in string
+;; Then writes a New line character to interface
+:Print_Line
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+
+	;; Initialize
+	MOVE R3 R0                  ; Get Pointer safely out of the way
+	FALSE R4                    ; Start index at 0
+
+:Print_Line_0
+	LOADXU8 R0 R3 R4            ; Get our first byte
+	CMPSKIP.NE R0 0             ; If the loaded byte is NULL
+	JUMP @Print_Line_Done       ; Be done
+	FPUTC                       ; Otherwise print
+	ADDUI R4 R4 1               ; Increment for next loop
+	JUMP @Print_Line_0          ; And Loop
+
+;; Clean up
+:Print_Line_Done
+	LOADUI R0 10                ; Put in Newline char
+	FPUTC                       ; Write it out
+
+	;; Restore Registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET R15
+
 
 ;; Where we are putting the start of our stack
 :stack
