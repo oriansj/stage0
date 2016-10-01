@@ -3,17 +3,17 @@
 	;; We will be using R14 for our condition codes
 	LOADUI R15 $stack           ; Put stack at end of program
 
-	;; Main program
-	;; Reads contents of Tape_01 and applies all Definitions
-	;; Writes results to Tape_02
+;; Main program
+;; Reads contents of Tape_01 and applies all Definitions
+;; Writes results to Tape_02
 ;; Accepts no arguments and HALTS when done
 :main
 	;; Prep TAPE_01
 	LOADUI R0 0x1100
 	FOPEN_READ
 
-	FALSE R0                    ; Head is NULL
-	LOADUI R0 0x1100            ; Read Tape_01
+	FALSE R13                   ; Head is NULL
+	MOVE R1 R0                  ; Read Tape_01
 	FALSE R14                   ; We haven't yet reached EOF
 :main_0
 	CALLI R15 @Tokenize_Line    ; Call Tokenize_Line
@@ -60,10 +60,10 @@
 	NOP
 
 
-	;; Tokenize_Line function
-	;; Recieves pointer to Head in R0 and desired input in R1
-	;; Alters R14 when EOF Reached
-	;; Returns to whatever called it
+;; Tokenize_Line function
+;; Recieves pointer to Head in R0 and desired input in R1
+;; Alters R14 when EOF Reached
+;; Returns to whatever called it
 :Tokenize_Line
 	;; Preserve registers
 	PUSHR R0 R15
@@ -232,11 +232,11 @@
 	RET R15
 
 
-	;; Add_Token Function
-	;; Recieves pointers in R0 R1
-	;; Alters R0 if NULL
-	;; Appends nodes together
-	;; Returns to whatever called it
+;; Add_Token Function
+;; Recieves pointers in R0 R1
+;; Alters R13 if R) is NULL
+;; Appends nodes together
+;; Returns to whatever called it
 :Add_Token
 		;; Preserve Registers
 	PUSHR R2 R15
@@ -245,8 +245,9 @@
 
 	;; Handle if Head is NULL
 	JUMP.NZ R0 @Add_Token_0
-	POPR R0 R15
-	PUSHR R1 R15
+	COPY R13 R1                 ; Fix head
+	POPR R0 R15                 ; Clean up register
+	PUSHR R1 R15                ; And act like we passed the reverse
 	JUMP @Add_Token_2
 
 :Add_Token_0
@@ -272,6 +273,7 @@
 	POPR R1 R15
 	POPR R2 R15
 	RET R15
+
 
 ;; strcmp function
 ;; Recieves pointers to null terminated strings
@@ -360,10 +362,10 @@
 "DEFINE"
 
 
-	;; Line_Macro Function
-	;; Recieves a node pointer in R0
-	;; Causes macros to be applied
-	;; Returns to whatever called it
+;; Line_Macro Function
+;; Recieves a node pointer in R0
+;; Causes macros to be applied
+;; Returns to whatever called it
 :Line_Macro
 	;; Preserve Registers
 	PUSHR R0 R15
@@ -498,7 +500,7 @@
 	ADDUI R2 R2 4               ; Pointer Text pointer to next 4 bytes
 	ADDUI R4 R4 8               ; Increment storage space required
 	CMPSKIP.E R3 0              ; If byte was NULL
-	JUMP @Hexify_String
+	JUMP @Hexify_String_0
 
 	;; Done
 	ADDUI R0 R4 1               ; Lead space for NULL terminator
@@ -542,6 +544,69 @@
 	ADDUI R1 R1 1               ; Increment address pointer
 	RET R15                     ; Get next nybble or return if done
 
+
+;; Eval_Immediates function
+;; Recieves a node in R0
+;; Converts number into Hex
+;; And write into Memory and fix pointer
+:Eval_Immediates
+	;; Preserve Registers
+	PUSHR R0 R15
+	PUSHR R1 R15
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+	PUSHR R5 R15
+	PUSHR R6 R15
+
+	;; Initialize
+	FALSE R5                    ; Zero for checking return of numerate_string
+
+;; Process Text
+:Eval_Immediates_0
+	COPY R6 R0                  ; Safely preserve pointer to node
+	LOAD32 R4 R0 0              ; Load Node->Next
+	LOAD32 R3 R0 4              ; Load Node type
+	LOAD32 R2 R0 12             ; Load Expression pointer
+	LOAD32 R1 R0 8              ; Load Text pointer
+	JUMP.NZ R2 @Eval_Immediates_1 ; Don't do anything if Expression is set
+	JUMP.NZ R3 @Eval_Immediates_1 ; Don't do anything if Typed
+	CALLI R15 @numerate_string  ; Convert to number in R0
+	LOAD8 R1 R1 0               ; Get first char of Text
+	CMPSKIP.E R1 48             ; Skip next comparision if '0'
+	CMPJUMP.E R0 R5 @Eval_Immediates_1 ; Don't do anything if string isn't a number
+	MOVE R1 R0                  ; Preserve number
+	LOADUI R0 5                 ; Allocate enough space for 4 hex and a null
+	CALLI R15 @malloc           ; Obtain the pointer the newly allocated Expression
+	STORE R0 R6 12              ; Preserve pointer to expression
+	SWAP R0 R1                  ; Fix order for call to hex16
+	CALLI R15 @hex16            ; Shove our number into expression
+
+;; Handle looping
+:Eval_Immediates_1
+	CMPJUMP.E R4 R5 @Eval_Immediates_2 ; If null be done
+	MOVE R0 R4                  ; Prepare for next loop
+	JUMP @Eval_Immediates_0     ; And loop
+
+;; Clean up
+:Eval_Immediates_2
+	;; Restore Registers
+	POPR R6 R15
+	POPR R5 R15
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	POPR R0 R15
+	RET
+
+
+;; numerate_string function
+;; Recieves pointer To string in R0
+;; Returns number in R0 equal to value of string
+;; Or Zero in the event of invalid string
+:numerate_string
+	
 
 ;; Where we are putting the start of our stack
 :stack
