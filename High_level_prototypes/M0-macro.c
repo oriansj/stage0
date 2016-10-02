@@ -133,14 +133,10 @@ struct Token* Tokenize_Line(struct Token* head)
 
 void setExpression(struct Token* p, char match[], char Exp[])
 {
-	if(NULL != p->next)
-	{
-		setExpression(p->next, match, Exp);
-	}
-
 	/* Leave macros alone */
 	if((p->type & macro))
 	{
+		setExpression(p->next, match, Exp);
 		return;
 	}
 
@@ -149,6 +145,12 @@ void setExpression(struct Token* p, char match[], char Exp[])
 	{
 		p->Expression = Exp;
 	}
+
+	if(NULL != p->next)
+	{
+		setExpression(p->next, match, Exp);
+	}
+
 }
 
 void identify_macros(struct Token* p)

@@ -415,25 +415,28 @@
 	;; Preserve registers
 	PUSHR R0 R15
 	PUSHR R3 R15
+	PUSHR R4 R15
 
-	LOAD32 R3 R0 0              ; Load Next
-	SWAP R0 R3                  ; Protect R0
-	CMPSKIP.E R0 0              ; if Next is Null
-	CALLI R15 @setExpression    ; Don't recurse
-	MOVE R0 R3                  ; Restore R0
+	;; Initialize
+	MOVE R4 R1                  ; Put Macro Text in a safe place
+:setExpression_0
 	LOAD32 R3 R0 4              ; Load type into R3
-	CMPSKIP.NE R3 1             ; If Node is a macro
-	JUMP @setExpression_Done    ; Be done
-	LOAD32 R3 R0 8              ; Load Text into R3
-	SWAP R0 R3                  ; Prepare for strncmp
+	CMPSKIP.NE R3 1             ; Check if Macro
+	JUMP @setExpression_1       ; Move to next if Macro
+	MOVE R3 R0                  ; Preserve node Pointer
+	LOAD32 R0 R3 8              ; Load Text pointer into R0 for Comparision
+	COPY R1 R4                  ; Put Macro Text for comparision
 	CALLI R15 @strcmp           ; compare Text and Macro Text
-	JUMP.NE R0 @setExpression_Done
-
-	;; Node matches
+	JUMP.NE R0 @setExpression_1 ; Move to next if not Match
 	STORE32 R2 R3 12            ; Set node->Expression = Exp
+
+:setExpression_1
+	LOAD32 R0 R3 0              ; Load Next
+	JUMP.NZ R0 @setExpression_0 ; Loop if next isn't NULL
 
 :setExpression_Done
 	;; Restore registers
+	POPR R4 R15
 	POPR R3 R15
 	POPR R0 R15
 	RET R15
