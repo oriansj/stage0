@@ -712,7 +712,7 @@
 	LOAD32 R1 R0 8              ; Load Text pointer
 	JUMP.NZ R2 @Preserve_Other_1 ; Don't do anything if Expression is set
 	JUMP.NZ R3 @Preserve_Other_1 ; Don't do anything if Typed
-	STORE32 R3 R0 12            ; Set Expression pointer to Text pointer
+	STORE32 R1 R0 12            ; Set Expression pointer to Text pointer
 
 ;; Loop through nodes
 :Preserve_Other_1
