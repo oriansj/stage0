@@ -1,0 +1,18 @@
+* Unreleased
+** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.0.1 - 2016-10-02
+** Added
++ Initial draft of change log added
+
+** Changed
++ Reorganization of Files to group files by stage
+
+** Fixed
++ Line Macro assembler M0 is now self hosting
