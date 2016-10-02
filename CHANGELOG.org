@@ -1,7 +1,9 @@
 * Unreleased
 ** Added
++ Created xeh tool in C for more cross platform debugging
 
 ** Changed
++ Renamed xeh1 files to match current naming standard
 
 ** Fixed
 
