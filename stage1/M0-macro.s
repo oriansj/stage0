@@ -455,6 +455,7 @@
 	PUSHR R1 R15
 	PUSHR R2 R15
 
+:Process_String_0
 	;; Get node type
 	LOAD32 R1 R0 4              ; Load Type
 	CMPSKIP.E R1 2              ; If not a string
@@ -462,25 +463,25 @@
 
 	;; Its a string
 	LOAD32 R1 R0 8              ; Get Text pointer
-	LOAD32 R2 R1 0              ; Get first char of Text
+	LOAD8 R2 R1 0               ; Get first char of Text
 
 	;; Deal with '
 	CMPSKIP.E R2 39             ; If char is not '
-	JUMP @Process_String_0      ; Move to next label
+	JUMP @Process_String_1      ; Move to next label
 
 	;; Simply use Hex strings as is
 	ADDUI R1 R1 1               ; Move Text pointer by 1
 	STORE32 R1 R0 12            ; Set expression to Text + 1
 	JUMP @Process_String_Done   ; And move on
 
-:Process_String_0
+:Process_String_1
 	;; Deal with "
 	CALLI R15 @Hexify_String
 
 :Process_String_Done
-	LOAD32 R0 R0 0				; Load Next
-	CMPSKIP.E R0 0				; If Next isn't NULL
-	CALLI R15 @Process_String	; Recurse down list
+	LOAD32 R0 R0 0              ; Load Next
+	CMPSKIP.E R0 0              ; If Next isn't NULL
+	JUMP @Process_String_0      ; Recurse down list
 
 	;; Restore registers
 	POPR R2 R15
@@ -509,6 +510,7 @@
 	MOVE R1 R0                  ; Prep For Hex32
 	STORE32 R1 R2 12            ; Set node expression pointer
 	LOAD32 R2 R2 8              ; Load Text pointer into R2
+	ADDUI R2 R2 1               ; SKip leading "
 	FALSE R4                    ; Set counter for malloc to Zero
 
 	;; Main Loop
