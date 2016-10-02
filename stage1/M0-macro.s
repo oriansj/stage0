@@ -645,17 +645,23 @@
 
 	;; Deal with Decimal input
 	LOADUI R4 10                ; Multiply by 10
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIP.NE R0 45            ; If - toggle flag
+	TRUE R2                     ; So that we know to negate
+	CMPSKIP.E R2 0              ; If toggled
+	ADDUI R1 R1 1               ; Move to next
 :numerate_string_dec
 	LOAD8 R0 R1 0               ; Get a byte
-	CMPSKIP.NE R2 45            ; If - flip negative flag
-	NOT R2 R2                   ; So that multiple cancel out
 
 	CMPSKIP.NE R0 0             ; If NULL
 	JUMP @numerate_string_done  ; Be done
 
 	MUL R3 R3 R4                ; Shift counter by 10
 	SUBI R0 R0 48               ; Convert ascii to number
-	CMPSKIP.L R0 0              ; If not a number
+	CMPSKIP.GE R0 0             ; If less than a number
+	JUMP @numerate_string_done  ; Terminate NOW
+	CMPSKIP.L R0 10             ; If more than a number
+	JUMP @numerate_string_done  ; Terminate NOW
 	ADDU R3 R3 R0               ; Don't add to the count
 
 	ADDUI R1 R1 1               ; Move onto next byte
@@ -663,6 +669,9 @@
 
 	;; Deal with Hex input
 :numerate_string_hex
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIP.E R0 48             ; All hex strings start with 0x
+	JUMP @numerate_string_done  ; Be done if not a match
 	ADDUI R1 R1 2               ; Move to after leading 0x
 :numerate_string_hex_0
 	LOAD8 R0 R1 0               ; Get a byte
@@ -676,11 +685,13 @@
 	CMPSKIP.L R0 16             ; If a-f
 	SUBI R0 R0 32               ; Shove into Range
 	ADDU R3 R3 R0               ; Add to the count
+
+	ADDUI R1 R1 1               ; Get next Hex
 	JUMP @numerate_string_hex_0
 
 ;; Clean up
 :numerate_string_done
-	CMPSKIP.NE R2 0             ; If Negate flag has been set
+	CMPSKIP.E R2 0              ; If Negate flag has been set
 	NEG R3 R3                   ; Make the number negative
 	MOVE R0 R3                  ; Put number in R0
 
