@@ -327,6 +327,7 @@
 	PUSHR R0 R15
 	PUSHR R1 R15
 	PUSHR R2 R15
+	PUSHR R3 R15
 
 	;; Main Loop
 :Identify_Macros_0
@@ -350,6 +351,9 @@
 	;; Set p->Expression = p->next->next->Text
 	LOAD32 R2 R2 0              ; Get Next->Next
 	LOAD32 R0 R2 8              ; Get Next->Next->Text
+	LOAD32 R3 R2 4              ; Get Next->Next->type
+	CMPSKIP.NE R3 2             ; If node is a string
+	ADDUI R0 R0 1               ; Skip first char
 	STORE32 R0 R1 12            ; Set Expression = Next->Next->Text
 
 	;; Set p->Next = p->Next->Next->Next
@@ -366,6 +370,7 @@
 
 :Identify_Macros_Done
 	;; Restore registers
+	POPR R3 R15
 	POPR R2 R15
 	POPR R1 R15
 	POPR R0 R15

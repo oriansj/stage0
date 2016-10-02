@@ -159,7 +159,14 @@ void identify_macros(struct Token* p)
 	{
 		p->type = macro;
 		p->Text = p->next->Text;
-		p->Expression = p->next->next->Text;
+		if(p->next->next->type & str)
+		{
+			p->Expression = p->next->next->Text + 1;
+		}
+		else
+		{
+			p->Expression = p->next->next->Text;
+		}
 		p->next = p->next->next->next;
 	}
 
