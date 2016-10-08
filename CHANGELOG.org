@@ -1,11 +1,13 @@
 * Unreleased
 ** Added
 + Created xeh tool in C for more cross platform debugging
++ Created M0 in hex2
 
 ** Changed
 + Renamed xeh1 files to match current naming standard
 
 ** Fixed
++ Fixed leading char bug in M0
 
 ** Removed
 
