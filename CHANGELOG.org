@@ -2,12 +2,15 @@
 ** Added
 + Created xeh tool in C for more cross platform debugging
 + Created M0 in hex2
++ Documented build steps in notes.org
 
 ** Changed
 + Renamed xeh1 files to match current naming standard
++ created roms/ to store previously built roms and expanded .gitignore to prevent binary blobs from being checked in.
 
 ** Fixed
 + Fixed leading char bug in M0
++ Updated Checksums to reflect updates in stage1_assembler-2
 
 ** Removed
 
