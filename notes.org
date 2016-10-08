@@ -106,3 +106,160 @@ Having these binaries are a huge step forward compared to not having them but th
 Stage 2 will be introducing enhancements to Stage 1 programs that allow you to fix the problems you accidentially introduce.
 
 We will also begin to introduce programs that make software development alot easier.
+* Bootstrap steps
+** stage0 Monitor
+Using any method you desire convert stage0/stage0_monitor.hex0 into a binary.
+Should you be just bootstrapping the VM path, use Linux Bootstrap/hex.c or any other of the hex programs in that directory
+Which provided you ran make development, you can run the following:
+./bin/hex < stage0/stage0_monitor.hex0 > roms/stage0_monitor
+Which should produce the file stage0_monitor that has the following properties:
+sha256sum roms/stage0_monitor
+7314d72708a732a16c566344d9aa3711a80c62405324fc7e12703cad02741a67  roms/stage0_monitor
+sha1sum roms/stage0_monitor
+cb2cad1bc77b3bdaee72852cf994bfd30655da9c  roms/stage0_monitor
+md5sum roms/stage0_monitor
+960c6143076d522af176de82257514cc  roms/stage0_monitor
+wc -c roms/stage0_monitor
+268 roms/stage0_monitor
+
+This program can be used to bootstrap any binary program in a trusted manner from commented hex0 input or as the most terrible text editor in existence.
+
+** stage1
+*** stage1_assembler-0.hex0
+Using the stage0_monitor, you can produce the stage1_assembler-0 by either manually typing in the commented hex or if you make production:
+cp roms/stage0_monitor rom
+./bin/vm rom < stage1/stage1_assembler-0.hex0
+
+Which produces 2 files of value:
+tape_02 which is the source code that you just manually typed in [or piped]
+tape_01 which is the stage1_assembler-0 compiled
+
+The produced binary has the following properties:
+sha256sum roms/stage1_assembler-0
+f8289dfa9dd92e8a1a48f9a624d5d19e4f312b91bc3d1e0796474b46157ec47a  roms/stage1_assembler-0
+sha1sum roms/stage1_assembler-0
+10b1490182ba3122cd80b1afe9ca11dfa71f2ce4  roms/stage1_assembler-0
+md5sum roms/stage1_assembler-0
+a6e0f5348dbb9b049c65b467cf6033e4  roms/stage1_assembler-0
+wc -c roms/stage1_assembler-0
+260 roms/stage1_assembler-0
+
+This is the most minimal commented hex assembler you can use for development
+
+*** SET.hex0
+It is desirable to be able to edit programs written in hex, instead of having to start from scratch.
+At this stage you have to use stage0-monitor to create the SET text editor, as you have no other method of writing files.
+However after being written, it can also be compiled via the stage1_assembler-0 using the following commands:
+cp roms/stage1_assembler-0 rom
+./bin/vm rom
+
+Which will display the source code as it is being run, along with producing tape_02 [The compiled binary] from the commented hex in tape_01
+
+The produced binary has the following properties:
+sha256sum roms/SET
+24a4d74eb2eb7a82e68335643855658b27b5a6c3b13db473539f3e08d6f26ceb  roms/SET
+sha1sum roms/SET
+7f9b1297c4a15a41d24947131ea9e69022f0d6bd  roms/SET
+md5sum roms/SET
+26143022bc422c2e56b7bae7c3c08a5e  roms/SET
+wc -c roms/SET
+916 roms/SET
+
+This is the most minimal useful text editor you can use for development but it is terrible for review of source code.
+
+*** more.hex0
+Now that we have the ability to compile commented hex and edit tapes, we probably want an ability to quickly review the contents of a tape.
+For that task we leverage SET and stage1_assembler-0 to produce more.hex0
+After being written by SET, it can then be compiled via the stage1_assembler-0 using the following commands:
+cp roms/stage1_assembler-0 rom
+./bin/vm rom
+
+Which will display the contents of tape_01 10 lines at a time to the TTY Using all keypresses to indicate to move forward.
+
+The produced binary has the following properties:
+sha256sum roms/more
+84c80d9845ee0f9b746ebcdce1092172f299b1d572371b162cfb89e565dd5405  roms/more
+sha1sum roms/more
+c86119bb60ee4e08d4e42c61caae786ed76d81a8  roms/more
+md5sum roms/more
+310ffb4321ac14b444c92bb0e8c21ae8  roms/more
+wc -c roms/more
+76 roms/more
+
+With this tool in our toolkit, we now have everything we need to be moderately productive in creating commented Hex programs.
+
+*** stage1_assembler-1.hex0
+After being able to write arbitrary commented Hex programs, we soon discover that it is a massive pain in the ass to manually calculate displacement values.
+So we upgrade our assembler to include single character labels, which will save us a bunch of pain.
+After being written by SET, it can then be compiled via the stage1_assembler-0 using the following commands:
+cp roms/stage1_assembler-0 rom
+./bin/vm rom
+
+The contents of tape_02 is now stage1_assembler-1, which supports single character labels.
+
+The produced binary has the following properties:
+sha256sum roms/stage1_assembler-1
+e4f0ed6e78ae79bb5e4a4fbde36f085dd0469cd6ae036dce5953b3d1c89801ce  roms/stage1_assembler-1
+sha1sum roms/stage1_assembler-1
+358a22c6996808ef44a9596ce714970837b53379  roms/stage1_assembler-1
+md5sum roms/stage1_assembler-1
+5c26294c7c59b250fd00d5c3559e68d8  roms/stage1_assembler-1
+wc -c roms/stage1_assembler-1
+488 roms/stage1_assembler-1
+
+This however is just a stopgap solution to the real problem of needing to support arbitrary labels but gives us enough to make the next step easier.
+
+*** stage1_assembler-2.hex1
+After being able to include single character labels in our commented Hex programs, we soon run into that rather small limit to the number of labels we can use.
+So we upgrade our assembler to include 64 character labels and absolute address labels.
+Afer being written by SET, it can then be compiled via the stage1_assembler-1 using the following commands:
+cp roms/stage1_assembler-1 rom
+./bin/vm rom
+
+The contents of tape_02 is now stage1_assembler-2, which supports 64 character labels and absolute address labels.
+
+The produced binary has the following properties:
+sha256sum roms/stage1_assembler-2
+61c1b0f2f628847d9491bd678ac7a23231527cc36493b321612f191674ff3c99
+roms/stage1_assembler-2
+sha1sum roms/stage1_assembler-2
+5d43563ee2297cea95a2117817c5e68b8a9c60d6  roms/stage1_assembler-2
+md5sum roms/stage1_assembler-2
+c608fbb896b9931b90e86fe32996ccd8  roms/stage1_assembler-2
+wc -c roms/stage1_assembler-2
+1036 roms/stage1_assembler-2
+
+Now if you are like me, at this point you are tired of having to remember the hex values for a bunch of assembly instructions and would prefer for software to handle that instead.
+
+*** M0-macro.hex2
+Because we don't know what relationship between hex and string is going to be most useful in the future, we are going to define only the single keyword: DEFINE
+Which will replace all non-macro/strings that match it, but that of course requires us to also type the definitions, for that we created a definitions file:
+High_level_prototypes/defs
+Which you would want to prepend to any assembly program you write.
+For those wishing to keep their definitions seperate from their code, cat High_level_prototypes/defs mycode.s > tape_01 will be sufficient.
+However to keep this program as simple as possible: this program will not produce binaries, rather hex2 files that can be compiled to binary via stage1_assembler-2
+After being written by SET, it can becompiled via the stage1_assembler-2 using the following commands:
+cp roms/stage1_assembler-2 rom
+./bin/vm rom
+
+
+The contents of tape_02 is now the M0 macro assembler, which now does alot of useful functionality for us, however everything it produces needs to go through stage1_assembler-2 to become a working binary.
+
+The produced binary has the following properties:
+sha256sum roms/M0
+2b9727381aec15a504c0898189fbc2344209d8e04451e3fa5d743e08e38f64cf  roms/M0
+sha1sum roms/M0
+d7c3e898a7badf1156dbd0e562739db475b9b404  roms/M0
+md5sum roms/M0
+16f6f691729a51e23a39bd48b9fdb331  roms/M0
+wc -c roms/M0
+1792 roms/M0
+
+At this point you are now able to compile all of the .s files via the following (abit slightly annoying process):
+cat High_level_prototypes/defs source_file.s > tape_01
+cp roms/M0 rom
+./bin/vm rom
+mv tape_02 tape_01
+cp roms/stage1_assembler-2 rom
+./bin/vm rom
+Which will produce the desired binary in tape_02

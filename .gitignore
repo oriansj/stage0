@@ -1,7 +1,12 @@
+# Folders that hold cached results
 bin/
 tmp/
 __pycache__/
+roms/
+
+# Generated files that don't need to be version controlled
 libvm.so
 tape_*
 rom
 z_disassembled
+
