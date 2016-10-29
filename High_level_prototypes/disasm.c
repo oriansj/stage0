@@ -1105,54 +1105,54 @@ void decode_1OPI(struct Instruction* c)
 			strncpy(Name, "STORER32", 19);
 			break;
 		}
-		case 0xA00: /* CMPSKIP.G */
+		case 0xA00: /* CMPSKIPI.G */
 		{
-			strncpy(Name, "CMPSKIP.G", 19);
+			strncpy(Name, "CMPSKIPI.G", 19);
 			break;
 		}
-		case 0xA01: /* CMPSKIP.GE */
+		case 0xA01: /* CMPSKIPI.GE */
 		{
-			strncpy(Name, "CMPSKIP.GE", 19);
+			strncpy(Name, "CMPSKIPI.GE", 19);
 			break;
 		}
-		case 0xA02: /* CMPSKIP.E */
+		case 0xA02: /* CMPSKIPI.E */
 		{
-			strncpy(Name, "CMPSKIP.E", 19);
+			strncpy(Name, "CMPSKIPI.E", 19);
 			break;
 		}
-		case 0xA03: /* CMPSKIP.NE */
+		case 0xA03: /* CMPSKIPI.NE */
 		{
-			strncpy(Name, "CMPSKIP.NE", 19);
+			strncpy(Name, "CMPSKIPI.NE", 19);
 			break;
 		}
-		case 0xA04: /* CMPSKIP.LE */
+		case 0xA04: /* CMPSKIPI.LE */
 		{
-			strncpy(Name, "CMPSKIP.LE", 19);
+			strncpy(Name, "CMPSKIPI.LE", 19);
 			break;
 		}
-		case 0xA05: /* CMPSKIP.L */
+		case 0xA05: /* CMPSKIPI.L */
 		{
-			strncpy(Name, "CMPSKIP.L", 19);
+			strncpy(Name, "CMPSKIPI.L", 19);
 			break;
 		}
-		case 0xA10: /* CMPSKIPU.G */
+		case 0xA10: /* CMPSKIPUI.G */
 		{
-			strncpy(Name, "CMPSKIPU.G", 19);
+			strncpy(Name, "CMPSKIPUI.G", 19);
 			break;
 		}
-		case 0xA11: /* CMPSKIPU.GE */
+		case 0xA11: /* CMPSKIPUI.GE */
 		{
-			strncpy(Name, "CMPSKIPU.GE", 19);
+			strncpy(Name, "CMPSKIPUI.GE", 19);
 			break;
 		}
-		case 0xA14: /* CMPSKIPU.LE */
+		case 0xA14: /* CMPSKIPUI.LE */
 		{
-			strncpy(Name, "CMPSKIPU.LE", 19);
+			strncpy(Name, "CMPSKIPUI.LE", 19);
 			break;
 		}
-		case 0xA15: /* CMPSKIPU.L */
+		case 0xA15: /* CMPSKIPUI.L */
 		{
-			strncpy(Name, "CMPSKIPU.L", 19);
+			strncpy(Name, "CMPSKIPUI.L", 19);
 			break;
 		}
 		default: /* Unknown 1OPI*/

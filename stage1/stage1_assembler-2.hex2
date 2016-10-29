@@ -46,24 +46,24 @@ FFFFFFFF	# HALT
 2D211100	# LOADUI R1 0x1100 ; Read from tape_01
 42100100	# FGETC ; Read a Char
 # ;; Check for EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 0D01001F	# RET R15
 # ;; Check for and deal with label (:)
-A030003a	# CMPSKIP.NE R0 58
+A030003a	# CMPSKIPI.NE R0 58
 3C00 @storeLabel	# JUMP @storeLabel
 # ;; Check for and deal with pointers to labels
 # ;; Starting with (@)
-A0300040	# CMPSKIP.NE R0 64
+A0300040	# CMPSKIPI.NE R0 64
 3C00 @ThrowAwayPointer	# JUMP @ThrowAwayPointer
 # ;; Then dealing with ($)
-A0300024	# CMPSKIP.NE R0 36
+A0300024	# CMPSKIPI.NE R0 36
 3C00 @ThrowAwayPointer	# JUMP @ThrowAwayPointer
 # ;; Now check for absolute addresses (&)
-A0300026	# CMPSKIP.NE R0 38
+A0300026	# CMPSKIPI.NE R0 38
 3C00 @ThrowAwayAddress	# JUMP @ThrowAwayAddress
 # ;; Otherwise attempt to process
 2D0F @hex	# CALLI R15 @hex ; Convert it
-A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
+A0100000	# CMPSKIPI.GE R0 0 ; Don't record, nonhex values
 3C00 @first_pass	# JUMP @first_pass ; Move onto Next char
 # ;; Determine if we got a full byte
 2C9A @first_pass_0	# JUMP.Z R10 @first_pass_0 ; Jump if toggled
@@ -86,21 +86,21 @@ A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
 2D211100	# LOADUI R1 0x1100 ; Read from tape_01
 42100100	# FGETC ; Read a Char
 # ;; Check for EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 0D01001F	# RET R15
 # ;; Check for and deal with label
-A030003a	# CMPSKIP.NE R0 58
+A030003a	# CMPSKIPI.NE R0 58
 3C00 @ThrowAwayLabel	# JUMP @ThrowAwayLabel
 # ;; Check for and deal with Pointers to labels
-A0300040	# CMPSKIP.NE R0 64 ; @ for relative
+A0300040	# CMPSKIPI.NE R0 64 ; @ for relative
 3C00 @StoreRelativePointer	# JUMP @StoreRelativePointer
-A0300024	# CMPSKIP.NE R0 36 ; $ for absolute
+A0300024	# CMPSKIPI.NE R0 36 ; $ for absolute
 3C00 @StoreAbsolutePointer	# JUMP @StoreAbsolutePointer
-A0300026	# CMPSKIP.NE R0 38 ; & for address
+A0300026	# CMPSKIPI.NE R0 38 ; & for address
 3C00 @StoreAbsoluteAddress	# JUMP @StoreAbsoluteAddress
 # ;; Process everything else
 2D0F @hex	# CALLI R15 @hex ; Attempt to Convert it
-A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
+A0100000	# CMPSKIPI.GE R0 0 ; Don't record, nonhex values
 3C00 @second_pass	# JUMP @second_pass ; Move onto Next char
 # ;; Determine if we got a full byte
 2C9A @second_pass_0	# JUMP.Z R10 @second_pass_0 ; Jump if toggled
@@ -127,7 +127,7 @@ A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
 # ;; Returns to first pass when done
 :storeLabel
 2E00 @current_index	# LOADR R0 @current_index ; Get address of first open index
-A0300000	# CMPSKIP.NE R0 0 ; If zero intialize from R13
+A0300000	# CMPSKIPI.NE R0 0 ; If zero intialize from R13
 0900040D	# COPY R0 R13
 # ;; Store the PC of the label
 23B00000	# STORE32 R11 R0 0
@@ -230,11 +230,11 @@ A0300000	# CMPSKIP.NE R0 0 ; If zero intialize from R13
 :writeout_token_0
 42100100	# FGETC ; Get another byte
 # ;; Deal with termination cases
-A0300020	# CMPSKIP.NE R0 32 ; Finished if space
+A0300020	# CMPSKIPI.NE R0 32 ; Finished if space
 3C00 @writeout_token_done	# JUMP @writeout_token_done
-A0300009	# CMPSKIP.NE R0 9 ; Finished if tab
+A0300009	# CMPSKIPI.NE R0 9 ; Finished if tab
 3C00 @writeout_token_done	# JUMP @writeout_token_done
-A030000a	# CMPSKIP.NE R0 10 ; Finished if newline
+A030000a	# CMPSKIPI.NE R0 10 ; Finished if newline
 3C00 @writeout_token_done	# JUMP @writeout_token_done
 # ;; Deal with valid input
 21020000	# STORE8 R0 R2 0 ; Write out the byte
@@ -328,7 +328,7 @@ A030000a	# CMPSKIP.NE R0 10 ; Finished if newline
 0503A134	# LOADXU8 R1 R3 R4 ; Get a byte of our second string
 0F440001	# ADDUI R4 R4 1 ; Prep for next loop
 05004101	# CMP R1 R0 R1 ; Compare the bytes
-A0200000	# CMPSKIP.E R0 0 ; Stop if byte is NULL
+A0200000	# CMPSKIPI.E R0 0 ; Stop if byte is NULL
 2C51 @cmpbyte	# JUMP.E R1 @cmpbyte ; Loop if bytes are equal
 # ;; Done
 09000501	# MOVE R0 R1 ; Prepare for return
@@ -408,13 +408,13 @@ A0200000	# CMPSKIP.E R0 0 ; Stop if byte is NULL
 2D211100	# LOADUI R1 0x1100 ; Read from tape_01
 42100100	# FGETC ; Read a Char
 # ;; Stop looping if space
-A0300020	# CMPSKIP.NE R0 32
+A0300020	# CMPSKIPI.NE R0 32
 0D01001F	# RET R15
 # ;; Stop looping if tab
-A0300009	# CMPSKIP.NE R0 9
+A0300009	# CMPSKIPI.NE R0 9
 0D01001F	# RET R15
 # ;; Stop looping if newline
-A030000a	# CMPSKIP.NE R0 10
+A030000a	# CMPSKIPI.NE R0 10
 0D01001F	# RET R15
 # ;; Otherwise keep looping
 3C00 @throwAwayToken	# JUMP @throwAwayToken

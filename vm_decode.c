@@ -2212,114 +2212,114 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			STORER32(vm, c);
 			break;
 		}
-		case 0xA00: /* CMPSKIP.G */
+		case 0xA00: /* CMPSKIPI.G */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIP.G", 19);
+			strncpy(Name, "CMPSKIPI.G", 19);
 			#elif TRACE
-			record_trace("CMPSKIP.G");
+			record_trace("CMPSKIPI.G");
 			#endif
 
-			CMPSKIP_G(vm, c);
+			CMPSKIPI_G(vm, c);
 			break;
 		}
-		case 0xA01: /* CMPSKIP.GE */
+		case 0xA01: /* CMPSKIPI.GE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIP.GE", 19);
+			strncpy(Name, "CMPSKIPI.GE", 19);
 			#elif TRACE
-			record_trace("CMPSKIP.GE");
+			record_trace("CMPSKIPI.GE");
 			#endif
 
-			CMPSKIP_GE(vm, c);
+			CMPSKIPI_GE(vm, c);
 			break;
 		}
-		case 0xA02: /* CMPSKIP.E */
+		case 0xA02: /* CMPSKIPI.E */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIP.E", 19);
+			strncpy(Name, "CMPSKIPI.E", 19);
 			#elif TRACE
-			record_trace("CMPSKIP.E");
+			record_trace("CMPSKIPI.E");
 			#endif
 
-			CMPSKIP_E(vm, c);
+			CMPSKIPI_E(vm, c);
 			break;
 		}
-		case 0xA03: /* CMPSKIP.NE */
+		case 0xA03: /* CMPSKIPI.NE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIP.NE", 19);
+			strncpy(Name, "CMPSKIPI.NE", 19);
 			#elif TRACE
-			record_trace("CMPSKIP.NE");
+			record_trace("CMPSKIPI.NE");
 			#endif
 
-			CMPSKIP_NE(vm, c);
+			CMPSKIPI_NE(vm, c);
 			break;
 		}
-		case 0xA04: /* CMPSKIP.LE */
+		case 0xA04: /* CMPSKIPI.LE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIP.LE", 19);
+			strncpy(Name, "CMPSKIPI.LE", 19);
 			#elif TRACE
-			record_trace("CMPSKIP.LE");
+			record_trace("CMPSKIPI.LE");
 			#endif
 
-			CMPSKIP_LE(vm, c);
+			CMPSKIPI_LE(vm, c);
 			break;
 		}
-		case 0xA05: /* CMPSKIP.L */
+		case 0xA05: /* CMPSKIPI.L */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIP.L", 19);
+			strncpy(Name, "CMPSKIPI.L", 19);
 			#elif TRACE
-			record_trace("CMPSKIP.L");
+			record_trace("CMPSKIPI.L");
 			#endif
 
-			CMPSKIP_L(vm, c);
+			CMPSKIPI_L(vm, c);
 			break;
 		}
-		case 0xA10: /* CMPSKIPU.G */
+		case 0xA10: /* CMPSKIPUI.G */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIPU.G", 19);
+			strncpy(Name, "CMPSKIPUI.G", 19);
 			#elif TRACE
-			record_trace("CMPSKIPU.G");
+			record_trace("CMPSKIPUI.G");
 			#endif
 
-			CMPSKIPU_G(vm, c);
+			CMPSKIPUI_G(vm, c);
 			break;
 		}
-		case 0xA11: /* CMPSKIPU.GE */
+		case 0xA11: /* CMPSKIPUI.GE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIPU.GE", 19);
+			strncpy(Name, "CMPSKIPUI.GE", 19);
 			#elif TRACE
-			record_trace("CMPSKIPU.GE");
+			record_trace("CMPSKIPUI.GE");
 			#endif
 
-			CMPSKIPU_GE(vm, c);
+			CMPSKIPUI_GE(vm, c);
 			break;
 		}
-		case 0xA14: /* CMPSKIPU.LE */
+		case 0xA14: /* CMPSKIPUI.LE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIPU.LE", 19);
+			strncpy(Name, "CMPSKIPUI.LE", 19);
 			#elif TRACE
-			record_trace("CMPSKIPU.LE");
+			record_trace("CMPSKIPUI.LE");
 			#endif
 
-			CMPSKIPU_LE(vm, c);
+			CMPSKIPUI_LE(vm, c);
 			break;
 		}
-		case 0xA15: /* CMPSKIPU.L */
+		case 0xA15: /* CMPSKIPUI.L */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPSKIPU.L", 19);
+			strncpy(Name, "CMPSKIPUI.L", 19);
 			#elif TRACE
-			record_trace("CMPSKIPU.L");
+			record_trace("CMPSKIPUI.L");
 			#endif
 
-			CMPSKIPU_L(vm, c);
+			CMPSKIPUI_L(vm, c);
 			break;
 		}
 		default: return true;

@@ -54,29 +54,29 @@
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	RET R15
 
 	;; Check for and deal with label (:)
-	CMPSKIP.NE R0 58
+	CMPSKIPI.NE R0 58
 	JUMP @storeLabel
 
 	;; Check for and deal with pointers to labels
 	;; Starting with (@)
-	CMPSKIP.NE R0 64
+	CMPSKIPI.NE R0 64
 	JUMP @ThrowAwayPointer
 
 	;; Then dealing with ($)
-	CMPSKIP.NE R0 36
+	CMPSKIPI.NE R0 36
 	JUMP @ThrowAwayPointer
 
 	;; Now check for absolute addresses (&)
-	CMPSKIP.NE R0 38
+	CMPSKIPI.NE R0 38
 	JUMP @ThrowAwayAddress
 
 	;; Otherwise attempt to process
 	CALLI R15 @hex              ; Convert it
-	CMPSKIP.GE R0 0             ; Don't record, nonhex values
+	CMPSKIPI.GE R0 0            ; Don't record, nonhex values
 	JUMP @first_pass            ; Move onto Next char
 
 	;; Determine if we got a full byte
@@ -103,26 +103,26 @@
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	RET R15
 
 	;; Check for and deal with label
-	CMPSKIP.NE R0 58
+	CMPSKIPI.NE R0 58
 	JUMP @ThrowAwayLabel
 
 	;; Check for and deal with Pointers to labels
-	CMPSKIP.NE R0 64            ; @ for relative
+	CMPSKIPI.NE R0 64           ; @ for relative
 	JUMP @StoreRelativePointer
 
-	CMPSKIP.NE R0 36            ; $ for absolute
+	CMPSKIPI.NE R0 36           ; $ for absolute
 	JUMP @StoreAbsolutePointer
 
-	CMPSKIP.NE R0 38            ; & for address
+	CMPSKIPI.NE R0 38           ; & for address
 	JUMP @StoreAbsoluteAddress
 
 	;; Process everything else
 	CALLI R15 @hex              ; Attempt to Convert it
-	CMPSKIP.GE R0 0             ; Don't record, nonhex values
+	CMPSKIPI.GE R0 0            ; Don't record, nonhex values
 	JUMP @second_pass           ; Move onto Next char
 
 	;; Determine if we got a full byte
@@ -152,7 +152,7 @@
 ;; Returns to first pass when done
 :storeLabel
 	LOADR R0 @current_index     ; Get address of first open index
-	CMPSKIP.NE R0 0             ; If zero intialize from R13
+	CMPSKIPI.NE R0 0            ; If zero intialize from R13
 	COPY R0 R13
 
 	;; Store the PC of the label
@@ -262,11 +262,11 @@
 	FGETC                       ; Get another byte
 
 	;; Deal with termination cases
-	CMPSKIP.NE R0 32            ; Finished if space
+	CMPSKIPI.NE R0 32           ; Finished if space
 	JUMP @writeout_token_done
-	CMPSKIP.NE R0 9             ; Finished if tab
+	CMPSKIPI.NE R0 9            ; Finished if tab
 	JUMP @writeout_token_done
-	CMPSKIP.NE R0 10            ; Finished if newline
+	CMPSKIPI.NE R0 10           ; Finished if newline
 	JUMP @writeout_token_done
 
 	;; Deal with valid input
@@ -365,7 +365,7 @@
 	LOADXU8 R1 R3 R4        ; Get a byte of our second string
 	ADDUI R4 R4 1           ; Prep for next loop
 	CMP R1 R0 R1            ; Compare the bytes
-	CMPSKIP.E R0 0          ; Stop if byte is NULL
+	CMPSKIPI.E R0 0         ; Stop if byte is NULL
 	JUMP.E R1 @cmpbyte      ; Loop if bytes are equal
 ;; Done
 	MOVE R0 R1              ; Prepare for return
@@ -448,15 +448,15 @@
 	FGETC                       ; Read a Char
 
 	;; Stop looping if space
-	CMPSKIP.NE R0 32
+	CMPSKIPI.NE R0 32
 	RET R15
 
 	;; Stop looping if tab
-	CMPSKIP.NE R0 9
+	CMPSKIPI.NE R0 9
 	RET R15
 
 	;; Stop looping if newline
-	CMPSKIP.NE R0 10
+	CMPSKIPI.NE R0 10
 	RET R15
 
 	;; Otherwise keep looping

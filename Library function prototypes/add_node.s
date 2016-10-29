@@ -29,7 +29,7 @@
 	;; Handle case of Head->next not being NULL
 	LOAD32 R0 R0 0              ; Move to next node
 	LOAD32 R2 R0 0              ; Get node->next
-	CMPSKIP.E R2 0              ; If it is not null
+	CMPSKIPI.E R2 0             ; If it is not null
 	JUMP @add_node_1            ; Move to the next node and try again
 	JUMP @add_node_0            ; Else simply act as if we got this node
 	                            ; in the first place

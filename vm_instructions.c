@@ -1741,7 +1741,7 @@ void CMPJUMPU_L(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIP_G(struct lilith* vm, struct Instruction* c)
+void CMPSKIPI_G(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1753,7 +1753,7 @@ void CMPSKIP_G(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIP_GE(struct lilith* vm, struct Instruction* c)
+void CMPSKIPI_GE(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1765,7 +1765,7 @@ void CMPSKIP_GE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIP_E(struct lilith* vm, struct Instruction* c)
+void CMPSKIPI_E(struct lilith* vm, struct Instruction* c)
 {
 	uint16_t utmp1;
 
@@ -1777,7 +1777,7 @@ void CMPSKIP_E(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIP_NE(struct lilith* vm, struct Instruction* c)
+void CMPSKIPI_NE(struct lilith* vm, struct Instruction* c)
 {
 	uint16_t utmp1;
 
@@ -1789,7 +1789,7 @@ void CMPSKIP_NE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIP_LE(struct lilith* vm, struct Instruction* c)
+void CMPSKIPI_LE(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1801,7 +1801,7 @@ void CMPSKIP_LE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIP_L(struct lilith* vm, struct Instruction* c)
+void CMPSKIPI_L(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1813,7 +1813,7 @@ void CMPSKIP_L(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIPU_G(struct lilith* vm, struct Instruction* c)
+void CMPSKIPUI_G(struct lilith* vm, struct Instruction* c)
 {
 	uint16_t utmp1;
 
@@ -1825,7 +1825,7 @@ void CMPSKIPU_G(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c)
+void CMPSKIPUI_GE(struct lilith* vm, struct Instruction* c)
 {
 	uint16_t utmp1;
 
@@ -1837,7 +1837,7 @@ void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c)
+void CMPSKIPUI_LE(struct lilith* vm, struct Instruction* c)
 {
 	uint16_t utmp1;
 
@@ -1849,7 +1849,7 @@ void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPSKIPU_L(struct lilith* vm, struct Instruction* c)
+void CMPSKIPUI_L(struct lilith* vm, struct Instruction* c)
 {
 	uint16_t utmp1;
 

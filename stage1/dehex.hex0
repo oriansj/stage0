@@ -18,7 +18,7 @@
 2D211100	# LOADUI R1 0x1100 ; Read from tape_01
 42100100	# FGETC ; Read a Char
 # ;; Check for EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 3C000010	# JUMP @main_1
 # ;; Process that byte
 2D0F0020	# CALLI R15 @dehex
@@ -45,7 +45,7 @@ FFFFFFFF	# HALT
 0902000F	# PUSHR R0 R15 ; Save byte until after address
 B00E0003	# ANDI R0 R14 3 ; Get mod 4 of address
 2D211101	# LOADUI R1 0x1101 ; We want it on TAPE_02
-A0200000	# CMPSKIP.E R0 0 ; if not zero
+A0200000	# CMPSKIPI.E R0 0 ; if not zero
 3C000024	# JUMP @dehex_0 ; Skip placing address
 # ;; Prepend new line
 2D20000a	# LOADUI R0 10 ; First print line feed
@@ -90,7 +90,7 @@ A0200000	# CMPSKIP.E R0 0 ; if not zero
 # :hex4
 B000000f	# ANDI R0 R0 0x000F ; isolate nybble
 0F000030	# ADDUI R0 R0 48 ; convert to ascii
-A0400039	# CMPSKIP.LE R0 57 ; If nybble was greater than '9'
+A0400039	# CMPSKIPI.LE R0 57 ; If nybble was greater than '9'
 0F000007	# ADDUI R0 R0 7 ; Shift it into 'A' range of ascii
 42100200	# FPUTC ; Print char
 0D01001F	# RET R15 ; Get next nybble or return if done

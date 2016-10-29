@@ -23,11 +23,11 @@
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	JUMP @stage2
 
 	;; Check for Label
-	CMPSKIP.NE R0 58            ; If the Char is : the next char is the label
+	CMPSKIPI.NE R0 58           ; If the Char is : the next char is the label
 	CALLI R13 @storeLabel
 
 	;; Check for pointer to label
@@ -44,7 +44,7 @@
 :.L0
 	;; Otherwise attempt to process
 	CALLI R13 @hex              ; Convert it
-	CMPSKIP.GE R0 0             ; Don't record, nonhex values
+	CMPSKIPI.GE R0 0            ; Don't record, nonhex values
 	JUMP @getLables             ; Move onto Next char
 
 	;; Determine if we got a full byte
@@ -90,7 +90,7 @@
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	JUMP @finish
 
 	;; Check for Label

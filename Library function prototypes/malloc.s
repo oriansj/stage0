@@ -4,9 +4,9 @@
 	# R15 will be used as the stack pointer
 :start
 	LOADUI R15 @stack
-	LOADUI R0 22				; Allocate 22 bytes
+	LOADUI R0 22                ; Allocate 22 bytes
 	CALLI R15 @malloc
-	LOADUI R0 42				; Allocate 42 bytes
+	LOADUI R0 42                ; Allocate 42 bytes
 	CALLI R15 @malloc
 	HALT
 
@@ -17,7 +17,7 @@
 	;; Get current malloc pointer
 	LOADR R1 @malloc_pointer
 	;; Deal with special case
-	CMPSKIP.NE R1 0			; If Zero set to our start of heap space
+	CMPSKIPI.NE R1 0            ; If Zero set to our start of heap space
 	LOADUI R1 0x600
 
 	;; update malloc pointer

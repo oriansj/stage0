@@ -24,14 +24,14 @@
 	MOVE R3 R1
 	LOADUI R4 0
 :cmpbyte
-	LOADXU8 R0 R2 R4			; Get a byte of our first string
-	LOADXU8 R1 R3 R4			; Get a byte of our second string
-	ADDUI R4 R4 1				; Prep for next loop
-	CMP R1 R0 R1				; Compare the bytes
-	CMPSKIP.E R0 0				; Stop if byte is NULL
-	JUMP.E R1 @cmpbyte			; Loop if bytes are equal
+	LOADXU8 R0 R2 R4            ; Get a byte of our first string
+	LOADXU8 R1 R3 R4            ; Get a byte of our second string
+	ADDUI R4 R4 1               ; Prep for next loop
+	CMP R1 R0 R1                ; Compare the bytes
+	CMPSKIPI.E R0 0             ; Stop if byte is NULL
+	JUMP.E R1 @cmpbyte          ; Loop if bytes are equal
 ;; Done
-	MOVE R0 R1					; Prepare for return
+	MOVE R0 R1                  ; Prepare for return
 	;; Restore registers
 	POPR R4 R15
 	POPR R3 R15

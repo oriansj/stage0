@@ -23,11 +23,11 @@
 42100100	# FGETC ; Read a Char
 
 # ;; Check for EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 3C00 @e	# JUMP @stage2
 
 # ;; Check for Label
-A030003a	# CMPSKIP.NE R0 58 ; If the Char is : the next char is the label
+A030003a	# CMPSKIPI.NE R0 58 ; If the Char is : the next char is the label
 2D0D @d	# CALLI R13 @storeLabel
 
 # ;; Check for pointer to label
@@ -44,7 +44,7 @@ A030003a	# CMPSKIP.NE R0 58 ; If the Char is : the next char is the label
 :b
 # ;; Otherwise attempt to process
 2D0D @k	# CALLI R13 @hex ; Convert it
-A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
+A0100000	# CMPSKIPI.GE R0 0 ; Don't record, nonhex values
 3C00 @a	# JUMP @getLables ; Move onto Next char
 
 # ;; Determine if we got a full byte
@@ -94,7 +94,7 @@ A0100000	# CMPSKIP.GE R0 0 ; Don't record, nonhex values
 42100100	# FGETC ; Read a Char
 
 # ;; Check for EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 3C00 @q	# JUMP @finish
 
 # ;; Check for Label

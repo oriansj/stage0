@@ -75,19 +75,19 @@
 	FGETC                       ; Read a Char
 
 	;; Flag if reached EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	TRUE R14
 
 	;; Stop if EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	JUMP @Readline_2
 
 	;; Handle Backspace
-	CMPSKIP.E R0 127
+	CMPSKIPI.E R0 127
 	JUMP @Readline_1
 
 	;; Move back 1 character if R3 > 0
-	CMPSKIP.LE R3 0
+	CMPSKIPI.LE R3 0
 	SUBUI R3 R3 1
 
 	;; Hopefully they keep typing
@@ -95,7 +95,7 @@
 
 :Readline_1
 	;; Replace all CR with LF
-	CMPSKIP.NE R0 13
+	CMPSKIPI.NE R0 13
 	LOADUI R0 10
 
 	;; Store the Byte
@@ -105,7 +105,7 @@
 	ADDUI R3 R3 1
 
 	;; Check for EOL
-	CMPSKIP.NE R0 10
+	CMPSKIPI.NE R0 10
 	JUMP @Readline_2
 
 	;; Otherwise loop
@@ -113,7 +113,7 @@
 
 :Readline_2
 	;; Set Text pointer
-	CMPSKIP.E R3 0              ; Don't bother for Empty strings
+	CMPSKIPI.E R3 0             ; Don't bother for Empty strings
 	STORE32 R2 R4 8
 	;; Correct Malloc
 	MOVE R0 R3                  ; Ensure actually allocates exactly
@@ -158,7 +158,7 @@
 	;; Handle case of Head->next not being NULL
 	LOAD32 R0 R0 0              ; Move to next node
 	LOAD32 R2 R0 0              ; Get node->next
-	CMPSKIP.E R2 0              ; If it is not null
+	CMPSKIPI.E R2 0             ; If it is not null
 	JUMP @addline_1             ; Move to the next node and try again
 	JUMP @addline_0             ; Else simply act as if we got this node
 	                            ; in the first place
@@ -181,7 +181,7 @@
 	;; Get current malloc pointer
 	LOADR R1 @malloc_pointer
 	;; Deal with special case
-	CMPSKIP.NE R1 0             ; If Zero set to our start of heap space
+	CMPSKIPI.NE R1 0            ; If Zero set to our start of heap space
 	LOADUI R1 0x4000
 
 	;; update malloc pointer
@@ -208,7 +208,7 @@
 	FGETC                       ; Read a Char
 
 	;; Quit if q
-	CMPSKIP.NE R0 113
+	CMPSKIPI.NE R0 113
 	RET R15
 
 	;; Print if p
@@ -226,7 +226,7 @@
 	LOAD32 R0 R13 0             ; Load head->next
 
 	;; If head->next isn't null make it the new head
-	CMPSKIP.E R0 0
+	CMPSKIPI.E R0 0
 	MOVE R13 R0
 	JUMP @EditorLoop
 
@@ -237,7 +237,7 @@
 	LOAD32 R0 R13 4             ; Load head->prev
 
 	;; If head->prev isn't null make it the new head
-	CMPSKIP.E R0 0
+	CMPSKIPI.E R0 0
 	MOVE R13 R0
 	JUMP @EditorLoop
 
@@ -311,7 +311,7 @@
 	;; Get Head->Prev
 	LOAD32 R1 R0 4
 
-	CMPSKIP.NE R1 0
+	CMPSKIPI.NE R1 0
 	JUMP @GetRoot_1
 
 	MOVE R0 R1
@@ -337,7 +337,7 @@
 	LOAD32 R2 R0 0              ; Store Head->Next in R2
 	LOAD32 R0 R0 8              ; Set R0 to Head->Text
 	CALLI R15 @PrintLine        ; Prints Head->Text
-	CMPSKIP.NE R2 0             ; If Head->Next is NULL
+	CMPSKIPI.NE R2 0            ; If Head->Next is NULL
 	JUMP @PrintAll_1            ; Stop Looping
 	MOVE R0 R2                  ; Otherwise Move to Next Node
 	JUMP @PrintAll_0            ; And Loop
@@ -364,12 +364,12 @@
 	MOVE R2 R0
 	FALSE R3
 	;; Deal with NULL Pointer
-	CMPSKIP.NE R2 0
+	CMPSKIPI.NE R2 0
 	JUMP @PrintLine_1
 :PrintLine_0
 	LOADXU8 R0 R2 R3            ; Load char from string
 	;; Don't print NULLs
-	CMPSKIP.NE R0 0
+	CMPSKIPI.NE R0 0
 	JUMP @PrintLine_1
 
 	FPUTC                       ; Print the char
@@ -403,7 +403,7 @@
 
 	;; Check if head->Next is null
 	LOAD32 R2 R1 0
-	CMPSKIP.E R2 0              ; If head->Next is something
+	CMPSKIPI.E R2 0             ; If head->Next is something
 	STORE32 R0 R2 4             ; Set head->next->prev to p
 
 	;; Setup p and head
@@ -436,7 +436,7 @@
 
 	;; Check if Head->Prev is Null
 	LOAD32 R2 R1 4
-	CMPSKIP.E R2 0              ; If head->prev is something
+	CMPSKIPI.E R2 0             ; If head->prev is something
 	STORE32 R0 R2 0             ; Set head->prev->next to p
 
 	;; Setup p and head
@@ -465,14 +465,14 @@
 	LOAD32 R2 R1 0              ; put p->next in R2
 
 	;; Keep links
-	CMPSKIP.E R0 0              ; If p->prev is not null
+	CMPSKIPI.E R0 0             ; If p->prev is not null
 	STORE32 R2 R0 0             ; p->prev->next = p->next
 
-	CMPSKIP.E R2 0              ; If p->next is not null
+	CMPSKIPI.E R2 0             ; If p->next is not null
 	STORE32 R0 R2 4             ; p->next->prev = p->prev
 
 	;; Attempt to save what is left of the list
-	CMPSKIP.NE R0 0             ; If p->prev is null
+	CMPSKIPI.NE R0 0            ; If p->prev is null
 	MOVE R0 R2                  ; return p->next
 
 	;; Restore Registers

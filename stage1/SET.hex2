@@ -70,30 +70,30 @@ FFFFFFFF	# HALT
 :Readline_0
 42100100	# FGETC ; Read a Char
 # ;; Flag if reached EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 0D00003E	# TRUE R14
 # ;; Stop if EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 3C00 @Readline_2	# JUMP @Readline_2
 # ;; Handle Backspace
-A020007f	# CMPSKIP.E R0 127
+A020007f	# CMPSKIPI.E R0 127
 3C00 @Readline_1	# JUMP @Readline_1
 # ;; Move back 1 character if R3 > 0
-A0430000	# CMPSKIP.LE R3 0
+A0430000	# CMPSKIPI.LE R3 0
 11330001	# SUBUI R3 R3 1
 # ;; Hopefully they keep typing
 3C00 @Readline_0	# JUMP @Readline_0
 :Readline_1
 # ;; Replace all CR with LF
-A030000d	# CMPSKIP.NE R0 13
+A030000d	# CMPSKIPI.NE R0 13
 2D20000a	# LOADUI R0 10
 # ;; Store the Byte
 05049023	# STOREX8 R0 R2 R3
 # ;; Check for EOL
-A030000a	# CMPSKIP.NE R0 10
+A030000a	# CMPSKIPI.NE R0 10
 3C00 @Readline_2	# JUMP @Readline_2
 # ;; Prevent lines from exceeding 255 chars
-A04300ff	# CMPSKIP.LE R3 255
+A04300ff	# CMPSKIPI.LE R3 255
 3C00 @Readline_2	# JUMP @Readline_2
 # ;; Prep for next loop
 0F330001	# ADDUI R3 R3 1
@@ -156,7 +156,7 @@ A04300ff	# CMPSKIP.LE R3 255
 # ;; Get current malloc pointer
 2E01 @malloc_pointer	# LOADR R1 @malloc_pointer
 # ;; Deal with special case
-A0310000	# CMPSKIP.NE R1 0 ; If Zero set to our start of heap space
+A0310000	# CMPSKIPI.NE R1 0 ; If Zero set to our start of heap space
 2D214000	# LOADUI R1 0x4000
 # ;; update malloc pointer
 09000301	# SWAP R0 R1
@@ -180,7 +180,7 @@ A0310000	# CMPSKIP.NE R1 0 ; If Zero set to our start of heap space
 0D000021	# FALSE R1 ; Read from tty
 42100100	# FGETC ; Read a Char
 # ;; Quit if q
-A0300071	# CMPSKIP.NE R0 113
+A0300071	# CMPSKIPI.NE R0 113
 0D01001F	# RET R15
 # ;; Print if p
 1FE00070	# CMPUI R14 R0 112
@@ -195,7 +195,7 @@ A0300071	# CMPSKIP.NE R0 113
 2C6E @EditorLoop_1	# JUMP.NE R14 @EditorLoop_1
 180D0000	# LOAD32 R0 R13 0 ; Load head->next
 # ;; If head->next isn't null make it the new head
-A0200000	# CMPSKIP.E R0 0
+A0200000	# CMPSKIPI.E R0 0
 090005D0	# MOVE R13 R0
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_1
@@ -204,7 +204,7 @@ A0200000	# CMPSKIP.E R0 0
 2C6E @EditorLoop_2	# JUMP.NE R14 @EditorLoop_2
 180D0004	# LOAD32 R0 R13 4 ; Load head->prev
 # ;; If head->prev isn't null make it the new head
-A0200000	# CMPSKIP.E R0 0
+A0200000	# CMPSKIPI.E R0 0
 090005D0	# MOVE R13 R0
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_2
@@ -266,7 +266,7 @@ A0200000	# CMPSKIP.E R0 0
 :GetRoot_0
 # ;; Get Head->Prev
 18100004	# LOAD32 R1 R0 4
-A0310000	# CMPSKIP.NE R1 0
+A0310000	# CMPSKIPI.NE R1 0
 3C00 @GetRoot_1	# JUMP @GetRoot_1
 09000501	# MOVE R0 R1
 3C00 @GetRoot_0	# JUMP @GetRoot_0
@@ -290,7 +290,7 @@ A0310000	# CMPSKIP.NE R1 0
 18200000	# LOAD32 R2 R0 0 ; Store Head->Next in R2
 18000008	# LOAD32 R0 R0 8 ; Set R0 to Head->Text
 2D0F @PrintLine	# CALLI R15 @PrintLine ; Prints Head->Text
-A0320000	# CMPSKIP.NE R2 0 ; If Head->Next is NULL
+A0320000	# CMPSKIPI.NE R2 0 ; If Head->Next is NULL
 3C00 @PrintAll_1	# JUMP @PrintAll_1 ; Stop Looping
 09000502	# MOVE R0 R2 ; Otherwise Move to Next Node
 3C00 @PrintAll_0	# JUMP @PrintAll_0 ; And Loop
@@ -317,12 +317,12 @@ A0320000	# CMPSKIP.NE R2 0 ; If Head->Next is NULL
 09000520	# MOVE R2 R0
 0D000023	# FALSE R3
 # ;; Deal with NULL Pointer
-A0320000	# CMPSKIP.NE R2 0
+A0320000	# CMPSKIPI.NE R2 0
 3C00 @PrintLine_1	# JUMP @PrintLine_1
 :PrintLine_0
 0503A023	# LOADXU8 R0 R2 R3 ; Load char from string
 # ;; Don't print NULLs
-A0300000	# CMPSKIP.NE R0 0
+A0300000	# CMPSKIPI.NE R0 0
 3C00 @PrintLine_1	# JUMP @PrintLine_1
 42100200	# FPUTC
 # ; Print the char
@@ -354,7 +354,7 @@ A0300000	# CMPSKIP.NE R0 0
 2D0F @malloc	# CALLI R15 @malloc
 # ;; Check if head->Next is null
 18210000	# LOAD32 R2 R1 0
-A0220000	# CMPSKIP.E R2 0 ; If head->Next is something
+A0220000	# CMPSKIPI.E R2 0 ; If head->Next is something
 23020004	# STORE32 R0 R2 4 ; Set head->next->prev to p
 # ;; Setup p and head
 23200000	# STORE32 R2 R0 0 ; p->next = head->next
@@ -384,7 +384,7 @@ A0220000	# CMPSKIP.E R2 0 ; If head->Next is something
 2D0F @malloc	# CALLI R15 @malloc
 # ;; Check if Head->Prev is Null
 18210004	# LOAD32 R2 R1 4
-A0220000	# CMPSKIP.E R2 0 ; If head->prev is something
+A0220000	# CMPSKIPI.E R2 0 ; If head->prev is something
 23020000	# STORE32 R0 R2 0 ; Set head->prev->next to p
 # ;; Setup p and head
 23200004	# STORE32 R2 R0 4 ; p->prev = head->prev
@@ -410,12 +410,12 @@ A0220000	# CMPSKIP.E R2 0 ; If head->prev is something
 18010004	# LOAD32 R0 R1 4 ; put p->prev in R0
 18210000	# LOAD32 R2 R1 0 ; put p->next in R2
 # ;; Keep links
-A0200000	# CMPSKIP.E R0 0 ; If p->prev is not null
+A0200000	# CMPSKIPI.E R0 0 ; If p->prev is not null
 23200000	# STORE32 R2 R0 0 ; p->prev->next = p->next
-A0220000	# CMPSKIP.E R2 0 ; If p->next is not null
+A0220000	# CMPSKIPI.E R2 0 ; If p->next is not null
 23020004	# STORE32 R0 R2 4 ; p->next->prev = p->prev
 # ;; Attempt to save what is left of the list
-A0300000	# CMPSKIP.NE R0 0 ; If p->prev is null
+A0300000	# CMPSKIPI.NE R0 0 ; If p->prev is null
 09000502	# MOVE R0 R2 ; return p->next
 # ;; Restore Registers
 0902802F	# POPR R2 R15

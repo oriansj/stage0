@@ -17,13 +17,13 @@
 	LOADUI R1 0                 ; Read from tty
 	FGETC                       ; Read a Char
 
-	CMPSKIP.NE R0 13            ; Replace all CR
+	CMPSKIPI.NE R0 13           ; Replace all CR
 	LOADUI R0 10                ; WIth LF
 
 	FPUTC                       ; Display the Char to User
 
 	;; Check for Ctrl-D
-	CMPSKIP.NE R0 4
+	CMPSKIPI.NE R0 4
 	JUMP @finish
 
 	;; Check for EOF
@@ -93,7 +93,7 @@
 :ascii_comment
 	LOADUI R1 0                 ; Read from tty
 	FGETC                       ; Read another char
-	CMPSKIP.NE R0 13            ; Replace all CR
+	CMPSKIPI.NE R0 13           ; Replace all CR
 	LOADUI R0 10                ; WIth LF
 	FPUTC                       ; Let the user see it
 	CMPUI R14 R0 10             ; Stop at the end of line

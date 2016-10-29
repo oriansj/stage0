@@ -23,19 +23,19 @@
 	FGETC                       ; Read a Char
 
 	;; Flag if reached EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	TRUE R14
 
 	;; Stop if EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	JUMP @Readline_2
 
 	;; Handle Backspace
-	CMPSKIP.E R0 127
+	CMPSKIPI.E R0 127
 	JUMP @Readline_1
 
 	;; Move back 1 character if R3 > 0
-	CMPSKIP.LE R3 0
+	CMPSKIPI.LE R3 0
 	SUBUI R3 R3 1
 
 	;; Hopefully they keep typing
@@ -43,7 +43,7 @@
 
 :Readline_1
 	;; Replace all CR with LF
-	CMPSKIP.NE R0 13
+	CMPSKIPI.NE R0 13
 	LOADUI R0 10
 
 	;; Store the Byte
@@ -53,7 +53,7 @@
 	ADDUI R3 R3 1
 
 	;; Check for EOL
-	CMPSKIP.NE R0 10
+	CMPSKIPI.NE R0 10
 	JUMP @Readline_2
 
 	;; Otherwise loop
@@ -61,7 +61,7 @@
 
 :Readline_2
 	;; Set Text pointer
-	CMPSKIP.E R3 0              ; Don't bother for Empty strings
+	CMPSKIPI.E R3 0             ; Don't bother for Empty strings
 	STORE32 R2 R4 8
 	;; Correct Malloc
 	MOVE R0 R3                  ; Ensure actually allocates exactly

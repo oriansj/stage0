@@ -21,7 +21,7 @@
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	JUMP @main_1
 
 	;; Process that byte
@@ -52,7 +52,7 @@
 	PUSHR R0 R15                ; Save byte until after address
 	ANDI R0 R14 3               ; Get mod 4 of address
 	LOADUI R1 0x1101            ; We want it on TAPE_02
-	CMPSKIP.E R0 0              ; if not zero
+	CMPSKIPI.E R0 0             ; if not zero
 	JUMP @dehex_0               ; Skip placing address
 
 	;; Prepend new line
@@ -102,7 +102,7 @@
 :hex4
 	ANDI R0 R0 0x000F           ; isolate nybble
 	ADDUI R0 R0 48              ; convert to ascii
-	CMPSKIP.LE R0 57            ; If nybble was greater than '9'
+	CMPSKIPI.LE R0 57           ; If nybble was greater than '9'
 	ADDUI R0 R0 7               ; Shift it into 'A' range of ascii
 	FPUTC                       ; Print char
 	RET R15                     ; Get next nybble or return if done

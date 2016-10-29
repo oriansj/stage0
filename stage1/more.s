@@ -14,7 +14,7 @@
 	FGETC
 
 	;; Check for EOF
-	CMPSKIP.GE R0 0
+	CMPSKIPI.GE R0 0
 	JUMP @main_1
 
 	;; Write the Byte
@@ -22,11 +22,11 @@
 	FPUTC
 
 	;; Check for LF
-	CMPSKIP.NE R0 10            ; Skip if not line feed
+	CMPSKIPI.NE R0 10           ; Skip if not line feed
 	SUBI R2 R2 1                ; Decrement on line feed
 
 	;; Loop if not Zero
-	CMPSKIP.E R2 0              ; Skip if counter is zero
+	CMPSKIPI.E R2 0             ; Skip if counter is zero
 	JUMP @main
 
 	;; Otherwise provide main loop functionality

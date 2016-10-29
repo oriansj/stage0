@@ -49,7 +49,7 @@ FFFFFFFF	# HALT ; We are Done
 # ;; Get current malloc pointer
 2E01 @malloc_pointer	# LOADR R1 @malloc_pointer
 # ;; Deal with special case
-A0310000	# CMPSKIP.NE R1 0 ; If Zero set to our start of heap space
+A0310000	# CMPSKIPI.NE R1 0 ; If Zero set to our start of heap space
 2D214000	# LOADUI R1 0x4000
 # ;; update malloc pointer
 09000301	# SWAP R0 R1
@@ -80,25 +80,25 @@ A0310000	# CMPSKIP.NE R1 0 ; If Zero set to our start of heap space
 :Tokenize_Line_0
 42100100	# FGETC ; Get a Char
 # ;; Deal with lines comments starting with #
-A0300023	# CMPSKIP.NE R0 35
+A0300023	# CMPSKIPI.NE R0 35
 3C00 @Purge_Line_Comment	# JUMP @Purge_Line_Comment
 # ;; Deal with Line comments starting with ;
-A030003b	# CMPSKIP.NE R0 59
+A030003b	# CMPSKIPI.NE R0 59
 3C00 @Purge_Line_Comment	# JUMP @Purge_Line_Comment
 # ;; Deal with Tab
-A0300009	# CMPSKIP.NE R0 9
+A0300009	# CMPSKIPI.NE R0 9
 3C00 @Tokenize_Line_0	# JUMP @Tokenize_Line_0 ; Throw away byte and try again
 # ;; Deal with New line
-A030000a	# CMPSKIP.NE R0 10
+A030000a	# CMPSKIPI.NE R0 10
 3C00 @Tokenize_Line_0	# JUMP @Tokenize_Line_0 ; Throw away byte and try again
 # ;; Deal with space characters
-A0300020	# CMPSKIP.NE R0 32
+A0300020	# CMPSKIPI.NE R0 32
 3C00 @Tokenize_Line_0	# JUMP @Tokenize_Line_0 ; Throw away byte and try again
 # ;; Flag if reached EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 0D00003E	# TRUE R14
 # ;; Stop if EOF
-A0100000	# CMPSKIP.GE R0 0
+A0100000	# CMPSKIPI.GE R0 0
 3C00 @Tokenize_Line_Done	# JUMP @Tokenize_Line_Done
 # ;; Allocate a new Node
 09000520	# MOVE R2 R0 ; Get Char out the way
@@ -106,10 +106,10 @@ A0100000	# CMPSKIP.GE R0 0
 2D0F @malloc	# CALLI R15 @malloc ; Get address of new Node
 09000320	# SWAP R2 R0 ; Store Pointer in R2
 # ;; Deal with Strings wrapped in ""
-A0300022	# CMPSKIP.NE R0 34
+A0300022	# CMPSKIPI.NE R0 34
 3C00 @Store_String	# JUMP @Store_String
 # ;; Deal with Strings wrapped in '
-A0300027	# CMPSKIP.NE R0 39
+A0300027	# CMPSKIPI.NE R0 39
 3C00 @Store_String	# JUMP @Store_String
 # ;; Everything else is an atom store it
 2D0F @Store_Atom	# CALLI R15 @Store_Atom
@@ -134,7 +134,7 @@ A0300027	# CMPSKIP.NE R0 39
 # ;; Comment never existed
 :Purge_Line_Comment
 42100100	# FGETC ; Get another Char
-A020000a	# CMPSKIP.E R0 10 ; Stop When LF is reached
+A020000a	# CMPSKIPI.E R0 10 ; Stop When LF is reached
 3C00 @Purge_Line_Comment	# JUMP @Purge_Line_Comment ; Otherwise keep looping
 3C00 @Tokenize_Line_0	# JUMP @Tokenize_Line_0 ; Return as if this never happened
 
@@ -192,11 +192,11 @@ C306 @Store_String_0	# CMPJUMP.NE R0 R6 @Store_String_0 ; Loop if matching not f
 05049045	# STOREX8 R0 R4 R5 ; Store the Byte
 42100100	# FGETC ; Get next Byte
 0F550001	# ADDUI R5 R5 1 ; Prep for next loop
-A0300009	# CMPSKIP.NE R0 9 ; If char is Tab
+A0300009	# CMPSKIPI.NE R0 9 ; If char is Tab
 3C00 @Store_Atom_Done	# JUMP @Store_Atom_Done ; Be done
-A030000a	# CMPSKIP.NE R0 10 ; If char is LF
+A030000a	# CMPSKIPI.NE R0 10 ; If char is LF
 3C00 @Store_Atom_Done	# JUMP @Store_Atom_Done ; Be done
-A0300020	# CMPSKIP.NE R0 32 ; If char is Space
+A0300020	# CMPSKIPI.NE R0 32 ; If char is Space
 3C00 @Store_Atom_Done	# JUMP @Store_Atom_Done ; Be done
 # ;; Otherwise loop
 3C00 @Store_Atom_0	# JUMP @Store_Atom_0
@@ -238,7 +238,7 @@ A0300020	# CMPSKIP.NE R0 32 ; If char is Space
 # ;; Handle case of Head->next not being NULL
 18000000	# LOAD32 R0 R0 0 ; Move to next node
 18200000	# LOAD32 R2 R0 0 ; Get node->next
-A0220000	# CMPSKIP.E R2 0 ; If it is not null
+A0220000	# CMPSKIPI.E R2 0 ; If it is not null
 3C00 @Add_Token_1	# JUMP @Add_Token_1 ; Move to the next node and try again
 3C00 @Add_Token_0	# JUMP @Add_Token_0 ; Else simply act as if we got this node
 # ; in the first place
@@ -269,7 +269,7 @@ A0220000	# CMPSKIP.E R2 0 ; If it is not null
 0503A134	# LOADXU8 R1 R3 R4 ; Get a byte of our second string
 0F440001	# ADDUI R4 R4 1 ; Prep for next loop
 05004101	# CMP R1 R0 R1 ; Compare the bytes
-A0200000	# CMPSKIP.E R0 0 ; Stop if byte is NULL
+A0200000	# CMPSKIPI.E R0 0 ; Stop if byte is NULL
 2C51 @cmpbyte	# JUMP.E R1 @cmpbyte ; Loop if bytes are equal
 # ;; Done
 09000501	# MOVE R0 R1 ; Prepare for return
@@ -312,7 +312,7 @@ A0200000	# CMPSKIP.E R0 0 ; Stop if byte is NULL
 18220000	# LOAD32 R2 R2 0 ; Get Next->Next
 18020008	# LOAD32 R0 R2 8 ; Get Next->Next->Text
 18320004	# LOAD32 R3 R2 4 ; Get Next->Next->type
-A0330002	# CMPSKIP.NE R3 2 ; If node is a string
+A0330002	# CMPSKIPI.NE R3 2 ; If node is a string
 0F000001	# ADDUI R0 R0 1 ; Skip first char
 2301000c	# STORE32 R0 R1 12 ; Set Expression = Next->Next->Text
 # ;; Set p->Next = p->Next->Next->Next
@@ -320,7 +320,7 @@ A0330002	# CMPSKIP.NE R3 2 ; If node is a string
 23010000	# STORE32 R0 R1 0 ; Set Next = Next->Next->Next
 :Identify_Macros_1
 18010000	# LOAD32 R0 R1 0 ; Get node->next
-A0300000	# CMPSKIP.NE R0 0 ; If node->next is NULL
+A0300000	# CMPSKIPI.NE R0 0 ; If node->next is NULL
 3C00 @Identify_Macros_Done	# JUMP @Identify_Macros_Done ; Be done
 # ;; Otherwise keep looping
 3C00 @Identify_Macros_0	# JUMP @Identify_Macros_0
@@ -351,9 +351,9 @@ A0300000	# CMPSKIP.NE R0 0 ; If node->next is NULL
 1820000c	# LOAD32 R2 R0 12 ; Load Expression pointer
 18100008	# LOAD32 R1 R0 8 ; Load Text pointer
 18000000	# LOAD32 R0 R0 0 ; Load Next pointer
-A0330001	# CMPSKIP.NE R3 1 ; If a macro
+A0330001	# CMPSKIPI.NE R3 1 ; If a macro
 2D0F @setExpression	# CALLI R15 @setExpression ; Apply to other nodes
-A0200000	# CMPSKIP.E R0 0 ; If Next is Null
+A0200000	# CMPSKIPI.E R0 0 ; If Next is Null
 3C00 @Line_Macro_0	# JUMP @Line_Macro_0 ; Don't loop
 # ;; Clean up
 0902803F	# POPR R3 R15
@@ -380,7 +380,7 @@ A0200000	# CMPSKIP.E R0 0 ; If Next is Null
 09000450	# COPY R5 R0 ; Use R5 for Node pointer
 :setExpression_0
 18350004	# LOAD32 R3 R5 4 ; Load type into R3
-A0330001	# CMPSKIP.NE R3 1 ; Check if Macro
+A0330001	# CMPSKIPI.NE R3 1 ; Check if Macro
 3C00 @setExpression_1	# JUMP @setExpression_1 ; Move to next if Macro
 18050008	# LOAD32 R0 R5 8 ; Load Text pointer into R0 for Comparision
 09000414	# COPY R1 R4 ; Put Macro Text for comparision
@@ -411,13 +411,13 @@ A0330001	# CMPSKIP.NE R3 1 ; Check if Macro
 :Process_String_0
 # ;; Get node type
 18100004	# LOAD32 R1 R0 4 ; Load Type
-A0210002	# CMPSKIP.E R1 2 ; If not a string
+A0210002	# CMPSKIPI.E R1 2 ; If not a string
 3C00 @Process_String_Done	# JUMP @Process_String_Done ; Just go to next
 # ;; Its a string
 18100008	# LOAD32 R1 R0 8 ; Get Text pointer
 14210000	# LOAD8 R2 R1 0 ; Get first char of Text
 # ;; Deal with '
-A0220027	# CMPSKIP.E R2 39 ; If char is not '
+A0220027	# CMPSKIPI.E R2 39 ; If char is not '
 3C00 @Process_String_1	# JUMP @Process_String_1 ; Move to next label
 # ;; Simply use Hex strings as is
 0F110001	# ADDUI R1 R1 1 ; Move Text pointer by 1
@@ -428,7 +428,7 @@ A0220027	# CMPSKIP.E R2 39 ; If char is not '
 2D0F @Hexify_String	# CALLI R15 @Hexify_String
 :Process_String_Done
 18000000	# LOAD32 R0 R0 0 ; Load Next
-A0200000	# CMPSKIP.E R0 0 ; If Next isn't NULL
+A0200000	# CMPSKIPI.E R0 0 ; If Next isn't NULL
 3C00 @Process_String_0	# JUMP @Process_String_0 ; Recurse down list
 # ;; Restore registers
 0902802F	# POPR R2 R15
@@ -465,7 +465,7 @@ B03000ff	# ANDI R3 R0 0xFF ; Preserve byte to check for NULL
 2D0F @hex32	# CALLI R15 @hex32 ; Convert to hex and store in Expression
 0F220004	# ADDUI R2 R2 4 ; Pointer Text pointer to next 4 bytes
 0F440008	# ADDUI R4 R4 8 ; Increment storage space required
-A0230000	# CMPSKIP.E R3 0 ; If byte was NULL
+A0230000	# CMPSKIPI.E R3 0 ; If byte was NULL
 3C00 @Hexify_String_0	# JUMP @Hexify_String_0
 # ;; Done
 0F040001	# ADDUI R0 R4 1 ; Lead space for NULL terminator
@@ -502,7 +502,7 @@ A0230000	# CMPSKIP.E R3 0 ; If byte was NULL
 :hex4
 B000000f	# ANDI R0 R0 0x000F ; isolate nybble
 0F000030	# ADDUI R0 R0 48 ; convert to ascii
-A0400039	# CMPSKIP.LE R0 57 ; If nybble was greater than '9'
+A0400039	# CMPSKIPI.LE R0 57 ; If nybble was greater than '9'
 0F000007	# ADDUI R0 R0 7 ; Shift it into 'A' range of ascii
 21010000	# STORE8 R0 R1 0 ; Store Hex Char
 0F110001	# ADDUI R1 R1 1 ; Increment address pointer
@@ -537,7 +537,7 @@ A0400039	# CMPSKIP.LE R0 57 ; If nybble was greater than '9'
 09000401	# COPY R0 R1 ; Put Text pointer into R0
 2D0F @numerate_string	# CALLI R15 @numerate_string ; Convert to number in R0
 14110000	# LOAD8 R1 R1 0 ; Get first char of Text
-A0210030	# CMPSKIP.E R1 48 ; Skip next comparision if '0'
+A0210030	# CMPSKIPI.E R1 48 ; Skip next comparision if '0'
 C205 @Eval_Immediates_1	# CMPJUMP.E R0 R5 @Eval_Immediates_1 ; Don't do anything if string isn't a number
 09000510	# MOVE R1 R0 ; Preserve number
 2D200005	# LOADUI R0 5 ; Allocate enough space for 4 hex and a null
@@ -578,24 +578,24 @@ C245 @Eval_Immediates_2	# CMPJUMP.E R4 R5 @Eval_Immediates_2 ; If null be done
 0D000022	# FALSE R2 ; Set Negative flag to false
 0D000023	# FALSE R3 ; Set current count to Zero
 14010001	# LOAD8 R0 R1 1 ; Get second byte
-A0300078	# CMPSKIP.NE R0 120 ; If the second byte is x
+A0300078	# CMPSKIPI.NE R0 120 ; If the second byte is x
 3C00 @numerate_string_hex	# JUMP @numerate_string_hex ; treat string like hex
 # ;; Deal with Decimal input
 2D24000a	# LOADUI R4 10 ; Multiply by 10
 14010000	# LOAD8 R0 R1 0 ; Get a byte
-A030002d	# CMPSKIP.NE R0 45 ; If - toggle flag
+A030002d	# CMPSKIPI.NE R0 45 ; If - toggle flag
 0D000032	# TRUE R2 ; So that we know to negate
-A0220000	# CMPSKIP.E R2 0 ; If toggled
+A0220000	# CMPSKIPI.E R2 0 ; If toggled
 0F110001	# ADDUI R1 R1 1 ; Move to next
 :numerate_string_dec
 14010000	# LOAD8 R0 R1 0 ; Get a byte
-A0300000	# CMPSKIP.NE R0 0 ; If NULL
+A0300000	# CMPSKIPI.NE R0 0 ; If NULL
 3C00 @numerate_string_done	# JUMP @numerate_string_done ; Be done
 05006334	# MUL R3 R3 R4 ; Shift counter by 10
 10000030	# SUBI R0 R0 48 ; Convert ascii to number
-A0100000	# CMPSKIP.GE R0 0 ; If less than a number
+A0100000	# CMPSKIPI.GE R0 0 ; If less than a number
 3C00 @numerate_string_done	# JUMP @numerate_string_done ; Terminate NOW
-A050000a	# CMPSKIP.L R0 10 ; If more than a number
+A050000a	# CMPSKIPI.L R0 10 ; If more than a number
 3C00 @numerate_string_done	# JUMP @numerate_string_done ; Terminate NOW
 05001330	# ADDU R3 R3 R0 ; Don't add to the count
 0F110001	# ADDUI R1 R1 1 ; Move onto next byte
@@ -603,25 +603,25 @@ A050000a	# CMPSKIP.L R0 10 ; If more than a number
 # ;; Deal with Hex input
 :numerate_string_hex
 14010000	# LOAD8 R0 R1 0 ; Get a byte
-A0200030	# CMPSKIP.E R0 48 ; All hex strings start with 0x
+A0200030	# CMPSKIPI.E R0 48 ; All hex strings start with 0x
 3C00 @numerate_string_done	# JUMP @numerate_string_done ; Be done if not a match
 0F110002	# ADDUI R1 R1 2 ; Move to after leading 0x
 :numerate_string_hex_0
 14010000	# LOAD8 R0 R1 0 ; Get a byte
-A0300000	# CMPSKIP.NE R0 0 ; If NULL
+A0300000	# CMPSKIPI.NE R0 0 ; If NULL
 3C00 @numerate_string_done	# JUMP @numerate_string_done ; Be done
 2D530004	# SL0I R3 4 ; Shift counter by 16
 10000030	# SUBI R0 R0 48 ; Convert ascii number to number
-A050000a	# CMPSKIP.L R0 10 ; If A-F
+A050000a	# CMPSKIPI.L R0 10 ; If A-F
 10000007	# SUBI R0 R0 7 ; Shove into Range
-A0500010	# CMPSKIP.L R0 16 ; If a-f
+A0500010	# CMPSKIPI.L R0 16 ; If a-f
 10000020	# SUBI R0 R0 32 ; Shove into Range
 05001330	# ADDU R3 R3 R0 ; Add to the count
 0F110001	# ADDUI R1 R1 1 ; Get next Hex
 3C00 @numerate_string_hex_0	# JUMP @numerate_string_hex_0
 # ;; Clean up
 :numerate_string_done
-A0220000	# CMPSKIP.E R2 0 ; If Negate flag has been set
+A0220000	# CMPSKIPI.E R2 0 ; If Negate flag has been set
 09000033	# NEG R3 R3 ; Make the number negative
 09000503	# MOVE R0 R3 ; Put number in R0
 # ;; Restore Registers
@@ -720,7 +720,7 @@ A0220000	# CMPSKIP.E R2 0 ; If Negate flag has been set
 0D000024	# FALSE R4 ; Start index at 0
 :Print_Line_0
 0503A034	# LOADXU8 R0 R3 R4 ; Get our first byte
-A0300000	# CMPSKIP.NE R0 0 ; If the loaded byte is NULL
+A0300000	# CMPSKIPI.NE R0 0 ; If the loaded byte is NULL
 3C00 @Print_Line_Done	# JUMP @Print_Line_Done ; Be done
 42100200	# FPUTC ; Otherwise print
 0F440001	# ADDUI R4 R4 1 ; Increment for next loop
