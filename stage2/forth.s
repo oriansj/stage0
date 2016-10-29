@@ -13,6 +13,9 @@
 	;; Next pointer [R13]
 	;; Current pointer [R12]
 	;; Address of NEXT [R11]
+	;; Forth STATE [R10]
+	;; Forth LATEST (Pointer to last defined function) [R9]
+	;; Forth HERE (Pointer to next free byte in HEAP) [R8]
 
 	;; Start function
 	;; Loads contents of tape_01
@@ -389,6 +392,164 @@
 	POPR R0 R14
 	NOT R0 R0
 	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;; LIT
+:LIT_Text
+"LIT"
+:LIT_Entry
+	&NOT_Entry					; Pointer to NOT
+	&LIT_Text					; Pointer to Name
+	NOP						; Flags
+	LOAD R0 R11 0				; Get contents of NEXT
+	ADDUI R11 R11 4			; Increment NEXT
+	PUSHR R0 R14				; Put immediate onto stack
+	JSR_COROUTINE R11			; NEXT
+
+;; Memory manipulation instructions
+
+;; STORE
+:Store_Text
+"!"
+:Store_Entry
+	&LIT_Entry					; Pointer to LIT
+	&Store_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14				; Destination
+	POPR R1 R14				; Contents
+	STORE R1 R0 0				; Write out
+	JSR_COROUTINE R11			; NEXT
+
+;; FETCH
+:Fetch_Text
+"@"
+:Fetch_Entry
+	&Store_Entry				; Pointer to Store
+	&Fetch_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14				; Source address
+	LOAD R0 R0 0				; Get Contents
+	PUSHR R0 R14				; Push Contents
+	JSR_COROUTINE R11			; NEXT
+
+;; ADDSTORE
+:AStore_Text
+"+!"
+:AStore_Entry
+	&Fetch_Entry				; Pointer to Fetch
+	&AStore_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14				; Destination
+	POPR R1 R14				; How much to add
+	LOAD R2 R0 0				; Get contents of address
+	ADD R1 R1 R2				; Combine
+	STORE R1 R0 0				; Write out
+	JSR_COROUTINE R11			; NEXT
+
+;; SUBSTORE
+:SStore_Text
+"-!"
+:SStore_Entry
+	&AStore_Entry				; Pointer to ADDSTORE
+	&SStore_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14				; Destination
+	POPR R1 R14				; How much to sub
+	LOAD R2 R0 0				; Get contents of address
+	SUB R1 R2 R1				; Subtract
+	STORE R1 R0 0				; Write out
+	JSR_COROUTINE R11			; NEXT
+
+;; STOREBYTE
+:SByte_Text
+"C!"
+:SByte_Entry
+	&SStore_Entry				; Pointer to SUBSTORE
+	&SByte_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14				; Destination
+	POPR R1 R14				; Contents
+	STORE8 R1 R0 0				; Write out
+	JSR_COROUTINE R11			; NEXT
+
+;; FETCHBYTE
+:FByte_Text
+"C@"
+:FByte_Entry
+	&SByte_Entry				; Pointer to STOREBYTE
+	&FByte_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14				; Source address
+	LOADU8 R0 R0 0				; Get Contents
+	PUSHR R0 R14				; Push Contents
+	JSR_COROUTINE R11			; NEXT
+
+;; CMOVE
+:CMove_Text
+"CMOVE"
+:CMove_Entry
+	&FByte_Entry				; Pointer to FETCHBYTE
+	&CMove_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14				; Get number of bytes to Move
+	POPR R1 R14				; Where to put the result
+	POPR R2 R14				; Where it is coming from
+	FALSE R4					; Prepare for Zeroing
+:Cmove_Main
+	CMPSKIPI.GE R0 4			; Loop if we have 4 or more bytes to move
+	JUMP @Cmove_Slow			; Otherwise slowly move bytes
+	LOAD R3 R2 0				; Get 4 Bytes
+	STORE R4 R2 0				; Overwrite that memory with Zeros
+	STORE R3 R1 0				; Store them at the destination
+	ADDUI R1 R1 4				; Increment Source by 4
+	ADDUI R2 R2 4				; Increment Destination by 4
+	SUBI R0 R0 4				; Decrement number of bytes to move by 4
+	JUMP @Cmove_Main			; Loop more
+
+:Cmove_Slow
+	CMPSKIPI.G R0 0			; While number of bytes is greater than 0
+	JUMP @Cmove_Done			; Otherwise be done
+	LOADU8 R3 R2 0				; Get 4 Bytes
+	STORE8 R4 R2 0				; Overwrite that memory with Zeros
+	STORE8 R3 R1 0				; Store them at the destination
+	ADDUI R1 R1 1				; Increment Source by 1
+	ADDUI R2 R2 1				; Increment Destination by 1
+	SUBI R0 R0 1				; Decrement number of bytes to move by 1
+	JUMP @Cmove_Slow			; Loop more
+
+:Cmove_Done
+	JSR_COROUTINE R11			; NEXT
+
+;; Global variables
+
+;; STATE
+:State_Text
+"STATE"
+:State_Entry
+	&CMove_Entry				; Pointer to CMOVE
+	&State_Text				; Pointer to Name
+	NOP						; Flags
+	PUSHR R10 R14				; Put STATE onto stack
+	JSR_COROUTINE R11			; NEXT
+
+;; LATEST
+:Latest_Text
+"LATEST"
+:Latest_Entry
+	&State_Entry				; Pointer to STATE
+	&Latest_Text				; Pointer to Name
+	NOP						; Flags
+	PUSHR R9 R14				; Put LATEST onto stack
+	JSR_COROUTINE R11			; NEXT
+
+;; HERE
+:Here_Text
+"HERE"
+:Here_Entry
+	&Latest_Entry				; Pointer to
+	&Here_Text					; Pointer to Name
+	NOP						; Flags
+	PUSHR R8 R14				; Put HERE onto stack
 	JSR_COROUTINE R11			; NEXT
 
 :cold_start
