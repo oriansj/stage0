@@ -911,54 +911,54 @@ void decode_Integer_2OPI(struct Instruction* c)
 			strncpy(Name, "XNORI", 19);
 			break;
 		}
-		case 0xC0: /* CMPJUMP.G */
+		case 0xC0: /* CMPJUMPI.G */
 		{
-			strncpy(Name, "CMPJUMP.G", 19);
+			strncpy(Name, "CMPJUMPI.G", 19);
 			break;
 		}
-		case 0xC1: /* CMPJUMP.GE */
+		case 0xC1: /* CMPJUMPI.GE */
 		{
-			strncpy(Name, "CMPJUMP.GE", 19);
+			strncpy(Name, "CMPJUMPI.GE", 19);
 			break;
 		}
-		case 0xC2: /* CMPJUMP.E */
+		case 0xC2: /* CMPJUMPI.E */
 		{
-			strncpy(Name, "CMPJUMP.E", 19);
+			strncpy(Name, "CMPJUMPI.E", 19);
 			break;
 		}
-		case 0xC3: /* CMPJUMP.NE */
+		case 0xC3: /* CMPJUMPI.NE */
 		{
-			strncpy(Name, "CMPJUMP.NE", 19);
+			strncpy(Name, "CMPJUMPI.NE", 19);
 			break;
 		}
-		case 0xC4: /* CMPJUMP.LE */
+		case 0xC4: /* CMPJUMPI.LE */
 		{
-			strncpy(Name, "CMPJUMP.LE", 19);
+			strncpy(Name, "CMPJUMPI.LE", 19);
 			break;
 		}
-		case 0xC5: /* CMPJUMP.L */
+		case 0xC5: /* CMPJUMPI.L */
 		{
-			strncpy(Name, "CMPJUMP.L", 19);
+			strncpy(Name, "CMPJUMPI.L", 19);
 			break;
 		}
-		case 0xD0: /* CMPJUMPU.G */
+		case 0xD0: /* CMPJUMPUI.G */
 		{
-			strncpy(Name, "CMPJUMPU.G", 19);
+			strncpy(Name, "CMPJUMPUI.G", 19);
 			break;
 		}
-		case 0xD1: /* CMPJUMPU.GE */
+		case 0xD1: /* CMPJUMPUI.GE */
 		{
-			strncpy(Name, "CMPJUMPU.GE", 19);
+			strncpy(Name, "CMPJUMPUI.GE", 19);
 			break;
 		}
-		case 0xD4: /* CMPJUMPU.LE */
+		case 0xD4: /* CMPJUMPUI.LE */
 		{
-			strncpy(Name, "CMPJUMPU.LE", 19);
+			strncpy(Name, "CMPJUMPUI.LE", 19);
 			break;
 		}
-		case 0xD5: /* CMPJUMPU.L */
+		case 0xD5: /* CMPJUMPUI.L */
 		{
-			strncpy(Name, "CMPJUMPU.L", 19);
+			strncpy(Name, "CMPJUMPUI.L", 19);
 			break;
 		}
 		default: /* Unknown 2OPI*/

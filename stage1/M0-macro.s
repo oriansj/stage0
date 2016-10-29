@@ -182,7 +182,7 @@
 	STOREX8 R0 R4 R5            ; Store the Byte
 	FGETC                       ; Get next Byte
 	ADDUI R5 R5 1               ; Prep for next loop
-	CMPJUMP.NE R0 R6 @Store_String_0 ; Loop if matching not found
+	CMPJUMPI.NE R0 R6 @Store_String_0 ; Loop if matching not found
 
 	;; Clean up
 	STORE32 R4 R2 8             ; Set Text pointer
@@ -602,7 +602,7 @@
 	CALLI R15 @numerate_string  ; Convert to number in R0
 	LOAD8 R1 R1 0               ; Get first char of Text
 	CMPSKIPI.E R1 48            ; Skip next comparision if '0'
-	CMPJUMP.E R0 R5 @Eval_Immediates_1 ; Don't do anything if string isn't a number
+	CMPJUMPI.E R0 R5 @Eval_Immediates_1 ; Don't do anything if string isn't a number
 	MOVE R1 R0                  ; Preserve number
 	LOADUI R0 5                 ; Allocate enough space for 4 hex and a null
 	CALLI R15 @malloc           ; Obtain the pointer the newly allocated Expression
@@ -612,7 +612,7 @@
 
 ;; Handle looping
 :Eval_Immediates_1
-	CMPJUMP.E R4 R5 @Eval_Immediates_2 ; If null be done
+	CMPJUMPI.E R4 R5 @Eval_Immediates_2 ; If null be done
 	MOVE R0 R4                  ; Prepare for next loop
 	JUMP @Eval_Immediates_0     ; And loop
 

@@ -595,27 +595,27 @@ DO NOT USE.
 | ...         | Reserved        |                    |
 | BF FF FF FF | Reserved        |                    |
 
-** CMPJUMP Group
-| Hex         | Name                  | Comment                             |
-|-------------+-----------------------+-------------------------------------|
-| C0 ab ii ii | CMPJUMP.G a b ii ii   | a > b ? PC = PC + ii ii             |
-| C1 ab ii ii | CMPJUMP.GE a b ii ii  | a >= b ? PC = PC + ii ii            |
-| C2 ab ii ii | CMPJUMP.E a b ii ii   | a == b ? PC = PC + ii ii            |
-| C3 ab ii ii | CMPJUMP.NE a b ii ii  | a != b ? PC = PC + ii ii            |
-| C4 ab ii ii | CMPJUMP.LE a b ii ii  | a <= b ? PC = PC + ii ii            |
-| C5 ab ii ii | CMPJUMP.L a b ii ii   | a < b ? PC = PC + ii ii             |
-| C6 ab ii ii | Reserved              |                                     |
-| ...         | Reserved              |                                     |
-| CF ab ii ii | Reserved              |                                     |
-| D0 ab ii ii | CMPJUMPU.G a b ii ii  | a > b ? PC = PC + ii ii (unsigned)  |
-| D1 ab ii ii | CMPJUMPU.GE a b ii ii | a >= b ? PC = PC + ii ii (unsigned) |
-| D2 ab ii ii | Reserved              |                                     |
-| D3 ab ii ii | Reserved              |                                     |
-| D4 ab ii ii | CMPJUMPU.LE a b ii ii | a <= b ? PC = PC + ii ii (unsigned) |
-| D5 ab ii ii | CMPJUMPU.L a b ii ii  | a < b ? PC = PC + ii ii (unsigned)  |
-| D6 ab ii ii | Reserved              |                                     |
-| ...         | Reserved              |                                     |
-| DF ab ii ii | Reserved              |                                     |
+** CMPJUMPI Group
+| Hex         | Name                   | Comment                             |
+|-------------+------------------------+-------------------------------------|
+| C0 ab ii ii | CMPJUMPI.G a b ii ii   | a > b ? PC = PC + ii ii             |
+| C1 ab ii ii | CMPJUMPI.GE a b ii ii  | a >= b ? PC = PC + ii ii            |
+| C2 ab ii ii | CMPJUMPI.E a b ii ii   | a == b ? PC = PC + ii ii            |
+| C3 ab ii ii | CMPJUMPI.NE a b ii ii  | a != b ? PC = PC + ii ii            |
+| C4 ab ii ii | CMPJUMPI.LE a b ii ii  | a <= b ? PC = PC + ii ii            |
+| C5 ab ii ii | CMPJUMPI.L a b ii ii   | a < b ? PC = PC + ii ii             |
+| C6 ab ii ii | Reserved               |                                     |
+| ...         | Reserved               |                                     |
+| CF ab ii ii | Reserved               |                                     |
+| D0 ab ii ii | CMPJUMPUI.G a b ii ii  | a > b ? PC = PC + ii ii (unsigned)  |
+| D1 ab ii ii | CMPJUMPUI.GE a b ii ii | a >= b ? PC = PC + ii ii (unsigned) |
+| D2 ab ii ii | Reserved               |                                     |
+| D3 ab ii ii | Reserved               |                                     |
+| D4 ab ii ii | CMPJUMPUI.LE a b ii ii | a <= b ? PC = PC + ii ii (unsigned) |
+| D5 ab ii ii | CMPJUMPUI.L a b ii ii  | a < b ? PC = PC + ii ii (unsigned)  |
+| D6 ab ii ii | Reserved               |                                     |
+| ...         | Reserved               |                                     |
+| DF ab ii ii | Reserved               |                                     |
 
 ** Reserved Block 3
 At this time these instructions only produce a warning; but could do anything.

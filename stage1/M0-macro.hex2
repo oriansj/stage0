@@ -160,7 +160,7 @@ A020000a	# CMPSKIPI.E R0 10 ; Stop When LF is reached
 05049045	# STOREX8 R0 R4 R5 ; Store the Byte
 42100100	# FGETC ; Get next Byte
 0F550001	# ADDUI R5 R5 1 ; Prep for next loop
-C306 @Store_String_0	# CMPJUMP.NE R0 R6 @Store_String_0 ; Loop if matching not found
+C306 @Store_String_0	# CMPJUMPI.NE R0 R6 @Store_String_0 ; Loop if matching not found
 # ;; Clean up
 23420008	# STORE32 R4 R2 8 ; Set Text pointer
 0F050004	# ADDUI R0 R5 4 ; Correct Malloc
@@ -538,7 +538,7 @@ A0400039	# CMPSKIPI.LE R0 57 ; If nybble was greater than '9'
 2D0F @numerate_string	# CALLI R15 @numerate_string ; Convert to number in R0
 14110000	# LOAD8 R1 R1 0 ; Get first char of Text
 A0210030	# CMPSKIPI.E R1 48 ; Skip next comparision if '0'
-C205 @Eval_Immediates_1	# CMPJUMP.E R0 R5 @Eval_Immediates_1 ; Don't do anything if string isn't a number
+C205 @Eval_Immediates_1	# CMPJUMPI.E R0 R5 @Eval_Immediates_1 ; Don't do anything if string isn't a number
 09000510	# MOVE R1 R0 ; Preserve number
 2D200005	# LOADUI R0 5 ; Allocate enough space for 4 hex and a null
 2D0F @malloc	# CALLI R15 @malloc ; Obtain the pointer the newly allocated Expression
@@ -547,7 +547,7 @@ C205 @Eval_Immediates_1	# CMPJUMP.E R0 R5 @Eval_Immediates_1 ; Don't do anything
 2D0F @hex16	# CALLI R15 @hex16 ; Shove our number into expression
 # ;; Handle looping
 :Eval_Immediates_1
-C245 @Eval_Immediates_2	# CMPJUMP.E R4 R5 @Eval_Immediates_2 ; If null be done
+C245 @Eval_Immediates_2	# CMPJUMPI.E R4 R5 @Eval_Immediates_2 ; If null be done
 09000504	# MOVE R0 R4 ; Prepare for next loop
 3C00 @Eval_Immediates_0	# JUMP @Eval_Immediates_0 ; And loop
 # ;; Clean up

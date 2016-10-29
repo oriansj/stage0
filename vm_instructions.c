@@ -1649,7 +1649,7 @@ void JUMP_NP(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMP_G(struct lilith* vm, struct Instruction* c)
+void CMPJUMPI_G(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1660,7 +1660,7 @@ void CMPJUMP_G(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMP_GE(struct lilith* vm, struct Instruction* c)
+void CMPJUMPI_GE(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1671,7 +1671,7 @@ void CMPJUMP_GE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMP_E(struct lilith* vm, struct Instruction* c)
+void CMPJUMPI_E(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) == (vm->reg[c->reg1]))
 	{
@@ -1679,7 +1679,7 @@ void CMPJUMP_E(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMP_NE(struct lilith* vm, struct Instruction* c)
+void CMPJUMPI_NE(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) != (vm->reg[c->reg1]))
 	{
@@ -1687,7 +1687,7 @@ void CMPJUMP_NE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMP_LE(struct lilith* vm, struct Instruction* c)
+void CMPJUMPI_LE(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1698,7 +1698,7 @@ void CMPJUMP_LE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMP_L(struct lilith* vm, struct Instruction* c)
+void CMPJUMPI_L(struct lilith* vm, struct Instruction* c)
 {
 	int32_t tmp1, tmp2;
 	tmp1 = (int32_t)(vm->reg[c->reg0]);
@@ -1709,7 +1709,7 @@ void CMPJUMP_L(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMPU_G(struct lilith* vm, struct Instruction* c)
+void CMPJUMPUI_G(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) > (vm->reg[c->reg1]))
 	{
@@ -1717,7 +1717,7 @@ void CMPJUMPU_G(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c)
+void CMPJUMPUI_GE(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) >= (vm->reg[c->reg1]))
 	{
@@ -1725,7 +1725,7 @@ void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c)
+void CMPJUMPUI_LE(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) <= (vm->reg[c->reg1]))
 	{
@@ -1733,7 +1733,7 @@ void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c)
 	}
 }
 
-void CMPJUMPU_L(struct lilith* vm, struct Instruction* c)
+void CMPJUMPUI_L(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) < (vm->reg[c->reg1]))
 	{

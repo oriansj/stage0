@@ -1830,114 +1830,114 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			XNORI(vm, c);
 			break;
 		}
-		case 0xC0: /* CMPJUMP.G */
+		case 0xC0: /* CMPJUMPI.G */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMP.G", 19);
+			strncpy(Name, "CMPJUMPI.G", 19);
 			#elif TRACE
-			record_trace("CMPJUMP.G");
+			record_trace("CMPJUMPI.G");
 			#endif
 
-			CMPJUMP_G(vm, c);
+			CMPJUMPI_G(vm, c);
 			break;
 		}
-		case 0xC1: /* CMPJUMP.GE */
+		case 0xC1: /* CMPJUMPI.GE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMP.GE", 19);
+			strncpy(Name, "CMPJUMPI.GE", 19);
 			#elif TRACE
-			record_trace("CMPJUMP.GE");
+			record_trace("CMPJUMPI.GE");
 			#endif
 
-			CMPJUMP_GE(vm, c);
+			CMPJUMPI_GE(vm, c);
 			break;
 		}
-		case 0xC2: /* CMPJUMP.E */
+		case 0xC2: /* CMPJUMPI.E */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMP.E", 19);
+			strncpy(Name, "CMPJUMPI.E", 19);
 			#elif TRACE
-			record_trace("CMPJUMP.E");
+			record_trace("CMPJUMPI.E");
 			#endif
 
-			CMPJUMP_E(vm, c);
+			CMPJUMPI_E(vm, c);
 			break;
 		}
-		case 0xC3: /* CMPJUMP.NE */
+		case 0xC3: /* CMPJUMPI.NE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMP.NE", 19);
+			strncpy(Name, "CMPJUMPI.NE", 19);
 			#elif TRACE
-			record_trace("CMPJUMP.NE");
+			record_trace("CMPJUMPI.NE");
 			#endif
 
-			CMPJUMP_NE(vm, c);
+			CMPJUMPI_NE(vm, c);
 			break;
 		}
-		case 0xC4: /* CMPJUMP.LE */
+		case 0xC4: /* CMPJUMPI.LE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMP.LE", 19);
+			strncpy(Name, "CMPJUMPI.LE", 19);
 			#elif TRACE
-			record_trace("CMPJUMP.LE");
+			record_trace("CMPJUMPI.LE");
 			#endif
 
-			CMPJUMP_LE(vm, c);
+			CMPJUMPI_LE(vm, c);
 			break;
 		}
-		case 0xC5: /* CMPJUMP.L */
+		case 0xC5: /* CMPJUMPI.L */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMP.L", 19);
+			strncpy(Name, "CMPJUMPI.L", 19);
 			#elif TRACE
-			record_trace("CMPJUMP.L");
+			record_trace("CMPJUMPI.L");
 			#endif
 
-			CMPJUMP_L(vm, c);
+			CMPJUMPI_L(vm, c);
 			break;
 		}
-		case 0xD0: /* CMPJUMPU.G */
+		case 0xD0: /* CMPJUMPUI.G */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMPU.G", 19);
+			strncpy(Name, "CMPJUMPUI.G", 19);
 			#elif TRACE
-			record_trace("CMPJUMPU.G");
+			record_trace("CMPJUMPUI.G");
 			#endif
 
-			CMPJUMPU_G(vm, c);
+			CMPJUMPUI_G(vm, c);
 			break;
 		}
-		case 0xD1: /* CMPJUMPU.GE */
+		case 0xD1: /* CMPJUMPUI.GE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMPU.GE", 19);
+			strncpy(Name, "CMPJUMPUI.GE", 19);
 			#elif TRACE
-			record_trace("CMPJUMPU.GE");
+			record_trace("CMPJUMPUI.GE");
 			#endif
 
-			CMPJUMPU_GE(vm, c);
+			CMPJUMPUI_GE(vm, c);
 			break;
 		}
-		case 0xD4: /* CMPJUMPU.LE */
+		case 0xD4: /* CMPJUMPUI.LE */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMPU.LE", 19);
+			strncpy(Name, "CMPJUMPUI.LE", 19);
 			#elif TRACE
-			record_trace("CMPJUMPU.LE");
+			record_trace("CMPJUMPUI.LE");
 			#endif
 
-			CMPJUMPU_LE(vm, c);
+			CMPJUMPUI_LE(vm, c);
 			break;
 		}
-		case 0xD5: /* CMPJUMPU.L */
+		case 0xD5: /* CMPJUMPUI.L */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "CMPJUMPU.L", 19);
+			strncpy(Name, "CMPJUMPUI.L", 19);
 			#elif TRACE
-			record_trace("CMPJUMPU.L");
+			record_trace("CMPJUMPUI.L");
 			#endif
 
-			CMPJUMPU_L(vm, c);
+			CMPJUMPUI_L(vm, c);
 			break;
 		}
 		default: return true;
