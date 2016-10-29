@@ -591,11 +591,33 @@
 :RSPStore_Text
 "RSP!"
 :RSPStore_Entry
-	&RSPFetch_Entry                 ; Pointer to RSP@
-	&ore_Text                       ; Pointer to Name
-	NOP                             ; Flags
-	POPR R15 R14                    ; Replace Return stack pointer from parameter stack
-	JSR_COROUTINE R11               ; NEXT
+	&RSPFetch_Entry             ; Pointer to RSP@
+	&ore_Text                   ; Pointer to Name
+	NOP                         ; Flags
+	POPR R15 R14                ; Replace Return stack pointer from parameter stack
+	JSR_COROUTINE R11           ; NEXT
+
+	;; Parameter stack operations
+
+;; DSP@
+:DSPFetch_Text
+"DSP@"
+:DSPFetch_Entry
+	&RSPStore_Entry             ; Pointer to RSP!
+	&DSPFetch_Text              ; Pointer to Name
+	NOP                         ; Flags
+	PUSHR R14 R14               ; Push current parameter pointer onto parameter stack
+	JSR_COROUTINE R11           ; NEXT
+
+;; DSP!
+:DSPStore_Text
+"DSP!"
+:DSPStore_Entry
+	&DSPFetch_Entry             ; Pointer to DSP@
+	&DSPStore_Text              ; Pointer to Name
+	NOP                         ; Flags
+	POPR R14 R14                ; Replace parameter stack pointer from parameter stack
+	JSR_COROUTINE R11           ; NEXT
 
 :cold_start
 	;;
