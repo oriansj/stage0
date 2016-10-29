@@ -16,6 +16,7 @@
 	;; Forth STATE [R10]
 	;; Forth LATEST (Pointer to last defined function) [R9]
 	;; Forth HERE (Pointer to next free byte in HEAP) [R8]
+	;; IO source [R7]
 
 	;; Start function
 	;; Loads contents of tape_01
@@ -617,6 +618,84 @@
 	&DSPStore_Text              ; Pointer to Name
 	NOP                         ; Flags
 	POPR R14 R14                ; Replace parameter stack pointer from parameter stack
+	JSR_COROUTINE R11           ; NEXT
+
+	;; Input and output
+
+;; KEY
+:Key_Text
+"KEY"
+:Key_Entry
+	&DSPStore_Entry             ; Pointer to DSP!
+	&Key_Text                   ; Pointer to Name
+	NOP                         ; Flags
+	COPY R1 R7                  ; Using designated IO
+	FGETC                       ; Get a byte
+	PUSHR R0 R14                ; And push it onto the stack
+	JSR_COROUTINE R11           ; NEXT
+
+;; EMIT
+:Emit_Text
+"EMIT"
+:Emit_Entry
+	&Key_Entry                  ; Pointer to Key
+	&Emit_Text                  ; Pointer to Name
+	NOP                         ; Flags
+	POPR R0 R14                 ; Get value off the parameter stack
+	COPY R1 R7                  ; Using designated IO
+	FPUTC                       ; Write out the byte
+	JSR_COROUTINE R11           ; NEXT
+
+;; WORD
+:Word_Text
+"WORD"
+:Word_Entry
+	&Emit_Entry                 ; Pointer to Emit
+	&Word_Text                  ; Pointer to Name
+	NOP                         ; Flags
+	COPY R1 R7                  ; Using designated IO
+	FALSE R2                    ; Starting at index 0
+
+:Word_Start
+	FGETC                       ; Read a byte
+	CMPSKIPI.NE R0 9            ; If Tab
+	JUMP @Word_Start            ; Get another byte
+
+	CMPSKIP.NE R0 32            ; If space
+	JUMP @Word_Start            ; Get another byte
+
+:Word_Main
+	CMPSKIPI.NE R0 4            ; If EOF
+	JUMP @Word_Done             ; Stop processing
+
+	CMPSKIPI.NE R0 9            ; If Tab
+	JUMP @Word_Done             ; Be done
+
+	CMPSKIPI.NE R0 32           ; If space
+	JUMP @Word_Done             ; Be done
+
+	CMPSKIPI.NE R0 92           ; If comment
+	JUMP @Word_Comment          ; Purge it and be done
+
+	STOREX8 R0 R8 R2            ; Store byte onto HEAP
+	ADDUI R2 R2 1               ; Increment index
+	FGETC                       ; Read a byte
+	JUMP @Word_Main             ; Keep looping
+
+:Word_Comment
+	FGETC                       ; Get another byte
+	CMPSKIPI.NE R0 4            ; IF EOF
+	JUMP @Word_Done             ; Be done
+	CMPSKIPI.NE R0 10           ; IF Line Feed
+	JUMP @Word_Done             ; Be done
+	JUMP @Word_Comment          ; Otherwise keep looping
+
+:Word_Done
+	PUSHR R8 R14                ; Push pointer to string on parameter stack
+	PUSHR R2 R14                ; Push number of bytes in length onto stack
+	CMPSKIPI.LE R2 0            ; If number of bytes is greater than 0
+	ADDUI R2 R2 1               ; Add a null to end of string
+	ADD R8 R8 R2                ; Update HEAP pointer
 	JSR_COROUTINE R11           ; NEXT
 
 :cold_start
