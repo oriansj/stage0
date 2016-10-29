@@ -620,7 +620,7 @@
 	POPR R14 R14                ; Replace parameter stack pointer from parameter stack
 	JSR_COROUTINE R11           ; NEXT
 
-	;; Input and output
+;; Input and output
 
 ;; KEY
 :Key_Text
@@ -696,6 +696,127 @@
 	CMPSKIPI.LE R2 0            ; If number of bytes is greater than 0
 	ADDUI R2 R2 1               ; Add a null to end of string
 	ADD R8 R8 R2                ; Update HEAP pointer
+	JSR_COROUTINE R11           ; NEXT
+
+;; NUMBER
+:Number_Text
+"NUMBER"
+:Number_Entry
+	&Word_Entry                 ; Pointer to Word
+	&Number_Text                ; Pointer to Name
+	NOP                         ; Flags
+	POPR R1 R14                 ; Get pointer to string for parsing
+	FALSE R2                    ; Set Negate flag to false
+	FALSE R3                    ; Set index to Zero
+	LOAD8 R0 R1 1               ; Get second byte
+	CMPSKIPI.NE R0 120          ; If the second byte is x
+	JUMP @numerate_string_hex   ; treat string like hex
+
+	;; Deal with Decimal input
+	LOADUI R4 10                ; Multiply by 10
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.NE R0 45           ; If - toggle flag
+	TRUE R2                     ; So that we know to negate
+	CMPSKIPI.E R2 0             ; If toggled
+	ADDUI R1 R1 1               ; Move to next
+
+:numerate_string_dec
+	LOAD8 R0 R1 0               ; Get a byte
+
+	CMPSKIPI.NE R0 0            ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	MUL R3 R3 R4                ; Shift counter by 10
+	SUBI R0 R0 48               ; Convert ascii to number
+	CMPSKIPI.GE R0 0            ; If less than a number
+	JUMP @numerate_string_done  ; Terminate NOW
+	CMPSKIPI.L R0 10            ; If more than a number
+	JUMP @numerate_string_done  ; Terminate NOW
+	ADDU R3 R3 R0               ; Don't add to the count
+
+	ADDUI R1 R1 1               ; Move onto next byte
+	JUMP @numerate_string_dec
+
+	;; Deal with Hex input
+:numerate_string_hex
+	LOADU8 R0 R1 0               ; Get a byte
+	CMPSKIPI.E R0 48            ; All hex strings start with 0x
+	JUMP @numerate_string_done  ; Be done if not a match
+	ADDUI R1 R1 2               ; Move to after leading 0x
+
+:numerate_string_hex_0
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.NE R0 0            ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	SL0I R3 4                   ; Shift counter by 16
+	SUBI R0 R0 48               ; Convert ascii number to number
+	CMPSKIPI.L R0 10            ; If A-F
+	SUBI R0 R0 7                ; Shove into Range
+	CMPSKIPI.L R0 16            ; If a-f
+	SUBI R0 R0 32               ; Shove into Range
+	ADDU R3 R3 R0               ; Add to the count
+
+	ADDUI R1 R1 1               ; Get next Hex
+	JUMP @numerate_string_hex_0
+
+:numerate_string_done
+	CMPSKIPI.E R2 0             ; If Negate flag has been set
+	NEG R3 R3                   ; Make the number negative
+	PUSHR R3 R14                ; Store result
+	JSR_COROUTINE R11           ; NEXT
+
+;; strcmp
+:Strcmp_Text
+"STRCMP"
+:Strcmp_Entry
+	&Number_Entry               ; Pointer to NUMBER
+	&Strcmp_Text                ; Pointer to Name
+	NOP                         ; Flags
+	CALLI R15 @Strcmp_Direct    ; Trick to allow direct calls
+	JSR_COROUTINE R11           ; NEXT
+:Strcmp_Direct
+	POPR R2 R14                 ; Load pointer to string1
+	POPR R3 R14                 ; Load pointer to string2
+	LOADUI R4 0                 ; Starting at index 0
+:cmpbyte
+	LOADXU8 R0 R2 R4            ; Get a byte of our first string
+	LOADXU8 R1 R3 R4            ; Get a byte of our second string
+	ADDUI R4 R4 1               ; Prep for next loop
+	CMP R1 R0 R1                ; Compare the bytes
+	CMPSKIPI.E R0 0             ; Stop if byte is NULL
+	JUMP.E R1 @cmpbyte          ; Loop if bytes are equal
+	PUSHR R1 R14                ; Store the comparision result
+	RET R15                     ; Return to whoever called it
+
+
+
+;; FIND
+:Find_Text
+"FIND"
+:Find_Entry
+	&Strcmp_Entry               ; Pointer to STRCMP
+	&Find_Text                  ; Pointer to Name
+	NOP                         ; Flags
+	POPR R0 R14                 ; Get pointer to String to find
+	COPY R3 R9                  ; Copy LATEST
+
+:Find_Loop
+	LOAD R1 R3 4                ; Get Pointer to string
+	PUSHR R3 R14                ; Protect Node pointer
+	PUSHR R0 R14                ; Protect FIND string
+	PUSHR R0 R14                ; Prepare for CALL
+	PUSHR R1 R14                ; Prepare for CALL
+	CALLI R15 @Strcmp_Direct    ; Perform direct call
+	POPR R1 R14                 ; Get return value
+	POPR R0 R14                 ; Restore FIND string pointer
+	POPR R3 R14                 ; Restore Node pointer
+	JUMP.E R1 @Find_Done        ; If find was successful
+	LOAD R3 R3 0                ; Otherwise get next pointer
+	JUMP.NZ R3 @Find_Loop       ; If Not NULL keep looping
+
+:Find_Done
+	PUSHR R3 R14                ; Push pointer or Zero onto parameter stack
 	JSR_COROUTINE R11           ; NEXT
 
 :cold_start
