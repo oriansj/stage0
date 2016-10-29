@@ -264,6 +264,17 @@ void assemble(struct Token* p)
 	setExpression(p, "STOREX8", "05049", 4);
 	setExpression(p, "STOREX16", "0504A", 4);
 	setExpression(p, "STOREX32", "0504B", 4);
+	setExpression(p, "CMPJUMP.G", "05050", 4);
+	setExpression(p, "CMPJUMP.GE", "05051", 4);
+	setExpression(p, "CMPJUMP.E", "05052", 4);
+	setExpression(p, "CMPJUMP.NE", "05053", 4);
+	setExpression(p, "CMPJUMP.LE", "05054", 4);
+	setExpression(p, "CMPJUMP.L", "05055", 4);
+	setExpression(p, "CMPJUMPU.G", "05060", 4);
+	setExpression(p, "CMPJUMPU.GE", "05061", 4);
+	setExpression(p, "CMPJUMPU.LE", "05064", 4);
+	setExpression(p, "CMPJUMPU.L", "05065", 4);
+
 
 	/* 2OP Integer Group */
 	setExpression(p, "NEG", "090000", 4);

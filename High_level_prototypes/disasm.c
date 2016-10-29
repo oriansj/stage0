@@ -485,6 +485,56 @@ void decode_Integer_3OP(struct Instruction* c)
 			strncpy(Name, "STOREX32", 19);
 			break;
 		}
+		case 0x050: /* CMPJUMP.G */
+		{
+			strncpy(Name, "CMPJUMP.G", 19);
+			break;
+		}
+		case 0x051: /* CMPJUMP.GE */
+		{
+			strncpy(Name, "CMPJUMP.GE", 19);
+			break;
+		}
+		case 0x052: /* CMPJUMP.E */
+		{
+			strncpy(Name, "CMPJUMP.E", 19);
+			break;
+		}
+		case 0x053: /* CMPJUMP.NE */
+		{
+			strncpy(Name, "CMPJUMP.NE", 19);
+			break;
+		}
+		case 0x054: /* CMPJUMP.LE */
+		{
+			strncpy(Name, "CMPJUMP.LE", 19);
+			break;
+		}
+		case 0x055: /* CMPJUMP.L */
+		{
+			strncpy(Name, "CMPJUMP.L", 19);
+			break;
+		}
+		case 0x060: /* CMPJUMPU.G */
+		{
+			strncpy(Name, "CMPJUMPU.G", 19);
+			break;
+		}
+		case 0x061: /* CMPJUMPU.GE */
+		{
+			strncpy(Name, "CMPJUMPU.GE", 19);
+			break;
+		}
+		case 0x064: /* CMPJUMPU.LE */
+		{
+			strncpy(Name, "CMPJUMPU.LE", 19);
+			break;
+		}
+		case 0x065: /* CMPJUMPU.L */
+		{
+			strncpy(Name, "CMPJUMPU.L", 19);
+			break;
+		}
 		default: /* Unknown 3OP*/
 		{
 			break;

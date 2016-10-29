@@ -176,10 +176,32 @@
 | 05 04 Ex xx | Reserved       |                       |
 | 05 04 Fx xx | Reserved       |                       |
 
+**** CMPJUMP group
+| Hex         | Name              | Comment         |
+|-------------+-------------------+-----------------|
+| 05 05 0a bc | CMPJUMP.G a b c   | a > b ? PC = c  |
+| 05 05 1a bc | CMPJUMP.GE a b c  | a >= b ? PC = c |
+| 05 05 2a bc | CMPJUMP.E a b c   | a == b ? PC = c |
+| 05 05 3a bc | CMPJUMP.NE a b c  | a != b ? PC = c |
+| 05 05 4a bc | CMPJUMP.LE a b c  | a <= b ? PC = c |
+| 05 05 5a bc | CMPJUMP.L a b c   | a < b ? PC = c  |
+| 05 05 6x xx | Reserved          |                 |
+| ...         | Reserved          |                 |
+| 05 05 Fx xx | Reserved          |                 |
+| 05 06 0a bc | CMPJUMPU.G a b c  | a > b ? PC = c  |
+| 05 06 1a bc | CMPJUMPU.GE a b c | a >= b ? PC = c |
+| 05 06 2a bc | Reserved          |                 |
+| 05 06 3a bc | Reserved          |                 |
+| 05 06 4a bc | CMPJUMPU.LE a b c | a <= b ? PC = c |
+| 05 06 5a bc | CMPJUMPU.L a b c  | a < b ? PC = c  |
+| 05 06 6x xx | Reserved          |                 |
+| ...         | Reserved          |                 |
+| 05 06 Fx xx | Reserved          |                 |
+
 **** Reserved group 2
 | Hex         | Name     |
 |-------------+----------|
-| 05 05 0x xx | Reserved |
+| 05 07 0x xx | Reserved |
 | ...         | Reserved |
 | 05 FF Fx xx | Reserved |
 

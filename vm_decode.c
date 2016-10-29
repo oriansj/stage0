@@ -1106,6 +1106,116 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			STOREX32(vm, c);
 			break;
 		}
+		case 0x050: /* CMPJUMP.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.G", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.G");
+			#endif
+
+			CMPJUMP_G(vm, c);
+			break;
+		}
+		case 0x051: /* CMPJUMP.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.GE", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.GE");
+			#endif
+
+			CMPJUMP_GE(vm, c);
+			break;
+		}
+		case 0x052: /* CMPJUMP.E */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.E", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.E");
+			#endif
+
+			CMPJUMP_E(vm, c);
+			break;
+		}
+		case 0x053: /* CMPJUMP.NE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.NE", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.NE");
+			#endif
+
+			CMPJUMP_NE(vm, c);
+			break;
+		}
+		case 0x054: /* CMPJUMP.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.LE", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.LE");
+			#endif
+
+			CMPJUMP_LE(vm, c);
+			break;
+		}
+		case 0x055: /* CMPJUMP.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMP.L", 19);
+			#elif TRACE
+			record_trace("CMPJUMP.L");
+			#endif
+
+			CMPJUMP_L(vm, c);
+			break;
+		}
+		case 0x060: /* CMPJUMPU.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.G", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.G");
+			#endif
+
+			CMPJUMPU_G(vm, c);
+			break;
+		}
+		case 0x061: /* CMPJUMPU.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.GE", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.GE");
+			#endif
+
+			CMPJUMPU_GE(vm, c);
+			break;
+		}
+		case 0x064: /* CMPJUMPU.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.LE", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.LE");
+			#endif
+
+			CMPJUMPU_LE(vm, c);
+			break;
+		}
+		case 0x065: /* CMPJUMPU.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPJUMPU.L", 19);
+			#elif TRACE
+			record_trace("CMPJUMPU.L");
+			#endif
+
+			CMPJUMPU_L(vm, c);
+			break;
+		}
 		default: return true;
 	}
 	#ifdef DEBUG

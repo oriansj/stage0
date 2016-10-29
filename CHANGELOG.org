@@ -10,6 +10,7 @@
 + Revised stage0 Monitor to utilize ANDI and updated the Hex0 version to incorporate the enhancements made previously
 + Imported CMPSKIP instructions that operate on 2 registers
 + Corrected CMPJUMP(u) to CMPJUMP(u)I to match current naming scheme for instructions
++ Imported CMPJUMP instructions that operate on 3 registers
 
 ** Fixed
 + Fixed leading char bug in M0

@@ -231,7 +231,16 @@ void CMPSKIPU_G(struct lilith* vm, struct Instruction* c);
 void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c);
 void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c);
 void CMPSKIPU_L(struct lilith* vm, struct Instruction* c);
-
+void CMPJUMP_G(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_GE(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_E(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_NE(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_LE(struct lilith* vm, struct Instruction* c);
+void CMPJUMP_L(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_G(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c);
+void CMPJUMPU_L(struct lilith* vm, struct Instruction* c);
 
 /* Prototypes for functions in vm_decode.c*/
 struct lilith* create_vm(size_t size);

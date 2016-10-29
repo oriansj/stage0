@@ -1985,11 +1985,7 @@ void CMPSKIP_GE(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIP_E(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
-
-	if(tmp1 == tmp2)
+	if((vm->reg[c->reg0]) == (vm->reg[c->reg1]))
 	{
 		vm->ip = vm->ip + 4;
 	}
@@ -1997,11 +1993,7 @@ void CMPSKIP_E(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIP_NE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
-
-	if(tmp1 != tmp2)
+	if((vm->reg[c->reg0]) != (vm->reg[c->reg1]))
 	{
 		vm->ip = vm->ip + 4;
 	}
@@ -2033,7 +2025,7 @@ void CMPSKIP_L(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPU_G(struct lilith* vm, struct Instruction* c)
 {
-	if((vm->reg[c->reg0]) > vm->reg[c->reg1])
+	if((vm->reg[c->reg0]) > (vm->reg[c->reg1]))
 	{
 		vm->ip = vm->ip + 4;
 	}
@@ -2041,7 +2033,7 @@ void CMPSKIPU_G(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c)
 {
-	if((vm->reg[c->reg0]) >= vm->reg[c->reg1])
+	if((vm->reg[c->reg0]) >= (vm->reg[c->reg1]))
 	{
 		vm->ip = vm->ip + 4;
 	}
@@ -2049,7 +2041,7 @@ void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c)
 {
-	if((vm->reg[c->reg0]) <= vm->reg[c->reg1])
+	if((vm->reg[c->reg0]) <= (vm->reg[c->reg1]))
 	{
 		vm->ip = vm->ip + 4;
 	}
@@ -2057,8 +2049,100 @@ void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPU_L(struct lilith* vm, struct Instruction* c)
 {
-	if((vm->reg[c->reg0]) < vm->reg[c->reg1])
+	if((vm->reg[c->reg0]) < (vm->reg[c->reg1]))
 	{
 		vm->ip = vm->ip + 4;
+	}
+}
+
+void CMPJUMP_G(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	if(tmp1 > tmp2)
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMP_GE(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	if(tmp1 >= tmp2)
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMP_E(struct lilith* vm, struct Instruction* c)
+{
+	if((vm->reg[c->reg0]) == (vm->reg[c->reg1]))
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMP_NE(struct lilith* vm, struct Instruction* c)
+{
+	if((vm->reg[c->reg0]) != (vm->reg[c->reg1]))
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMP_LE(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	if(tmp1 <= tmp2)
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMP_L(struct lilith* vm, struct Instruction* c)
+{
+	int32_t tmp1, tmp2;
+	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	if(tmp1 < tmp2)
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMPU_G(struct lilith* vm, struct Instruction* c)
+{
+	if((vm->reg[c->reg0]) > (vm->reg[c->reg1]))
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c)
+{
+	if((vm->reg[c->reg0]) >= (vm->reg[c->reg1]))
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c)
+{
+	if((vm->reg[c->reg0]) <= (vm->reg[c->reg1]))
+	{
+		vm->ip = vm->reg[c->reg2];
+	}
+}
+
+void CMPJUMPU_L(struct lilith* vm, struct Instruction* c)
+{
+	if((vm->reg[c->reg0]) < (vm->reg[c->reg1]))
+	{
+		vm->ip = vm->reg[c->reg2];
 	}
 }
