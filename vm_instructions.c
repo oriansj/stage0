@@ -1298,11 +1298,14 @@ void PUSHPC(struct lilith* vm, struct Instruction* c)
 
 void POPPC(struct lilith* vm, struct Instruction* c)
 {
+	/* Update our index */
+	vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
+
 	/* Read in the new PC */
 	vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
 
-	/* Update our index */
-	vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
+	/* Clear memory where PC was */
+	writeout_Reg(vm, vm->reg[c->reg0], 0);
 }
 
 void ADDI(struct lilith* vm, struct Instruction* c)
@@ -1883,45 +1886,59 @@ void PUSH32(struct lilith* vm, struct Instruction* c)
 }
 void POPR(struct lilith* vm, struct Instruction* c)
 {
+	uint32_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
-	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1]);
+	tmp = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
+	vm->reg[c->reg0] = tmp;
 }
 void POP8(struct lilith* vm, struct Instruction* c)
 {
+	int8_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 1;
-	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1], true);
+	tmp = readin_byte(vm, vm->reg[c->reg1], true);
 	writeout_byte(vm, vm->reg[c->reg1], 0);
+	vm->reg[c->reg0] = tmp;
 }
 void POPU8(struct lilith* vm, struct Instruction* c)
 {
+	uint8_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 1;
-	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1], false);
+	tmp = readin_byte(vm, vm->reg[c->reg1], false);
 	writeout_byte(vm, vm->reg[c->reg1], 0);
+	vm->reg[c->reg0] = tmp;
 }
 void POP16(struct lilith* vm, struct Instruction* c)
 {
+	int16_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 2;
-	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1], true);
+	tmp = readin_doublebyte(vm, vm->reg[c->reg1], true);
 	writeout_doublebyte(vm, vm->reg[c->reg1], 0);
+	vm->reg[c->reg0] = tmp;
 }
 void POPU16(struct lilith* vm, struct Instruction* c)
 {
+	uint16_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 2;
-	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1], false);
+	tmp = readin_doublebyte(vm, vm->reg[c->reg1], false);
 	writeout_doublebyte(vm, vm->reg[c->reg1], 0);
+	vm->reg[c->reg0] = tmp;
 }
 void POP32(struct lilith* vm, struct Instruction* c)
 {
+	int32_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
-	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1]);
+	tmp = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
+	vm->reg[c->reg0] = tmp;
 }
 void POPU32(struct lilith* vm, struct Instruction* c)
 {
+	uint32_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
-	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1]);
+	tmp = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
+	vm->reg[c->reg0] = tmp;
 }
 
 void ANDI(struct lilith* vm, struct Instruction* c)
