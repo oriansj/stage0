@@ -253,10 +253,86 @@
 	NOP						; Flags
 	POPR R1 R14
 	POPR R2 R14
-	TRUE R0					; Assume comparision is false
-	
+	FALSE R0					; Assume comparision is True
+	CMPSKIP.E R1 R2			; Check if they are equal and skip if they are
+	TRUE R0					; Looks like our assumption was wrong
+	PUSHR R0 R14
 	JSR_COROUTINE R11			; NEXT
 
+;; !=
+:NEqual_Text
+"!="
+:NEqual_Entry
+	&Equal_Entry				; Pointer to =
+	&NEqual_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R1 R14
+	POPR R2 R14
+	FALSE R0					; Assume comparision is True
+	CMPSKIP.NE R1 R2			; Check if they are not equal and skip if they are
+	TRUE R0					; Looks like our assumption was wrong
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;; <
+:Less_Text
+"<"
+:Less_Entry
+	&NEqual_Entry				; Pointer to !=
+	&Less_Text					; Pointer to Name
+	NOP						; Flags
+	POPR R1 R14
+	POPR R2 R14
+	FALSE R0					; Assume comparision is True
+	CMPSKIP.L R1 R2			; Check if less than and skip if they are
+	TRUE R0					; Looks like our assumption was wrong
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;; <=
+:LEqual_Text
+"<="
+:LEqual_Entry
+	&Less_Entry				; Pointer to <
+	&LEqual_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R1 R14
+	POPR R2 R14
+	FALSE R0					; Assume comparision is True
+	CMPSKIP.LE R1 R2			; Check if they are less than or equal and skip if they are
+	TRUE R0					; Looks like our assumption was wrong
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;;  >
+:Greater_Text
+">"
+:Greater_Entry
+	&LEqual_Entry				; Pointer to <=
+	&Greater_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R1 R14
+	POPR R2 R14
+	FALSE R0					; Assume comparision is True
+	CMPSKIP.G R1 R2			; Check if greater and skip if they are
+	TRUE R0					; Looks like our assumption was wrong
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;;  >=
+:GEqual_Text
+">="
+:GEqual_Entry
+	&Greater_Entry				; Pointer to >
+	&GEqual_Text				; Pointer to Name
+	NOP						; Flags
+	POPR R1 R14
+	POPR R2 R14
+	FALSE R0					; Assume comparision is True
+	CMPSKIP.GE R1 R2			; Check if they are equal and skip if they are
+	TRUE R0					; Looks like our assumption was wrong
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
 
 :cold_start
 	;;
