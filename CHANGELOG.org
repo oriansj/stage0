@@ -7,6 +7,7 @@
 ** Changed
 + Renamed xeh1 files to match current naming standard
 + created roms/ to store previously built roms and expanded .gitignore to prevent binary blobs from being checked in.
++ Revised stage0 Monitor to utilize ANDI and updated the Hex0 version to incorporate the enhancements made previously
 
 ** Fixed
 + Fixed leading char bug in M0

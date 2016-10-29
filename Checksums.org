@@ -13,7 +13,7 @@
 ** stage0
 | Filename            | compiled binary sha256sum                                        | compiled binary sha1sum                  | compiled binary md5sum           |
 |---------------------+------------------------------------------------------------------+------------------------------------------+----------------------------------|
-| stage0_monitor.hex0 | 7314d72708a732a16c566344d9aa3711a80c62405324fc7e12703cad02741a67 | cb2cad1bc77b3bdaee72852cf994bfd30655da9c | 960c6143076d522af176de82257514cc |
+| stage0_monitor.hex0 | 0a427b14020354d1c785f5f900677e0059fce8f8d4456e9c19e5528cb17101eb | 1365da633f268f551424c621535bd94cfc6bf85b | f0890d7a69ed38f1fc5aa79d6f35c095 |
 
 ** stage1
 | Filename                | compiled binary sha256sum                                        | compiled binary sha1sum                  | compiled binary md5sum           |

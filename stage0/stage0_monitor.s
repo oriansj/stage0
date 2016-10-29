@@ -1,5 +1,4 @@
 :start
-	LOADUI R10 0x0F             ; Byte mask
 	LOADUI R11 1                ; Our toggle
 	LOADUI R13 0x600            ; Where we are starting our Stack
 	;;  R14 will be storing our condition
@@ -37,13 +36,13 @@
 	JUMP.Z R11 @.L99            ; Jump if toggled
 
 	;; Process first byte of pair
-	AND R15 R0 R10              ; Store First nibble
+	ANDI R15 R0 0x0F            ; Store First nibble
 	FALSE R11                   ; Flip the toggle
 	JUMP @loop
 
 :.L99
 	SL0I R15 4                  ; Shift our first nibble
-	AND R0 R0 R10               ; Mask out top
+	ANDI R0 R0 0x0F             ; Mask out top
 	ADD R0 R0 R15               ; Combine nibbles
 	LOADI R11 1                 ; Flip the toggle
 	LOADUI R1 0x1100            ; Write the combined byte
