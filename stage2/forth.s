@@ -26,6 +26,12 @@
 	CALLI R15 @cold_start
 	HALT
 
+;; EXIT function
+;; Pops Return stack
+;; And jumps to NEXT
+:EXIT
+	POPR R13 R15
+
 ;; NEXT function
 ;; increments to next instruction
 ;; Jumps to updated current
@@ -331,6 +337,57 @@
 	FALSE R0					; Assume comparision is True
 	CMPSKIP.GE R1 R2			; Check if they are equal and skip if they are
 	TRUE R0					; Looks like our assumption was wrong
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;; AND
+:AND_Text
+"AND"
+:AND_Entry
+	&GEqual_Entry				; Pointer to >=
+	&AND_Text					; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14
+	POPR R1 R14
+	AND R0 R0 R1
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;; OR
+:OR_Text
+"OR"
+:OR_Entry
+	&AND_Entry					; Pointer to AND
+	&OR_Text					; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14
+	POPR R1 R14
+	OR R0 R0 R1
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;; XOR
+:XOR_Text
+"XOR"
+:XOR_Entry
+	&OR_Entry					; Pointer to OR
+	&XOR_Text					; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14
+	POPR R1 R14
+	XOR R0 R0 R1
+	PUSHR R0 R14
+	JSR_COROUTINE R11			; NEXT
+
+;; NOT
+:NOT_Text
+"NOT"
+:NOT_Entry
+	&XOR_Entry					; Pointer to XOR
+	&NOT_Text					; Pointer to Name
+	NOP						; Flags
+	POPR R0 R14
+	NOT R0 R0
 	PUSHR R0 R14
 	JSR_COROUTINE R11			; NEXT
 
