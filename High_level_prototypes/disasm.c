@@ -612,6 +612,56 @@ void decode_Integer_2OP(struct Instruction* c)
 			strncpy(Name, "POPU32", 19);
 			break;
 		}
+		case 0x0300: /* CMPSKIP.G */
+		{
+			strncpy(Name, "CMPSKIP.G", 19);
+			break;
+		}
+		case 0x0301: /* CMPSKIP.GE */
+		{
+			strncpy(Name, "CMPSKIP.GE", 19);
+			break;
+		}
+		case 0x0302: /* CMPSKIP.E */
+		{
+			strncpy(Name, "CMPSKIP.E", 19);
+			break;
+		}
+		case 0x0303: /* CMPSKIP.NE */
+		{
+			strncpy(Name, "CMPSKIP.NE", 19);
+			break;
+		}
+		case 0x0304: /* CMPSKIP.LE */
+		{
+			strncpy(Name, "CMPSKIP.LE", 19);
+			break;
+		}
+		case 0x0305: /* CMPSKIP.L */
+		{
+			strncpy(Name, "CMPSKIP.L", 19);
+			break;
+		}
+		case 0x0380: /* CMPSKIPU.G */
+		{
+			strncpy(Name, "CMPSKIPU.G", 19);
+			break;
+		}
+		case 0x0381: /* CMPSKIPU.GE */
+		{
+			strncpy(Name, "CMPSKIPU.GE", 19);
+			break;
+		}
+		case 0x0384: /* CMPSKIPU.LE */
+		{
+			strncpy(Name, "CMPSKIPU.LE", 19);
+			break;
+		}
+		case 0x0385: /* CMPSKIPU.L */
+		{
+			strncpy(Name, "CMPSKIPU.L", 19);
+			break;
+		}
 		default: /* Unknown 2OP*/
 		{
 			break;

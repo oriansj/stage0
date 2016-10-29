@@ -286,6 +286,17 @@ void assemble(struct Token* p)
 	setExpression(p, "POPU16", "090284", 4);
 	setExpression(p, "POP32", "090285", 4);
 	setExpression(p, "POPU32", "090286", 4);
+	setExpression(p, "CMPSKIP.G", "090300", 4);
+	setExpression(p, "CMPSKIP.GE", "090301", 4);
+	setExpression(p, "CMPSKIP.E", "090302", 4);
+	setExpression(p, "CMPSKIP.NE", "090303", 4);
+	setExpression(p, "CMPSKIP.LE", "090304", 4);
+	setExpression(p, "CMPSKIP.L", "090305", 4);
+	setExpression(p, "CMPSKIPU.G", "090380", 4);
+	setExpression(p, "CMPSKIPU.GE", "090381", 4);
+	setExpression(p, "CMPSKIPU.LE", "090384", 4);
+	setExpression(p, "CMPSKIPU.L", "090385", 4);
+
 
 	/* 1OP Group */
 	setExpression(p, "READPC", "0D00000", 4);

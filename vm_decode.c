@@ -1343,6 +1343,116 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			POPU32(vm, c);
 			break;
 		}
+		case 0x0300: /* CMPSKIP.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.G", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.G");
+			#endif
+
+			CMPSKIP_G(vm, c);
+			break;
+		}
+		case 0x0301: /* CMPSKIP.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.GE", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.GE");
+			#endif
+
+			CMPSKIP_GE(vm, c);
+			break;
+		}
+		case 0x0302: /* CMPSKIP.E */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.E", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.E");
+			#endif
+
+			CMPSKIP_E(vm, c);
+			break;
+		}
+		case 0x0303: /* CMPSKIP.NE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.NE", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.NE");
+			#endif
+
+			CMPSKIP_NE(vm, c);
+			break;
+		}
+		case 0x0304: /* CMPSKIP.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.LE", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.LE");
+			#endif
+
+			CMPSKIP_LE(vm, c);
+			break;
+		}
+		case 0x0305: /* CMPSKIP.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIP.L", 19);
+			#elif TRACE
+			record_trace("CMPSKIP.L");
+			#endif
+
+			CMPSKIP_L(vm, c);
+			break;
+		}
+		case 0x0380: /* CMPSKIPU.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.G", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.G");
+			#endif
+
+			CMPSKIPU_G(vm, c);
+			break;
+		}
+		case 0x0381: /* CMPSKIPU.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.GE", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.GE");
+			#endif
+
+			CMPSKIPU_GE(vm, c);
+			break;
+		}
+		case 0x0384: /* CMPSKIPU.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.LE", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.LE");
+			#endif
+
+			CMPSKIPU_LE(vm, c);
+			break;
+		}
+		case 0x0385: /* CMPSKIPU.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "CMPSKIPU.L", 19);
+			#elif TRACE
+			record_trace("CMPSKIPU.L");
+			#endif
+
+			CMPSKIPU_L(vm, c);
+			break;
+		}
 		default: return true;
 	}
 	#ifdef DEBUG
