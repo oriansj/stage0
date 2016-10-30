@@ -410,8 +410,8 @@
 	&NOT_Entry                  ; Pointer to NOT
 	&LIT_Text                   ; Pointer to Name
 	NOP                         ; Flags
-	LOAD R0 R11 0               ; Get contents of NEXT
-	ADDUI R11 R11 4             ; Increment NEXT
+	LOAD R0 R13 0               ; Get contents of NEXT
+	ADDUI R13 R13 4             ; Increment NEXT
 	PUSHR R0 R14                ; Put immediate onto stack
 	JSR_COROUTINE R11           ; NEXT
 
@@ -673,12 +673,12 @@
 	CMPSKIPI.NE R0 9            ; If Tab
 	JUMP @Word_Start            ; Get another byte
 
-	CMPSKIP.NE R0 32            ; If space
+	CMPSKIPI.NE R0 32           ; If space
 	JUMP @Word_Start            ; Get another byte
 
 :Word_Main
 	CMPSKIPI.NE R0 4            ; If EOF
-	JUMP @Word_Done             ; Stop processing
+	JUMP @cold_done             ; Stop processing
 
 	CMPSKIPI.NE R0 9            ; If Tab
 	JUMP @Word_Done             ; Be done
@@ -717,6 +717,10 @@
 	&Word_Entry                 ; Pointer to Word
 	&Number_Text                ; Pointer to Name
 	NOP                         ; Flags
+	CALLI R15 @Number_Direct    ; Trick for direct access
+	JSR_COROUTINE R11           ; NEXT
+
+:Number_Direct
 	POPR R1 R14                 ; Get pointer to string for parsing
 	FALSE R2                    ; Set Negate flag to false
 	FALSE R3                    ; Set index to Zero
@@ -776,7 +780,7 @@
 	CMPSKIPI.E R2 0             ; If Negate flag has been set
 	NEG R3 R3                   ; Make the number negative
 	PUSHR R3 R14                ; Store result
-	JSR_COROUTINE R11           ; NEXT
+	RET R15                     ; Return to whoever called it
 
 ;; strcmp
 :Strcmp_Text
@@ -801,8 +805,6 @@
 	PUSHR R1 R14                ; Store the comparision result
 	RET R15                     ; Return to whoever called it
 
-
-
 ;; FIND
 :Find_Text
 "FIND"
@@ -810,6 +812,10 @@
 	&Strcmp_Entry               ; Pointer to STRCMP
 	&Find_Text                  ; Pointer to Name
 	NOP                         ; Flags
+	CALLI R15 @Find_Direct      ; Allow Direct access
+	JSR_COROUTINE R11           ; NEXT
+
+:Find_Direct
 	POPR R0 R14                 ; Get pointer to String to find
 	COPY R3 R9                  ; Copy LATEST
 
@@ -829,7 +835,7 @@
 
 :Find_Done
 	PUSHR R3 R14                ; Push pointer or Zero onto parameter stack
-	JSR_COROUTINE R11           ; NEXT
+	RET R15                     ; Return to whoever called you
 
 ;; >CFA
 :TCFA_Text
@@ -940,5 +946,90 @@
 	LOADUI R0 $EXIT             ; Load pointer to EXIT
 	JSR_COROUTINE R0            ; EXIT
 
+;; Branching
+
+;; BRANCH
+:Branch_Text
+"BRANCH"
+:Branch_Entry
+	&SEMICOLON_Entry            ; Pointer to Semicolon
+	&Branch_Text                ; Pointer to Name
+	NOP                         ; Flags
+	LOAD R0 R13 0               ; Get Contents of NEXT
+	ADD R13 R13 R0              ; Update NEXT with offset
+	JSR_COROUTINE R11           ; NEXT
+
+;; 0BRANCH
+:0Branch_Text
+"0BRANCH"
+:0Branch_Entry
+	&Branch_Entry               ; Pointer to Branch
+	&0Branch_Text               ; Pointer to Name
+	NOP                         ; Flags
+	POPR R1 R14                 ; Get value off parameter stack
+	LOADUI R0 4                 ; Default offset of 4
+	CMPSKIPI.NE R1 0            ; If not Zero use default offset
+	LOAD R0 R13 0               ; Otherwise use Contents of NEXT
+	ADD R13 R13 R0              ; Set NEXT to NEXT plus the offset
+	JSR_COROUTINE R11           ; NEXT
+
+;; Interaction Commands
+
+;; QUIT
+:Quit_Text
+"QUIT"
+:Quit_Entry
+	&0Branch_Entry              ; Pointer to 0Branch
+	&Quit_Text                  ; Pointer to Name
+	NOP                         ; Flags
+	LOADUI R1 1                 ; Since 1MB can't fit in 16 bits
+	SL0I R1 20                  ; 1 shifted 20 bits should do the trick
+	CMPJUMPI.LE R15 R1 @Quit_Done ; If Return stack is empty skip clearing
+
+:Quit_Clear
+	PUSHR R0 R15                ; Remove entry from Return Stack
+	CMPSKIP.LE R15 R1           ; While Return stack isn't empty
+	JUMP @Quit_Clear            ; Keep looping to clear it out
+
+:Quit_Done
+	LOADUI R0 $Interpret_Entry
+	JSR_COROUTINE R0            ; INTERPRET
+
+;; INTERPRET
+:Interpret_Text
+"INTERPRET"
+:Interpret_Entry
+	&Quit_Entry                 ; Pointer to QUIT
+	&Interpret_Text             ; Pointer to Name
+	NOP                         ; Flags
+:Interpret_Loop
+	CALLI R15 @Word_Direct      ; Get the Word
+	POPR R0 R14                 ; Remove Length
+	POPR R0 R14                 ; Remove Pointer
+	PUSHR R0 R14                ; Protect Pointer
+	PUSHR R0 R14                ; Put Pointer
+	CALLI R15 @Find_Direct      ; Try to Find it
+	POPR R0 R14                 ; Get result of Search
+	JUMP.Z R0 @Interpret_Literal ; Since it wasn't found assume it is a literal
+	ADDUI R13 R0 12             ; Update NEXT Found Node
+	CALL R15 R13                ; Call function
+	JUMP @Interpret_Loop
+
+:Interpret_Literal
+	CALLI R15 @Number_Direct    ; Attempt to process string as number
+	JUMP @Interpret_Loop
+
+;; Cold start function
+;; Reads Tape_01 until EOF
+;; Then switches into TTY Mode
 :cold_start
-	;;
+;; Prep TAPE_01
+	LOADUI R0 0x1100
+	FOPEN_READ
+	MOVE R7 R0
+	JUMP @Interpret_Loop
+
+:cold_done
+	;; Prep TTY
+	FALSE R7
+	JUMP @Interpret_Loop
