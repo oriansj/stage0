@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 
 	/* Perform all the essential stages in order */
 	struct lilith* vm;
-	vm = create_vm(1 << 22);
+	vm = create_vm(1 << 20);
 	load_program(vm, argv);
 	execute_vm(vm);
 	destroy_vm(vm);

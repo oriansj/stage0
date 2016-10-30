@@ -37,7 +37,7 @@ void execute_vm(struct lilith* vm)
 void initialize_lilith()
 {
 	struct lilith* vm;
-	vm = create_vm(1 << 22);
+	vm = create_vm(1 << 20);
 	Globalvm = vm;
 }
 
@@ -67,11 +67,13 @@ void set_register(unsigned int reg, unsigned int value)
 
 void set_memory(unsigned int address, unsigned char value)
 {
+	outside_of_world(Globalvm, address, "Address outside of World");
 	Globalvm->memory[address] = value;
 }
 
 unsigned char get_byte(unsigned int add)
 {
+	outside_of_world(Globalvm, add, "Address outside of World");
 	return Globalvm->memory[add];
 }
 
