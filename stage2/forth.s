@@ -31,12 +31,10 @@
 	HALT
 
 :RETURN_BASE
-	0x0004
-	0x0000
+'00040000'
 
 :PARAMETER_BASE
-	0x0006
-	0x0000
+'00060000'
 
 ;; EXIT function
 ;; Pops Return stack
@@ -619,7 +617,7 @@
 	CMPJUMPI.LE R15 R1 @RETURN_Done ; If Return stack is empty skip clearing
 
 :Clear_Return
-	PUSHR R0 R15                ; Remove entry from Return Stack
+	POPRR R0 R15                ; Remove entry from Return Stack
 	CMPSKIP.LE R15 R1           ; While Return stack isn't empty
 	JUMP @Clear_Return          ; Keep looping to clear it out
 :RETURN_Done
@@ -1043,7 +1041,7 @@
 	LOADUI R0 0x1100
 	FOPEN_READ
 	MOVE R7 R0
-	LOADUI R13 $Quit_Entry
+	LOADUI R13 $Quit_Code
 	JSR_COROUTINE R11            ; NEXT
 
 :cold_done
