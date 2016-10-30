@@ -22,13 +22,21 @@
 	;; Loads contents of tape_01
 	;; Starts interface until Halted
 :start
-	LOADUI R15 1                ; Since 1MB can't fit in 16 bits
-	SL0I R15 20                 ; 1 shifted 20 bits should do the trick
-	LOADUI R14 3                ; Since 1.5MB can't fit into 16 bits
-	SL0I R14 19                 ; 3 shifted 19 bits should do the trick
+	LOADR R14 @PARAMETER_BASE   ; Load Base of Parameter Stack
+	LOADR R15 @RETURN_BASE      ; Load Base of Return Stack
 	LOADUI R11 $NEXT            ; Get Address of Next
+	LOADUI R8 $HEAP             ; Get Address of HEAP
+	LOADUI R9 $Interpret_Entry  ; Get Address of last defined function
 	CALLI R15 @cold_start
 	HALT
+
+:RETURN_BASE
+	0x0004
+	0x0000
+
+:PARAMETER_BASE
+	0x0006
+	0x0000
 
 ;; EXIT function
 ;; Pops Return stack
@@ -601,9 +609,20 @@
 "RSP!"
 :RSPStore_Entry
 	&RSPFetch_Entry             ; Pointer to RSP@
-	&ore_Text                   ; Pointer to Name
+	&RSPStore_Text              ; Pointer to Name
 	NOP                         ; Flags
 	POPR R15 R14                ; Replace Return stack pointer from parameter stack
+	JSR_COROUTINE R11           ; NEXT
+
+:RETURN_CLEAR
+	LOADR R1 @RETURN_BASE       ; Get Base of Return Stack
+	CMPJUMPI.LE R15 R1 @RETURN_Done ; If Return stack is empty skip clearing
+
+:Clear_Return
+	PUSHR R0 R15                ; Remove entry from Return Stack
+	CMPSKIP.LE R15 R1           ; While Return stack isn't empty
+	JUMP @Clear_Return          ; Keep looping to clear it out
+:RETURN_Done
 	JSR_COROUTINE R11           ; NEXT
 
 	;; Parameter stack operations
@@ -670,6 +689,7 @@
 
 :Word_Start
 	FGETC                       ; Read a byte
+	FPUTC                       ; Make it visible
 	CMPSKIPI.NE R0 9            ; If Tab
 	JUMP @Word_Start            ; Get another byte
 
@@ -692,10 +712,14 @@
 	STOREX8 R0 R8 R2            ; Store byte onto HEAP
 	ADDUI R2 R2 1               ; Increment index
 	FGETC                       ; Read a byte
+	FPUTC                       ; Make it visible
 	JUMP @Word_Main             ; Keep looping
 
 :Word_Comment
 	FGETC                       ; Get another byte
+	CMPSKIPI.NE R0 13           ; If CR
+	LOADUI R0 10                ; Convert to LF
+	FPUTC                       ; Make it visible
 	CMPSKIPI.NE R0 4            ; IF EOF
 	JUMP @Word_Done             ; Be done
 	CMPSKIPI.NE R0 10           ; IF Line Feed
@@ -982,18 +1006,10 @@
 	&0Branch_Entry              ; Pointer to 0Branch
 	&Quit_Text                  ; Pointer to Name
 	NOP                         ; Flags
-	LOADUI R1 1                 ; Since 1MB can't fit in 16 bits
-	SL0I R1 20                  ; 1 shifted 20 bits should do the trick
-	CMPJUMPI.LE R15 R1 @Quit_Done ; If Return stack is empty skip clearing
-
-:Quit_Clear
-	PUSHR R0 R15                ; Remove entry from Return Stack
-	CMPSKIP.LE R15 R1           ; While Return stack isn't empty
-	JUMP @Quit_Clear            ; Keep looping to clear it out
-
-:Quit_Done
-	LOADUI R0 $Interpret_Entry
-	JSR_COROUTINE R0            ; INTERPRET
+:Quit_Code
+	&RETURN_CLEAR               ; Clear the return stack
+	&Interpret_Loop             ; INTERPRET
+	&Quit_Code                  ; Loop forever
 
 ;; INTERPRET
 :Interpret_Text
@@ -1012,7 +1028,7 @@
 	POPR R0 R14                 ; Get result of Search
 	JUMP.Z R0 @Interpret_Literal ; Since it wasn't found assume it is a literal
 	ADDUI R13 R0 12             ; Update NEXT Found Node
-	CALL R15 R13                ; Call function
+	CALL R13 R15                ; Call function
 	JUMP @Interpret_Loop
 
 :Interpret_Literal
@@ -1027,9 +1043,14 @@
 	LOADUI R0 0x1100
 	FOPEN_READ
 	MOVE R7 R0
-	JUMP @Interpret_Loop
+	LOADUI R13 $Quit_Entry
+	JSR_COROUTINE R11            ; NEXT
 
 :cold_done
 	;; Prep TTY
 	FALSE R7
-	JUMP @Interpret_Loop
+	LOADUI R13 $Quit_Code
+	JSR_COROUTINE R11            ; NEXT
+
+;; Where our HEAP Starts
+:HEAP
