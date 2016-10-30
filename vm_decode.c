@@ -13,6 +13,7 @@ struct lilith* create_vm(size_t size)
 	struct lilith* vm;
 	vm = calloc(1, sizeof(struct lilith));
 	vm->memory = calloc(size, sizeof(uint8_t));
+	vm->amount_of_Ram = size;
 	vm->halted = false;
 	vm->exception = false;
 	return vm;
@@ -23,6 +24,19 @@ void destroy_vm(struct lilith* vm)
 {
 	free(vm->memory);
 	free(vm);
+}
+
+/* Validate Memory Addresses*/
+void outside_of_world(struct lilith* vm, uint32_t place, char* message)
+{
+	if(vm->amount_of_Ram <= place)
+	{
+		fprintf(stderr, "Invalid state reached after: %i instructions\n", performance_counter);
+		fprintf(stderr, "%i: %s\n", place, message);
+		vm->halted = true;
+		exit(EXIT_FAILURE);
+	}
+
 }
 
 /* Deal with 4OP */
@@ -147,6 +161,8 @@ void read_instruction(struct lilith* vm, struct Instruction *current)
 	memset(current, 0, sizeof(struct Instruction));
 	/* Store IP for debugging */
 	current->ip = vm->ip;
+
+	outside_of_world(vm, current->ip, "Instruction outside of World");
 
 	/* Read the actual bytes and increment the IP */
 	current->raw0 = (uint8_t)vm->memory[vm->ip];

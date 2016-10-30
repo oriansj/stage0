@@ -8,6 +8,7 @@
 struct lilith
 {
 	uint8_t *memory;
+	size_t amount_of_Ram;
 	uint32_t reg[16];
 	uint32_t ip;
 	bool halted;
@@ -247,3 +248,4 @@ struct lilith* create_vm(size_t size);
 void destroy_vm(struct lilith* vm);
 void read_instruction(struct lilith* vm, struct Instruction *current);
 void eval_instruction(struct lilith* vm, struct Instruction* current);
+void outside_of_world(struct lilith* vm, uint32_t place, char* message);
