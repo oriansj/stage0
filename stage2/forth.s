@@ -45,6 +45,14 @@
 	ADDUI R13 R13 4             ; Increment Next
 	JSR_COROUTINE R12           ; Jump to next thing
 
+;; DOCOL Function
+;; The Interpreter for DO COLON
+;; Jumps to NEXT
+:DOCOL
+	PUSHR R13 R15               ; Push NEXT onto Return Stack
+	ADDUI R13 R12 4             ; Update NEXT to point to the instruction after itself
+	JUMP @NEXT                  ; Use NEXT
+
 ;; Some Forth primatives
 
 ;; Drop
@@ -653,6 +661,10 @@
 	&Emit_Entry                 ; Pointer to Emit
 	&Word_Text                  ; Pointer to Name
 	NOP                         ; Flags
+	CALLI R15 @Word_Direct      ; Trick for direct calls
+	JSR_COROUTINE R11           ; NEXT
+
+:Word_Direct
 	COPY R1 R7                  ; Using designated IO
 	FALSE R2                    ; Starting at index 0
 
@@ -696,7 +708,7 @@
 	CMPSKIPI.LE R2 0            ; If number of bytes is greater than 0
 	ADDUI R2 R2 1               ; Add a null to end of string
 	ADD R8 R8 R2                ; Update HEAP pointer
-	JSR_COROUTINE R11           ; NEXT
+	RET R15
 
 ;; NUMBER
 :Number_Text
@@ -818,6 +830,115 @@
 :Find_Done
 	PUSHR R3 R14                ; Push pointer or Zero onto parameter stack
 	JSR_COROUTINE R11           ; NEXT
+
+;; >CFA
+:TCFA_Text
+">CFA"
+:TCFA_Entry
+	&Find_Entry                 ; Pointer to Find
+	&TCFA_Text                  ; Pointer to Name
+	NOP                         ; Flags
+	POPR R0 R14                 ; Get Node pointer
+	ADDUI R0 R0 12              ; Move to CFA
+	PUSHR R0 R14                ; Push the result
+	JSR_COROUTINE R11           ; NEXT
+
+;; >DFA
+:TDFA_Text
+">DFA"
+:TDFA_Entry
+	&TCFA_Entry                 ; Pointer to >CFA
+	&TDFA_Text                  ; Pointer to Name
+	NOP                         ; Flags
+	POPR R0 R14                 ; Get Node pointer
+	ADDUI R0 R0 16              ; Move to DFA
+	PUSHR R0 R14                ; Push the result
+	JSR_COROUTINE R11           ; NEXT
+
+;; CREATE
+:Create_Text
+"CREATE"
+:Create_Entry
+	&TDFA_Entry                 ; Pointer to >DFA
+	&Create_Text                ; Pointer to Name
+	NOP                         ; Flags
+	COPY R0 R8                  ; Preserve HERE for next LATEST
+	PUSHR R9 R8                 ; Store LATEST onto HEAP
+	POPR R1 R14                 ; Get pointer to string
+	PUSHR R1 R8                 ; Store string pointer onto HEAP
+	FALSE R1                    ; Prepare NOP for Flag
+	PUSHR R1 R8                 ; Push NOP Flag
+	MOVE R0 R9                  ; Set LATEST
+	JSR_COROUTINE R11           ; NEXT
+
+;; DEFINE
+:Define_Text
+"DEFINE"
+:Define_Entry
+	&Create_Entry               ; Pointer to Create
+	&Define_Text                ; Pointer to Name
+	NOP                         ; Flags
+	CALLI R15 @Word_Direct      ; Get Word
+	COPY R0 R8                  ; Preserve HERE for next LATEST
+	PUSHR R9 R8                 ; Store LATEST onto HEAP
+	POPR R1 R14                 ; Get pointer to string
+	PUSHR R1 R8                 ; Store string pointer onto HEAP
+	TRUE R1                     ; Prepare HIDDEN for Flag
+	PUSHR R1 R8                 ; Push HIDDEN Flag
+	LOADR R1 @Define_DOCOL      ; Get address of DOCOL
+	PUSHR R1 R8                 ; Push DOCOL Address onto HEAP
+	MOVE R9 R0                  ; Set LATEST
+	LOADUI R10 1                ; Set STATE to Compile Mode
+	LOADUI R0 $EXIT             ; Load pointer to EXIT
+	JSR_COROUTINE R0            ; EXIT
+:Define_DOCOL
+	&DOCOL                      ; Store the address of DOCOL
+
+;; COMA
+:Comma_Text
+","
+:Comma_Entry
+	&Define_Entry               ; Pointer to DEFINE
+	&Comma_Text                 ; Pointer to Name
+	NOP                         ; Flags
+	POPR R0 R14                 ; Get top of parameter stack
+	PUSHR R0 R8                 ; Push onto HEAP and increment HEAP pointer
+	JSR_COROUTINE R11           ; NEXT
+
+;; [
+:LBRAC_Text
+"["
+:LBRAC_Entry
+	&Comma_Entry                ; Pointer to Comma
+	&LBRAC_Text                 ; Pointer to Name
+	NOP                         ; Flags
+	FALSE R10                   ; Set STATE to Interpret Mode
+	JSR_COROUTINE R11           ; NEXT
+
+;; ]
+:RBRAC_Text
+"]"
+:RBRACK_Entry
+	&LBRAC_Entry                ; Pointer to LBRAC
+	&RBRAC_Text                 ; Pointer to Name
+	NOP                         ; Flags
+	LOADUI R10 1                ; Set State to Compile Mode
+	JSR_COROUTINE R11           ; NEXT
+
+;; ;
+:SEMICOLON_Text
+";"
+:SEMICOLON_Entry
+	&RBRACK_Entry               ; Pointer to RBRAC
+	&SEMICOLON_Text             ; Pointer to Name
+	NOP                         ; Flags
+	LOADUI R0 $EXIT             ; Get EXIT Pointer
+	PUSHR R0 R8                 ; Push EXIT onto HEAP and increment HEAP pointer
+	FALSE R0                    ; Prep NULL for Flag
+	STORE R0 R9 8               ; Set Flag
+	FALSE R10                   ; Set State to Interpret Mode
+	LOADUI R0 $EXIT             ; Load pointer to EXIT
+	JSR_COROUTINE R0            ; EXIT
 
 :cold_start
 	;;
