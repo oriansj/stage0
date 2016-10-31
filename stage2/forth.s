@@ -1111,6 +1111,7 @@
 	&SEMICOLON_Entry            ; Pointer to Semicolon
 	&Branch_Text                ; Pointer to Name
 	NOP                         ; Flags
+	&Branch_Code                ; Where assembly is Stored
 :Branch_Code
 	LOAD R0 R13 0               ; Get Contents of NEXT
 	ADD R13 R13 R0              ; Update NEXT with offset
@@ -1203,7 +1204,6 @@
 	&Interpret_Entry            ; Pointer to INTERPRET
 	&CR_Text                    ; Pointer to Name
 	NOP                         ; Flags
-	&CR_Code                    ; Where assembly is Stored
 :CR_Code
 	&DOCOL                      ; Use DOCOL
 	&LIT_Code                   ; Read next word
