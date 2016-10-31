@@ -162,7 +162,7 @@ void read_instruction(struct lilith* vm, struct Instruction *current)
 	/* Store IP for debugging */
 	current->ip = vm->ip;
 
-	outside_of_world(vm, current->ip, "Instruction outside of World");
+	outside_of_world(vm, current->ip, "READ Instruction outside of World");
 
 	/* Read the actual bytes and increment the IP */
 	current->raw0 = (uint8_t)vm->memory[vm->ip];

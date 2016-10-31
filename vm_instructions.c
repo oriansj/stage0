@@ -19,7 +19,7 @@ void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 	tmp = tmp/0x100;
 	raw0 = tmp%0x100;
 
-	outside_of_world(vm, p, "Address is outside of World");
+	outside_of_world(vm, p, "Writeout Reg Address is outside of World");
 
 	vm->memory[p] = raw0;
 	vm->memory[p + 1] = raw1;
@@ -30,7 +30,7 @@ void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 /* Allow the use of native data format for Register operations */
 uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 {
-	outside_of_world(vm, p, "Address is outside of World");
+	outside_of_world(vm, p, "READIN REG Address is outside of World");
 
 	uint8_t raw0, raw1, raw2, raw3;
 	uint32_t sum;
@@ -50,14 +50,14 @@ uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 /* Unify byte write functionality */
 void writeout_byte(struct lilith* vm, uint32_t p, uint32_t value)
 {
-	outside_of_world(vm, p, "Address is outside of World");
+	outside_of_world(vm, p, "Write Byte Address is outside of World");
 	vm->memory[p] = (uint8_t)(value%0x100);
 }
 
 /* Unify byte read functionality*/
 uint32_t readin_byte(struct lilith* vm, uint32_t p, bool Signed)
 {
-	outside_of_world(vm, p, "Address is outside of World");
+	outside_of_world(vm, p, "Read Byte Address is outside of World");
 	if(Signed)
 	{
 		int32_t raw0;
@@ -78,7 +78,7 @@ void writeout_doublebyte(struct lilith* vm, uint32_t p, uint32_t value)
 	utmp = utmp/0x100;
 	uraw0 = utmp%0x100;
 
-	outside_of_world(vm, p, "Address is outside of World");
+	outside_of_world(vm, p, "Write DoubleByte Address is outside of World");
 
 	vm->memory[p] = uraw0;
 	vm->memory[p + 1] = uraw1;
@@ -87,7 +87,7 @@ void writeout_doublebyte(struct lilith* vm, uint32_t p, uint32_t value)
 /* Unify doublebyte read functionality*/
 uint32_t readin_doublebyte(struct lilith* vm, uint32_t p, bool Signed)
 {
-	outside_of_world(vm, p, "Address is outside of World");
+	outside_of_world(vm, p, "Read Doublebyte Address is outside of World");
 
 	if(Signed)
 	{
