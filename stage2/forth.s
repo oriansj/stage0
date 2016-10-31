@@ -35,9 +35,9 @@
 	LOADUI R11 $NEXT            ; Get Address of Next
 	FALSE R10                   ; Current state is Interpreting
 	LOADUI R9 $CR_Entry         ; Get Address of last defined function
-#	LOADUI R8 $HEAP             ; Get Address of HEAP
-#	LOADUI R0 0x1100            ; Need number to engage tape_01
-#	FOPEN_READ                  ; Load Tape_01 for Reading
+	LOADUI R8 $HEAP             ; Get Address of HEAP
+	LOADUI R0 0x1100            ; Need number to engage tape_01
+	FOPEN_READ                  ; Load Tape_01 for Reading
 	MOVE R7 R0                  ; Make Tape_01 Default IO
 	LOADUI R13 $Quit_Code       ; Intialize via QUIT
 	JSR_COROUTINE R11           ; NEXT
@@ -60,16 +60,17 @@
 ;; Jumps to updated current
 ;; Affects only Next and current
 :NEXT
-	LOAD R12 R13 0              ; Get Address stored which is pointed at by next
+	COPY R12 R13                ; Preserve Current Pointer
+	LOAD R0 R13 0               ; Get Address stored which is pointed at by next
 	ADDUI R13 R13 4             ; Increment Next
-	JSR_COROUTINE R12           ; Jump to next thing
+	JSR_COROUTINE R0            ; Jump to next thing
 
 ;; DOCOL Function
 ;; The Interpreter for DO COLON
 ;; Jumps to NEXT
 :DOCOL
 	PUSHR R13 R15               ; Push NEXT onto Return Stack
-	ADDUI R13 R13 4             ; Update NEXT to point to the instruction after itself
+	ADDUI R13 R12 4             ; Update NEXT to point to the instruction after itself
 	JUMP @NEXT                  ; Use NEXT
 
 ;; Some Forth primatives
@@ -717,6 +718,7 @@
 	CMPSKIP.LE R15 R1           ; While Return stack isn't empty
 	JUMP @Clear_Return          ; Keep looping to clear it out
 :RETURN_Done
+	MOVE R15 R1                 ; Ensure underflow is corrected
 	JSR_COROUTINE R11           ; NEXT
 
 	;; Parameter stack operations

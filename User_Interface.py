@@ -22,6 +22,8 @@ def Reset_lilith():
 def Step_lilith():
 	global Current_IP
 	Current_IP = vm.step_lilith()
+	global Count
+	Count = Count + 1
 	return
 
 def Set_Memory(address, value):
@@ -172,4 +174,5 @@ def get_footer():
 Current_IP = 0
 Current_Page = 0
 Watchpoints = {0}
+Count=0
 Reset_lilith()
