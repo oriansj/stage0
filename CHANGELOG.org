@@ -1,11 +1,18 @@
 * Unreleased
 ** Added
+** Changed
+** Fixed
+** Removed
+
+* 0.0.2 - 2016-11-01
+** Added
 + Created xeh tool in C for more cross platform debugging
 + Created M0 in hex2
 + Documented build steps in notes.org
 + Imported CMPSKIP instructions that operate on 2 registers
 + Imported CMPJUMP instructions that operate on 3 registers
 + Incorporated bounds checking on all vm->Memory accesses
++ Wrote the forth implementation in assembly
 
 ** Changed
 + Renamed xeh1 files to match current naming standard
