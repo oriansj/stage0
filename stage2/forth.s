@@ -36,9 +36,9 @@
 	FALSE R10                   ; Current state is Interpreting
 	LOADUI R9 $Interpret_Entry  ; Get Address of last defined function
 	LOADUI R8 $HEAP             ; Get Address of HEAP
-#	LOADUI R0 0x1100            ; Need number to engage tape_01
-#	FOPEN_READ                  ; Load Tape_01 for Reading
-#	MOVE R7 R0                  ; Make Tape_01 Default IO
+	LOADUI R0 0x1100            ; Need number to engage tape_01
+	FOPEN_READ                  ; Load Tape_01 for Reading
+	MOVE R7 R0                  ; Make Tape_01 Default IO
 	LOADUI R13 $Cold_Start      ; Intialize via QUIT
 	JSR_COROUTINE R11           ; NEXT
 	HALT                        ; If anything ever returns to here HALT
@@ -60,7 +60,7 @@
 ;; And jumps to NEXT
 :EXIT_Text
 "EXIT"
-:EXIT
+:EXIT_Entry
 	NOP                         ; No previous link elements
 	&EXIT_Text                  ; Pointer to name
 	NOP                         ; Flags
@@ -93,7 +93,7 @@
 :Drop_Text
 "DROP"
 :Drop_Entry
-	&EXIT                       ; Pointer to EXIT
+	&EXIT_Entry                 ; Pointer to EXIT
 	&Drop_Text                  ; Pointer to Name
 	NOP                         ; Flags
 	&Drop_Code                  ; Where assembly is Stored
@@ -825,6 +825,9 @@
 	CMPSKIPI.NE R0 4            ; If EOF
 	JUMP @cold_done             ; Stop processing
 
+	CMPSKIPI.G R0 0             ; If ERROR
+	JUMP @cold_done             ; Stop processing
+
 	CMPSKIPI.NE R0 9            ; If Tab
 	JUMP @Word_Done             ; Be done
 
@@ -854,6 +857,8 @@
 	FPUTC                       ; Make it visible
 	CMPSKIPI.NE R0 4            ; IF EOF
 	JUMP @Word_Done             ; Be done
+	CMPSKIPI.G R0 0             ; If ERROR
+	JUMP @cold_done             ; Stop processing
 	CMPSKIPI.NE R0 10           ; IF Line Feed
 	JUMP @Word_Done             ; Be done
 	JUMP @Word_Comment          ; Otherwise keep looping
@@ -1115,7 +1120,8 @@
 	'00000002'                  ; Flags [F_IMMED]
 	&SEMICOLON_Code             ; Where assembly is Stored
 :SEMICOLON_Code
-	LOADUI R0 $EXIT             ; Get EXIT Pointer
+	LOADUI R0 $EXIT_Entry       ; Get EXIT Pointer
+	ADDUI R0 R0 12              ; Adjust pointer
 	PUSHR R0 R8                 ; Push EXIT onto HEAP and increment HEAP pointer
 	FALSE R0                    ; Prep NULL for Flag
 	STORE R0 R9 8               ; Set Flag
