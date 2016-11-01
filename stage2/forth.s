@@ -58,7 +58,14 @@
 ;; EXIT function
 ;; Pops Return stack
 ;; And jumps to NEXT
+:EXIT_Text
+"EXIT"
 :EXIT
+	NOP                         ; No previous link elements
+	&EXIT_Text                  ; Pointer to name
+	NOP                         ; Flags
+	&EXIT_Code
+:EXIT_Code
 	POPR R13 R15
 
 ;; NEXT function
@@ -86,7 +93,7 @@
 :Drop_Text
 "DROP"
 :Drop_Entry
-	NOP                         ; No previous link elements
+	&EXIT                       ; Pointer to EXIT
 	&Drop_Text                  ; Pointer to Name
 	NOP                         ; Flags
 	&Drop_Code                  ; Where assembly is Stored
@@ -802,8 +809,7 @@
 :Word_Direct
 	COPY R1 R7                  ; Using designated IO
 	FALSE R2                    ; Starting at index 0
-	PUSHR R8 R15                ; Protect the HEAP
-	LOADR R8 @STRING_BASE       ; Use the STRING_BASE instead
+	LOADR R4 @STRING_BASE       ; Use the STRING_BASE instead
 
 :Word_Start
 	FGETC                       ; Read a byte
@@ -831,7 +837,7 @@
 	CMPSKIPI.NE R0 92           ; If comment
 	JUMP @Word_Comment          ; Purge it and be done
 
-	STOREX8 R0 R8 R2            ; Store byte onto HEAP
+	STOREX8 R0 R4 R2            ; Store byte onto HEAP
 	ADDUI R2 R2 1               ; Increment index
 	FGETC                       ; Read a byte
 	CMPSKIPI.NE R0 13           ; IF CR
@@ -853,13 +859,12 @@
 	JUMP @Word_Comment          ; Otherwise keep looping
 
 :Word_Done
-	PUSHR R8 R14                ; Push pointer to string on parameter stack
+	PUSHR R4 R14                ; Push pointer to string on parameter stack
 	PUSHR R2 R14                ; Push number of bytes in length onto stack
 	ADDUI R2 R2 4               ; Add a null to end of string
 	ANDI R2 R2 -4               ; Rounded up the next for or to Zero
-	ADD R8 R8 R2                ; Update pointer
-	STORER R8 @STRING_BASE      ; Save its value
-	POPR R8 R15                 ; Restore HEAP
+	ADD R4 R4 R2                ; Update pointer
+	STORER R4 @STRING_BASE      ; Save its value
 	RET R15
 
 ;; NUMBER
@@ -1192,8 +1197,9 @@
 	JUMP.Z R1 @Interpret_Compile ; Its not immediate so I might have to compile
 
 :Interpret_Execute
-	LOAD R0 R0 12               ; Get where to jump
-	JSR_COROUTINE R0            ; EXECUTE Directly
+	ADDUI R12 R0 12             ; Point to codeword
+	LOAD R1 R0 12               ; Get where to jump
+	JSR_COROUTINE R1            ; EXECUTE Directly
 
 :Interpret_Compile
 	ANDI R1 R10 1               ; Check if we are in compile mode
@@ -1225,7 +1231,7 @@
 
 	;; Prep TTY
 	FALSE R7                    ; Set TTY ID
-	LOADUI R13 $Quit_Code       ; Prepare to return to QUIT LOOP
+	LOADUI R13 $Cold_Start      ; Prepare to return to QUIT LOOP
 	JSR_COROUTINE R11           ; NEXT
 
 ;; Where our HEAP Starts
