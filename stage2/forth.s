@@ -34,14 +34,17 @@
 	LOADR R14 @PARAMETER_BASE   ; Load Base of Parameter Stack
 	LOADUI R11 $NEXT            ; Get Address of Next
 	FALSE R10                   ; Current state is Interpreting
-	LOADUI R9 $CR_Entry         ; Get Address of last defined function
+	LOADUI R9 $Interpret_Entry  ; Get Address of last defined function
 	LOADUI R8 $HEAP             ; Get Address of HEAP
-	LOADUI R0 0x1100            ; Need number to engage tape_01
-	FOPEN_READ                  ; Load Tape_01 for Reading
-	MOVE R7 R0                  ; Make Tape_01 Default IO
-	LOADUI R13 $Quit_Code       ; Intialize via QUIT
+#	LOADUI R0 0x1100            ; Need number to engage tape_01
+#	FOPEN_READ                  ; Load Tape_01 for Reading
+#	MOVE R7 R0                  ; Make Tape_01 Default IO
+	LOADUI R13 $Cold_Start      ; Intialize via QUIT
 	JSR_COROUTINE R11           ; NEXT
 	HALT                        ; If anything ever returns to here HALT
+
+:Cold_Start
+	&Quit_Code
 
 :RETURN_BASE
 '00040000'
@@ -60,10 +63,11 @@
 ;; Jumps to updated current
 ;; Affects only Next and current
 :NEXT
-	COPY R12 R13                ; Preserve Current Pointer
-	LOAD R0 R13 0               ; Get Address stored which is pointed at by next
+	COPY R12 R13                ; Preserve pointer
 	ADDUI R13 R13 4             ; Increment Next
-	JSR_COROUTINE R0            ; Jump to next thing
+	LOAD R12 R12 0              ; Get contents pointed at by R12
+	LOAD R0 R12 0               ; Get Code word target
+	JSR_COROUTINE R0            ; Jump to Code word
 
 ;; DOCOL Function
 ;; The Interpreter for DO COLON
@@ -710,6 +714,8 @@
 
 ;; Clear out the return stack
 :RETURN_CLEAR
+	&RETURN_CODE
+:RETURN_CODE
 	LOADR R1 @RETURN_BASE       ; Get Base of Return Stack
 	CMPJUMPI.LE R15 R1 @RETURN_Done ; If Return stack is empty skip clearing
 
@@ -1113,6 +1119,7 @@
 	&SEMICOLON_Entry            ; Pointer to Semicolon
 	&Branch_Text                ; Pointer to Name
 	NOP                         ; Flags
+:Branch
 	&Branch_Code                ; Where assembly is Stored
 :Branch_Code
 	LOAD R0 R13 0               ; Get Contents of NEXT
@@ -1148,7 +1155,7 @@
 	&DOCOL                      ; Use DOCOL
 	&RETURN_CLEAR               ; Clear the return stack
 	&Interpret_Loop             ; INTERPRET
-	&Branch_Code                ; Loop forever
+	&Branch                     ; Loop forever
 	'FFFFFFF4'                  ; -12
 
 
@@ -1159,8 +1166,9 @@
 	&Quit_Entry                 ; Pointer to QUIT
 	&Interpret_Text             ; Pointer to Name
 	NOP                         ; Flags
-	&Interpret_Loop             ; Where assembly is Stored
 :Interpret_Loop
+	&Interpret_Code             ; Where assembly is Stored
+:Interpret_Code
 	CALLI R15 @Word_Direct      ; Get the Word
 	POPR R0 R14                 ; Remove Length
 	POPR R0 R14                 ; Remove Pointer
@@ -1171,12 +1179,13 @@
 	JUMP.Z R0 @Interpret_Literal ; Since it wasn't found assume it is a literal
 
 ;; Found Node
+	POPR R1 R14                 ; Clean up unneed stack
 	LOAD R1 R0 8                ; Get Flags of found node
 	ANDI R1 R1 0x2              ; Check if F_IMMED is set
 	JUMP.Z R1 @Interpret_Compile ; Its not immediate so I might have to compile
 
 :Interpret_Execute
-	LOAD R0 R0 12               ; Update NEXT Found Node
+	LOAD R0 R0 12               ; Get where to jump
 	JSR_COROUTINE R0            ; EXECUTE Directly
 
 :Interpret_Compile
@@ -1198,20 +1207,6 @@
 	POPR R0 R14                 ; Get Immediate value
 	PUSHR R0 R8                 ; Append Immediate to HEAP
 	JSR_COROUTINE R11           ; NEXT
-
-;; CR
-:CR_Text
-"CR"
-:CR_Entry
-	&Interpret_Entry            ; Pointer to INTERPRET
-	&CR_Text                    ; Pointer to Name
-	NOP                         ; Flags
-:CR_Code
-	&DOCOL                      ; Use DOCOL
-	&LIT_Code                   ; Read next word
-	'0000000A'                  ; ASCII CHAR
-	&Emit_Code                  ; EMIT the CHAR
-	&EXIT                       ; EXIT
 
 ;; Cold done function
 ;; Reads Tape_01 until EOF
