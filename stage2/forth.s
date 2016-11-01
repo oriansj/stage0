@@ -49,6 +49,9 @@
 :RETURN_BASE
 '00040000'
 
+:STRING_BASE
+'00050000'
+
 :PARAMETER_BASE
 '00060000'
 
@@ -799,6 +802,8 @@
 :Word_Direct
 	COPY R1 R7                  ; Using designated IO
 	FALSE R2                    ; Starting at index 0
+	PUSHR R8 R15                ; Protect the HEAP
+	LOADR R8 @STRING_BASE       ; Use the STRING_BASE instead
 
 :Word_Start
 	FGETC                       ; Read a byte
@@ -850,9 +855,11 @@
 :Word_Done
 	PUSHR R8 R14                ; Push pointer to string on parameter stack
 	PUSHR R2 R14                ; Push number of bytes in length onto stack
-	CMPSKIPI.LE R2 0            ; If number of bytes is greater than 0
-	ADDUI R2 R2 1               ; Add a null to end of string
-	ADD R8 R8 R2                ; Update HEAP pointer
+	ADDUI R2 R2 4               ; Add a null to end of string
+	ANDI R2 R2 -4               ; Rounded up the next for or to Zero
+	ADD R8 R8 R2                ; Update pointer
+	STORER R8 @STRING_BASE      ; Save its value
+	POPR R8 R15                 ; Restore HEAP
 	RET R15
 
 ;; NUMBER
