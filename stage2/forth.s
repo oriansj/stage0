@@ -36,6 +36,8 @@
 	FALSE R10                   ; Current state is Interpreting
 	LOADUI R9 $Interpret_Entry  ; Get Address of last defined function
 	LOADUI R8 $HEAP             ; Get Address of HEAP
+	LOADUI R0 0x1101            ; Need number to engage tape_02
+	FOPEN_WRITE                 ; Load Tape_01 for Writing
 	LOADUI R0 0x1100            ; Need number to engage tape_01
 	FOPEN_READ                  ; Load Tape_01 for Reading
 	MOVE R7 R0                  ; Make Tape_01 Default IO
@@ -55,16 +57,26 @@
 :PARAMETER_BASE
 '00060000'
 
+	;; The last function you'll ever need to run
+	;; HALT
+:HALT_Text
+"HALT"
+:HALT_Entry
+	NOP                         ; No previous link elements
+	&HALT_Text                  ; Pointer to name
+	NOP                         ; Flags
+	&final_Cleanup              ; Where the assembly is
+
 ;; EXIT function
 ;; Pops Return stack
 ;; And jumps to NEXT
 :EXIT_Text
 "EXIT"
 :EXIT_Entry
-	NOP                         ; No previous link elements
+	&HALT_Entry                 ; Pointer to HALT
 	&EXIT_Text                  ; Pointer to name
 	NOP                         ; Flags
-	&EXIT_Code
+	&EXIT_Code                  ; Where the assembly is
 :EXIT_Code
 	POPR R13 R15
 
@@ -790,7 +802,23 @@
 :Emit_Code
 	POPR R0 R14                 ; Get value off the parameter stack
 	ANDI R0 R0 0xFF             ; Ensure only bottom Byte
-	COPY R1 R7                  ; Using designated IO
+	FALSE R1                    ; Write out only to TTY
+	FPUTC                       ; Write out the byte
+	JSR_COROUTINE R11           ; NEXT
+
+
+;; WRITE8
+:WRITE8_Text
+"WRITE8"
+:WRITE8_Entry
+	&Emit_Entry                 ; Pointer to EMIT
+	&WRITE8_Text                ; Pointer to Name
+	NOP                         ; Flags
+	&WRITE8_Code                ; Where assembly is Stored
+:WRITE8_Code
+	POPR R0 R14                 ; Get value off the parameter stack
+	ANDI R0 R0 0xFF             ; Ensure only bottom Byte
+	LOADUI R1 0x1101            ; Write out only to TAPE_02
 	FPUTC                       ; Write out the byte
 	JSR_COROUTINE R11           ; NEXT
 
@@ -798,7 +826,7 @@
 :Word_Text
 "WORD"
 :Word_Entry
-	&Emit_Entry                 ; Pointer to Emit
+	&WRITE8_Entry               ; Pointer to WRITE8
 	&Word_Text                  ; Pointer to Name
 	NOP                         ; Flags
 	&Word_Code                  ; Where assembly is Stored
@@ -1233,12 +1261,23 @@
 :cold_done
 	;; IF TTY Recieves EOF call it quits
 	CMPSKIPI.NE R7 0            ; Check if TTY
-	HALT                        ; User is done
+	JUMP @final_Cleanup         ; Clean up and call it a day
 
 	;; Prep TTY
 	FALSE R7                    ; Set TTY ID
 	LOADUI R13 $Cold_Start      ; Prepare to return to QUIT LOOP
 	JSR_COROUTINE R11           ; NEXT
+
+;; Clean up
+;; Cleans up everything before HALTING
+;; Don't try to make it a forth primative
+;; It only has 1 use
+:final_Cleanup
+	LOADUI R0 0x1101            ; Need number to disengage tape_02
+	FCLOSE                      ; unload Tape_01
+	LOADUI R0 0x1100            ; Need number to disengage tape_01
+	FCLOSE                      ; unload Tape_01
+	HALT                        ; User is done
 
 ;; Where our HEAP Starts
 :HEAP
