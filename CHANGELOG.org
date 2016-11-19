@@ -2,6 +2,8 @@
 ** Added
 ** Changed
 ** Fixed
+Fixed arrangement of spaces in forth to prevent the small input space bug
+
 ** Removed
 
 * 0.0.2 - 2016-11-01

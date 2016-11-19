@@ -1,7 +1,8 @@
 	;; Memory Space
 	;;  0 -> 1MB code -> Heap space [Heap pointer with malloc function]
-	;; 1MB -> 1.5MB Stack space 1 (Value Stack) [Pointed at by R14]
-	;; 1.5MB+ Stack space 2 (Return Stack) [Pointed at by R15]
+	;; 1MB -> 1.25MB Stack space 1 (Return Stack) [Pointed at by R15]
+	;; 1.25MB -> 1.5MB Stack space 2 (Value Stack) [Pointed at by R14]
+	;; 1.5MB+ String Space
 	;;
 	;; DICTIONARY ENTRY (HEADER)
 	;; 0 -> Link (pointer to previous)
@@ -51,10 +52,10 @@
 :RETURN_BASE
 '00040000'
 
-:STRING_BASE
+:PARAMETER_BASE
 '00050000'
 
-:PARAMETER_BASE
+:STRING_BASE
 '00060000'
 
 	;; The last function you'll ever need to run
