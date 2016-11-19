@@ -1,8 +1,8 @@
 	;; Memory Space
-	;;  0 -> 1MB code -> Heap space [Heap pointer with malloc function]
-	;; 1MB -> 1.25MB Stack space 1 (Return Stack) [Pointed at by R15]
-	;; 1.25MB -> 1.5MB Stack space 2 (Value Stack) [Pointed at by R14]
-	;; 1.5MB+ String Space
+	;; 0 -> 512KB code -> Heap space [Heap pointer with malloc function]
+	;; 512KB -> 576KB Stack space 1 (Return Stack) [Pointed at by R15]
+	;; 576MB -> 640KB Stack space 2 (Value Stack) [Pointed at by R14]
+	;; 640KB+ String Space
 	;;
 	;; DICTIONARY ENTRY (HEADER)
 	;; 0 -> Link (pointer to previous)
@@ -50,13 +50,13 @@
 	&Quit_Code
 
 :RETURN_BASE
-'00040000'
+'00080000'
 
 :PARAMETER_BASE
-'00050000'
+'00090000'
 
 :STRING_BASE
-'00060000'
+'000A0000'
 
 	;; The last function you'll ever need to run
 	;; HALT
