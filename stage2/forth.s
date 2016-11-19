@@ -1,7 +1,7 @@
 	;; Memory Space
 	;; 0 -> 512KB code -> Heap space [Heap pointer with malloc function]
 	;; 512KB -> 576KB Stack space 1 (Return Stack) [Pointed at by R15]
-	;; 576MB -> 640KB Stack space 2 (Value Stack) [Pointed at by R14]
+	;; 576KB -> 640KB Stack space 2 (Value Stack) [Pointed at by R14]
 	;; 640KB+ String Space
 	;;
 	;; DICTIONARY ENTRY (HEADER)
