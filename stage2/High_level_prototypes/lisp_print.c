@@ -36,6 +36,7 @@ void writeobj(FILE *ofp, struct cell* op)
 		}
 		case PRIMOP: fprintf(ofp, "#<PRIMOP>"); break;
 		case PROC: fprintf(ofp, "#<PROC>"); break;
+		case ASCII: fprintf(ofp, "%c", op->value); break;
 		default: exit(1);
 	}
 }
