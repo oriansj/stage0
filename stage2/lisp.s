@@ -24,6 +24,7 @@
 	;; We first read Tape_01 until completion
 	LOADUI R13 0x1100
 
+
 ;; Main loop
 :main
 	CALLI R15 @garbage_collect  ; Clean up unused cells
@@ -33,6 +34,7 @@
 	CALLI R15 @writeobj         ; Print result
 	JUMP @main                  ; Loop forever
 	HALT                        ; If broken get the fuck out now
+
 
 ;; Append_Cell
 ;; Adds a cell to the end of a CDR chain
@@ -58,6 +60,7 @@
 	POPR R0 R15                 ; Ensure we are returning HEAD of list
 	POPR R3 R15                 ; Restore R3
 	RET R15
+
 
 ;; Tokenize
 ;; Converts a string into a list of tokens
@@ -109,6 +112,206 @@
 	;; Clean up
 	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
+	RET R15
+
+
+;; is_integer
+;; Recieves pointer to string in R0
+;; Returns TRUE or FALSE in R0
+:is_integer
+	PUSHR R1 R15                ; Protect R1
+	LOADU8 R1 R0 0              ; Read first Char
+	FALSE R0                    ; Assume FALSE
+
+	CMPSKIPI.GE R1 48           ; If below '0'
+	JUMP @is_integer_done       ; Return FALSE
+
+	CMPSKIPI.G R1 57            ; If 0 to 9
+	TRUE R0                     ; Set to TRUE
+
+:is_integer_done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; numerate_string function
+;; Recieves pointer To string in R0
+;; Returns number in R0 equal to value of string
+;; Or Zero in the event of invalid string
+:numerate_string
+	;; Preserve Registers
+	PUSHR R1 R15
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+
+	;; Initialize
+	MOVE R1 R0                  ; Get Text pointer out of the way
+	FALSE R2                    ; Set Negative flag to false
+	FALSE R3                    ; Set current count to Zero
+	LOAD8 R0 R1 1               ; Get second byte
+	CMPSKIPI.NE R0 120          ; If the second byte is x
+	JUMP @numerate_string_hex   ; treat string like hex
+
+	;; Deal with Decimal input
+	LOADUI R4 10                ; Multiply by 10
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.NE R0 45           ; If - toggle flag
+	TRUE R2                     ; So that we know to negate
+	CMPSKIPI.E R2 0             ; If toggled
+	ADDUI R1 R1 1               ; Move to next
+:numerate_string_dec
+	LOAD8 R0 R1 0               ; Get a byte
+
+	CMPSKIPI.NE R0 0            ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	MUL R3 R3 R4                ; Shift counter by 10
+	SUBI R0 R0 48               ; Convert ascii to number
+	CMPSKIPI.GE R0 0            ; If less than a number
+	JUMP @numerate_string_done  ; Terminate NOW
+	CMPSKIPI.L R0 10            ; If more than a number
+	JUMP @numerate_string_done  ; Terminate NOW
+	ADDU R3 R3 R0               ; Don't add to the count
+
+	ADDUI R1 R1 1               ; Move onto next byte
+	JUMP @numerate_string_dec
+
+	;; Deal with Hex input
+:numerate_string_hex
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.E R0 48            ; All hex strings start with 0x
+	JUMP @numerate_string_done  ; Be done if not a match
+	ADDUI R1 R1 2               ; Move to after leading 0x
+:numerate_string_hex_0
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.NE R0 0            ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	SL0I R3 4                   ; Shift counter by 16
+	SUBI R0 R0 48               ; Convert ascii number to number
+	CMPSKIPI.L R0 10            ; If A-F
+	SUBI R0 R0 7                ; Shove into Range
+	CMPSKIPI.L R0 16            ; If a-f
+	SUBI R0 R0 32               ; Shove into Range
+	ADDU R3 R3 R0               ; Add to the count
+
+	ADDUI R1 R1 1               ; Get next Hex
+	JUMP @numerate_string_hex_0
+
+;; Clean up
+:numerate_string_done
+	CMPSKIPI.E R2 0             ; If Negate flag has been set
+	NEG R3 R3                   ; Make the number negative
+	MOVE R0 R3                  ; Put number in R0
+
+	;; Restore Registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	POPR R1 R15
+	RET R15
+
+
+;; atom
+;; Converts tokens into native forms
+;; Aka numbers become numbers and everything else is a symbol
+;; Recieves a pointer to Token in R0
+;; Returns a pointer to a Cell in R0
+:atom
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+
+	LOAD32 R1 R0 0              ; Get CAR
+	LOADU8 R2 R1 0              ; Get first Char
+
+	CMPSKIPI.E R2 39            ; If Not Quote Char
+	JUMP @atom_integer          ; Move to next type
+
+	;; When dealing with a quote
+	ADDUI R1 R1 1               ; Move past quote Char
+	STORE32 R1 R0 0             ; And write to CAR
+
+	LOADUI R1 $NIL              ; Using NIL
+	CALLI R15 @make_cons        ; Make a cons with the token
+	MOVE R1 R0                  ; Put the resulting CONS in R1
+	LOADUI R0 $QUOTE            ; Using QUOTE
+	CALLI R15 @make_cons        ; Make a CONS with the CONS
+	MOVE R1 R0                  ; Put What is being returned into R1
+	JUMP @atom_done             ; We are done
+
+:atom_integer
+	COPY R2 R1                  ; Preserve String pointer
+	SWAP R0 R1                  ; Put string Pointer in R0
+	CALLI R15 @is_integer       ; Determine if it is an integer
+	JUMP.Z R0 @atom_functions   ; If Not an integer move on
+	LOADUI R0 4                 ; Using INT
+	STORE32 R0 R1 0             ; Set type to Integer
+	MOVE R0 R2                  ; Using String pointer
+	CALLI R15 @numerate_string  ; Convert to Number
+	STORE32 R0 R1 4             ; Store result in CAR
+	JUMP @atom_done             ; We are done (Result is in R1)
+
+:atom_functions
+	COPY R0 R2                  ; Using String pointer
+	CALLI R15 @findsym          ; Lookup Symbol
+	LOADUI R3 $NIL              ; Using NIL
+	CMPSKIP.NE R0 R3            ; If NIL was Returned
+	JUMP @atom_new              ; Make a new Symbol
+
+	LOAD32 R1 R0 4              ; Make OP->CAR our result
+	JUMP @atom_done             ; We are done (Result is in R1)
+
+:atom_new
+	LOADR32 R0 @all_symbols     ; Get pointer to all symbols
+	SWAP R0 R1                  ; Put pointers in correct order
+	CALLI R15 @make_cons        ; Make a CONS out of Token and all_symbols
+	STORER32 R0 @all_symbols    ; Update all_symbols
+	MOVE R1 R0                  ; Put result in correct register
+
+:atom_done
+	MOVE R0 R1                  ; Put our result in R0
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+:token_stack
+	NOP                         ; Pointer to Unparsed Tokens
+
+
+;; readobj
+;; Breaks up tokens on the token_stack until its empty
+;; Recieves Nothing
+;; Returns a Cell in R0
+:readobj
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+
+	LOADR32 R0 @token_stack     ; Get HEAD
+
+	LOAD32 R1 R0 8              ; Get HEAD->CDR
+	STORER32 R1 @token_stack    ; Update Token Stack
+
+	FALSE R1                    ; Using NULL
+	STORE32 R1 R0 8             ; Set HEAD->CDR
+
+	LOAD32 R1 R0 4              ; Get HEAD->CAR
+	LOADU8 R1 R1 0              ; Get First Char of HEAD->CAR
+	CMPSKIPI.E R1 40            ; If NOT (
+	JUMP @readobj_0             ; Atomize HEAD
+
+	CALLI R15 @readlist         ; Otherwise we want the result of readlist
+	JUMP @readobj_done
+
+:readobj_0
+	CALLI R15 @atom             ; Let Atom process HEAD for us
+
+:readobj_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
 
 ;; Stack starts at the end of the program
