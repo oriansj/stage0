@@ -15,7 +15,8 @@
 :start
 	LOADUI R15 $stack           ; Put stack at end of program
 	;; We will be using R14 for our condition codes
-	;; We will be using R13 for which IO we will be using
+	;; We will be using R13 for which Input we will be using
+	;; We will be using R12 for which Output we will be using
 
 	;; Initialize
 	CALLI R15 @garbage_init
@@ -490,6 +491,164 @@
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	RET R15
+
+
+;; Write_Int
+;; Writes desired integer to desired IO
+;; Recieves Integer in R0 and IO in R1
+;; Returns Nothing
+:Max_Decimal
+	'3B9ACA00'
+
+:Write_Int
+	PUSHR R0 R15                ; Preserve R0
+	PUSHR R1 R15                ; Preserve R1
+	PUSHR R2 R15                ; Preserve R2
+	PUSHR R3 R15                ; Preserve R3
+	PUSHR R4 R15                ; Preserve R4
+	PUSHR R5 R15                ; Preserve R5
+	MOVE R3 R0                  ; Move Integer out of the way
+	LOADR R2 @Max_Decimal       ; Starting from the Top
+	LOADUI R5 10                ; We move down by 10
+	FALSE R4                    ; Flag leading Zeros
+
+:Write_Int_0
+	DIVIDE R0 R3 R3 R2          ; Break off top 10
+	CMPSKIPI.E R0 0             ; If Not Zero
+	TRUE R4                     ; Flip the Flag
+
+	ADDUI R0 R0 48              ; Shift into ASCII
+	CMPSKIPI.NE R0 48           ; If top was Zero
+	CMPSKIPI.NE R4 0            ; Don't print leading Zeros
+	FPUTC                       ; Print Top
+
+	DIV R2 R2 R5                ; Look at next 10
+	CMPSKIPI.E R2 0             ; If we reached the bottom STOP
+	JUMP @Write_Int_0           ; Otherwise keep looping
+
+	;; Cleanup
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; Print_String
+;; Prints the string pointed in R0 to IO in R1
+;; Recieves string pointer in R0 and IO in R1
+;; Returns nothing
+:Print_String
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R2 R15                ; Protect R2
+	MOVE R2 R0                  ; Get pointer out of the way
+
+: Print_String_loop
+	LOADU8 R0 R2 0              ; Get Char
+	CMPSKIPI.NE R0 0            ; If NULL
+	JUMP @Print_String_done     ; Call it done
+	FPUTC                       ; Otherwise write the Char
+	ADDUI R2 R2 1               ; Increment to next Char
+	JUMP @Print_String_loop     ; And Keep looping
+
+:Print_String_done
+	POPR R2 R15                 ; Restore R2
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; writeobj
+;; Outputs to the IO in R12
+;; Recieves a Cell list in R0
+;; Returns nothing
+:writeobj
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	COPY R3 R0                  ; Protect HEAD
+	LOAD32 R2 R0 0              ; Load HEAD->Type
+	COPY R1 R12                 ; Using desired output
+
+	CMPSKIPI.NE R2 4            ; If INT
+	JUMP @writeobj_INT          ; Print it and be done
+
+	CMPSKIPI.NE R2 8            ; If SYM
+	JUMP @writeobj_SYM          ; Print its string
+
+	CMPSKIPI.NE R2 16           ; If CONS
+	JUMP @writeobj_CONS         ; Print it all recursively
+
+	CMPSKIPI.NE R2 32           ; If PROC
+	JUMP @writeobj_PROC         ; Print Label
+
+	CMPSKIPI.NE R2 64           ; If PRIMOP
+	JUMP @writeobj_PRIMOP       ; Print Label
+
+	CMPSKIPI.NE R2 128          ; If ASCII
+	JUMP @writeobj_ASCII        ; Print the Char
+
+	;; What the hell is that???
+	HALT
+
+:writeobj_INT
+	LOAD32 R0 R0 4              ; Get HEAD->CAR
+	CALLI R15 @Write_Int        ; Write it output
+	JUMP @writeobj_done         ; Be done
+
+:writeobj_CONS
+	LOADUI R0 40                ; Using (
+	FPUTC                       ; Write to desired output
+
+:writeobj_CONS_0
+	LOAD32 R0 R3 4              ; Get HEAD->CAR
+	CALLI R15 @writeobj         ; Recurse on HEAD->CAR
+
+	LOAD32 R0 R3 8              ; Get HEAD->CDR
+	LOADUI R3 $NIL              ; Using NIL
+	CMPSKIPI.NE R0 R3           ; If NIL
+	JUMP @writeobj_CONS_1       ; Break out of loop
+	CALLI R15 @writeobj         ; Recurse on HEAD->CDR
+
+:writeobj_CONS_1
+	LOADUI R0 41                ; Using )
+	FPUTC                       ; Write to desired output
+	JUMP @writeobj_done         ; Be Done
+
+:writeobj_SYM
+	LOAD32 R0 R3 4              ; Get HEAD->CAR
+	CALLI R15 @Print_String     ; Write it to output
+	JUMP @writeobj_done         ; Be Done
+
+:PRIMOP_String
+	"#<PRIMOP>"
+
+:writeobj_PRIMOP
+	LOADUI R0 $PRIMOP_String    ; Using the desired string
+	CALLI R15 @Print_String     ; Write it to output
+	JUMP @writeobj_done         ; Be Done
+
+:PROC_String
+	"#<PROC>"
+
+:writeobj_PROC
+	LOADUI R0 $PROC_String      ; Using the desired string
+	CALLI R15 @Print_String     ; Write it to output
+	JUMP @writeobj_done         ; Be Done
+
+:writeobj_ASCII
+	LOADU8 R0 R3 7              ; Using bottom 8 bits of HEAD->CAR
+	FPUTC                       ; We write our desired output
+
+:writeobj_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
 
 ;; Stack starts at the end of the program
 :stack
