@@ -650,5 +650,69 @@
 	RET R15
 
 
+;; strcmp
+;; A simple string compare function
+;; Recieves string pointers in R0 and R1
+;; Returns result of comparision in R0
+:strcmp
+	;; Preserve registers
+	PUSHR R2 R15
+	PUSHR R3 R15
+	PUSHR R4 R15
+	;; Setup registers
+	MOVE R2 R0
+	MOVE R3 R1
+	LOADUI R4 0
+:cmpbyte
+	LOADXU8 R0 R2 R4            ; Get a byte of our first string
+	LOADXU8 R1 R3 R4            ; Get a byte of our second string
+	ADDUI R4 R4 1               ; Prep for next loop
+	CMP R1 R0 R1                ; Compare the bytes
+	CMPSKIPI.E R0 0             ; Stop if byte is NULL
+	JUMP.E R1 @cmpbyte          ; Loop if bytes are equal
+;; Done
+	MOVE R0 R1                  ; Prepare for return
+	;; Restore registers
+	POPR R4 R15
+	POPR R3 R15
+	POPR R2 R15
+	RET R15
+
+
+;; findsym
+;; Attempts to find a symbol in a CONS list
+;; Recieves a string in R0
+;; Returns Cell or NIL in R0
+:findsym
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	COPY R3 R0                  ; Protect String
+	LOADR R2 @all_symbols       ; Get all_symbols
+
+:findsym_loop
+	LOADUI R0 $NIL              ; Using NIL
+	CMPSKIP.NE R0 R2            ; Check if we reached the end
+	JUMP @findsym_done          ; Use NIL as our result
+
+	LOAD32 R0 R2 4              ; Get symlist->CAR
+	LOAD32 R0 R0 4              ; Get symlist->CAR->CAR
+	COPY R1 R3                  ; Prepare string to find
+	CALLI R15 @strcmp           ; See if we have a match
+	JUMP.E R0 @findsym_found    ; We have a match
+
+	LOAD32 R2 R2 8              ; symlist = symlist->CDR
+	JUMP @findsym_loop          ; Keep looping
+
+:findsym_found
+	MOVE R0 R2                  ; We want symlist as our result
+
+:findsym_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
