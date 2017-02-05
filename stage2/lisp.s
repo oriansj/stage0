@@ -314,5 +314,32 @@
 	POPR R1 R15                 ; Restore R1
 	RET R15
 
+
+;; readlist
+;; CONS up Rest of elements until ) is found
+;; Recieves nothing
+;; Returns A Cell in R0
+:readlist
+	PUSHR R1 R15                ; Protect R1
+	LOADR32 R0 @token_stack     ; Get HEAD
+	LOAD32 R1 R0 4              ; Get HEAD->CAR
+	LOADU8 R1 R1 0              ; Get first Char of HEAD->CAR
+	CMPSKIPI.E R1 41            ; If NOT )
+	JUMP @readlist_0            ; CONS up elements
+
+	LOADUI R0 $NIL              ; Use NIL (Result in R0)
+	JUMP @readlist_done
+
+:readlist_0
+	CALLI R15 @readobj          ; Have readobj do its work
+	MOVE R1 R0                  ; Put the result in a safe place
+	CALLI R15 @readlist         ; Recursively call self
+	SWAP R0 R1                  ; Put results in proper order
+	CALLI R15 @make_cons        ; Make into a CONS (Result in R0)
+
+:readlist_done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
 ;; Stack starts at the end of the program
 :stack
