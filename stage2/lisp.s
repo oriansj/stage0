@@ -714,5 +714,38 @@
 	RET R15
 
 
+;; intern
+;; Either find symbol or make it
+;; Recieves string pointer in R0
+;; Returns a Cell pointer in R0
+:intern
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+
+	COPY R1 R0                  ; Protect String
+	CALLI R15 @findsym          ; Lookup Symbol
+
+	CMPSKIP.NE R0 $NIL          ; Determine if Symbol was found
+	JUMP @intern_found          ; And if so, use it
+
+	MOVE R0 R1                  ; Using our string
+	CALLI R15 @make_sym         ; Make a SYM
+	COPY R2 R0                  ; Protect Cell
+
+	LOADR32 R1 @all_symbols     ; Get all_symbols
+	CALLI R15 @make_cons        ; CONS together
+	STORER32 R0 @all_symbols    ; Update all_symbols
+	MOVE R0 R2                  ; Restore Cell
+	JUMP @intern_done           ; R0 has our result
+
+:intern_found
+	LOAD32 R0 R0 4              ; Use op->CAR as our result
+
+:intern_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
