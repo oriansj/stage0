@@ -341,5 +341,29 @@
 	POPR R1 R15                 ; Restore R1
 	RET R15
 
+
+;; parse
+;; Starts the recursive tokenizing and atomizing of input
+;; Recieves a string in R0 and its length in R1
+;; Returns a list of Cells in R0
+:parse
+	PUSHR R2 R15                ; Protect R2
+	MOVE R2 R1                  ; Put Size in the correct place
+	MOVE R1 R0                  ; Put string pointer in the correct place
+	CALLI R15 @tokenize         ; Get a list of tokens from string
+	STORER32 R0 @token_stack    ; Shove list to token_stack
+
+	JUMP.NZ R0 @parse_0         ; If not a NULL list atomize
+
+	LOADUI R0 $NIL              ; Otherwise we return NIL
+	JUMP @parse_done            ; Result in R0
+
+:parse_0
+	CALLI R15 @readobj          ; Start the atomization (Result in R0)
+
+:parse_done
+	POPR R2 R15                 ; Restore R2
+	RET R15
+
 ;; Stack starts at the end of the program
 :stack
