@@ -7,6 +7,10 @@
 	;; FREE = 1, MARKED = (1 << 1),INT = (1 << 2),SYM = (1 << 3),
 	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),ASCII = (1 << 7)
 
+	;; Stack space: End of program -> 64KB
+	;; HEAP space: 64KB -> 512KB
+	;; CONS space: 512KB -> End of Memory (2MB) [Approx 98K CONS Cells]
+
 ;; Start function
 :start
 	LOADUI R15 $stack           ; Put stack at end of program
@@ -362,6 +366,128 @@
 	CALLI R15 @readobj          ; Start the atomization (Result in R0)
 
 :parse_done
+	POPR R2 R15                 ; Restore R2
+	RET R15
+
+
+;; Our simple malloc function
+;; Recieves A number of bytes to allocate in R0
+;; Returns a pointer to Segment in R0
+:malloc
+	PUSHR R1 R15                ; Protect R1
+	LOADR R1 @malloc_pointer    ; Get current malloc pointer
+
+	;; update malloc pointer
+	SWAP R0 R1
+	ADD R1 R0 R1
+	STORER R1 @malloc_pointer
+
+;; Done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+;; Our static value for malloc pointer
+;; Starting at 64KB
+:malloc_pointer
+	'00010000'
+
+
+;; Switch_Input
+;; If R13 is TTY, HALT
+;; Else Set input to TTY
+:Switch_Input
+	CMPSKIPI.NE R13 0           ; IF TTY
+	HALT                        ; Simply Done
+
+	FALSE R13                   ; Otherwise switch to TTY
+	RET R15
+
+
+;; Readline
+;; Using IO source in R13 read a FULL S-expression
+;; Returns String pointer in R0 and Length in R1
+:Readline
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	PUSHR R5 R15                ; Protect R5
+
+	FALSE R0                    ; Get where space is free
+	CALLI R15 @malloc
+	MOVE R2 R0                  ; Preserve pointer
+	FALSE R3                    ; Set index to 0
+	FALSE R4                    ; Set Depth to 0
+	COPY R1 R13                 ; Set desired IO
+	LOADUI R5 32                ; Keep SPACE for ()
+
+	;; Main Loop
+:Readline_loop
+	FGETC                       ; Get a Byte
+
+	CMPSKIPI.G R0 4             ; If EOF
+	CALLI R15 @Switch_Input     ; Do the correct thing
+
+	CMPSKIP.E R1 R13            ; If IO source changed
+	JUMP @Readline_done         ; We finished
+
+	CMPSKIPI.G R0 32            ; If SPACE or below
+	JUMP @Readline_1
+
+	CMPSKIPI.NE R0 59           ; If LINE Comment (;)
+	JUMP @Readline_0            ; Drop until the end of Line
+
+	CMPSKIPI.NE R0 40           ; If (
+	JUMP @Readline_2            ; Deal with depth and spacing
+
+	CMPSKIPI.NE R0 41           ; If )
+	JUMP @Readline_2            ; Deal with depth and spacing
+
+	STOREX8 R0 R2 R3            ; Append to String
+	ADDUI R3 R3 1               ; Increment Size
+	JUMP @Readline_loop         ; Keep Reading
+
+	;; Deal with Line comments
+:Readline_0
+	FGETC                       ; Get another Byte
+	CMPSKIPI.NE R0 10           ; If LF
+	JUMP @Readline_loop         ; Resume
+
+	JUMP @Readline_0            ; Otherwise Keep Looping
+
+	;; Deal with Whitespace and Control Chars
+:Readline_1
+	CMPSKIPI.NE R4 0            ; IF Depth 0
+	JUMP @Readline_done         ; We made it to the end
+
+	LOADUI R0 32                ; Otherwise convert to SPACE
+	STOREX8 R0 R2 R3            ; Append to String
+	ADDUI R3 R3 1               ; Increment Size
+
+	;; Deal with ()
+:Readline_2
+	CMPSKIPI.NE R0 40           ; If (
+	ADDUI R4 R4 1               ; Increment Depth
+
+	CMPSKIPI.NE R0 41           ; If )
+	SUBUI R4 R4 1               ; Decrement Depth
+
+	STOREX8 R5 R2 R3            ; Put in leading SPACE
+	ADDUI R3 R3 1               ; Increment Size
+	STOREX8 R0 R2 R3            ; Put in Char
+	ADDUI R3 R3 1               ; Increment Size
+	STOREX8 R5 R2 R3            ; Put in Trailing SPACE
+	ADDUI R3 R3 1               ; Increment Size
+
+	JUMP @Readline_loop         ; Resume
+
+	;; Clean up
+:Readline_done
+	ADDUI R0 R3 4               ; Pad with 4 NULLs
+	CALLI R15 @malloc           ; Correct Malloc
+	MOVE R1 R3                  ; Put Size in R1
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	RET R15
 
