@@ -840,5 +840,33 @@
 	RET R15
 
 
+;; evlis
+;; Recieves Expressions in R0 and an Environment in R1
+;; Returns the result of Evaluation of those Expressions
+;; in respect to the given Environment in R0
+:evlis
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+
+	COPY R3 R1                  ; Protect ENV
+	LOAD32 R2 R0 8              ; Protect EXPRS->CDR
+	LOAD32 R0 R0 4              ; Using EXPRS->CAR
+	CALLI R15 @eval             ; EVAL
+	SWAP R0 R2                  ; Using EXPRS->CDR
+	MOVE R1 R3                  ; Restore ENV
+	CALLI R15 @evlis            ; Recursively Call self Down Expressions
+	MOVE R1 R2                  ; Using result of EVAL and EVLIS
+	SWAP R1 R0                  ; Put in Proper Order
+	CALLI R15 @make_cons        ; Make a CONS of it all
+
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
