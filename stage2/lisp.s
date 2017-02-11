@@ -793,5 +793,22 @@
 	RET R15
 
 
+;; extend_top
+;; Recieves a Symbol in R0 and a Value in R1
+;; Returns Value in R0 after extending top
+:extend_top
+	PUSHR R1 R15                ; Protect Val
+	PUSHR R2 R15                ; Protect R2
+	CALLI R15 @make_cons        ; Make a cons of SYM and VAL
+	LOADR32 R2 @TOP_ENV         ; Get TOP_ENV
+	LOAD32 R1 R2 8              ; Using TOP_ENV->CDR
+	CALLI R15 @make_cons        ; Make final CONS
+	STORE32 R0 R2 8             ; TOP_ENV->CDR = CONS
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore Val
+	COPY R0 R1                  ; Return Val
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
