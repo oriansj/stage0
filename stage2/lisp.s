@@ -946,5 +946,49 @@
 	RET R15
 
 
+;; evcond
+;; Recieves an Expression in R0 and an Environment in R1
+;; Walks down conditions until true one is found and return
+;; Desired expression's result in R0
+;; if none of the conditions are true, and the result of
+;; the COND is undefined
+:evcond
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOADUI R4 $TEE              ; Using TEE
+
+	;; Truth Evaluation
+:evcond_0
+	LOAD32 R3 R0 8              ; Protect EXP->CDR
+	LOAD32 R2 R0 4              ; Protect EXP->CAR
+	LOAD32 R0 R2 4              ; Using EXP->CAR->CAR
+	CALLI R15 @eval             ; EVAL
+	CMPJUMPI.E R0 R4 @evcond_1  ; Its true !
+	MOVE R0 R3                  ; Prepare EXP->CDR
+	CMPSKIPI.NE R0 $NIL         ; If EXP->CDR == NIL
+	MOVE R4 R0                  ; Use NIL as our Return
+	JUMP.NZ R0 @evcond_0        ; Keep looping until NIL or True
+	MOVE R0 R4                  ; Put return in the right place
+	JUMP @evcond_done           ; Bail with just NIL
+
+	;;  Expression Evaluation
+:evcond_1
+	LOAD32 R0 R2 8              ; Get EXP->CAR->CDR
+	LOAD32 R0 R0 4              ; Using EXP->CAR->CDR->CAR
+	CALLI R15 @eval             ; EVAL
+
+	;; Clean up and return
+:evcond_done
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
