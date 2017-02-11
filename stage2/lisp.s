@@ -750,13 +750,46 @@
 ;; extend
 ;; CONS up symbols with an environment
 ;; Recieves an environment in R0, symbol in R1 and Value in R2
+;; Returns a CONS of CONS in R0, Clears R1 and R2
 :extend
 	PUSHR R0 R15                ; Protect the env until we need it
 	MOVE R0 R1                  ; Prepare Symbol for call
-	MOVE R1 R2                  ; Prepare value for call
+	MOVE R1 R2                  ; Prepare value for call and Clear R2
 	CALLI R15 @make_cons        ; Make inner CONS
 	POPR R1 R15                 ; Get env now that we need it
 	CALLI R15 @make_cons        ; Make outter CONS
+	FALSE R1                    ; Clear R1
+	RET R15
+
+
+;; multiple_extend
+;; Recieves an environment in R0, symbol in R1 and Values in R2
+;; Returns an extended environment in R0
+:multiple_extend
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	PUSHR R5 R15                ; Protect R5
+	LOADUI R5 $NIL              ; We will need NIL
+
+:multiple_extend_0
+	CMPJUMPI.E R1 R5 @multiple_extend_done
+	LOAD32 R3 R1 8              ; Protect SYMS->CDR
+	LOAD32 R4 R2 8              ; Protect VALS->CDR
+	LOAD32 R1 R1 4              ; Using SYMS->CAR
+	LOAD32 R2 R2 4              ; Using VALS->CAR
+	CALLI R15 @extend           ; Extend Environment
+	MOVE R1 R3                  ; USING SYMS->CDR
+	MOVE R2 R4                  ; VALS->CDR
+	JUMP @multiple_extend_0     ; Iterate until fully extended
+
+:multiple_extend_done
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
 
 
