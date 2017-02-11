@@ -28,7 +28,7 @@ struct cell* intern(char *name)
 /*** Environment ***/
 struct cell* extend(struct cell* env, struct cell* symbol, struct cell* value)
 {
-	return make_cons(make_cons((symbol), (value)), (env));
+	return make_cons(make_cons(symbol, value), env);
 }
 
 struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* vals)
@@ -97,23 +97,18 @@ struct cell* apply(struct cell* proc, struct cell* vals)
 
 struct cell* evcond(struct cell* exp, struct cell* env)
 {
+	/* Return nil but the result is technically undefined per the standard */
+	if(nil == exp)
+	{
+		return nil;
+	}
+
 	if(tee == eval(exp->car->car, env))
 	{
 		return eval(exp->car->cdr->car, env);
 	}
 
 	return evcond(exp->cdr, env);
-}
-
-struct cell* prim_begin(struct cell* exp, struct cell* env)
-{
-	struct cell* ret;
-	ret = eval(exp->car, env);
-	if(nil != exp->cdr)
-	{
-		ret = prim_begin(exp->cdr, env);
-	}
-	return ret;
 }
 
 struct cell* eval(struct cell* exp, struct cell* env)
@@ -144,7 +139,7 @@ struct cell* eval(struct cell* exp, struct cell* env)
 				return eval(exp->cdr->cdr->cdr->car, env);
 			}
 			if(exp->car == s_cond) return evcond(exp->cdr, env);
-			if(exp->car == s_begin) return prim_begin(exp->cdr, env);
+			if(exp->car == s_begin) return progn(exp->cdr, env);
 			if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
 			if(exp->car == quote) return exp->cdr->car;
 			if(exp->car == s_define) return(extend_top(exp->cdr->car, eval(exp->cdr->cdr->car, env)));

@@ -30,8 +30,7 @@ void writeobj(FILE *ofp, struct cell* op)
 		}
 		case SYM:
 		{
-			if(nil == op) fprintf(ofp, "()");
-			else fprintf(ofp, "%s", op->string);
+			fprintf(ofp, "%s", op->string);
 			break;
 		}
 		case PRIMOP: fprintf(ofp, "#<PRIMOP>"); break;
