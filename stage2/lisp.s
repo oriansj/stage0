@@ -885,8 +885,8 @@
 	LOAD32 R0 R0 4              ; Using EXPS->CAR
 	CALLI R15 @eval             ; EVAL
 	CMPSKIP.E R2 R3             ; If EXPS->CDR NOT NIL
-	COPY R0 R2                  ; Use EXPS->CDR for next loop
-	CMPJUMPI.NE R2 R3 @progn_0  ; Keep looping if EXPS->CDR isn't NIL
+	MOVE R0 R2                  ; Use EXPS->CDR for next loop
+	JUMP.Z R2 @progn_0          ; Keep looping if EXPS->CDR isn't NIL
 
 	;; Finally broke out of loop
 	;; Desired result is in R0
