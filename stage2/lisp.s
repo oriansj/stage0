@@ -990,5 +990,160 @@
 	RET R15
 
 
+;; eval
+;; Recieves an Expression in R0 and an Environment in R1
+;; Evaluates the expression in the given environment and returns
+;; The result in R0
+:eval
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOAD32 R4 R0 0              ; Get EXP->TYPE
+
+	;; Deal with special case of Integers
+	CMPSKIPI.NE R4 4            ; If EXP->TYPE is Integer
+	JUMP @eval_done             ; Simply return what was given
+
+	;; Deal with special case of Symbols
+	CMPSKIPI.E R4 8             ; If EXP->TYPE is NOT Symbol
+	JUMP @eval_cons             ; Move onto next Case
+
+	CALLI R15 @assoc            ; ASSOC
+	CMPSKIPI.NE R0 $NIL         ; If NIL is returned
+	JUMP @eval_bad_Symbol       ; Burn with FIRE
+
+	LOAD32 R0 R0 8              ; Using tmp->CDR
+	JUMP @eval_done             ; Return it
+
+:eval_bad_Symbol
+	LOADUI R0 $eval_unbound     ; Using the designated Error message
+	FALSE R1                    ; Using TTY
+	CALLI R15 @Print_String     ; Written for the user
+	HALT                        ; Simply toss the rest into the fire
+
+:eval_unbound
+	"Unbound symbol"
+
+	;; Deal with special cases of CONS
+:eval_cons
+	CMPSKIPI.E R4 16            ; If EXP->TYPE is NOT CONS
+	JUMP @eval_primop           ; Move onto next Case
+
+	LOAD32 R4 R0 4              ; Using EXP->CAR
+	LOADUI R3 $s_if             ; Using s_if
+	CMPJUMPI.NE R4 R3 @eval_cons_cond
+
+	;; deal with special case of If statements
+	LOAD32 R3 R0 8              ; Protect EXP->CDR
+	LOAD32 R0 R3 4              ; Using EXP->CDR->CAR
+	CALLI R15 @eval             ; Recurse to get truth
+	CMPSKIPI.E R0 $NIL          ; If Result was NOT NIL
+	LOAD32 R3 R3 8              ; Update to EXP->CDR->CDR
+	LOAD32 R0 R3 8              ; Get EXP->CDR->CDR
+	LOAD32 R0 R0 4              ; Using EXP->CDR->CDR->CAR
+	CALLI R15 @eval             ; Recurse to get result
+	JUMP @eval_done             ; Return it
+
+:eval_cons_cond
+	LOADUI R3 $s_cond           ; Using s_cond
+	CMPJUMPI.NE R4 R3 @eval_cons_begin
+
+	;; Deal with special case of COND statements
+	LOAD32 R0 R0 8              ; Using EXP->CDR
+	CALLI R15 @evcond           ; EVCOND
+	JUMP @eval_done             ; Simply use it's result
+
+:eval_cons_begin
+	LOADUI R3 $s_begin          ; Using s_begin
+	CMPJUMPI.NE R4 R3 @eval_cons_lambda
+
+	;; Deal with special case of BEGIN statements
+	LOAD32 R0 R0 8              ; Using EXP->CDR
+	CALLI R15 @progn            ; PROGN
+	JUMP @eval_done             ; Simply use it's result
+
+:eval_cons_lambda
+	LOADUI R3 $s_lambda         ; Using s_lambda
+	CMPJUMPI.NE R4 R3 @eval_cons_quote
+
+	;; Deal with special case of lambda statements
+	MOVE R2 R1                  ; Put ENV in the right place
+	LOAD32 R1 R0 8              ; Get EXP->CDR
+	LOAD32 R0 R1 4              ; Using EXP->CDR->CAR
+	LOAD32 R1 R1 8              ; Using EXP->CDR->CDR
+	CALLI R15 @make_proc        ; MAKE_PROC
+	JUMP @eval_done             ; Simply return its result
+
+:eval_cons_quote
+	LOADUI R3 $s_quote          ; Using s_quote
+	CMPJUMPI.NE R4 R3 @eval_cons_define
+
+	;; Deal with special case of quote statements
+	LOAD32 R0 R0 8              ; Get EXP->CDR
+	LOAD32 R0 R0 4              ; Using EXP->CDR->CAR
+	JUMP @eval_done             ; Simply use it as the result
+
+:eval_cons_define
+	LOADUI R3 $s_define         ; Using s_define
+	CMPJUMPI.NE R4 R3 @eval_cons_set
+
+	;; Deal with special case of Define statements
+	LOAD32 R2 R0 8              ; Protect EXP->CDR
+	LOAD32 R0 R2 8              ; Get EXP->CDR->CDR
+	LOAD32 R0 R0 4              ; Using EXP->CDR->CDR->CAR
+	CALLI R15 @eval             ; Recurse to figure out what it is
+	MOVE R1 R0                  ; Put Result in the right place
+	LOAD32 R0 R2 4              ; Using EXP->CDR->CAR
+	CALLI R15 @extend_top       ; EXTEND_TOP
+	JUMP @eval_done             ; Simply use what was returned
+
+:eval_cons_set
+	LOADUI R3 $s_setb           ; Using s_setb
+	CMPJUMPI.NE R4 R3 @eval_cons_apply
+
+	;; Deal with special case of SET statements
+	LOAD32 R2 R0 8              ; Protect EXP->CDR
+	LOAD32 R0 R2 8              ; Get EXP->CDR->CDR
+	LOAD32 R0 R0 4              ; Using EXP->CDR->CDR->CAR
+	CALLI R15 @eval             ; Recurse to get New value
+	SWAP R0 R2                  ; Protect New Value
+	LOAD32 R0 R0 4              ; Using EXP->CDR->CAR
+	CALLI R15 @assoc            ; Get the associated Symbol
+	STORE32 R2 R0 8             ; SET Pair->CDR to New Value
+	MOVE R0 R2                  ; Using New Value
+	JUMP @eval_done             ; Simply Return Result
+
+:eval_cons_apply
+	;; Deal with the last option for a CONS, APPLY
+	LOAD32 R2 R0 4              ; Protect EXP->CAR
+	LOAD32 R0 R0 8              ; Using EXP->CDR
+	CALLI R15 @evlis            ; EVLIS
+	SWAP R0 R2                  ; Protect EVLIS result
+	CALLI R15 @eval             ; Recurse to figure out what to APPLY
+	MOVE R1 R2                  ; Put EVLIS result in right place
+	CALLI R15 @apply            ; Apply what was found to the EVLIS result
+	JUMP @eval_done             ; Simply return the result
+
+	;; Deal with everything else the same way
+:eval_primop
+:eval_proc
+	;; The result for primops and procs are simply to return the Expression
+	;; Which just so happens to already be in R0 so don't bother to do any
+	;; More but we are leaving these labels in case we want to change it
+	;; later or do something much more complicated.
+
+	;; Result must be in R0 by this point
+	;; Simply Clean up and return result in R0
+:eval_done
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
