@@ -747,5 +747,18 @@
 	RET R15
 
 
+;; extend
+;; CONS up symbols with an environment
+;; Recieves an environment in R0, symbol in R1 and Value in R2
+:extend
+	PUSHR R0 R15                ; Protect the env until we need it
+	MOVE R0 R1                  ; Prepare Symbol for call
+	MOVE R1 R2                  ; Prepare value for call
+	CALLI R15 @make_cons        ; Make inner CONS
+	POPR R1 R15                 ; Get env now that we need it
+	CALLI R15 @make_cons        ; Make outter CONS
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
