@@ -810,5 +810,35 @@
 	RET R15
 
 
+;; assoc
+;; Recieves a Key in R0 and an alist in R1
+;; Returns Value if Found or NIL in R0
+:assoc
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOADUI R4 $NIL              ; Using NIL
+
+:assoc_0
+	CMPJUMPI.E R1 R4 @assoc_done
+	LOAD32 R2 R1 4              ; ALIST->CAR
+	LOAD32 R3 R2 4              ; ALIST->CAR->CAR
+	LOAD32 R1 R1 8              ; ALIST = ALIST->CDR
+	CMPSKIP.NE R0 R3            ; If ALIST->CAR->CAR != KEY
+	JUMP @assoc_0               ; Iterate using ALIST->CDR
+
+	;; Found KEY
+	MOVE R4 R2                  ; Set ALIST->CAR as our return value
+
+:assoc_done
+	MOVE R0 R4                  ; Use whatever in R4 as our return
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
