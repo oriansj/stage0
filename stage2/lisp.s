@@ -868,5 +868,33 @@
 	RET R15
 
 
+;; progn
+;; Recieves Expressions in R0 and an Environment in R1
+;; Returns the result of Evaluation of those Expressions
+;; in respect to the given Environment in R0
+:progn
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOADUI R3 $NIL              ; Using NIL
+
+:progn_0
+	LOAD32 R2 R0 8              ; Protect EXPS->CDR
+	LOAD32 R0 R0 4              ; Using EXPS->CAR
+	CALLI R15 @eval             ; EVAL
+	CMPSKIP.E R2 R3             ; If EXPS->CDR NOT NIL
+	COPY R0 R2                  ; Use EXPS->CDR for next loop
+	CMPJUMPI.NE R2 R3 @progn_0  ; Keep looping if EXPS->CDR isn't NIL
+
+	;; Finally broke out of loop
+	;; Desired result is in R0
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
