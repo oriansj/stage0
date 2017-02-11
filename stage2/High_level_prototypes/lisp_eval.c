@@ -68,10 +68,13 @@ struct cell* evlis(struct cell* exps, struct cell* env)
 struct cell* progn(struct cell* exps, struct cell* env)
 {
 	if(exps == nil) return nil;
+
+	struct cell* result;
+
 	for(;;)
 	{
-		if(exps->cdr == nil) return eval(exps->car, env);
-		eval(exps->car, env);
+		result = eval(exps->car, env);
+		if(exps->cdr == nil) return result;
 		exps = exps->cdr;
 	}
 }
