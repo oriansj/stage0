@@ -896,5 +896,55 @@
 	RET R15
 
 
+;; Apply
+;; Recieves a Procedure in R0 and Values in R1
+;; Applies the procedure to the values and returns the result in R0
+:apply
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOAD32 R3 R0 0              ; Get PROC->TYPE
+
+	;; Deal with PRIMOPs
+	CMPSKIPI.E R3 64            ; If Not PRIMOP
+	JUMP @apply_0               ; Check NEXT
+	LOAD32 R3 R0 4              ; Using PROC->CAR
+	MOVE R0 R1                  ; Apply to VALs
+	CALL R3 R15                 ; Call PROC->CAR with VALs
+	JUMP @apply_done            ; Simply Pass the results
+
+	;; Deal with Procedures
+:apply_0
+	CMPSKIPI.E R3 32            ; If Not PROC
+	JUMP @apply_1               ; Abort with FIRE
+
+	LOAD32 R3 R0 8              ; Protect PROC->CDR
+	MOVE R2 R1                  ; Put Values in right place
+	LOAD32 R1 R0 4              ; Using PROC->CAR
+	LOAD32 R0 R0 12             ; Using PROC->ENV
+	CALLI R15 @multiple_extend  ; Multiple_extend
+	MOVE R1 R0                  ; Put Extended_Env in the right place
+	MOVE R0 R3                  ; Using PROC->CDR
+	CALLI R15 @progn            ; PROGN
+	JUMP @apply_done            ; Simply Pass the results
+
+	;; Deal with unknown shit
+:apply_1
+	LOADUI R0 $apply_error      ; Using designated Error Message
+	FALSE R1                    ; Using TTY
+	CALLI R15 @Print_String     ; Write Message
+	HALT                        ; And bring the FIRE
+
+:apply_error
+	"Bad argument to apply"
+
+	;; Clean up and return
+:apply_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
