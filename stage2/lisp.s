@@ -1574,8 +1574,8 @@
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
-	LOADR R0 @gc_block_start	; Using GC_BLOCK_START
-	LOADR R1 @gc_block_end		; Using GC_BLOCK_END
+	LOADR R0 @gc_block_start    ; Using GC_BLOCK_START
+	LOADR R1 @gc_block_end      ; Using GC_BLOCK_END
 
 :reclaim_marked_0
 	CMPJUMPI.GE R0 R1 @reclaim_marked_done
@@ -1599,6 +1599,40 @@
 	JUMP @reclaim_marked_0      ; Iterate on next CELL
 
 :reclaim_marked_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; mark_all_cells
+;; Recieves nothing
+;; Returns nothing
+;; Marks all unfree cells
+:mark_all_cells
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOADR R0 @gc_block_start    ; Using GC_BLOCK_START
+	LOADR R1 @gc_block_end      ; Using GC_BLOCK_END
+
+:mark_all_cells_0
+	CMPJUMPI.GE R0 R1 @mark_all_cells_done
+	LOAD32 R2 R0 0              ; Get I->TYPE
+	CMPSKIPUI.NE R2 1           ; If NOT FREE
+	JUMP @mark_all_cells_1      ; Move onto the Next
+
+	;; Mark non-free cell
+	ORI R2 R2 2                 ; Add MARK
+	STORE32 R2 R0 0             ; Write out MARK
+
+:mark_all_cells_1
+	ADDUI R0 R0 16              ; Increment I by the size of a CELL
+	JUMP @mark_all_cells_0      ; Iterate on next CELL
+
+:mark_all_cells_done
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
