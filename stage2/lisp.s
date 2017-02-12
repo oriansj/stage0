@@ -1556,5 +1556,55 @@
 	RET R15
 
 
+;; gc_block_start
+:gc_block_start
+	'00080000'
+
+;; gc_block_end
+:gc_block_end
+	'00200000'
+
+
+;; reclaim_marked
+;; Recieves nothing
+;; Returns nothing
+;; Reclaims and updates free_cells
+:reclaim_marked
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOADR R0 @gc_block_start	; Using GC_BLOCK_START
+	LOADR R1 @gc_block_end		; Using GC_BLOCK_END
+
+:reclaim_marked_0
+	CMPJUMPI.GE R0 R1 @reclaim_marked_done
+	LOAD32 R2 R0 0              ; Get I->TYPE
+	ANDI R2 R2 2                ; AND with MARKED
+	JUMP.Z R2 @reclaim_marked_1 ; Deal with MARKED CELLS or jump on NULL
+
+	;; Deal with Marked
+	LOADUI R2 1                 ; Using FREE
+	STORE32 R2 R0 0             ; Set I->TYPE to FREE
+	FALSE R2                    ; USING NULL
+	LOADR R3 @free_cells        ; Get FREE_CELLS
+	STORE32 R2 R0 4             ; SET I->CAR to NULL
+	STORE32 R3 R0 8             ; SET I->CDR to FREE_CELLS
+	STORE32 R2 R0 12            ; SET I->ENV to NULL
+	STORER R0 @free_cells       ; Update FREE_CELLS to I
+
+	;; Deal with unmarked
+:reclaim_marked_1
+	ADDUI R0 R0 16              ; Increment I by the size of a CELL
+	JUMP @reclaim_marked_0      ; Iterate on next CELL
+
+:reclaim_marked_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
