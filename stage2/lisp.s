@@ -1240,5 +1240,25 @@
 	RET R15
 
 
+;; prim_car
+;; Recieves an arglist in R0 and returns the CAR in R0
+:prim_car
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 4              ; Using ARGS->CAR->CAR
+	RET R15
+
+
+;; prim_cdr
+;; Recieves an arglist in R0 and returns the CDR in R0
+:prim_cdr
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 8              ; Using ARGS->CAR->CDR
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
