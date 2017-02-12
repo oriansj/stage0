@@ -800,7 +800,7 @@
 	PUSHR R1 R15                ; Protect Val
 	PUSHR R2 R15                ; Protect R2
 	CALLI R15 @make_cons        ; Make a cons of SYM and VAL
-	LOADR32 R2 @TOP_ENV         ; Get TOP_ENV
+	LOADR32 R2 @top_env         ; Get TOP_ENV
 	LOAD32 R1 R2 8              ; Using TOP_ENV->CDR
 	CALLI R15 @make_cons        ; Make final CONS
 	STORE32 R0 R2 8             ; TOP_ENV->CDR = CONS
@@ -1258,6 +1258,132 @@
 	LOAD32 R0 R0 4              ; Get ARGS->CAR
 	LOAD32 R0 R0 8              ; Using ARGS->CAR->CDR
 	RET R15
+
+
+;; spinup
+;; Recieves a symbol in R0 and a primitive in R1
+;; Returns nothing but CONS both to all_symbols and top_env
+:spinup
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+
+	COPY R3 R0                  ; Protect SYM
+	MOVE R2 R1                  ; Put PRIM in right Spot
+	LOADR R1 @all_symbols       ; Get ALL_SYMBOLS
+	CALLI R15 @make_cons        ; MAKE_CONS
+	STORER R0 @all_symbols      ; Update ALL_SYMBOLS
+	MOVE R1 R3                  ; Restore SYM
+	LOADR R0 @top_env           ; Get TOP_ENV
+	CALLI R15 @extend           ; EXTEND
+	STORER R0 @top_env          ; Update TOP_ENV
+
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+	;; Special symbols
+;; NIL Object
+:NIL
+	'00000008'                  ; A Symbol
+	&NIL_String                 ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:NIL_String
+	"nil"
+
+
+;; TEE Object
+:TEE
+	'00000008'                  ; A Symbol
+	&TEE_String                 ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:TEE_String
+	"#t"
+
+
+;; Quote Object
+:s_quote
+	'00000008'                  ; A Symbol
+	&s_quote_String             ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_quote_String
+	"quote"
+
+
+;; IF Object
+:s_if
+	'00000008'                  ; A Symbol
+	&s_if_String                ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_if_String
+	"if"
+
+
+;; COND Object
+:s_cond
+	'00000008'                  ; A Symbol
+	&s_cond_String              ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_cond_String
+	"cond"
+
+
+;; Lambda Object
+:s_lambda
+	'00000008'                  ; A Symbol
+	&s_lambda_String            ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_lambda_String
+	"lambda"
+
+
+;; Define Object
+:s_define
+	'00000008'                  ; A Symbol
+	&s_define_String            ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_define_String
+	"define"
+
+
+;; SET Object
+:s_setb
+	'00000008'                  ; A Symbol
+	&s_setb_String              ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_setb_String
+	"set!"
+
+
+;; Begin Object
+:s_begin
+	'00000008'                  ; A Symbol
+	&s_begin_String             ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_begin_String
+	"begin"
 
 
 ;; Stack starts at the end of the program
