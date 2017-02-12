@@ -148,8 +148,8 @@ struct cell* eval(struct cell* exp, struct cell* env)
 			if(exp->car == s_define) return(extend_top(exp->cdr->car, eval(exp->cdr->cdr->car, env)));
 			if(exp->car == s_setb)
 			{
-				struct cell* pair = assoc(exp->cdr->car, env);
 				struct cell* newval = eval(exp->cdr->cdr->car, env);
+				struct cell* pair = assoc(exp->cdr->car, env);
 				pair->cdr = newval;
 				return newval;
 			}
@@ -167,6 +167,8 @@ struct cell* eval(struct cell* exp, struct cell* env)
 struct cell* make_int(int a);
 struct cell* prim_sum(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int sum;
 	for(sum = 0; nil != args; args = args->cdr)
 	{
@@ -177,6 +179,8 @@ struct cell* prim_sum(struct cell* args)
 
 struct cell* prim_sub(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int sum = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
@@ -187,6 +191,8 @@ struct cell* prim_sub(struct cell* args)
 
 struct cell* prim_prod(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int prod;
 	for(prod = 1; nil != args; args = args->cdr)
 	{
@@ -197,6 +203,8 @@ struct cell* prim_prod(struct cell* args)
 
 struct cell* prim_div(struct cell* args)
 {
+	if(nil == args) return make_int(1);
+
 	int div = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
@@ -207,6 +215,8 @@ struct cell* prim_div(struct cell* args)
 
 struct cell* prim_mod(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int mod = args->car->value % args->cdr->car->value;
 	if(nil != args->cdr->cdr)
 	{
@@ -218,6 +228,8 @@ struct cell* prim_mod(struct cell* args)
 
 struct cell* prim_and(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	for(; nil != args; args = args->cdr)
 	{
 		if(tee != args->car) return nil;
@@ -227,6 +239,8 @@ struct cell* prim_and(struct cell* args)
 
 struct cell* prim_or(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	for(; nil != args; args = args->cdr)
 	{
 		if(tee == args->car) return tee;
@@ -236,12 +250,16 @@ struct cell* prim_or(struct cell* args)
 
 struct cell* prim_not(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	if(tee != args->car) return tee;
 	return nil;
 }
 
 struct cell* prim_numgt(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
@@ -256,6 +274,8 @@ struct cell* prim_numgt(struct cell* args)
 
 struct cell* prim_numge(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
@@ -270,6 +290,8 @@ struct cell* prim_numge(struct cell* args)
 
 struct cell* prim_numeq(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
@@ -283,6 +305,8 @@ struct cell* prim_numeq(struct cell* args)
 
 struct cell* prim_numle(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
@@ -297,6 +321,8 @@ struct cell* prim_numle(struct cell* args)
 
 struct cell* prim_numlt(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	int temp = args->car->value;
 	for(args = args->cdr; nil != args; args = args->cdr)
 	{
@@ -311,6 +337,8 @@ struct cell* prim_numlt(struct cell* args)
 
 struct cell* prim_listp(struct cell* args)
 {
+	if(nil == args) return nil;
+
 	if(CONS == args->car->type)
 	{
 		return tee;
