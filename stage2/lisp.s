@@ -1205,5 +1205,40 @@
 	RET R15
 
 
+	;; Currently unimplemented functions
+;; prim_prod
+;; prim_div
+;; prim_mod
+;; prim_and
+;; prim_or
+;; prim_not
+;; prim_numgt
+;; prim_numge
+;; prim_numeq
+;; prim_numle
+;; prim_numlt
+;; prim_listp
+;; prim_display
+;; prim_freecell
+;; prim_ascii
+
+
+;; prim_list
+;; Simply returns the argument list passed to it in R0
+:prim_list
+	RET R15
+
+;; prim_cons
+;; Recieves an arglist in R0 and returns a CONS in R0
+:prim_cons
+	PUSHR R1 R15                ; Protect R1
+	LOAD32 R1 R0 8              ; Get ARGS->CDR
+	LOAD32 R1 R1 4              ; Use ARGS->CDR->CAR
+	LOAD32 R0 R0 4              ; Use ARGS->CAR
+	CALLI R15 @make_cons        ; MAKE_CONS
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
