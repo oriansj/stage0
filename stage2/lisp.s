@@ -1148,6 +1148,8 @@
 ;; prim_sum
 ;; Recieves a list in R0
 ;; Adds all values and returns a Cell with result in R0
+:prim_sum_String
+	"+"
 :prim_sum
 	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
 	RET R15                     ; Just get the Hell out
@@ -1177,6 +1179,8 @@
 ;; prim_sub
 ;; Recieves a list in R0
 ;; Subtracts all of the values and returns a Cell with the result in R0
+:prim_sub_String
+	"-"
 :prim_sub
 	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
 	RET R15                     ; Just get the Hell out
@@ -1225,11 +1229,15 @@
 
 ;; prim_list
 ;; Simply returns the argument list passed to it in R0
+:prim_list_String
+	"list"
 :prim_list
 	RET R15
 
 ;; prim_cons
 ;; Recieves an arglist in R0 and returns a CONS in R0
+:prim_cons_String
+	"cons"
 :prim_cons
 	PUSHR R1 R15                ; Protect R1
 	LOAD32 R1 R0 8              ; Get ARGS->CDR
@@ -1242,6 +1250,8 @@
 
 ;; prim_car
 ;; Recieves an arglist in R0 and returns the CAR in R0
+:prim_car_String
+	"car"
 :prim_car
 	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
 	RET R15                     ; Just get the Hell out
@@ -1252,6 +1262,8 @@
 
 ;; prim_cdr
 ;; Recieves an arglist in R0 and returns the CDR in R0
+:prim_cdr_String
+	"cdr"
 :prim_cdr
 	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
 	RET R15                     ; Just get the Hell out
@@ -1283,6 +1295,7 @@
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
 
 
@@ -1385,6 +1398,122 @@
 :s_begin_String
 	"begin"
 
+
+	;; Globals of interest
+:all_symbols
+	&all_symbols_init
+
+:all_symbols_init
+	'00000010'                  ; A CONS
+	&NIL                        ; Pointer to NIL
+	&NIL                        ; Pointer to NIL
+	&NIL                        ; Pointer to NIL
+
+
+:top_env
+	&top_env_init_1
+
+:top_env_init_0
+	'00000010'                  ; A CONS
+	&NIL                        ; Pointer to NIL
+	&NIL                        ; Pointer to NIL
+	&NIL                        ; Pointer to NIL
+
+:top_env_init_1
+	'00000010'                  ; A CONS
+	&top_env_init_0             ; Pointer to CONS of NIL
+	&NIL                        ; Pointer to NIL
+	&NIL                        ; Pointer to NIL
+
+
+;; Global init function
+;; Recieves nothing
+;; Returns nothing
+;; sets up all_symbols and top_env
+:init_sl3
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+
+	;; Add Eval Specials
+	LOADUI R0 $TEE              ; Get TEE
+	COPY R1 R0                  ; Duplicate TEE
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_quote          ; Get s_quote
+	COPY R1 R0                  ; Duplicate s_quote
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_if             ; Get s_if
+	COPY R1 R0                  ; Duplicate s_if
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_cond           ; Get s_cond
+	COPY R1 R0                  ; Duplicate s_cond
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_lambda         ; Get s_lambda
+	COPY R1 R0                  ; Duplicate s_lambda
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_define         ; Get s_define
+	COPY R1 R0                  ; Duplicate s_define
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_setb           ; Get s_setb
+	COPY R1 R0                  ; Duplicate s_setb
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_begin          ; Get s_begin
+	COPY R1 R0                  ; Duplicate s_if
+	CALLI R15 @spinup           ; SPINUP
+
+	;; Add Primitive Specials
+	LOADUI R0 $prim_sum         ; Using PRIM_SUM
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_sum_String  ; Using PRIM_SUM_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_sub         ; Using PRIM_SUB
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_sub_String  ; Using PRIM_SUB_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_list        ; Using PRIM_list
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_list_String ; Using PRIM_LIST_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_cons        ; Using PRIM_CONS
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_cons_String ; Using PRIM_CONS_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_car         ; Using PRIM_CAR
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_car_String  ; Using PRIM_CAR_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_cdr         ; Using PRIM_CDR
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_cdr_String  ; Using PRIM_CDR_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	;; Clean up
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
 
 ;; Stack starts at the end of the program
 :stack
