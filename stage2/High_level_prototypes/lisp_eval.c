@@ -410,6 +410,7 @@ struct cell* make_prim(void* fun);
 struct cell* make_sym(char* name);
 void init_sl3()
 {
+	/* Special symbols */
 	nil = make_sym("nil");
 	tee = make_sym("#t");
 	quote = make_sym("quote");
@@ -420,10 +421,21 @@ void init_sl3()
 	s_setb = make_sym("set!");
 	s_begin = make_sym("begin");
 
-	all_symbols = make_cons(s_begin, make_cons(s_setb, make_cons(s_define, make_cons(s_lambda, make_cons(s_cond, make_cons(s_if, make_cons(quote, make_cons(tee, make_cons(nil, nil)))))))));
+	/* Globals of interest */
+	all_symbols = make_cons(nil, nil);
 	top_env = extend(nil, nil, nil);
-	top_env = extend(top_env, tee, tee);
 
+	/* Add Eval Specials */
+	spinup(tee, tee);
+	spinup(quote, quote);
+	spinup(s_if, s_if);
+	spinup(s_cond, s_cond);
+	spinup(s_lambda, s_lambda);
+	spinup(s_define, s_define);
+	spinup(s_setb, s_setb);
+	spinup(s_begin, s_begin);
+
+	/* Add Primitive Specials */
 	spinup(make_sym("+"), make_prim(prim_sum));
 	spinup(make_sym("-"), make_prim(prim_sub));
 	spinup(make_sym("*"), make_prim(prim_prod));

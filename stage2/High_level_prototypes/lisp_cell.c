@@ -67,15 +67,6 @@ void garbage_collect()
 	mark_all_cells();
 	unmark_cells(all_symbols);
 	unmark_cells(top_env);
-	unmark_cells(nil);
-	unmark_cells(tee);
-	unmark_cells(quote);
-	unmark_cells(s_if);
-	unmark_cells(s_lambda);
-	unmark_cells(s_define);
-	unmark_cells(s_setb);
-	unmark_cells(s_cond);
-	unmark_cells(s_begin);
 	reclaim_marked();
 	update_remaining();
 }
