@@ -7,13 +7,13 @@
 	;; FREE = 1, MARKED = (1 << 1),INT = (1 << 2),SYM = (1 << 3),
 	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),ASCII = (1 << 7)
 
-	;; Stack space: End of program -> 64KB
-	;; HEAP space: 64KB -> 512KB
-	;; CONS space: 512KB -> End of Memory (2MB) [Approx 98K CONS Cells]
+	;; CONS space: End of program -> 1.5MB (0x180000)
+	;; HEAP space: 1.5MB -> 1.75MB (0x1C0000)
+	;; STACK space: 1.75MB -> End of Memory (2MB (0x200000))
 
 ;; Start function
 :start
-	LOADUI R15 $stack           ; Put stack at end of program
+	LOADR R15 @stack_start      ; Put stack after CONS and HEAP
 	;; We will be using R14 for our condition codes
 	;; We will be using R13 for which Input we will be using
 	;; We will be using R12 for which Output we will be using
@@ -40,6 +40,8 @@
 	JUMP @main                  ; Loop forever
 	HALT                        ; If broken get the fuck out now
 
+:stack_start
+	'001C0000'
 
 ;; Append_Cell
 ;; Adds a cell to the end of a CDR chain
@@ -228,7 +230,7 @@
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
 
-	LOAD32 R1 R0 0              ; Get CAR
+	LOAD32 R1 R0 4              ; Get CAR
 	LOADU8 R2 R1 0              ; Get first Char
 
 	CMPSKIPI.E R2 39            ; If Not Quote Char
@@ -236,7 +238,7 @@
 
 	;; When dealing with a quote
 	ADDUI R1 R1 1               ; Move past quote Char
-	STORE32 R1 R0 0             ; And write to CAR
+	STORE32 R1 R0 4             ; And write to CAR
 
 	LOADUI R1 $NIL              ; Using NIL
 	CALLI R15 @make_cons        ; Make a cons with the token
@@ -390,7 +392,7 @@
 ;; Our static value for malloc pointer
 ;; Starting at 64KB
 :malloc_pointer
-	'00010000'
+	'00180000'
 
 
 ;; Switch_Input
@@ -424,6 +426,9 @@
 	;; Main Loop
 :Readline_loop
 	FGETC                       ; Get a Byte
+	FALSE R1                    ; Using TTY
+	FPUTC                       ; Display the Char we just pressed
+	COPY R1 R13                 ; Set desired IO
 
 	CMPSKIPI.G R0 4             ; If EOF
 	CALLI R15 @Switch_Input     ; Do the correct thing
@@ -514,7 +519,7 @@
 
 :Write_Int_0
 	DIVIDE R0 R3 R3 R2          ; Break off top 10
-	CMPSKIPI.E R0 0             ; If Not Zero
+	CMPSKIPI.NE R0 0            ; If Not Zero
 	TRUE R4                     ; Flip the Flag
 
 	ADDUI R0 R0 48              ; Shift into ASCII
@@ -527,6 +532,8 @@
 	JUMP @Write_Int_0           ; Otherwise keep looping
 
 	;; Cleanup
+	LOADUI R0 10                ; Append Newline
+	FPUTC                       ; Print it
 	POPR R5 R15                 ; Restore R5
 	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
@@ -1291,7 +1298,6 @@
 	CALLI R15 @extend           ; EXTEND
 	STORER R0 @top_env          ; Update TOP_ENV
 
-	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
@@ -1558,11 +1564,11 @@
 
 ;; gc_block_start
 :gc_block_start
-	'00080000'
+	&Start_CONS
 
 ;; gc_block_end
 :gc_block_end
-	'00100000'
+	'00160000'
 
 
 ;; reclaim_marked
@@ -1816,5 +1822,5 @@
 	RET R15
 
 
-;; Stack starts at the end of the program
-:stack
+;; CONS starts at the end of the program
+:Start_CONS
