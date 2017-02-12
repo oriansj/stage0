@@ -19,7 +19,7 @@
 	;; We will be using R12 for which Output we will be using
 
 	;; Initialize
-	CALLI R15 @garbage_init
+	CALLI R15 @garbage_collect
 	CALLI R15 @init_sl3
 
 	;; Prep TAPE_01
@@ -1683,6 +1683,51 @@
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
+
+
+;; garbage_collect
+;; Recieves nothing
+;; Returns nothing
+;; The Core of Garbage Collection
+:garbage_collect
+	PUSHR R0 R15                ; Protect R0
+	CALLI R15 @mark_all_cells   ; MARK_ALL_CELLS
+	LOADR R0 @all_symbols       ; Using ALL_SYMBOLS
+	CALLI R15 @unmark_cells     ; UNMARK ALL_SYMBOLS
+	LOADR R0 @top_env           ; Using TOP_ENV
+	CALLI R15 @unmark_cells     ; UNMARK TOP_ENV
+	CALLI @reclaim_marked       ; RECLAIM_MARKED
+	CALLI @update_remaining     ; Fix the Count
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; pop_cons
+;; Recieves nothing
+;; Returns a Free CONS in R0
+;; Updates left_to_take
+:pop_cons
+	PUSHR R1 R15                ; Protect R1
+	LOADR R0 @free_cells        ; Get First Free Cell
+	JUMP.Z R0 @pop_cons_error   ; If NULL BURN with FIRE
+	LOAD32 R1 R0 8              ; Get I->CDR
+	STORER R1 @free_cells       ; Update FREE_CELLS
+	FALSE R1                    ; Using NULL
+	STORE32 R1 R0 8             ; SET I->CDR to NULL
+	LOADR R1 @left_to_take      ; Get LEFT_TO_TAKE
+	SUBUI R1 R1 1               ; Decrement by 1
+	STORER R1 @left_to_take     ; Update LEFT_TO_TAKE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:pop_cons_error
+	LOADUI R0 $pop_cons_Message ; Using Message
+	FALSE R1                    ; Using TTY
+	CALLI R15 @Print_String     ; Display ERROR
+	HALT                        ; Burn with FIRE
+
+:pop_cons_Message
+	"OOOPS we ran out of cells"
 
 
 ;; Stack starts at the end of the program
