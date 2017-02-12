@@ -19,7 +19,7 @@
 	;; We will be using R12 for which Output we will be using
 
 	;; Initialize
-	CALLI R15 @garbage_collect
+	CALLI R15 @garbage_init
 	CALLI R15 @init_sl3
 
 	;; Prep TAPE_01
@@ -241,7 +241,7 @@
 	LOADUI R1 $NIL              ; Using NIL
 	CALLI R15 @make_cons        ; Make a cons with the token
 	MOVE R1 R0                  ; Put the resulting CONS in R1
-	LOADUI R0 $QUOTE            ; Using QUOTE
+	LOADUI R0 $s_quote          ; Using S_QUOTE
 	CALLI R15 @make_cons        ; Make a CONS with the CONS
 	MOVE R1 R0                  ; Put What is being returned into R1
 	JUMP @atom_done             ; We are done
@@ -545,7 +545,7 @@
 	PUSHR R2 R15                ; Protect R2
 	MOVE R2 R0                  ; Get pointer out of the way
 
-: Print_String_loop
+:Print_String_loop
 	LOADU8 R0 R2 0              ; Get Char
 	CMPSKIPI.NE R0 0            ; If NULL
 	JUMP @Print_String_done     ; Call it done
@@ -608,7 +608,7 @@
 
 	LOAD32 R0 R3 8              ; Get HEAD->CDR
 	LOADUI R3 $NIL              ; Using NIL
-	CMPSKIPI.NE R0 R3           ; If NIL
+	CMPSKIP.NE R0 R3            ; If NIL
 	JUMP @writeobj_CONS_1       ; Break out of loop
 	CALLI R15 @writeobj         ; Recurse on HEAD->CDR
 
@@ -725,7 +725,7 @@
 	COPY R1 R0                  ; Protect String
 	CALLI R15 @findsym          ; Lookup Symbol
 
-	CMPSKIP.NE R0 $NIL          ; Determine if Symbol was found
+	CMPSKIPI.NE R0 $NIL         ; Determine if Symbol was found
 	JUMP @intern_found          ; And if so, use it
 
 	MOVE R0 R1                  ; Using our string
@@ -1562,7 +1562,7 @@
 
 ;; gc_block_end
 :gc_block_end
-	'00200000'
+	'00100000'
 
 
 ;; reclaim_marked
@@ -1621,7 +1621,7 @@
 :mark_all_cells_0
 	CMPJUMPI.GE R0 R1 @mark_all_cells_done
 	LOAD32 R2 R0 0              ; Get I->TYPE
-	CMPSKIPUI.NE R2 1           ; If NOT FREE
+	CMPSKIPI.NE R2 1            ; If NOT FREE
 	JUMP @mark_all_cells_1      ; Move onto the Next
 
 	;; Mark non-free cell
@@ -1696,8 +1696,21 @@
 	CALLI R15 @unmark_cells     ; UNMARK ALL_SYMBOLS
 	LOADR R0 @top_env           ; Using TOP_ENV
 	CALLI R15 @unmark_cells     ; UNMARK TOP_ENV
-	CALLI @reclaim_marked       ; RECLAIM_MARKED
-	CALLI @update_remaining     ; Fix the Count
+	CALLI R15 @reclaim_marked   ; RECLAIM_MARKED
+	CALLI R15 @update_remaining ; Fix the Count
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; garbage_init
+;; Recieves nothing
+;; Returns nothing
+;; Initializes Garbage Heap
+:garbage_init
+	PUSHR R0 R15                ; Protect R0
+	CALLI R15 @mark_all_cells   ; MARK_ALL_CELLS
+	CALLI R15 @reclaim_marked   ; RECLAIM_MARKED
+	CALLI R15 @update_remaining ; Fix the Count
 	POPR R0 R15                 ; Restore R0
 	RET R15
 
