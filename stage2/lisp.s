@@ -1730,5 +1730,78 @@
 	"OOOPS we ran out of cells"
 
 
+;; make_int
+;; Recieves an Integer in R0
+;; Returns a CELL in R0
+:make_int
+	PUSHR R1 R15                ; Protect R1
+	MOVE R1 R0                  ; Protect Integer
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R1 R0 4             ; Set C->CAR
+	LOADUI R1 4                 ; Using INT
+	STORE32 R1 R0 0             ; Set C->TYPE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; make_sym
+;; Recieves a string pointer in R0
+;; Returns a Cell in R0
+:make_sym
+	PUSHR R1 R15                ; Protect R1
+	MOVE R1 R0                  ; Protect String Pointer
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R1 R0 4             ; Set C->CAR
+	LOADUI R1 8                 ; Using SYM
+	STORE32 R1 R0 0             ; Set C->TYPE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; make_cons
+;; Recieves a Cell in R0 and R1
+;; Returns a combined Cell in R0
+:make_cons
+	PUSHR R2 R15                ; Protect R2
+	MOVE R2 R0                  ; Protect CELL A
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R2 R0 4             ; Set C->CAR
+	STORE32 R1 R0 8             ; SET C->CDR
+	LOADUI R2 16                ; Using CONS
+	STORE32 R2 R0 0             ; Set C->TYPE
+	POPR R2 R15                 ; Restore R2
+	RET R15
+
+
+;; make_proc
+;; Recieves Cells in R0, R1 and R2
+;; Returns a combined Cell in R0
+:make_proc
+	PUSHR R3 R15                ; Protect R3
+	MOVE R3 R0                  ; Protect CELL
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R3 R0 4             ; Set C->CAR
+	STORE32 R1 R0 8             ; Set C->CDR
+	STORE32 R2 R0 12            ; Set C->ENV
+	LOADUI R3 32                ; Using PROC
+	STORE32 R3 R0 0             ; Set C->TYPE
+	POPR R3 R15                 ; Restore R3
+	RET R15
+
+
+;; make_prim
+;; Recieves pointer to function in R0
+;; Returns a Cell in R0
+:make_prim
+	PUSHR R1 R15                ; Protect R1
+	MOVE R1 R0                  ; Protect Function Pointer
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R1 R0 4             ; Set C->CAR
+	LOADUI R1 64                ; Using PRIMOP
+	STORE32 R1 R0 0             ; Set C->TYPE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
