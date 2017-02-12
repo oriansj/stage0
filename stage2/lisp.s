@@ -1426,6 +1426,10 @@
 	&NIL                        ; Pointer to NIL
 
 
+:free_cells
+	NOP                         ; Start with NULL
+
+
 ;; Global init function
 ;; Recieves nothing
 ;; Returns nothing
@@ -1514,6 +1518,43 @@
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
+
+
+;; Left_to_take
+;; The number of cells_remaining
+:left_to_take
+	NOP
+
+;; cells_remaining
+;; Recieves nothing and returns number of remaining cells in R0
+:cells_remaining
+	LOADR R0 @left_to_take      ; Get number of cells left
+	RET R15
+
+
+;; update_remaining
+;; Recieves nothing
+;; Returns nothing
+;; Updates left_to_take via counting
+:update_remaining
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+
+	LOADR R0 @free_cells        ; Get FREE_CELLS
+	FALSE R1                    ; Set Count to 0
+
+:update_remaining_0
+	JUMP.Z R0 @update_remaining_done
+	ADDUI R1 R1 1               ; Increment by 1
+	LOAD32 R0 R0 8              ; get I->CDR
+	JUMP @update_remaining_0    ; Keep looping til NULL
+
+:update_remaining_done
+	STORER R1 @left_to_take     ; update left_to_take
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
 
 ;; Stack starts at the end of the program
 :stack
