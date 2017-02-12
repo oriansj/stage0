@@ -70,7 +70,7 @@ class StringGenerator(object):
 		UI.Step_lilith()
 		while UI.Current_IP not in UI.Watchpoints:
 			UI.Step_lilith()
-			if UI.Count >= UI.Debug_Point:
+			if UI.Count == UI.Debug_Point:
 				break
 		return UI.returnPage()
 

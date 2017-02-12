@@ -37,7 +37,7 @@ void execute_vm(struct lilith* vm)
 void initialize_lilith()
 {
 	struct lilith* vm;
-	vm = create_vm(1 << 20);
+	vm = create_vm(1 << 21);
 	Globalvm = vm;
 }
 
