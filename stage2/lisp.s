@@ -1580,11 +1580,11 @@
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
-	LOADR R0 @gc_block_start    ; Using GC_BLOCK_START
-	LOADR R1 @gc_block_end      ; Using GC_BLOCK_END
+	LOADR R1 @gc_block_start    ; Using GC_BLOCK_START
+	LOADR R0 @gc_block_end      ; Using GC_BLOCK_END
 
 :reclaim_marked_0
-	CMPJUMPI.GE R0 R1 @reclaim_marked_done
+	CMPJUMPI.LE R0 R1 @reclaim_marked_done
 	LOAD32 R2 R0 0              ; Get I->TYPE
 	ANDI R2 R2 2                ; AND with MARKED
 	JUMP.Z R2 @reclaim_marked_1 ; Deal with MARKED CELLS or jump on NULL
@@ -1601,7 +1601,7 @@
 
 	;; Deal with unmarked
 :reclaim_marked_1
-	ADDUI R0 R0 16              ; Increment I by the size of a CELL
+	SUBUI R0 R0 16              ; Decrement I by the size of a CELL
 	JUMP @reclaim_marked_0      ; Iterate on next CELL
 
 :reclaim_marked_done
@@ -1714,9 +1714,17 @@
 ;; Initializes Garbage Heap
 :garbage_init
 	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOADR R0 @gc_block_start    ; Get Starting Offset
+	ANDI R0 R0 0xF              ; We only need the buttom 4 Bits
+	LOADR R1 @gc_block_end      ; Get End Address
+	ADD R1 R1 R0                ; Add the Offset
+	SUBUI R1 R1 16              ; Shift Back Down
+	STORER R1 @gc_block_end     ; Update Block End
 	CALLI R15 @mark_all_cells   ; MARK_ALL_CELLS
 	CALLI R15 @reclaim_marked   ; RECLAIM_MARKED
 	CALLI R15 @update_remaining ; Fix the Count
+	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
 
