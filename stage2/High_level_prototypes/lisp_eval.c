@@ -398,6 +398,12 @@ struct cell* prim_cons(struct cell* args) { return make_cons(args->car, args->cd
 struct cell* prim_car(struct cell* args) { return args->car->car; }
 struct cell* prim_cdr(struct cell* args) { return args->car->cdr; }
 
+void spinup(struct cell* sym, struct cell* prim)
+{
+	all_symbols = make_cons(sym, all_symbols);
+	top_env = extend(top_env, sym, prim);
+}
+
 /*** Initialization ***/
 struct cell* intern(char *name);
 struct cell* make_prim(void* fun);
@@ -405,36 +411,38 @@ struct cell* make_sym(char* name);
 void init_sl3()
 {
 	nil = make_sym("nil");
-	all_symbols = make_cons(nil, nil);
-	top_env = make_cons(make_cons(nil, nil), nil);
-	tee = intern("#t");
-	extend_top(tee, tee);
-	quote = intern("quote");
-	s_if = intern("if");
-	s_cond = intern("cond");
-	s_lambda = intern("lambda");
-	s_define = intern("define");
-	s_setb = intern("set!");
-	s_begin = intern("begin");
-	extend_top(intern("+"), make_prim(prim_sum));
-	extend_top(intern("-"), make_prim(prim_sub));
-	extend_top(intern("*"), make_prim(prim_prod));
-	extend_top(intern("/"), make_prim(prim_div));
-	extend_top(intern("mod"), make_prim(prim_mod));
-	extend_top(intern("and"), make_prim(prim_and));
-	extend_top(intern("or"), make_prim(prim_or));
-	extend_top(intern("not"), make_prim(prim_not));
-	extend_top(intern(">"), make_prim(prim_numgt));
-	extend_top(intern(">="), make_prim(prim_numge));
-	extend_top(intern("="), make_prim(prim_numeq));
-	extend_top(intern("<="), make_prim(prim_numle));
-	extend_top(intern("<"), make_prim(prim_numlt));
-	extend_top(intern("display"), make_prim(prim_display));
-	extend_top(intern("free_mem"), make_prim(prim_freecell));
-	extend_top(intern("ascii!"), make_prim(prim_ascii));
-	extend_top(intern("list?"), make_prim(prim_listp));
-	extend_top(intern("list"), make_prim(prim_list));
-	extend_top(intern("cons"), make_prim(prim_cons));
-	extend_top(intern("car"), make_prim(prim_car));
-	extend_top(intern("cdr"), make_prim(prim_cdr));
+	tee = make_sym("#t");
+	quote = make_sym("quote");
+	s_if = make_sym("if");
+	s_cond = make_sym("cond");
+	s_lambda = make_sym("lambda");
+	s_define = make_sym("define");
+	s_setb = make_sym("set!");
+	s_begin = make_sym("begin");
+
+	all_symbols = make_cons(s_begin, make_cons(s_setb, make_cons(s_define, make_cons(s_lambda, make_cons(s_cond, make_cons(s_if, make_cons(quote, make_cons(tee, make_cons(nil, nil)))))))));
+	top_env = extend(nil, nil, nil);
+	top_env = extend(top_env, tee, tee);
+
+	spinup(make_sym("+"), make_prim(prim_sum));
+	spinup(make_sym("-"), make_prim(prim_sub));
+	spinup(make_sym("*"), make_prim(prim_prod));
+	spinup(make_sym("/"), make_prim(prim_div));
+	spinup(make_sym("mod"), make_prim(prim_mod));
+	spinup(make_sym("and"), make_prim(prim_and));
+	spinup(make_sym("or"), make_prim(prim_or));
+	spinup(make_sym("not"), make_prim(prim_not));
+	spinup(make_sym(">"), make_prim(prim_numgt));
+	spinup(make_sym(">="), make_prim(prim_numge));
+	spinup(make_sym("="), make_prim(prim_numeq));
+	spinup(make_sym("<="), make_prim(prim_numle));
+	spinup(make_sym("<"), make_prim(prim_numlt));
+	spinup(make_sym("display"), make_prim(prim_display));
+	spinup(make_sym("free_mem"), make_prim(prim_freecell));
+	spinup(make_sym("ascii!"), make_prim(prim_ascii));
+	spinup(make_sym("list?"), make_prim(prim_listp));
+	spinup(make_sym("list"), make_prim(prim_list));
+	spinup(make_sym("cons"), make_prim(prim_cons));
+	spinup(make_sym("car"), make_prim(prim_car));
+	spinup(make_sym("cdr"), make_prim(prim_cdr));
 }
