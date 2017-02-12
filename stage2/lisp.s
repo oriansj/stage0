@@ -1640,5 +1640,50 @@
 	RET R15
 
 
+;; unmark_cells
+;; Recieves a List in R0
+;; Returns nothing
+;; Unmarks all connected Cells
+:unmark_cells
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADUI R2 2                 ; GET MARKED
+	NOT R2 R2                   ; Use ~MARKED
+
+:unmark_cells_0
+	JUMP.Z R0 @unmark_cells_done
+	LOAD32 R1 R0 0              ; Get I->TYPE
+	AND R1 R1 R3                ; Remove MARK
+	STORE32 R1 R0 0             ; Store the cleaned type
+
+	;; Deal with CONS
+	CMPSKIPI.NE R1 16           ; If A CONS
+	JUMP @unmark_cells_proc     ; Deal with it
+
+	;; Deal with PROC
+	CMPSKIPI.NE R1 32           ; If A PROC
+	JUMP @unmark_cells_proc     ; Deal with it
+
+	;; Everything else
+	JUMP @unmark_cells_1        ; Move onto NEXT
+
+:unmark_cells_proc
+	LOAD32 R2 R0 4              ; Using list->CAR
+	SWAP R0 R2                  ; Protect list
+	CALLI R15 @unmark_cells     ; Recurse until the ends
+	SWAP R0 R2                  ; Put list back
+
+:unmark_cells_1
+	LOAD32 R0 R0 8              ; Get list->CDR
+	JUMP @unmark_cells_0        ; Keep going down list
+
+:unmark_cells_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
