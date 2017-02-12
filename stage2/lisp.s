@@ -1145,5 +1145,31 @@
 	RET R15
 
 
+;; prim_sum
+;; Recieves a list in R0
+;; Adds all values and returns a Cell with result in R0
+:prim_sum
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOADUI R3 $NIL              ; Using NIL
+	FALSE R2                    ; Initialize our SUM at 0
+
+:prim_sum_0
+	CMPJUMPI.E R0 R3 @prim_sum_done
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R0 4              ; Get ARGS->CAR->CAR
+	ADD R2 R2 R1                ; sum = sum + value
+	JUMP @prim_sum_0            ; Go to next list item
+
+:prim_sum_done
+	MOVE R0 R2                  ; Put SUM in right spot
+	CALLI R15 @make_int         ; Get our Cell
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Stack starts at the end of the program
 :stack
