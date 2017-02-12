@@ -1,8 +1,8 @@
 import subprocess
 import ctypes
 import re
+import sys, getopt
 
-subprocess.call("./bin/dis rom | sponge z_disassembled", shell=True)
 vm = ctypes.CDLL('./libvm.so')
 
 vm.get_memory.argtype = ctypes.c_uint
@@ -17,7 +17,8 @@ def Reset_lilith():
 	Current_IP = 0
 	global Watchpoints
 	Watchpoints = {0}
-	vm.load_lilith(ctypes.create_string_buffer("rom".encode('ascii')))
+	global ROM_Name
+	vm.load_lilith(ctypes.create_string_buffer(ROM_Name.encode('ascii')))
 
 def Step_lilith():
 	global Current_IP
@@ -171,8 +172,30 @@ def get_footer():
 </html>
 """
 
+def main(argv):
+	global Debug_Point
+	try:
+		opts, args = getopt.getopt(argv,"R:D:",["ROM=","DEBUG="])
+	except getopt.GetoptError:
+		print ('Knight.py ROM=$NAME DEBUG=$NUMBER\n')
+		sys.exit(2)
+	for opt, arg in opts:
+		if opt == '-h':
+			print ('Knight.py ROM=$NAME DEBUG=$NUMBER\n')
+			sys.exit()
+		elif opt in ("-R", "--ROM"):
+			global ROM_Name
+			ROM_Name = arg
+		elif opt in ("-D", "--DEBUG"):
+			global Debug_Point
+			Debug_Point = int(arg)
+
+	subprocess.call("./bin/dis " + ROM_Name + " | sponge z_disassembled", shell=True)
+
 Current_IP = 0
 Current_Page = 0
 Watchpoints = {0}
 Count=0
+Debug_Point = 0
+ROM_Name = "rom"
 Reset_lilith()

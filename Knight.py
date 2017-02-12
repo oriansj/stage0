@@ -4,6 +4,7 @@ import array
 import time
 import cherrypy
 import User_Interface as UI
+import sys
 
 class StringGenerator(object):
 	@cherrypy.expose
@@ -38,6 +39,7 @@ class StringGenerator(object):
 
 	@cherrypy.expose
 	def STOP(self):
+		print("Stopping after: " + str(UI.Count) + " Instructions" )
 		return UI.returnPage()
 
 	@cherrypy.expose
@@ -68,9 +70,12 @@ class StringGenerator(object):
 		UI.Step_lilith()
 		while UI.Current_IP not in UI.Watchpoints:
 			UI.Step_lilith()
+			if UI.Count >= UI.Debug_Point:
+				break
 		return UI.returnPage()
 
 if __name__ == '__main__':
+	 UI.main(sys.argv[1:])
 	 conf = {
 		  '/': {
 				'tools.sessions.on': True,
@@ -86,7 +91,6 @@ if __name__ == '__main__':
 				'tools.staticdir.dir': './public'
 		}
 	}
-
 
 	 webapp = StringGenerator()
 	 webapp.generator = StringGenerator()
