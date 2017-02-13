@@ -1413,7 +1413,7 @@
 	'00000010'                  ; A CONS
 	&NIL                        ; Pointer to NIL
 	&NIL                        ; Pointer to NIL
-	&NIL                        ; Pointer to NIL
+	'00000000'                  ; NULL
 
 
 :top_env
@@ -1423,13 +1423,13 @@
 	'00000010'                  ; A CONS
 	&NIL                        ; Pointer to NIL
 	&NIL                        ; Pointer to NIL
-	&NIL                        ; Pointer to NIL
+	'00000000'                  ; NULL
 
 :top_env_init_1
 	'00000010'                  ; A CONS
 	&top_env_init_0             ; Pointer to CONS of NIL
 	&NIL                        ; Pointer to NIL
-	&NIL                        ; Pointer to NIL
+	'00000000'                  ; NULL
 
 
 :free_cells
@@ -1580,11 +1580,11 @@
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
-	LOADR R1 @gc_block_start    ; Using GC_BLOCK_START
-	LOADR R0 @gc_block_end      ; Using GC_BLOCK_END
+	LOADR R0 @gc_block_start    ; Using GC_BLOCK_START
+	LOADR R1 @gc_block_end      ; Using GC_BLOCK_END
 
 :reclaim_marked_0
-	CMPJUMPI.LE R0 R1 @reclaim_marked_done
+	CMPJUMPI.GE R0 R1 @reclaim_marked_done
 	LOAD32 R2 R0 0              ; Get I->TYPE
 	ANDI R2 R2 2                ; AND with MARKED
 	JUMP.Z R2 @reclaim_marked_1 ; Deal with MARKED CELLS or jump on NULL
@@ -1601,7 +1601,7 @@
 
 	;; Deal with unmarked
 :reclaim_marked_1
-	SUBUI R0 R0 16              ; Decrement I by the size of a CELL
+	ADDUI R0 R0 16              ; Increment I by the size of a CELL
 	JUMP @reclaim_marked_0      ; Iterate on next CELL
 
 :reclaim_marked_done
