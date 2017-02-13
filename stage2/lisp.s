@@ -598,7 +598,13 @@
 	JUMP @writeobj_ASCII        ; Print the Char
 
 	;; What the hell is that???
+	LOADUI R0 $writeobj_Error
+	FALSE R1
+	CALLI R15 @Print_String
 	HALT
+
+:writeobj_Error
+	"What the fuck was that?"
 
 :writeobj_INT
 	LOAD32 R0 R0 4              ; Get HEAD->CAR
