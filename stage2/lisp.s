@@ -1660,7 +1660,7 @@
 :unmark_cells_0
 	JUMP.Z R0 @unmark_cells_done
 	LOAD32 R1 R0 0              ; Get I->TYPE
-	AND R1 R1 R3                ; Remove MARK
+	AND R1 R1 R2                ; Remove MARK
 	STORE32 R1 R0 0             ; Store the cleaned type
 
 	;; Deal with CONS
@@ -1675,10 +1675,10 @@
 	JUMP @unmark_cells_1        ; Move onto NEXT
 
 :unmark_cells_proc
-	LOAD32 R2 R0 4              ; Using list->CAR
-	SWAP R0 R2                  ; Protect list
+	LOAD32 R1 R0 4              ; Using list->CAR
+	SWAP R0 R1                  ; Protect list
 	CALLI R15 @unmark_cells     ; Recurse until the ends
-	SWAP R0 R2                  ; Put list back
+	SWAP R0 R1                  ; Put list back
 
 :unmark_cells_1
 	LOAD32 R0 R0 8              ; Get list->CDR
