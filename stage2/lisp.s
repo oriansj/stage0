@@ -1128,7 +1128,7 @@
 
 	LOAD32 R4 R0 4              ; Using EXP->CAR
 	LOADUI R3 $s_if             ; Using s_if
-	CMPJUMPI.NE R4 R3 @eval_cons_cond
+	CMPJUMPI.NE R4 R3 @process_cons_cond
 
 	CALLI R15 @process_if       ; deal with special case of If statements
 	JUMP @process_cons_done     ; Return it
