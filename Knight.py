@@ -66,6 +66,11 @@ class StringGenerator(object):
 		return UI.returnPage()
 
 	@cherrypy.expose
+	def WINDOW(self, Window=0):
+		UI.Current_Page = int(Window, 16)
+		return UI.returnPage()
+
+	@cherrypy.expose
 	def SPEEDBREAKPOINT(self):
 		UI.Step_lilith()
 		while UI.Current_IP not in UI.Watchpoints:

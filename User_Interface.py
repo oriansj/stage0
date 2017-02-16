@@ -36,7 +36,7 @@ def Set_Register(register, value):
 	return
 
 def returnPage():
-	return get_header() + (vm.get_memory(Current_Page)).decode('utf-8') + get_spacer1() + get_registers(0) + get_registers(8) + get_spacer2() + get_disassembled() + get_footer()
+	return get_header() + (vm.get_memory(Current_Page)).decode('utf-8') + get_spacer1() + get_registers(0) + get_registers(8) + get_spacer2() + get_Window_shortcut() + get_disassembled() + get_footer()
 
 hexlookup = { 0 : '0', 1 : '1', 2 : '2', 3 : '3', 4 : '4', 5 : '5', 6 : '6', 7 : '7', 8 : '8', 9 : '9', 10 : 'A', 11 : 'B', 12 : 'C', 13 : 'D', 14 : 'E', 15 : 'F' }
 
@@ -141,12 +141,20 @@ def get_spacer2():
 	return """
 	</div>
 	</div>
-	<div style="position:absolute; left:10px; top:280px; overflow-y: scroll; height:200px; width:60%;"> """
+"""
+
+def get_Window_shortcut():
+	return """
+	<form action="WINDOW" style="position:absolute; left:10px; top:260px;">
+		<input type="submit" value="Window Fast Move"> <input type="text" name="Window">
+	</form>
+"""
 
 def get_disassembled():
 	f = open('z_disassembled', "r")
 
-	temp = """<table class="Debug"><tbody>"""
+	temp = """	<div style="position:absolute; left:10px; top:280px; overflow-y: scroll; height:200px; width:60%;"> 
+<table class="Debug"><tbody>"""
 	i = 0
 	for line in f:
 		pieces = re.split(r'\t+', line)
