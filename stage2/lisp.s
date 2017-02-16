@@ -34,9 +34,13 @@
 :main
 	CALLI R15 @garbage_collect  ; Clean up unused cells
 	CALLI R15 @Readline         ; Read another S-expression
+	JUMP.Z R1 @main             ; Don't allow empty strings
 	CALLI R15 @parse            ; Convert into tokens
+	LOADR R1 @top_env           ; Get TOP_ENV
 	CALLI R15 @eval             ; Evaluate tokens
 	CALLI R15 @writeobj         ; Print result
+	FALSE R0                    ; Clear R0
+	FALSE R1                    ; Clear R1
 	JUMP @main                  ; Loop forever
 	HALT                        ; If broken get the fuck out now
 
