@@ -114,6 +114,9 @@ struct cell* evcond(struct cell* exp, struct cell* env)
 	return evcond(exp->cdr, env);
 }
 
+struct cell* process_sym(struct cell* exp, struct cell* env);
+struct cell* process_cons(struct cell* exp, struct cell* env);
+
 struct cell* eval(struct cell* exp, struct cell* env)
 {
 	if(exp == nil) return nil;
@@ -121,40 +124,8 @@ struct cell* eval(struct cell* exp, struct cell* env)
 	switch(exp->type)
 	{
 		case INT: return exp;
-		case SYM:
-		{
-			struct cell* tmp = assoc(exp, env);
-			if(tmp == nil)
-			{
-				fprintf(stderr,"Unbound symbol\n");
-				exit(EXIT_FAILURE);
-			}
-			return tmp->cdr;
-		}
-		case CONS:
-		{
-			if(exp->car == s_if)
-			{
-				if(eval(exp->cdr->car, env) != nil)
-				{
-					return eval(exp->cdr->cdr->car, env);
-				}
-				return eval(exp->cdr->cdr->cdr->car, env);
-			}
-			if(exp->car == s_cond) return evcond(exp->cdr, env);
-			if(exp->car == s_begin) return progn(exp->cdr, env);
-			if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
-			if(exp->car == quote) return exp->cdr->car;
-			if(exp->car == s_define) return(extend_top(exp->cdr->car, eval(exp->cdr->cdr->car, env)));
-			if(exp->car == s_setb)
-			{
-				struct cell* newval = eval(exp->cdr->cdr->car, env);
-				struct cell* pair = assoc(exp->cdr->car, env);
-				pair->cdr = newval;
-				return newval;
-			}
-			return apply(eval(exp->car, env), evlis(exp->cdr, env));
-		}
+		case SYM: return process_sym(exp, env);
+		case CONS: return process_cons(exp, env);
 		case PRIMOP: return exp;
 		case PROC: return exp;
 		default: return exp;
@@ -162,6 +133,48 @@ struct cell* eval(struct cell* exp, struct cell* env)
 	/* Not reached */
 	return exp;
 }
+
+struct cell* process_sym(struct cell* exp, struct cell* env)
+{
+	struct cell* tmp = assoc(exp, env);
+	if(tmp == nil)
+	{
+		fprintf(stderr,"Unbound symbol\n");
+		exit(EXIT_FAILURE);
+	}
+	return tmp->cdr;
+}
+
+struct cell* process_if(struct cell* exp, struct cell* env)
+{
+	if(eval(exp->cdr->car, env) != nil)
+	{
+		return eval(exp->cdr->cdr->car, env);
+	}
+	return eval(exp->cdr->cdr->cdr->car, env);
+
+}
+
+struct cell* process_setb(struct cell* exp, struct cell* env)
+{
+	struct cell* newval = eval(exp->cdr->cdr->car, env);
+	struct cell* pair = assoc(exp->cdr->car, env);
+	pair->cdr = newval;
+	return newval;
+}
+
+struct cell* process_cons(struct cell* exp, struct cell* env)
+{
+	if(exp->car == s_if) return process_if(exp, env);
+	if(exp->car == s_cond) return evcond(exp->cdr, env);
+	if(exp->car == s_begin) return progn(exp->cdr, env);
+	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
+	if(exp->car == quote) return exp->cdr->car;
+	if(exp->car == s_define) return(extend_top(exp->cdr->car, eval(exp->cdr->cdr->car, env)));
+	if(exp->car == s_setb) return process_setb(exp, env);
+	return apply(eval(exp->car, env), evlis(exp->cdr, env));
+}
+
 
 /*** Primitives ***/
 struct cell* make_int(int a);
@@ -393,6 +406,11 @@ struct cell* prim_ascii(struct cell* args)
 	return args;
 }
 
+struct cell* prim_halt(struct cell* args)
+{
+	exit(EXIT_SUCCESS);
+}
+
 struct cell* prim_list(struct cell* args) {return args;}
 struct cell* prim_cons(struct cell* args) { return make_cons(args->car, args->cdr->car); }
 struct cell* prim_car(struct cell* args) { return args->car->car; }
@@ -457,4 +475,5 @@ void init_sl3()
 	spinup(make_sym("cons"), make_prim(prim_cons));
 	spinup(make_sym("car"), make_prim(prim_car));
 	spinup(make_sym("cdr"), make_prim(prim_cdr));
+	spinup(make_sym("HALT"), make_prim(prim_halt));
 }
