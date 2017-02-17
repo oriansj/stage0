@@ -1322,12 +1322,21 @@
 ;; prim_ascii
 
 
+;; prim_halt
+;; Simply HALTS
+:prim_halt_String
+	"HALT"
+:prim_halt
+	HALT
+
+
 ;; prim_list
 ;; Simply returns the argument list passed to it in R0
 :prim_list_String
 	"list"
 :prim_list
 	RET R15
+
 
 ;; prim_cons
 ;; Recieves an arglist in R0 and returns a CONS in R0
@@ -1577,6 +1586,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_sub_String  ; Using PRIM_SUB_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_halt        ; Using PRIM_HALT
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_halt_String ; Using PRIM_SUB_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
