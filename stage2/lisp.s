@@ -1492,8 +1492,46 @@
 	RET R15
 
 
-	;; Currently unimplemented functions
 ;; prim_numgt
+;; Recieves a list in R0
+;; Compares values and returns a Cell with the result in R0
+:prim_numgt_String
+	">"
+:prim_numgt
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOADUI R3 $NIL              ; Using NIL
+	LOAD32 R2 R0 4              ; Get ARGS->CAR
+	LOAD32 R2 R2 4              ; Using ARGS->CAR->CAR as starting Value
+	LOAD32 R0 R0 8              ; Using ARGS->CDR as args
+
+:prim_numgt_0
+	CMPJUMPI.E R0 R3 @prim_numgt_1
+	LOAD32 R1 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R1 4              ; Get ARGS->CAR->CAR
+	LOAD32 R0 R0 8              ; Set ARGS to ARGS->CDR
+	CMPJUMPI.LE R2 R1 @prim_numgt_2
+	MOVE R2 R1                  ; Prepare for next loop
+	JUMP @prim_numgt_0          ; Go to next list item
+
+:prim_numgt_1
+	LOADUI R0 $TEE              ; Return TEE
+	JUMP @prim_numgt_done       ; Be done
+
+:prim_numgt_2
+	LOADUI R0 $NIL              ; Return NIL
+
+:prim_numgt_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+	;; Currently unimplemented functions
 ;; prim_numge
 ;; prim_numeq
 ;; prim_numle
@@ -1810,6 +1848,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_not_String  ; Using PRIM_NOT_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_numgt       ; Using PRIM_NUMGT
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_numgt_String ; Using PRIM_NUMGT_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
