@@ -437,10 +437,9 @@
 	FGETC                       ; Get a Byte
 	CMPSKIPI.NE R0 13           ; If CR
 	LOADUI R0 10                ; Replace with LF
-	FALSE R1                    ; Using TTY
-	CMPSKIPI.L R0 10            ; Don't print lower Control Chars
+
+	CMPSKIPI.NE R13 0           ; Don't display unless TTY
 	FPUTC                       ; Display the Char we just pressed
-	COPY R1 R13                 ; Set desired IO
 
 	CMPSKIPI.G R0 4             ; If EOF
 	CALLI R15 @Switch_Input     ; Do the correct thing
