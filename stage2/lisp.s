@@ -1714,7 +1714,42 @@
 	;; Currently unimplemented functions
 ;; prim_display
 ;; prim_freecell
+
+
 ;; prim_ascii
+;; Recieves a list in R0
+;; Converts all integers to ASCII
+:prim_ascii_String
+	"ascii!"
+:prim_ascii
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOADUI R3 $NIL              ; Using NIL
+
+:prim_ascii_0
+	CMPJUMPI.E R0 R3 @prim_ascii_done
+	LOAD32 R1 R0 4              ; Get ARGS->CAR
+	LOAD32 R2 R1 0              ; Get ARGS->CAR->TYPE
+	LOAD32 R0 R0 8              ; Set ARGS to ARGS->CDR
+	CMPSKIPI.NE R2 4            ; If Type is INT
+	JUMP @prim_ascii_1          ; Convert to ASCII
+	JUMP @prim_ascii_0          ; Go to next list item
+
+:prim_ascii_1
+	LOADUI R2 128               ; Using Type ASCII
+	STORE32 R2 R1 0             ; Update ARGS->CAR->TYPE
+	JUMP @prim_ascii_0          ; Keep looping
+
+:prim_ascii_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
 
 
 ;; prim_halt
@@ -2068,10 +2103,17 @@
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
+	LOADUI R0 $prim_ascii       ; Using PRIM_ASCII
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_ascii_String ; Using PRIM_ASCII_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
 	LOADUI R0 $prim_halt        ; Using PRIM_HALT
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
-	LOADUI R0 $prim_halt_String ; Using PRIM_SUB_STRING
+	LOADUI R0 $prim_halt_String ; Using PRIM_HALT_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
