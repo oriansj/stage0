@@ -1401,8 +1401,42 @@
 	RET R15
 
 
-	;; Currently unimplemented functions
 ;; prim_and
+;; Recieves a list in R0
+;; ANDs all of the values and returns a Cell with the result in R0
+:prim_and_String
+	"and"
+:prim_and
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOADUI R4 $TEE              ; Using TEE
+	LOADUI R3 $NIL              ; Using NIL
+
+
+:prim_and_0
+	CMPJUMPI.E R0 R3 @prim_and_done
+	LOAD32 R2 R0 4              ; Get ARGS->CAR
+	CMPJUMPI.NE R2 R4 @prim_and_1
+	LOAD32 R0 R0 8              ; Get ARGS->CDR
+	JUMP @prim_and_0            ; Go to next list item
+
+:prim_and_1
+	COPY R2 R3                  ; Return NIL
+
+:prim_and_done
+	MOVE R0 R2                  ; Put result in correct location
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+	;; Currently unimplemented functions
 ;; prim_or
 ;; prim_not
 ;; prim_numgt
@@ -1701,6 +1735,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_mod_String  ; Using PRIM_MOD_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_and         ; Using PRIM_AND
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_and_String  ; Using PRIM_AND_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
