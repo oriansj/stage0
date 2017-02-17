@@ -1,6 +1,21 @@
 * Unreleased
 ** Added
+
 ** Changed
+
+** Fixed
+
+** Removed
+
+* 0.0.3 - 2017-02-17
+** Added
++ Added a primitive Lisp implementation in assembly
++ Gave primitive Lisp an exact garbage collector for CELLs (aka everything but strings)
++ Added a concatination program to make dealing with line macros easier for M0-macro programmers
+
+** Changed
++ Enhanced Forth to better fit memory space
+
 ** Fixed
 Fixed arrangement of spaces in forth to prevent the small input space bug
 
