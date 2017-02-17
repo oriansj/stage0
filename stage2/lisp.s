@@ -99,12 +99,12 @@
 	FALSE R3                    ; NULL terminate
 	STOREX8 R3 R1 R4            ; Found Token
 
+	COPY R3 R1                  ; Preserve pointer to string
 	CMPSKIPI.NE R4 0            ; If empty
 	JUMP @tokenize_iterate      ; Don't bother to append
 
 	;; Make string token and append
 	SWAP R0 R1                  ; Need to send string in R0 for call
-	COPY R3 R0                  ; Preserve pointer to string
 	CALLI R15 @make_sym         ; Convert string to token
 	SWAP R0 R1                  ; Put HEAD and Tail in proper order
 	CALLI R15 @append_Cell      ; Append Token to HEAD
@@ -770,15 +770,21 @@
 ;; extend
 ;; CONS up symbols with an environment
 ;; Recieves an environment in R0, symbol in R1 and Value in R2
-;; Returns a CONS of CONS in R0, Clears R1 and R2
+;; Returns a CONS of CONS in R0
 :extend
-	PUSHR R0 R15                ; Protect the env until we need it
-	MOVE R0 R1                  ; Prepare Symbol for call
-	MOVE R1 R2                  ; Prepare value for call and Clear R2
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+
+	SWAP R2 R0                  ; Protect the env until we need it
+	SWAP R0 R1                  ; Put Symbol and Value in Correct Order
 	CALLI R15 @make_cons        ; Make inner CONS
-	POPR R1 R15                 ; Get env now that we need it
+	MOVE R1 R2                  ; Get env now that we need it
 	CALLI R15 @make_cons        ; Make outter CONS
-	FALSE R1                    ; Clear R1
+
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
 
 
@@ -845,7 +851,7 @@
 	LOAD32 R2 R1 4              ; ALIST->CAR
 	LOAD32 R3 R2 4              ; ALIST->CAR->CAR
 	LOAD32 R1 R1 8              ; ALIST = ALIST->CDR
-	CMPSKIP.NE R0 R3            ; If ALIST->CAR->CAR != KEY
+	CMPSKIP.E R0 R3             ; If ALIST->CAR->CAR != KEY
 	JUMP @assoc_0               ; Iterate using ALIST->CDR
 
 	;; Found KEY
@@ -872,14 +878,13 @@
 	PUSHR R3 R15                ; Protect R3
 
 	COPY R3 R1                  ; Protect ENV
-	LOAD32 R2 R0 8              ; Protect EXPRS->CDR
-	LOAD32 R0 R0 4              ; Using EXPRS->CAR
-	CALLI R15 @eval             ; EVAL
+	LOAD32 R2 R0 4              ; Protect EXPRS->CAR
+	LOAD32 R0 R0 8              ; Using EXPRS->CDR
+	CALLI R15 @evlis            ; Recursively Call self Down Expressions
 	SWAP R0 R2                  ; Using EXPRS->CDR
 	MOVE R1 R3                  ; Restore ENV
-	CALLI R15 @evlis            ; Recursively Call self Down Expressions
+	CALLI R15 @eval             ; EVAL
 	MOVE R1 R2                  ; Using result of EVAL and EVLIS
-	SWAP R1 R0                  ; Put in Proper Order
 	CALLI R15 @make_cons        ; Make a CONS of it all
 
 	POPR R3 R15                 ; Restore R3
@@ -988,11 +993,9 @@
 	LOAD32 R0 R2 4              ; Using EXP->CAR->CAR
 	CALLI R15 @eval             ; EVAL
 	CMPJUMPI.E R0 R4 @evcond_1  ; Its true !
-	MOVE R0 R3                  ; Prepare EXP->CDR
-	CMPSKIPI.NE R0 $NIL         ; If EXP->CDR == NIL
-	MOVE R4 R0                  ; Use NIL as our Return
-	JUMP.NZ R0 @evcond_0        ; Keep looping until NIL or True
-	MOVE R0 R4                  ; Put return in the right place
+
+	MOVE R0 R3                  ; Using EXP->CDR
+	CALLI R15 @evcond           ; Recurse
 	JUMP @evcond_done           ; Bail with just NIL
 
 	;;  Expression Evaluation
@@ -1037,18 +1040,25 @@
 	;; Deal with special cases of CONS
 :eval_cons
 	CMPSKIPI.E R4 16            ; If EXP->TYPE is NOT CONS
-	JUMP @eval_primop           ; Move onto next Case
+	JUMP @eval_proc             ; Move onto next Case
 
 	CALLI R15 @process_cons     ; Deal with all CONS
 	JUMP @eval_done             ; Simply return the result
 
-	;; Deal with everything else the same way
-:eval_primop
 :eval_proc
-	;; The result for primops and procs are simply to return the Expression
-	;; Which just so happens to already be in R0 so don't bother to do any
-	;; More but we are leaving these labels in case we want to change it
-	;; later or do something much more complicated.
+	CMPSKIPI.E R4 32			; If EXP->TYPE is NOT PROC
+	JUMP @eval_primop			; Move onto next Case
+
+	JUMP @eval_done
+
+:eval_primop
+	CMPSKIPI.E R4 64			; If EXP->TYPE is NOT PRIMOP
+	JUMP @eval_error			; Move onto next Case
+
+	JUMP @eval_done
+
+:eval_error
+	HALT
 
 	;; Result must be in R0 by this point
 	;; Simply Clean up and return result in R0
@@ -1060,9 +1070,9 @@
 	RET R15
 
 
-	;; process_sym
-	;; Recieves Expression in R0 and an Environment in R1
-	;; Returns symbol in R0
+;; process_sym
+;; Recieves Expression in R0 and an Environment in R1
+;; Returns symbol in R0
 :process_sym
 	CALLI R15 @assoc            ; ASSOC to get tmp
 	CMPSKIPI.NE R0 $NIL         ; If NIL is returned
@@ -1092,8 +1102,8 @@
 	LOAD32 R0 R2 4              ; Using EXP->CDR->CAR
 	CALLI R15 @eval             ; Recurse to get truth
 	CMPSKIPI.E R0 $NIL          ; If Result was NOT NIL
-	LOAD32 R3 R3 8              ; Update to EXP->CDR->CDR
-	LOAD32 R0 R3 8              ; Get EXP->CDR->CDR
+	LOAD32 R2 R2 8              ; Update to EXP->CDR->CDR
+	LOAD32 R0 R2 8              ; Get EXP->CDR->CDR
 	LOAD32 R0 R0 4              ; Using EXP->CDR->CDR->CAR
 	CALLI R15 @eval             ; Recurse to get result
 
