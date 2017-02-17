@@ -545,8 +545,6 @@
 	JUMP @Write_Int_0           ; Otherwise keep looping
 
 	;; Cleanup
-	LOADUI R0 10                ; Append Newline
-	FPUTC                       ; Print it
 	POPR R5 R15                 ; Restore R5
 	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
@@ -632,13 +630,27 @@
 	LOAD32 R0 R3 4              ; Get HEAD->CAR
 	CALLI R15 @writeobj         ; Recurse on HEAD->CAR
 
-	LOAD32 R0 R3 8              ; Get HEAD->CDR
-	LOADUI R3 $NIL              ; Using NIL
-	CMPSKIP.NE R0 R3            ; If NIL
-	JUMP @writeobj_CONS_1       ; Break out of loop
-	CALLI R15 @writeobj         ; Recurse on HEAD->CDR
+	LOAD32 R3 R3 8              ; Set HEAD to HEAD->CDR
+	LOADUI R0 $NIL              ; Using NIL
+	CMPJUMPI.E R0 R3 @writeobj_CONS_1
 
+	LOAD32 R0 R3 0              ; Get HEAD->type
+	CMPSKIPI.E R0 16            ; if Not CONS
+	JUMP @writeobj_CONS_2       ; Deal with inner case
+
+	LOADUI R0 32                ; Using SPACE
+	FPUTC                       ; Write out desired space
+	JUMP @writeobj_CONS_0       ; Keep looping
+
+	;; Deal with case of op->cdr == nil
 :writeobj_CONS_1
+	LOADUI R0 41                ; Using )
+	FPUTC                       ; Write to desired output
+	JUMP @writeobj_done         ; Be Done
+
+:writeobj_CONS_2
+	COPY R0 R3                  ; Using HEAD
+	CALLI R15 @writeobj         ; Recurse
 	LOADUI R0 41                ; Using )
 	FPUTC                       ; Write to desired output
 	JUMP @writeobj_done         ; Be Done
@@ -1052,14 +1064,14 @@
 	JUMP @eval_done             ; Simply return the result
 
 :eval_proc
-	CMPSKIPI.E R4 32			; If EXP->TYPE is NOT PROC
-	JUMP @eval_primop			; Move onto next Case
+	CMPSKIPI.E R4 32            ; If EXP->TYPE is NOT PROC
+	JUMP @eval_primop           ; Move onto next Case
 
 	JUMP @eval_done
 
 :eval_primop
-	CMPSKIPI.E R4 64			; If EXP->TYPE is NOT PRIMOP
-	JUMP @eval_error			; Move onto next Case
+	CMPSKIPI.E R4 64            ; If EXP->TYPE is NOT PRIMOP
+	JUMP @eval_error            ; Move onto next Case
 
 	JUMP @eval_done
 
@@ -1107,7 +1119,7 @@
 	LOAD32 R2 R0 8              ; Protect EXP->CDR
 	LOAD32 R0 R2 4              ; Using EXP->CDR->CAR
 	CALLI R15 @eval             ; Recurse to get truth
-	CMPSKIPI.E R0 $NIL          ; If Result was NOT NIL
+	CMPSKIPI.NE R0 $NIL         ; If Result was NOT NIL
 	LOAD32 R2 R2 8              ; Update to EXP->CDR->CDR
 	LOAD32 R0 R2 8              ; Get EXP->CDR->CDR
 	LOAD32 R0 R0 4              ; Using EXP->CDR->CDR->CAR
