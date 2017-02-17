@@ -108,13 +108,12 @@
 	CALLI R15 @make_sym         ; Convert string to token
 	SWAP R0 R1                  ; Put HEAD and Tail in proper order
 	CALLI R15 @append_Cell      ; Append Token to HEAD
-	ADD R1 R3 R4                ; Update string pointer
-	SUB R2 R2 R4                ; Decrement by size used
 
 	;; Loop down string until end, appending tokens along the way
 :tokenize_iterate
-	ADDUI R1 R1 1               ; Move past NULL
-	SUBUI R2 R2 1               ; And reduce size accordingly
+	ADDUI R4 R4 1               ; Move past NULL
+	ADD R1 R3 R4                ; Update string pointer
+	SUB R2 R2 R4                ; Decrement by size used
 	FALSE R4                    ; Reset Counter
 
 	CMPSKIPI.LE R2 0            ; If NOT end of string
@@ -277,9 +276,10 @@
 :atom_new
 	LOADR32 R0 @all_symbols     ; Get pointer to all symbols
 	SWAP R0 R1                  ; Put pointers in correct order
+	COPY R3 R0                  ; Protect A
 	CALLI R15 @make_cons        ; Make a CONS out of Token and all_symbols
 	STORER32 R0 @all_symbols    ; Update all_symbols
-	MOVE R1 R0                  ; Put result in correct register
+	MOVE R1 R3                  ; Put result in correct register
 
 :atom_done
 	MOVE R0 R1                  ; Put our result in R0
@@ -338,6 +338,8 @@
 	CMPSKIPI.E R1 41            ; If NOT )
 	JUMP @readlist_0            ; CONS up elements
 
+	LOAD32 R1 R0 8              ; Get HEAD->CDR
+	STORER32 R1 @token_stack    ; Update token stack
 	LOADUI R0 $NIL              ; Use NIL (Result in R0)
 	JUMP @readlist_done
 
@@ -437,9 +439,6 @@
 	CMPSKIPI.G R0 4             ; If EOF
 	CALLI R15 @Switch_Input     ; Do the correct thing
 
-	CMPSKIP.E R1 R13            ; If IO source changed
-	JUMP @Readline_done         ; We finished
-
 	CMPSKIPI.G R0 32            ; If SPACE or below
 	JUMP @Readline_1
 
@@ -459,6 +458,9 @@
 	;; Deal with Line comments
 :Readline_0
 	FGETC                       ; Get another Byte
+	CMPSKIPI.NE R0 13           ; Deal with CR
+	LOADUI R0 10                ; Convert to LF
+
 	CMPSKIPI.NE R0 10           ; If LF
 	JUMP @Readline_loop         ; Resume
 
@@ -472,6 +474,7 @@
 	LOADUI R0 32                ; Otherwise convert to SPACE
 	STOREX8 R0 R2 R3            ; Append to String
 	ADDUI R3 R3 1               ; Increment Size
+	JUMP @Readline_loop         ; Keep Looping
 
 	;; Deal with ()
 :Readline_2
