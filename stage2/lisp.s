@@ -1304,8 +1304,38 @@
 	RET R15
 
 
-	;; Currently unimplemented functions
 ;; prim_prod
+;; Recieves a list in R0
+;; Multiplies all of the values and returns a Cell with the result in R0
+:prim_prod_String
+	"*"
+:prim_prod
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOADUI R3 $NIL              ; Using NIL
+	LOADUI R2 1                 ; Initialize our Product at 1
+
+:prim_prod_0
+	CMPJUMPI.E R0 R3 @prim_prod_done
+	LOAD32 R1 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R1 4              ; Get ARGS->CAR->CAR
+	LOAD32 R0 R0 8              ; Set ARGS to ARGS->CDR
+	MUL R2 R2 R1                ; sum = sum + value
+	JUMP @prim_prod_0           ; Go to next list item
+
+:prim_prod_done
+	MOVE R0 R2                  ; Put SUM in right spot
+	CALLI R15 @make_int         ; Get our Cell
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+	;; Currently unimplemented functions
 ;; prim_div
 ;; prim_mod
 ;; prim_and
@@ -1586,6 +1616,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_sub_String  ; Using PRIM_SUB_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_prod        ; Using PRIM_PROD
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_prod_String ; Using PRIM_PROD_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
