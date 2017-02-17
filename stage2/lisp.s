@@ -39,6 +39,9 @@
 	LOADR R1 @top_env           ; Get TOP_ENV
 	CALLI R15 @eval             ; Evaluate tokens
 	CALLI R15 @writeobj         ; Print result
+	LOADUI R0 10                ; Use LF
+	COPY R1 R12                 ; And desired Output
+	FPUTC                       ; Write Line Feed
 	FALSE R0                    ; Clear R0
 	FALSE R1                    ; Clear R1
 	JUMP @main                  ; Loop forever
@@ -432,7 +435,10 @@
 	;; Main Loop
 :Readline_loop
 	FGETC                       ; Get a Byte
+	CMPSKIPI.NE R0 13           ; If CR
+	LOADUI R0 10                ; Replace with LF
 	FALSE R1                    ; Using TTY
+	CMPSKIPI.L R0 10            ; Don't print lower Control Chars
 	FPUTC                       ; Display the Char we just pressed
 	COPY R1 R13                 ; Set desired IO
 
@@ -526,14 +532,14 @@
 
 :Write_Int_0
 	DIVIDE R0 R3 R3 R2          ; Break off top 10
-	CMPSKIPI.NE R0 0            ; If Not Zero
+	CMPSKIPI.E R0 0             ; If Not Zero
 	TRUE R4                     ; Flip the Flag
 
+	JUMP.Z R4 @Write_Int_1      ; Skip leading Zeros
 	ADDUI R0 R0 48              ; Shift into ASCII
-	CMPSKIPI.NE R0 48           ; If top was Zero
-	CMPSKIPI.NE R4 0            ; Don't print leading Zeros
 	FPUTC                       ; Print Top
 
+:Write_Int_1
 	DIV R2 R2 R5                ; Look at next 10
 	CMPSKIPI.E R2 0             ; If we reached the bottom STOP
 	JUMP @Write_Int_0           ; Otherwise keep looping
