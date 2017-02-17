@@ -435,14 +435,14 @@
 	;; Main Loop
 :Readline_loop
 	FGETC                       ; Get a Byte
+	CMPSKIPI.G R0 4             ; If EOF
+	CALLI R15 @Switch_Input     ; Do the correct thing
+
 	CMPSKIPI.NE R0 13           ; If CR
 	LOADUI R0 10                ; Replace with LF
 
 	CMPSKIPI.NE R13 0           ; Don't display unless TTY
 	FPUTC                       ; Display the Char we just pressed
-
-	CMPSKIPI.G R0 4             ; If EOF
-	CALLI R15 @Switch_Input     ; Do the correct thing
 
 	CMPSKIPI.G R0 32            ; If SPACE or below
 	JUMP @Readline_1
