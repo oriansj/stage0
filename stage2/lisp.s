@@ -1687,8 +1687,31 @@
 	RET R15
 
 
-	;; Currently unimplemented functions
 ;; prim_listp
+;; Recieves a list in R0
+;; Compares values and returns a Cell with the result in R0
+:prim_listp_String
+	"list?"
+:prim_listp
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R0 16           ; If CONS
+	JUMP @prim_listp_0          ; Return TEE
+
+	LOADUI R0 $NIL              ; Otherwise return NIL
+	JUMP @prim_listp_done       ; Return our NIL
+
+:prim_listp_0
+	LOADUI R0 $TEE              ; Make TEE
+
+:prim_listp_done
+	RET R15
+
+
+	;; Currently unimplemented functions
 ;; prim_display
 ;; prim_freecell
 ;; prim_ascii
@@ -2035,6 +2058,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_numlt_String ; Using PRIM_NUMLT_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_listp       ; Using PRIM_LISTP
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_listp_String ; Using PRIM_LISTP_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
