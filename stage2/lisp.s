@@ -1469,8 +1469,30 @@
 	RET R15
 
 
-	;; Currently unimplemented functions
 ;; prim_not
+;; Recieves a list in R0
+;; NOTs first of the values and returns a Cell with the result in R0
+:prim_not_String
+	"not"
+:prim_not
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	CMPSKIPI.E R0 $TEE          ; If not TEE
+	JUMP @prim_not_0            ; Return TEE
+
+	LOADUI R0 $NIL              ; Otherwise return NIL
+	JUMP @prim_not_done         ; Return our NIL
+
+:prim_not_0
+	LOADUI R0 $TEE              ; Make TEE
+
+:prim_not_done
+	RET R15
+
+
+	;; Currently unimplemented functions
 ;; prim_numgt
 ;; prim_numge
 ;; prim_numeq
@@ -1781,6 +1803,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_or_String   ; Using PRIM_OR_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_not         ; Using PRIM_NOT
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_not_String  ; Using PRIM_NOT_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
