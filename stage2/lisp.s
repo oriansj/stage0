@@ -1722,7 +1722,7 @@
 	"free_mem"
 :prim_freecell
 	PUSHR R1 R15                ; Protect R1
-	CMPSKIPI.NE R0 $NIL         ; If NOT NIL
+	CMPSKIPI.E R0 $NIL          ; If NOT NIL
 	JUMP @prim_freecell_0       ; Skip message
 
 	LOADUI R0 $prim_freecell_Message
