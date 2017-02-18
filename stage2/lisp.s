@@ -7,9 +7,9 @@
 	;; FREE = 1, MARKED = (1 << 1),INT = (1 << 2),SYM = (1 << 3),
 	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),ASCII = (1 << 7)
 
-	;; CONS space: End of program -> 1.5MB (0x180000)
-	;; HEAP space: 1.5MB -> 1.75MB (0x1C0000)
-	;; STACK space: 1.75MB -> End of Memory (2MB (0x200000))
+	;; CONS space: End of program -> 1MB (0x100000)
+	;; HEAP space: 1MB -> 1.5MB (0x180000)
+	;; STACK space: 1.5MB -> End of Memory (2MB (0x200000))
 
 ;; Start function
 :start
@@ -48,7 +48,7 @@
 	HALT                        ; If broken get the fuck out now
 
 :stack_start
-	'001C0000'
+	'00180000'
 
 ;; Append_Cell
 ;; Adds a cell to the end of a CDR chain
@@ -405,7 +405,7 @@
 ;; Our static value for malloc pointer
 ;; Starting at 64KB
 :malloc_pointer
-	'00180000'
+	'00100000'
 
 
 ;; Switch_Input
@@ -2340,7 +2340,7 @@
 
 ;; gc_block_end
 :gc_block_end
-	'00160000'
+	'000FFFF0'
 
 
 ;; reclaim_marked
