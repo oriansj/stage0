@@ -1711,8 +1711,59 @@
 	RET R15
 
 
-	;; Currently unimplemented functions
 ;; prim_display
+;; Recieves argslist in R0
+;; Outputs to TTY and returns TEE
+:prim_display_String
+	"display"
+:prim_display
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOADUI R4 $NIL              ; Using NIL
+	FALSE R1                    ; Set to use TTY
+
+:prim_display_0
+	CMPJUMPI.E R0 R4 @prim_display_done
+	LOAD32 R3 R0 4              ; Get ARGS->CAR
+	LOAD32 R2 R3 0              ; Get ARGS->CAR->TYPE
+	SWAP R0 R3                  ; Protect ARGS
+
+	CMPSKIPI.NE R2 4            ; If INT
+	CALLI R15 @prim_display_INT ; Print the value
+
+	CMPSKIPI.NE R2 8            ; If SYM
+	CALLI R15 @prim_display_SYM ; Print the string
+
+	CMPSKIPI.NE R2 16           ; If CONS
+	CALLI R15 @prim_display     ; Recurse
+
+	CMPSKIPI.NE R2 128          ; If ASCII
+	CALLI R15 @prim_display_ASCII ; Just print the last Char
+
+	LOAD32 R0 R3 8              ; Get ARGS->CDR
+	JUMP @prim_display_0        ; Loop until we hit NIL
+
+:prim_display_done
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	LOADUI R0 $TEE              ; Return TEE
+	RET R15
+
+
+:prim_display_INT
+	RET R15
+
+
+:prim_display_SYM
+	RET R15
+
+
+:prim_display_ASCII
+	RET R15
 
 
 ;; prim_freecell
@@ -2125,6 +2176,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_listp_String ; Using PRIM_LISTP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_display     ; Using PRIM_DISPLAY
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_display_String ; Using PRIM_DISPLAY_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
