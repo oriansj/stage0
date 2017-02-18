@@ -7,6 +7,23 @@
 
 ** Removed
 
+* 0.0.4 - 2017-02-18
+** Added
++ Added missing primitives from High level prototype to lisp implementation
++ Improved Eval's debugging messages
+
+** Changed
++ Readline function no longer displays EOF Char should the user terminate input with Ctrl-d
+
+** Fixed
++ Corrected Eval's processing of ASCII type
++ Make IF statements behave correctly
++ Enabled support for negative numbers
++ Properly display Integer Cells with the value of ZERO
+
+** Removed
++ Removed Eval's default behavior of unknown input
+
 * 0.0.3 - 2017-02-17
 ** Added
 + Added a primitive Lisp implementation in assembly
