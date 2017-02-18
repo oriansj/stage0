@@ -134,6 +134,10 @@
 :is_integer
 	PUSHR R1 R15                ; Protect R1
 	LOADU8 R1 R0 0              ; Read first Char
+
+	CMPSKIPI.NE R1 45           ; If starts with -
+	LOADU8 R1 R0 1              ; Get Second Char
+
 	FALSE R0                    ; Assume FALSE
 
 	CMPSKIPI.GE R1 48           ; If below '0'
