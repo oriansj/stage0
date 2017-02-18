@@ -529,6 +529,8 @@
 	PUSHR R4 R15                ; Preserve R4
 	PUSHR R5 R15                ; Preserve R5
 	MOVE R3 R0                  ; Move Integer out of the way
+
+	JUMP.Z R3 @Write_Int_ZERO   ; Deal with Special case of ZERO
 	JUMP.P R3 @Write_Int_Positive
 	LOADUI R0 45                ; Using -
 	FPUTC                       ; Display leading -
@@ -554,6 +556,7 @@
 	CMPSKIPI.E R2 0             ; If we reached the bottom STOP
 	JUMP @Write_Int_0           ; Otherwise keep looping
 
+:Write_Int_done
 	;; Cleanup
 	POPR R5 R15                 ; Restore R5
 	POPR R4 R15                 ; Restore R4
@@ -562,6 +565,12 @@
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
+
+:Write_Int_ZERO
+	LOADUI R0 48                ; Using Zero
+	FPUTC                       ; Display
+	JUMP @Write_Int_done        ; Be done
+
 
 
 ;; Print_String
