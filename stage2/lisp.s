@@ -529,6 +529,13 @@
 	PUSHR R4 R15                ; Preserve R4
 	PUSHR R5 R15                ; Preserve R5
 	MOVE R3 R0                  ; Move Integer out of the way
+	JUMP.P R3 @Write_Int_Positive
+	LOADUI R0 45                ; Using -
+	FPUTC                       ; Display leading -
+	NOT R3 R3                   ; Flip into positive
+	ADDUI R3 R3 1               ; Adjust twos
+
+:Write_Int_Positive
 	LOADR R2 @Max_Decimal       ; Starting from the Top
 	LOADUI R5 10                ; We move down by 10
 	FALSE R4                    ; Flag leading Zeros
