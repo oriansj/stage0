@@ -1070,12 +1070,22 @@
 
 :eval_primop
 	CMPSKIPI.E R4 64            ; If EXP->TYPE is NOT PRIMOP
+	JUMP @eval_ascii            ; Move onto next Case
+
+:eval_ascii
+	CMPSKIPI.E R4 128           ; If EXP->TYPE is NOT ASCII
 	JUMP @eval_error            ; Move onto next Case
 
 	JUMP @eval_done
 
 :eval_error
+	LOADUI R0 $eval_error_Message ; Use a specific message to aid debugging
+	FALSE R1                    ; Written to TTY
+	CALLI R15 @Print_String     ; Write NOW
 	HALT
+
+:eval_error_Message
+	"EVAL Recieved unknown Object"
 
 	;; Result must be in R0 by this point
 	;; Simply Clean up and return result in R0
@@ -1754,15 +1764,42 @@
 	RET R15
 
 
+;; prim_display_INT
+;; Recieves an INT CELL in R0 and desired Output in R1
+;; Outputs value and returns
 :prim_display_INT
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOAD32 R0 R0 4              ; Get ARG->CAR
+	CALLI R15 @Write_Int        ; Write it
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
 
 
+;; prim_display_SYM
+;; Recieves a SYM CELL in R0 and desired Output in R1
+;; Outputs string and returns
 :prim_display_SYM
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOAD32 R0 R0 4              ; Get ARG->CAR
+	CALLI R15 @Print_String     ; Print the string
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
 
 
+;; prim_display_ASCII
+;; Recieves an ASCII CELL in R0 and desired Output in R1
+;; Outputs Last CHAR and returns
 :prim_display_ASCII
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOADU8 R0 R0 7              ; Get ARG->CAR [bottom 8 bits]
+	FPUTC                       ; Display desired CHAR
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
 
 
