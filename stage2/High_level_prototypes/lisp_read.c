@@ -88,6 +88,14 @@ bool is_integer(char* a)
 		return true;
 	}
 
+	if('-' == a[0])
+	{
+		if(('0' <= a[1]) && ('9' >= a[1]))
+		{
+			return true;
+		}
+	}
+
 	return false;
 }
 
