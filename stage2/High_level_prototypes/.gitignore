@@ -1,0 +1,7 @@
+# The compiled lisp
+lisp
+# temp files
+*.swp
+*.tmp
+*.qst
+
