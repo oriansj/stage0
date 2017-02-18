@@ -1713,7 +1713,32 @@
 
 	;; Currently unimplemented functions
 ;; prim_display
+
+
 ;; prim_freecell
+;; Recieves either NIL or a list in R0
+;; If NIL displays header, otherwise just returns number of free cells in R0
+:prim_freecell_String
+	"free_mem"
+:prim_freecell
+	PUSHR R1 R15                ; Protect R1
+	CMPSKIPI.NE R0 $NIL         ; If NOT NIL
+	JUMP @prim_freecell_0       ; Skip message
+
+	LOADUI R0 $prim_freecell_Message
+	COPY R1 R12                 ; Using Selected Output
+	CALLI R15 @Print_String     ; Display our header
+
+:prim_freecell_0
+	CALLI R15 @cells_remaining  ; Get number of remaining Cells
+	CALLI R15 @make_int         ; Convert integer in R0 to a Cell
+
+:prim_freecell_done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:prim_freecell_Message
+	"Remaining Cells: "
 
 
 ;; prim_ascii
@@ -2100,6 +2125,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_listp_String ; Using PRIM_LISTP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_freecell    ; Using PRIM_FREECELL
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_freecell_String ; Using PRIM_FREECELL_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
