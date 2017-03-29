@@ -1,0 +1,99 @@
+* Step 0 Setup the world
+make development
+
+* Step 1 create original bootstrap binary
+There are numerous methods but for simplicity, lets first get a basic hex assembler:
+
+gcc Linux\ Bootstrap/hex.c -o bin/hex
+
+Then we can use it to make our bootstrap binary:
+./bin/hex < stage0/stage0_monitor.hex0 > rom
+
+Which should have the sha256sum of 0a427b14020354d1c785f5f900677e0059fce8f8d4456e9c19e5528cb17101eb
+
+* Step 2 create a hex assembler
+There are two methods, 1) do make production instead and simply ./bin/vm rom < stage1/stage1_assembler-0.hex0
+or
+manually type in the contents of stage1/stage1_assembler-0.hex0 while running ./bin/vm rom
+
+this will produce tape_01 with the resulting binary and tape_02 with the source code input (this is really important for bootstrapping a text editor)
+
+WHich should have the sha256sum of f8289dfa9dd92e8a1a48f9a624d5d19e4f312b91bc3d1e0796474b46157ec47a
+
+* Step 3 create a better hex assembler
+We now need a place to put the binaries we already made so,
+mkdir roms
+mv rom roms/stage0
+
+Now lets use our hex assembler
+mv tape_01 rom
+
+and use the source for one that supports single charactor labels
+cp stage1/stage1_assembler-1.hex0 tape_01
+
+and lets build it
+./bin/vm rom
+
+Now tape_02 contains our new and improved assembler
+Which should have the sha256sum of e4f0ed6e78ae79bb5e4a4fbde36f085dd0469cd6ae036dce5953b3d1c89801ce
+
+* Step 4 get even long label support
+Lets protect that previous assembler for audit purposes
+mv rom roms/stage1-assembler0
+
+Now lets use our improved hex assembler
+mv tape_02 rom
+
+and use the source for one that supports long labels
+cp stage1/stage1_assembler-2.hex1 tape_01
+
+and lets build it
+./bin/vm rom
+
+Now tape_02 contains the last hex assembler we will need
+Which should have the sha256sum of 61c1b0f2f628847d9491bd678ac7a23231527cc36493b321612f191674ff3c99
+
+Lets save both
+mv rom roms/stage1-assembler1
+mv tape_02 rom
+cp rom roms/stage1-assembler2
+
+* Lets get us a line macro assembler
+First prepare the source code
+cp stage1/M0-macro.hex2 tape_01
+
+and lets build it
+./bin/vm rom
+
+Now tape_02 contains our new line macro assembler, which with our definition file High_level_prototypes/defs means we can right straight assembly from here on out.
+Lets save it now
+cp tape_02 roms/M0
+
+This should have the sha256sum of 2b9727381aec15a504c0898189fbc2344209d8e04451e3fa5d743e08e38f64cf
+
+* Finally we can build our forth or lisp
+to build the forth:
+cat High_level_prototypes/defs stage2/forth.s > tape_01
+to build the lisp:
+cat High_level_prototypes/defs stage2/lisp.s > tape_01
+
+and then the steps to build are exactly the same:
+cp roms/M0 rom
+./bin/vm rom
+
+Which puts a hex program in tape_02
+
+mv tape_02 tape_01
+
+we then have to use our last hex assembler
+cp roms/stage1-assembler2 rom
+
+and finally build the desired result:
+./bin/vm rom
+
+Which will produce one of the following in tape_02
+Given the forth assembly a file with the sha256sum of 0aacf6258e9de0acde755229ad14e6ce13ab7a43b0360dadeb862f8facccc422
+or
+Give the lisp assembly a file with the sha256sum of 9aa3838a079f6afc0fb9ce77a2d9a77f57838177393110c901616122a739ade4
+
+Now you can run the forth or lisp as you please
