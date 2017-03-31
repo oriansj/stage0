@@ -732,91 +732,21 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			break;
 		}
 		case 0x014: /* PACK */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "PACK", 19);
-			#elif TRACE
-			record_trace("PACK");
-			#endif
-
-			PACK(vm, c);
-			break;
-		}
 		case 0x015: /* UNPACK */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "UNPACK", 19);
-			#elif TRACE
-			record_trace("UNPACK");
-			#endif
-
-			UNPACK(vm, c);
-			break;
-		}
 		case 0x016: /* PACK8.CO */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "PACK8.CO", 19);
-			#elif TRACE
-			record_trace("PACK8.CO");
-			#endif
-
-			PACK8_CO(vm, c);
-			break;
-		}
 		case 0x017: /* PACK8U.CO */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "PACK8U.CO", 19);
-			#elif TRACE
-			record_trace("PACK8U.CO");
-			#endif
-
-			PACK8U_CO(vm, c);
-			break;
-		}
 		case 0x018: /* PACK16.CO */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "PACK16.CO", 19);
-			#elif TRACE
-			record_trace("PACK16.CO");
-			#endif
-
-			PACK16_CO(vm, c);
-			break;
-		}
 		case 0x019: /* PACK16U.CO */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "PACK16U.CO", 19);
-			#elif TRACE
-			record_trace("PACK16U.CO");
-			#endif
-
-			PACK16U_CO(vm, c);
-			break;
-		}
 		case 0x01A: /* PACK32.CO */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "PACK32.CO", 19);
-			#elif TRACE
-			record_trace("PACK32.CO");
-			#endif
-
-			PACK32_CO(vm, c);
-			break;
-		}
 		case 0x01B: /* PACK32U.CO */
 		{
 			#ifdef DEBUG
-			strncpy(Name, "PACK32U.CO", 19);
+			strncpy(Name, "ILLEGAL INSTRUCTION", 19);
 			#elif TRACE
-			record_trace("PACK32U.CO");
+			record_trace("ILLEGAL_INSTRUCTION");
 			#endif
 
-			PACK32U_CO(vm, c);
+			exit(EXIT_FAILURE);
 			break;
 		}
 		case 0x020: /* AND */

@@ -243,14 +243,6 @@ void assemble(struct Token* p)
 	setExpression(p, "MAXU", "05011", 4);
 	setExpression(p, "MIN", "05012", 4);
 	setExpression(p, "MINU", "05013", 4);
-	setExpression(p, "PACK", "05014", 4);
-	setExpression(p, "UNPACK", "05015", 4);
-	setExpression(p, "PACK8.CO", "05016", 4);
-	setExpression(p, "PACK8U.CO", "05017", 4);
-	setExpression(p, "PACK16.CO", "05018", 4);
-	setExpression(p, "PACK16U.CO", "05019", 4);
-	setExpression(p, "PACK32.CO", "0501A", 4);
-	setExpression(p, "PACK32U.CO", "0501B", 4);
 	setExpression(p, "AND", "05020", 4);
 	setExpression(p, "OR", "05021", 4);
 	setExpression(p, "XOR", "05022", 4);

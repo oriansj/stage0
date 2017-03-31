@@ -317,43 +317,15 @@ void decode_Integer_3OP(struct Instruction* c)
 			break;
 		}
 		case 0x014: /* PACK */
-		{
-			strncpy(Name, "PACK", 19);
-			break;
-		}
 		case 0x015: /* UNPACK */
-		{
-			strncpy(Name, "UNPACK", 19);
-			break;
-		}
 		case 0x016: /* PACK8.CO */
-		{
-			strncpy(Name, "PACK8.CO", 19);
-			break;
-		}
 		case 0x017: /* PACK8U.CO */
-		{
-			strncpy(Name, "PACK8U.CO", 19);
-			break;
-		}
 		case 0x018: /* PACK16.CO */
-		{
-			strncpy(Name, "PACK16.CO", 19);
-			break;
-		}
 		case 0x019: /* PACK16U.CO */
-		{
-			strncpy(Name, "PACK16.CO", 19);
-			break;
-		}
 		case 0x01A: /* PACK32.CO */
-		{
-			strncpy(Name, "PACK32.CO", 19);
-			break;
-		}
 		case 0x01B: /* PACK32U.CO */
 		{
-			strncpy(Name, "PACK32U.CO", 19);
+			strncpy(Name, "ILLEGAL_INSTRUCTION", 19);
 			break;
 		}
 		case 0x020: /* AND */

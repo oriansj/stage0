@@ -111,20 +111,14 @@
 | 05 01 3a bc | MINU a b c | a = MIN(b, c) [unsigned] |
 
 **** Binary packing group
-| Hex         | Name             | Comment                              |
-|-------------+------------------+--------------------------------------|
-| 05 01 4a bc | PACK a b c       | a = PACK(b, c) [[./img/pack.gif]]        |
-| 05 01 5a bc | UNPACK a b c     | a = UNPACK(b, c)  [[./img/unpack.gif]]   |
-| 05 01 6a bc | PACK8.CO a b c   | a = PACK(b) c = Overload? [signed]   |
-| 05 01 7a bc | PACK8U.CO a b c  | a = PACK(b) c = Overload? [unsigned] |
-| 05 01 8a bc | PACK16.CO a b c  | a = PACK(b) c = Overload? [signed]   |
-| 05 01 9a bc | PACK16U.CO a b c | a = PACK(b) c = Overload? [unsigned] |
-| 05 01 Aa bc | PACK32.CO a b c  | a = PACK(b) c = Overload? [signed]   |
-| 05 01 Ba bc | PACK32U.CO a b c | a = PACK(b) c = Overload? [unsigned] |
-| 05 01 Ca bc | Reserved         |                                      |
-| 05 01 Da bc | Reserved         |                                      |
-| 05 01 Ex xx | Reserved         |                                      |
-| 05 01 Fx xx | Reserved         |                                      |
+Due to the complexity of building/programming the pack instructions, the have been removed to simplify the porting task.
+The Opcodes will be preserved should we wish in the future to be binary compatable with the Knight specification.
+
+| Hex         | Name     | Comment |
+|-------------+----------+---------|
+| 05 01 4a bc | Reserved |         |
+| ...         | Reserved |         |
+| 05 01 Fx xx | Reserved |         |
 
 **** Logical group
 | Hex         | Name       | Comment                               |
