@@ -10,3 +10,6 @@ tape_*
 rom
 z_disassembled
 
+# Ignore custom fonts the users might load
+public/*.ttf
+
