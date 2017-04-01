@@ -1,5 +1,5 @@
 #!/bin/bash
-
+## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
 ## stage0 is free software: you an redistribute it and/or modify

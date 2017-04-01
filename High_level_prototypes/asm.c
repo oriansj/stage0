@@ -1,4 +1,5 @@
-/* This file is part of stage0.
+/* Copyright (C) 2016 Jeremiah Orians
+ * This file is part of stage0.
  *
  * stage0 is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
