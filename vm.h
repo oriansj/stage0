@@ -258,3 +258,7 @@ void destroy_vm(struct lilith* vm);
 void read_instruction(struct lilith* vm, struct Instruction *current);
 void eval_instruction(struct lilith* vm, struct Instruction* current);
 void outside_of_world(struct lilith* vm, uint32_t place, char* message);
+
+/* Allow tape names to be effectively changed */
+char* tape_01_name;
+char* tape_02_name;

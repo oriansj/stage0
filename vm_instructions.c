@@ -163,12 +163,12 @@ void vm_FOPEN_READ(struct lilith* vm)
 {
 	if(0x00001100 == vm->reg[0])
 	{
-		tape_01 = fopen("tape_01", "r");
+		tape_01 = fopen(tape_01_name, "r");
 	}
 
 	if (0x00001101 == vm->reg[0])
 	{
-		tape_02 = fopen("tape_02", "r");
+		tape_02 = fopen(tape_02_name, "r");
 	}
 }
 
@@ -176,12 +176,12 @@ void vm_FOPEN_WRITE(struct lilith* vm)
 {
 	if(0x00001100 == vm->reg[0])
 	{
-		tape_01 = fopen("tape_01", "w");
+		tape_01 = fopen(tape_01_name, "w");
 	}
 
 	if (0x00001101 == vm->reg[0])
 	{
-		tape_02 = fopen("tape_02", "w");
+		tape_02 = fopen(tape_02_name, "w");
 	}
 }
 

@@ -61,6 +61,8 @@ int main(int argc, char **argv)
 
 	/* Perform all the essential stages in order */
 	struct lilith* vm;
+	tape_01_name = "tape_01";
+	tape_02_name = "tape_02";
 	vm = create_vm(1 << 21);
 	load_program(vm, argv);
 	execute_vm(vm);
