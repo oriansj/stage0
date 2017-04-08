@@ -16,13 +16,12 @@
  */
 
 #include "vm.h"
-#include <getopt.h>
 
 /* Load program tape into Memory */
-void load_program(struct lilith* vm, char* rom_name)
+void load_program(struct lilith* vm, char **argv)
 {
 	FILE* program;
-	program = fopen(rom_name, "r");
+	program = fopen(argv[1], "r");
 
 	/* Figure out how much we need to load */
 	fseek(program, 0, SEEK_END);
@@ -53,62 +52,19 @@ void execute_vm(struct lilith* vm)
 /* Standard C main program */
 int main(int argc, char **argv)
 {
-	int c;
-
-	tape_01_name = "tape_01";
-	tape_02_name = "tape_02";
-	char* rom_name = NULL;
-
-	static struct option long_options[] = {
-		{"rom", required_argument, 0, 'r'},
-		{"tape_01", required_argument, 0, '1'},
-		{"tape_02", required_argument, 0, '2'},
-		{"help", no_argument, 0, 'h'},
-		{0, 0, 0, 0}
-	};
-	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "r:h:1:2", long_options, &option_index)) != -1)
+	/* Make sure we have a program tape to run */
+	if (argc < 2)
 	{
-		switch (c)
-		{
-			case 0: break;
-			case 'r':
-			{
-				rom_name = optarg;
-				break;
-			}
-			case 'h':
-			{
-				fprintf(stdout, "Usage: %s --rom $rom [--tape_01 $foo] [--tape_02 $bar]\n", argv[0]);
-				exit(EXIT_SUCCESS);
-			}
-			case '1':
-			{
-				tape_01_name = optarg;
-				break;
-			}
-			case '2':
-			{
-				tape_02_name = optarg;
-				break;
-			}
-			default:
-			{
-				exit(EXIT_FAILURE);
-			}
-		}
-	}
-
-	if(NULL == rom_name)
-	{
-		fprintf(stderr, "Usage: %s --rom $rom [--tape_01 $foo] [--tape_02 $bar]\n", argv[0]);
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Usage: %s $FileName\nWhere $FileName is the name of the paper tape of the program being run\n", argv[0]);
+		return EXIT_FAILURE;
 	}
 
 	/* Perform all the essential stages in order */
 	struct lilith* vm;
+	tape_01_name = "tape_01";
+	tape_02_name = "tape_02";
 	vm = create_vm(1 << 21);
-	load_program(vm, rom_name);
+	load_program(vm, argv);
 	execute_vm(vm);
 	destroy_vm(vm);
 
