@@ -45,6 +45,9 @@
 	;; We first read Tape_01 until completion
 	LOADUI R13 0x1100
 
+	;; Prep TAPE_02
+	LOADUI R0 0x1101
+	FOPEN_WRITE
 
 ;; Main loop
 :main
@@ -1757,41 +1760,39 @@
 	RET R15
 
 
-;; prim_display
+;; prim_output
 ;; Recieves argslist in R0
-;; Outputs to TTY and returns TEE
-:prim_display_String
-	"display"
-:prim_display
+;; Outputs to whatever is specified in R12 and returns TEE
+:prim_output
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
 	PUSHR R4 R15                ; Protect R4
 	LOADUI R4 $NIL              ; Using NIL
-	FALSE R1                    ; Set to use TTY
+	COPY R1 R12                 ; Set to use desired output
 
-:prim_display_0
-	CMPJUMPI.E R0 R4 @prim_display_done
+:prim_output_0
+	CMPJUMPI.E R0 R4 @prim_output_done
 	LOAD32 R3 R0 4              ; Get ARGS->CAR
 	LOAD32 R2 R3 0              ; Get ARGS->CAR->TYPE
 	SWAP R0 R3                  ; Protect ARGS
 
 	CMPSKIPI.NE R2 4            ; If INT
-	CALLI R15 @prim_display_INT ; Print the value
+	CALLI R15 @prim_output_INT  ; Print the value
 
 	CMPSKIPI.NE R2 8            ; If SYM
-	CALLI R15 @prim_display_SYM ; Print the string
+	CALLI R15 @prim_output_SYM  ; Print the string
 
 	CMPSKIPI.NE R2 16           ; If CONS
-	CALLI R15 @prim_display     ; Recurse
+	CALLI R15 @prim_output      ; Recurse
 
 	CMPSKIPI.NE R2 128          ; If ASCII
-	CALLI R15 @prim_display_ASCII ; Just print the last Char
+	CALLI R15 @prim_output_ASCII ; Just print the last Char
 
 	LOAD32 R0 R3 8              ; Get ARGS->CDR
-	JUMP @prim_display_0        ; Loop until we hit NIL
+	JUMP @prim_output_0         ; Loop until we hit NIL
 
-:prim_display_done
+:prim_output_done
 	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
@@ -1800,10 +1801,10 @@
 	RET R15
 
 
-;; prim_display_INT
+;; prim_output_INT
 ;; Recieves an INT CELL in R0 and desired Output in R1
 ;; Outputs value and returns
-:prim_display_INT
+:prim_output_INT
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	LOAD32 R0 R0 4              ; Get ARG->CAR
@@ -1813,10 +1814,10 @@
 	RET R15
 
 
-;; prim_display_SYM
+;; prim_output_SYM
 ;; Recieves a SYM CELL in R0 and desired Output in R1
 ;; Outputs string and returns
-:prim_display_SYM
+:prim_output_SYM
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	LOAD32 R0 R0 4              ; Get ARG->CAR
@@ -1826,16 +1827,38 @@
 	RET R15
 
 
-;; prim_display_ASCII
+;; prim_output_ASCII
 ;; Recieves an ASCII CELL in R0 and desired Output in R1
 ;; Outputs Last CHAR and returns
-:prim_display_ASCII
+:prim_output_ASCII
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	LOADU8 R0 R0 7              ; Get ARG->CAR [bottom 8 bits]
 	FPUTC                       ; Display desired CHAR
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; prim_display
+;; Recieves argslist in R0
+;; Outputs to TTY R12 and returns TEE
+:prim_display_String
+	"display"
+:prim_display
+	CALLI R15 @prim_output
+	RET R15
+
+
+;; prim_write
+;; Recieves argslist in R0
+;; Write to Tape_02 and returns TEE
+:prim_write_String
+	"write"
+:prim_write
+	LOADUI R12 0x1101           ; Write to Tape_02
+	CALLI R15 @prim_output      ; Use shared prim_output
+	FALSE R12                   ; Revert to TTY
 	RET R15
 
 
@@ -1906,6 +1929,8 @@
 :prim_halt_String
 	"HALT"
 :prim_halt
+	LOADUI R0 0x1101            ; Clean up after ourselves
+	FCLOSE                      ; Close our write tape
 	HALT
 
 
@@ -2256,6 +2281,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_display_String ; Using PRIM_DISPLAY_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_write       ; Using PRIM_WRITE
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_write_String ; Using PRIM_WRITE_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 

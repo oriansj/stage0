@@ -16,8 +16,11 @@
 
 * Unreleased
 ** Added
+Added write to lisp
+Added bootstrapping steps documentation
 
 ** Changed
+Correct lisp High level prototype to include line comments
 
 ** Fixed
 
