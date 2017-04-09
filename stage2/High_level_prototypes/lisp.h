@@ -56,3 +56,4 @@ struct cell* make_cons(struct cell* a, struct cell* b);
 
 /* Global objects */
 struct cell *all_symbols, *top_env, *nil, *tee, *quote, *s_if, *s_lambda, *s_define, *s_setb, *s_cond, *s_begin;
+FILE* output;

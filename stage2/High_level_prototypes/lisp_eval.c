@@ -376,28 +376,38 @@ struct cell* prim_listp(struct cell* args)
 	return nil;
 }
 
-struct cell* prim_display(struct cell* args)
+struct cell* prim_output(struct cell* args, FILE* out)
 {
 	for(; nil != args; args = args->cdr)
 	{
 		if(INT == args->car->type)
 		{
-			printf("%d", args->car->value);
+			fprintf(out, "%d", args->car->value);
 		}
 		else if(ASCII == args->car->type)
 		{
-			printf("%c", args->car->value);
+			fprintf(out, "%c", args->car->value);
 		}
 		else if(CONS == args->car->type)
 		{
-			prim_display(args->car);
+			prim_output(args->car, out);
 		}
 		else
 		{
-			printf("%s", args->car->string);
+			fprintf(out, "%s", args->car->string);
 		}
 	}
 	return tee;
+}
+
+struct cell* prim_display(struct cell* args)
+{
+	return prim_output(args, stdout);
+}
+
+struct cell* prim_write(struct cell* args)
+{
+	return prim_output(args, output);
 }
 
 int64_t cells_remaining();
@@ -425,6 +435,7 @@ struct cell* prim_ascii(struct cell* args)
 
 struct cell* prim_halt(struct cell* args)
 {
+	fclose(output);
 	exit(EXIT_SUCCESS);
 }
 
@@ -485,6 +496,7 @@ void init_sl3()
 	spinup(make_sym("<="), make_prim(prim_numle));
 	spinup(make_sym("<"), make_prim(prim_numlt));
 	spinup(make_sym("display"), make_prim(prim_display));
+	spinup(make_sym("write"), make_prim(prim_write));
 	spinup(make_sym("free_mem"), make_prim(prim_freecell));
 	spinup(make_sym("ascii!"), make_prim(prim_ascii));
 	spinup(make_sym("list?"), make_prim(prim_listp));

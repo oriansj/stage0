@@ -231,6 +231,15 @@ uint32_t Readline(FILE* source_file, char* temp)
 		{
 			exit(EXIT_SUCCESS);
 		}
+		else if(59 == c)
+		{
+			/* drop everything until we hit newline */
+			while(10 != c)
+			{
+				c = fgetc(source_file);
+			}
+			goto Line_complete;
+		}
 		else if((0 == depth) && ((10 == c) || (13 == c) || (32 == c) || (9 == c)))
 		{
 			goto Line_complete;
