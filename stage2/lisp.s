@@ -2386,8 +2386,8 @@
 :gc_block_start
 	&Start_CONS
 
-;; gc_block_end
-:gc_block_end
+;; top_allocated
+:top_allocated
 	'000FFFF0'
 
 
@@ -2401,7 +2401,7 @@
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
 	LOADR R0 @gc_block_start    ; Using GC_BLOCK_START
-	LOADR R1 @gc_block_end      ; Using GC_BLOCK_END
+	LOADR R1 @top_allocated     ; Using TOP_ALLOCATED
 
 :reclaim_marked_0
 	CMPJUMPI.GE R0 R1 @reclaim_marked_done
@@ -2442,7 +2442,7 @@
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
 	LOADR R0 @gc_block_start    ; Using GC_BLOCK_START
-	LOADR R1 @gc_block_end      ; Using GC_BLOCK_END
+	LOADR R1 @top_allocated     ; Using TOP_ALLOCATED
 
 :mark_all_cells_0
 	CMPJUMPI.GE R0 R1 @mark_all_cells_done
@@ -2537,13 +2537,15 @@
 	PUSHR R1 R15                ; Protect R1
 	LOADR R0 @gc_block_start    ; Get Starting Offset
 	ANDI R0 R0 0xF              ; We only need the buttom 4 Bits
-	LOADR R1 @gc_block_end      ; Get End Address
+	LOADR R1 @top_allocated     ; Get End Address
 	ADD R1 R1 R0                ; Add the Offset
 	SUBUI R1 R1 16              ; Shift Back Down
-	STORER R1 @gc_block_end     ; Update Block End
+	STORER R1 @top_allocated    ; Update Block End
 	CALLI R15 @mark_all_cells   ; MARK_ALL_CELLS
 	CALLI R15 @reclaim_marked   ; RECLAIM_MARKED
 	CALLI R15 @update_remaining ; Fix the Count
+	FALSE R0                    ; Using NULL
+	STORER R0 @top_allocated    ; Clear TOP_ALLOCATED
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
@@ -2561,6 +2563,9 @@
 	STORER R1 @free_cells       ; Update FREE_CELLS
 	FALSE R1                    ; Using NULL
 	STORE32 R1 R0 8             ; SET I->CDR to NULL
+	LOADR R1 @top_allocated     ; Get top allocation
+	CMPSKIP.LE R0 R1            ; Skip if I <= TOP_ALLOCATED
+	STORER R0 @top_allocated    ; Update TOP_ALLOCATED to new highest allocation
 	LOADR R1 @left_to_take      ; Get LEFT_TO_TAKE
 	SUBUI R1 R1 1               ; Decrement by 1
 	STORER R1 @left_to_take     ; Update LEFT_TO_TAKE
