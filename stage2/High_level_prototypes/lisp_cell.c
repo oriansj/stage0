@@ -17,7 +17,7 @@
 
 #include "lisp.h"
 
-struct cell *free_cells, *gc_block_start, *gc_block_end;
+struct cell *free_cells, *gc_block_start, *top_allocated;
 int64_t left_to_take;
 
 int64_t cells_remaining()
@@ -37,26 +37,93 @@ void update_remaining()
 	left_to_take = count;
 }
 
+struct cell* insert_ordered(struct cell* i, struct cell* list)
+{
+	if(NULL == list)
+	{
+		return i;
+	}
+
+	if(i < list)
+	{
+		i->cdr = list;
+		return i;
+	}
+
+	list->cdr = insert_ordered(i, list->cdr);
+	return list;
+}
+
 void reclaim_marked()
 {
 	struct cell* i;
-	for(i= gc_block_start; i < gc_block_end; i = i + 1)
+	for(i= top_allocated; i >= gc_block_start ; i = i - 1)
 	{
 		if(i->type & MARKED)
 		{
 			i->type = FREE;
 			i->car = NULL;
-			i->cdr = free_cells;
+			i->cdr = NULL;
 			i->env = NULL;
-			free_cells = i;
+			free_cells = insert_ordered(i, free_cells);
 		}
 	}
 }
 
+void relocate_cell(struct cell* current, struct cell* target, struct cell* list)
+{
+	for(; NULL != list; list = list->cdr)
+	{
+		if(list->car == current)
+		{
+			list->car = target;
+		}
+
+		if(list->cdr == current)
+		{
+			list->cdr = target;
+		}
+
+		if(list->env == current)
+		{
+			list->env = target;
+		}
+
+		if((list->type & CONS)|| list->type & PROC )
+		{
+			relocate_cell(current, target, list->car);
+		}
+	}
+}
+
+struct cell* pop_cons();
+void compact(struct cell* list)
+{
+	for(; NULL != list; list = list->cdr)
+	{
+		if((FREE != list->type) && (list > free_cells ))
+		{
+			struct cell* temp = pop_cons();
+			temp->type = list->type;
+			temp->car = list->car;
+			temp->cdr = list->cdr;
+			temp->env = list->env;
+			relocate_cell(list, temp, all_symbols);
+			relocate_cell(list, temp, top_env);
+		}
+
+		if((list->type & CONS)|| list->type & PROC )
+		{
+			compact(list->car);
+		}
+	}
+}
+
+
 void mark_all_cells()
 {
 	struct cell* i;
-	for(i= gc_block_start; i < gc_block_end; i = i + 1)
+	for(i= gc_block_start; i < top_allocated; i = i + 1)
 	{
 		/* if not in the free list */
 		if(!(i->type & FREE))
@@ -86,15 +153,19 @@ void garbage_collect()
 	unmark_cells(top_env);
 	reclaim_marked();
 	update_remaining();
+	compact(all_symbols);
+	compact(top_env);
+	top_allocated = NULL;
 }
 
 void garbage_init()
 {
 	int number_of_Cells = 1000000;
 	gc_block_start = calloc(number_of_Cells + 1, sizeof(cell));
-	gc_block_end = gc_block_start + number_of_Cells;
+	top_allocated = gc_block_start + number_of_Cells;
 	free_cells = NULL;
 	garbage_collect();
+	top_allocated = NULL;
 }
 
 struct cell* pop_cons()
@@ -108,6 +179,10 @@ struct cell* pop_cons()
 	i = free_cells;
 	free_cells = i->cdr;
 	i->cdr = NULL;
+	if(i > top_allocated)
+	{
+		top_allocated = i;
+	}
 	left_to_take = left_to_take - 1;
 	return i;
 }

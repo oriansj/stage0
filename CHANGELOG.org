@@ -17,6 +17,7 @@
 * Unreleased
 ** Added
 Added write to lisp
+Added Cell Compactor to Lisp garbage collector resulting with multiple performance improvements
 Added bootstrapping steps documentation
 Added ability to specify amount of Available RAM on a Per run basis, however 16KB is the default
 
@@ -27,6 +28,8 @@ Updated bootstrap documentation to match the memory requirements of the individu
 
 ** Fixed
 Fixed missing traces when memory outside of world are accessed when profiling
+Imported improved High Level Lisp Prototype
+Updated bootstrap documentation to reflect change in Lisp sha256sum caused by recent performance upgrade
 
 ** Removed
 
