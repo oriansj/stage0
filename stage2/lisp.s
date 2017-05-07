@@ -2533,6 +2533,130 @@
 	RET R15
 
 
+;; relocate_cell
+;; Recieves a current, target and List in R0, R1 and R2
+;; Returns nothing
+;; Relocate all references to a cell and walks down list
+:relocate_cell
+	PUSHR R3 R15                ; Protect R3
+
+:relocate_cell_0
+	JUMP.Z R2 @relocate_cell_done
+
+	;; Fix CAR References
+	LOAD32 R3 R2 4              ; Get LIST->CAR
+	CMPSKIP.NE R0 R3            ; If match with Current
+	STORE32 R1 R2 4             ; Fix LIST->CAR
+
+	;; Fix CDR References
+	LOAD32 R3 R2 8              ; Get LIST->CDR
+	CMPSKIP.NE R0 R3            ; If match with Current
+	STORE32 R1 R2 8             ; Fix LIST->CDR
+
+	;; Fix ENV References
+	LOAD32 R3 R2 12             ; Get LIST->ENV
+	CMPSKIP.NE R0 R3            ; If match with Current
+	STORE32 R1 R2 12            ; Fix LIST->ENV
+
+	LOAD32 R3 R2 0              ; Get LIST->TYPE
+
+	;; Deal with CONS
+	CMPSKIPI.NE R3 16           ; If A CONS
+	JUMP @relocate_cell_proc    ; Deal with it
+
+	;; Deal with PROC
+	CMPSKIPI.NE R3 32           ; If A PROC
+	JUMP @relocate_cell_proc    ; Deal with it
+
+	;; Everything else
+	JUMP @relocate_cell_1       ; Move onto NEXT
+
+:relocate_cell_proc
+	PUSHR R2 R15                ; Protect LIST
+	LOAD32 R2 R2 4              ; Using list->CAR
+	CALLI R15 @relocate_cell    ; Recurse until the ends
+	POPR R2 R15                 ; Restore LIST
+
+:relocate_cell_1
+	LOAD32 R2 R2 8              ; Get list->CDR
+	JUMP @relocate_cell_0       ; Keep going down list
+
+:relocate_cell_done
+	POPR R3 R15                 ; Restore R3
+	RET R15
+
+
+;; compact
+;; Recieves a List in R0
+;; Returns nothing
+;; Finds cells to relocate and has all references updated
+:compact
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+
+:compact_0
+	JUMP.Z R0 @compact_done
+
+	LOAD32 R2 R0 0              ; Get LIST->TYPE
+	CMPSKIPI.NE R2 1            ; If LIST->TYPE == FREE
+	JUMP @compact_1             ; Not worth relocating
+
+	LOADR R1 @free_cells        ; Get FREE_CELLS
+	CMPJUMPI.LE R0 R1 @compact_1 ; Don't bother to relocate if Low
+
+	;; Found a better place for cell
+	SWAP R0 R1                  ; Get LIST out of the way
+	CALLI R15 @pop_cons         ; Get our New location
+	SWAP R0 R1                  ; Put in correct order
+
+	;; Update temp to LIST
+	LOAD32 R2 R0 0              ; Get LIST->TYPE
+	STORE32 R2 R1 0             ; Set TEMP->TYPE
+	LOAD32 R2 R0 4              ; GET LIST->CAR
+	STORE32 R2 R1 4             ; Set TEMP->CAR
+	LOAD32 R2 R0 8              ; GET LIST->CDR
+	STORE32 R2 R1 8             ; Set TEMP->CDR
+	LOAD32 R2 R0 12             ; GET LIST->ENV
+	STORE32 R2 R1 12            ; Set TEMP->ENV
+
+	;; Fix Reference in Symbols list
+	LOADR R2 @all_symbols
+	CALLI R15 @relocate_cell
+
+	;; Fix References in Environment list
+	LOADR R2 @top_env
+	CALLI R15 @relocate_cell
+
+	LOAD32 R2 R0 0              ; Get LIST->TYPE
+
+:compact_1
+	;; Deal with CONS
+	CMPSKIPI.NE R2 16           ; If A CONS
+	JUMP @compact_proc          ; Deal with it
+
+	;; Deal with PROC
+	CMPSKIPI.NE R2 32           ; If A PROC
+	JUMP @compact_proc          ; Deal with it
+
+	;; Everything else
+	JUMP @compact_2             ; Move onto NEXT
+
+:compact_proc
+	PUSHR R0 R15                ; Protect LIST
+	LOAD32 R0 R0 4              ; Using list->CAR
+	CALLI R15 @compact          ; Recurse until the ends
+	POPR R0 R15                 ; Restore LIST
+
+:compact_2
+	LOAD32 R0 R0 8              ; Get list->CDR
+	JUMP @compact_0             ; Keep going down list
+
+:compact_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; garbage_collect
 ;; Recieves nothing
 ;; Returns nothing
@@ -2546,6 +2670,12 @@
 	CALLI R15 @unmark_cells     ; UNMARK TOP_ENV
 	CALLI R15 @reclaim_marked   ; RECLAIM_MARKED
 	CALLI R15 @update_remaining ; Fix the Count
+	LOADR R0 @all_symbols       ; Using Symbols list
+	CALLI R15 @compact          ; Compact
+	LOADR R0 @top_env           ; Using TOP_ENV
+	CALLI R15 @compact          ; Compact
+	FALSE R0                    ; Using NULL
+	STORER R0 @top_allocated    ; Clear TOP_ALLOCATED
 	POPR R0 R15                 ; Restore R0
 	RET R15
 
