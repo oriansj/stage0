@@ -51,10 +51,10 @@ void execute_vm(struct lilith* vm)
 	return;
 }
 
-void initialize_lilith()
+void initialize_lilith(unsigned int size)
 {
 	struct lilith* vm;
-	vm = create_vm(1 << 21);
+	vm = create_vm(size);
 	Globalvm = vm;
 }
 
