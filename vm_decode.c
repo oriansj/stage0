@@ -51,6 +51,10 @@ void outside_of_world(struct lilith* vm, uint32_t place, char* message)
 		fprintf(stderr, "Invalid state reached after: %i instructions\n", performance_counter);
 		fprintf(stderr, "%i: %s\n", place, message);
 		vm->halted = true;
+		#ifdef TRACE
+		record_trace("HALT");
+		print_traces();
+		#endif
 		exit(EXIT_FAILURE);
 	}
 

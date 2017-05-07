@@ -54,20 +54,23 @@ void execute_vm(struct lilith* vm)
 int main(int argc, char **argv)
 {
 	int c;
+	int Memory_Size = (16 * 1024);
 
 	tape_01_name = "tape_01";
 	tape_02_name = "tape_02";
 	char* rom_name = NULL;
+	char class;
 
 	static struct option long_options[] = {
 		{"rom", required_argument, 0, 'r'},
 		{"tape_01", required_argument, 0, '1'},
 		{"tape_02", required_argument, 0, '2'},
+		{"memory", required_argument, 0, 'm'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "r:h:1:2", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "r:h:1:2:m", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -92,6 +95,26 @@ int main(int argc, char **argv)
 				tape_02_name = optarg;
 				break;
 			}
+			case 'm':
+			{
+				int length = strlen(optarg) - 1;
+				class = optarg[length];
+				optarg[length] = 0;
+				Memory_Size = atoi(optarg);
+				if('K' == class)
+				{
+					Memory_Size = Memory_Size * 1024;
+				}
+				else if('M' == class)
+				{
+					Memory_Size = Memory_Size * 1024 * 1024;
+				}
+				else if('G' == class)
+				{
+					Memory_Size = Memory_Size * 1024 * 1024 * 1024;
+				}
+				break;
+			}
 			default:
 			{
 				exit(EXIT_FAILURE);
@@ -107,7 +130,7 @@ int main(int argc, char **argv)
 
 	/* Perform all the essential stages in order */
 	struct lilith* vm;
-	vm = create_vm(1 << 21);
+	vm = create_vm(Memory_Size);
 	load_program(vm, rom_name);
 	execute_vm(vm);
 	destroy_vm(vm);

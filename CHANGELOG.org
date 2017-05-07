@@ -18,11 +18,15 @@
 ** Added
 Added write to lisp
 Added bootstrapping steps documentation
+Added ability to specify amount of Available RAM on a Per run basis, however 16KB is the default
 
 ** Changed
 Correct lisp High level prototype to include line comments
+Changed default RAM to 16KB
+Updated bootstrap documentation to match the memory requirements of the individual steps
 
 ** Fixed
+Fixed missing traces when memory outside of world are accessed when profiling
 
 ** Removed
 

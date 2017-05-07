@@ -21,6 +21,7 @@ import sys, getopt
 
 vm = ctypes.CDLL('./libvm.so')
 
+vm.initialize_lilith.argtype = ctypes.c_uint
 vm.get_memory.argtype = ctypes.c_uint
 vm.get_memory.restype = ctypes.c_char_p
 vm.step_lilith.restype = ctypes.c_uint
@@ -28,7 +29,22 @@ vm.set_register.argtype = (ctypes.c_uint, ctypes.c_uint)
 vm.set_memory.argtype = (ctypes.c_uint, ctypes.c_ubyte)
 
 def Reset_lilith():
-	vm.initialize_lilith()
+	global Memory_Size
+	if 0 <= Memory_Size < 1024:
+		unit = 'Bytes'
+		chunks = Memory_Size
+	elif 1024 <= Memory_Size < (1024 * 1024):
+		unit = 'KB'
+		chunks = Memory_Size / 1024
+	elif (1024 * 1024) <= Memory_Size < (1024 * 1024 * 1024):
+		unit = 'MB'
+		chunks = Memory_Size / (1024 * 1024)
+	else:
+		unit = 'GB'
+		chunks = Memory_Size / (1024 * 1024 * 1024)
+
+	print("Current Memory Size is: " + str(chunks) + unit)
+	vm.initialize_lilith(Memory_Size)
 	global Current_IP
 	Current_IP = 0
 	global Watchpoints
@@ -199,9 +215,9 @@ def get_footer():
 def main(argv):
 	global Debug_Point
 	try:
-		opts, args = getopt.getopt(argv,"R:D:",["ROM=","DEBUG="])
+		opts, args = getopt.getopt(argv,"R:D:W:M:",["ROM=","DEBUG=","WINDOW=", "MEMORY="])
 	except getopt.GetoptError:
-		print ('Knight.py ROM=$NAME DEBUG=$NUMBER\n')
+		print ('Knight.py ROM=$NAME DEBUG=$NUMBER WINDOW=$NUMBER\n')
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
@@ -213,13 +229,25 @@ def main(argv):
 		elif opt in ("-D", "--DEBUG"):
 			global Debug_Point
 			Debug_Point = int(arg)
+		elif opt in ("-W", "--WINDOW"):
+			global Current_Page
+			Current_Page = int(arg, 16)
+		elif opt in ("-M", "--MEMORY"):
+			global Memory_Size
+			if arg.endswith('K'):
+				Memory_Size = (int(arg[:-1]) * 1024)
+			elif arg.endswith('M'):
+				Memory_Size = (int(arg[:-1]) * 1024 * 1024)
+			elif arg.endswith('G'):
+				Memory_Size = (int(arg[:-1]) * 1024 * 1024 * 1024)
 
 	subprocess.call("./bin/dis " + ROM_Name + " | sponge z_disassembled", shell=True)
+	Reset_lilith()
 
 Current_IP = 0
+Memory_Size = 16 * 1024
 Current_Page = 0
 Watchpoints = {0}
 Count=0
 Debug_Point = 0
 ROM_Name = "rom"
-Reset_lilith()

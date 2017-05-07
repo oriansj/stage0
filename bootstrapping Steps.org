@@ -75,6 +75,8 @@ Then you can compile the text file with the stage1_assembler-0 that we already m
 
 From this point on I will assume you are going to take the easy route and simply load the source code using some mechanism you trust or are using SET to manually duplicate the entries of the code files used in each of the proceeding steps.
 
+SET should have the SHA256SUM of 24a4d74eb2eb7a82e68335643855658b27b5a6c3b13db473539f3e08d6f26ceb
+
 * Step 3 create a better hex assembler
 Now that it is easy(ish) to create text files and we have a really stupid hex assembler, we probably don't want to manually calculate offsets and jumps any more.
 
@@ -102,7 +104,7 @@ I don't know about you but at this point, I don't wanna convert another instruct
 At 1792 bytes large and 448 hand converted instructions, this program will allow us to write proper assembly code provided we prefix our assembly code with a definitions file (Which by the way is High_level_prototypes/defs for our VM)
 
 To build our line macro assembler:
-./bin/vm --rom roms/stage1_assembler-2 --tape_01 stage1/M0-macro.hex2 --tape_02 roms/M0
+./bin/vm --rom roms/stage1_assembler-2 --tape_01 stage1/M0-macro.hex2 --tape_02 roms/M0 --memory 48K
 
 Now with our new line macro assembler, which with our definition file High_level_prototypes/defs means we can write straight assembly from here on out.
 
@@ -119,10 +121,10 @@ First prepend High_level_prototypes/defs to your stage1/CAT.s file and save it a
 Then to assemble our first assembly program, we need to run 2 different programs for our different passes.
 
 To Build our first pass is:
-./bin/vm --rom roms/M0 --tape_01 temp --tape_02 temp2
+./bin/vm --rom roms/M0 --tape_01 temp --tape_02 temp2 --memory 48K
 
 To finish our build our last pass is:
-./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/CAT
+./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/CAT --memory 48K
 
 roms/CAT should have the sha256sum of 8f465d3ec1cba00a7d024a1964e74bb6d241f86a73c77d95d8ceb10d09c8f7b9
 
@@ -137,14 +139,15 @@ We first need to create our prepared tape:
 cat High_level_prototypes/defs stage2/lisp.s > temp
 
 Then we use our M0 Line macro assembler to convert our assembly into hex2 format:
-./bin/vm --rom roms/M0 --tape_01 temp --tape_02 temp2
+./bin/vm --rom roms/M0 --tape_01 temp --tape_02 temp2 --memory 256K
 
 Then we need to assemble that hex into our desired program:
-./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/lisp
+./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/lisp --memory 48K
 
 roms/lisp should have the sha256sum of a5d5e2c5ed947d817a02eea2307ac40b0204f58628a606865711e808d3403444
 
 Our lisp will first attempt to evaluate any code in tape_01 and then evaluate any code that the user types in.
+It is recommended to run with no less than 4MB of Memory
 
 * Step 6b Build us a Forth
 Since forth fans kept telling me Forth is easier to implement than lisp, I also implemented a Forth but it certainly took far longer to get the bugs out.
@@ -158,12 +161,13 @@ We first need to create our prepared tape:
 cat High_level_prototypes/defs stage2/forth.s > temp
 
 Then we use our M0 Line macro assembler to convert our assembly into hex2 format:
-./bin/vm --rom roms/M0 --tape_01 temp --tape_02 temp2
+./bin/vm --rom roms/M0 --tape_01 temp --tape_02 temp2 --memory 128K
 
 Then we need to assemble that hex into our desired program:
-./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/forth
+./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/forth --memory 48K
 
 roms/forth should with the sha256sum of 0aacf6258e9de0acde755229ad14e6ce13ab7a43b0360dadeb862f8facccc422
 
 Our forth will first attempt to evaluate any code in tape_01 and then evaluate any code that the user types in
 (Otherwise there is no way for a forth fan to have a chance against the lisp in terms of being able to bootstrap something cool)
+Tuning needs to be done to run with any less than 4MB of Memory
