@@ -16,6 +16,7 @@
 
 * Current
 ** Added
+Added absolute addresses to High level assembler output to aid in debugging of complex assembly programs
 
 ** Changed
 

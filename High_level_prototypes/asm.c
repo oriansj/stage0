@@ -601,6 +601,10 @@ void print_text(struct Token* p)
 	{
 		fprintf(stdout, "'");
 	}
+	else if(':' == p->Text[0])
+	{
+		fprintf(stdout, " %x", p->address);
+	}
 
 	if((NULL != p->next) && !((p->type & EOL)))
 	{
