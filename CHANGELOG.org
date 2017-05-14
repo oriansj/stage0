@@ -18,9 +18,11 @@
 ** Added
 Added absolute addresses to High level assembler output to aid in debugging of complex assembly programs
 Added Let expressions to High Level prototype lisp
+Added Let expressions to stage2 lisp implementation
 
 ** Changed
 Converted High level prototype lisp from dynamic scope to Lexical
+Converted stage2 lisp implementation from dynamic scope to Lexical
 
 ** Fixed
 Made Web debugger provide more useful information

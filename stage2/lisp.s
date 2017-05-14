@@ -875,17 +875,23 @@
 	RET R15
 
 
-;; extend_top
-;; Recieves a Symbol in R0 and a Value in R1
+;; extend_env
+;; Recieves a Symbol in R0, a Value in R1 and an environment pointer in R2
 ;; Returns Value in R0 after extending top
-:extend_top
+:extend_env
 	PUSHR R1 R15                ; Protect Val
 	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
 	CALLI R15 @make_cons        ; Make a cons of SYM and VAL
-	LOADR32 R2 @top_env         ; Get TOP_ENV
-	LOAD32 R1 R2 8              ; Using TOP_ENV->CDR
-	CALLI R15 @make_cons        ; Make final CONS
-	STORE32 R0 R2 8             ; TOP_ENV->CDR = CONS
+	MOVE R3 R0                  ; Put safely out of way
+	LOAD32 R0 R2 4              ; Using ENV->CAR
+	LOAD32 R1 R2 8              ; And ENV->CDR
+	CALLI R15 @make_cons        ; Make a cons of old environment
+	STORE32 R0 R2 8             ; SET ENV->CDR to old environment
+	STORE32 R3 R2 4             ; SET ENV->CAR to new CONS
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore Val
 	COPY R0 R1                  ; Return Val
@@ -999,14 +1005,19 @@
 	CMPSKIPI.E R3 32            ; If Not PROC
 	JUMP @apply_1               ; Abort with FIRE
 
-	LOAD32 R3 R0 8              ; Protect PROC->CDR
-	MOVE R2 R1                  ; Put Values in right place
-	LOAD32 R1 R0 4              ; Using PROC->CAR
-	LOAD32 R0 R0 12             ; Using PROC->ENV
-	CALLI R15 @multiple_extend  ; Multiple_extend
+	MOVE R2 R1                  ; Protect VALUE and put in future correct place
+	MOVE R3 R0                  ; Protect PROC
+	LOAD32 R0 R3 12             ; Get PROC->ENV
+	LOAD32 R1 R0 8              ; Get PROC->ENV->CDR
+	LOAD32 R0 R0 4              ; Get PROC->ENV->CAR
+	CALLI R15 @make_cons        ; ENV = MAKE_CONS(PROC->ENV->CAR, PROC->ENV->CDR)
+
+	LOAD32 R1 R3 4              ; Get PROC->CAR
+	CALLI R15 @multiple_extend  ; R0 = MULTIPLE_EXTEND(ENV, PROC->CAR, VALS)
+
 	MOVE R1 R0                  ; Put Extended_Env in the right place
-	MOVE R0 R3                  ; Using PROC->CDR
-	CALLI R15 @progn            ; PROGN
+	LOAD32 R0 R3 8              ; Get PROC->CDR
+	CALLI R15 @progn            ; PROGN(PROC->CDR, R0)
 	JUMP @apply_done            ; Simply Pass the results
 
 	;; Deal with unknown shit
@@ -1196,6 +1207,56 @@
 	RET R15
 
 
+;; process_let
+;; Recieves Expression in R0 and an Environment in R1
+;; Creates lexical closure and evaluates inside of it
+;; Returns the value/type in R0
+:process_let
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	PUSHR R5 R15                ; Protect R5
+	LOADUI R4 $NIL              ; Get NIL
+	MOVE R3 R1                  ; Get ENV out of the way
+	MOVE R2 R0                  ; Protect EXP
+	LOAD32 R5 R2 8              ; Get EXP->CDR
+	LOAD32 R5 R5 4              ; LETS = EXP->CDR->CAR
+
+:process_let_0
+	CMPJUMPI.E R5 R4 @process_let_1
+	LOAD32 R0 R5 4              ; Get LETS->CAR
+	LOAD32 R0 R0 8              ; Get LETS->CAR->CDR
+	LOAD32 R0 R0 4              ; Get LETS->CAR->CDR->CAR
+	COPY R1 R3                  ; Using ENV
+	CALLI R15 @eval             ; CELL = EVAL(LETS->CAR->CDR->CAR, ENV)
+
+	MOVE R1 R0                  ; Put CELL in the right place
+	LOAD32 R0 R5 4              ; Get LETS->CAR
+	LOAD32 R0 R0 4              ; Get LETS->CAR->CAR
+	CALLI R15 @make_cons        ; CELL = MAKE_CONS(LETS->CAR->CAR, CELL)
+
+	COPY R1 R3                  ; Using ENV
+	CALLI R15 @make_cons        ; CELL = MAKE_CONS(CELL, ENV)
+	MOVE R3 R0                  ; ENV = CELL
+
+	LOAD32 R5 R5 8              ; LETS = LETS->CDR
+	JUMP @process_let_0         ; Iterate through bindings
+
+:process_let_1
+	MOVE R1 R3                  ; Using ENV
+	LOAD32 R0 R2 8              ; Get EXP->CDR
+	LOAD32 R0 R0 8              ; Using EXP->CDR->CDR
+	CALLI R15 @progn            ; Process inside of Closure
+
+	;; Cleanup
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
 ;; process_cons
 ;; Recieves Expression in R0 and an Environment in R1
 ;; Returns the evaluation of whatever special used or
@@ -1260,16 +1321,24 @@
 	LOAD32 R0 R2 8              ; Get EXP->CDR->CDR
 	LOAD32 R0 R0 4              ; Using EXP->CDR->CDR->CAR
 	CALLI R15 @eval             ; Recurse to figure out what it is
-	MOVE R1 R0                  ; Change Environment
-	LOAD32 R0 R2 4              ; Using EXP->CDR->CAR
-	CALLI R15 @extend_top       ; EXTEND_TOP
+	SWAP R2 R1                  ; Put Environment in the right place
+	SWAP R1 R0                  ; Put Evaluation in the right place
+	LOAD32 R0 R0 4              ; Using EXP->CDR->CAR
+	CALLI R15 @extend_env       ; EXTEND_ENV
 	JUMP @process_cons_done     ; Simply use what was returned
 
 :process_cons_set
 	LOADUI R3 $s_setb           ; Using s_setb
-	CMPJUMPI.NE R4 R3 @process_cons_apply
+	CMPJUMPI.NE R4 R3 @process_cons_let
 
 	CALLI R15 @process_setb     ; Deal with special case of SET statements
+	JUMP @process_cons_done     ; Simply Return Result
+
+:process_cons_let
+	LOADUI R3 $s_let            ; Using s_let
+	CMPJUMPI.NE R4 R3 @process_cons_apply
+
+	CALLI R15 @process_let      ; Deal with special case of LET statements
 	JUMP @process_cons_done     ; Simply Return Result
 
 :process_cons_apply
@@ -2094,6 +2163,15 @@
 :s_setb_String
 	"set!"
 
+;; LET Object
+:s_let
+	'00000008'                  ; A Symbol
+	&s_let_String               ; Pointer to string
+	'00000000'                  ; NUL CDR
+	'00000000'                  ; NUL ENV
+
+:s_let_String
+	"let"
 
 ;; Begin Object
 :s_begin
@@ -2172,6 +2250,10 @@
 
 	LOADUI R0 $s_setb           ; Get s_setb
 	COPY R1 R0                  ; Duplicate s_setb
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $s_let            ; Get s_let
+	COPY R1 R0                  ; Duplicate s_let
 	CALLI R15 @spinup           ; SPINUP
 
 	LOADUI R0 $s_begin          ; Get s_begin
