@@ -214,14 +214,15 @@ def get_footer():
 
 def main(argv):
 	global Debug_Point
+	help_string = 'Knight.py --ROM=$NAME [--DEBUG=$NUMBER] [--WINDOW=$NUMBER] [--MEMORY=$SIZE]\n'
 	try:
 		opts, args = getopt.getopt(argv,"R:D:W:M:",["ROM=","DEBUG=","WINDOW=", "MEMORY="])
 	except getopt.GetoptError:
-		print ('Knight.py ROM=$NAME DEBUG=$NUMBER WINDOW=$NUMBER\n')
+		print (help_string)
 		sys.exit(2)
 	for opt, arg in opts:
 		if opt == '-h':
-			print ('Knight.py ROM=$NAME DEBUG=$NUMBER\n')
+			print (help_string)
 			sys.exit()
 		elif opt in ("-R", "--ROM"):
 			global ROM_Name

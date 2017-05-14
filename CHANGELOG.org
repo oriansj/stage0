@@ -14,7 +14,17 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-* Unreleased
+* Current
+** Added
+
+** Changed
+
+** Fixed
+Made Web debugger provide more useful information
+
+** Removed
+
+* 0.0.5 - 2017-05-06
 ** Added
 Added write to lisp
 Added Cell Compactor to Lisp garbage collector resulting with multiple performance improvements
