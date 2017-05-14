@@ -57,9 +57,10 @@ struct cell* multiple_extend(struct cell* env, struct cell* syms, struct cell* v
 	return multiple_extend(extend(env, syms->car, vals->car), syms->cdr, vals->cdr);
 }
 
-struct cell* extend_top(struct cell* sym, struct cell* val)
+struct cell* extend_env(struct cell* sym, struct cell* val, struct cell* env)
 {
-	top_env->cdr = make_cons(make_cons(sym, val), top_env->cdr);
+	env->cdr = make_cons(env->car, env->cdr);
+	env->car = make_cons(sym, val);
 	return val;
 }
 
@@ -86,10 +87,9 @@ struct cell* progn(struct cell* exps, struct cell* env)
 {
 	if(exps == nil) return nil;
 
-	struct cell* result;
-
 	for(;;)
 	{
+		struct cell* result;
 		result = eval(exps->car, env);
 		if(exps->cdr == nil) return result;
 		exps = exps->cdr;
@@ -105,7 +105,8 @@ struct cell* apply(struct cell* proc, struct cell* vals)
 	}
 	else if(proc->type == PROC)
 	{
-		temp = progn(proc->cdr, multiple_extend(proc->env, proc->car, vals));
+		struct cell* env = make_cons(proc->env->car, proc->env->cdr);
+		temp = progn(proc->cdr, multiple_extend(env, proc->car, vals));
 	}
 	else
 	{
@@ -180,6 +181,15 @@ struct cell* process_setb(struct cell* exp, struct cell* env)
 	return newval;
 }
 
+struct cell* process_let(struct cell* exp, struct cell* env)
+{
+	for(struct cell* lets = exp->cdr->car; lets != nil; lets = lets->cdr)
+	{
+		env = make_cons(make_cons(lets->car->car, eval(lets->car->cdr->car, env)), env);
+	}
+	return progn(exp->cdr->cdr, env);
+}
+
 struct cell* process_cons(struct cell* exp, struct cell* env)
 {
 	if(exp->car == s_if) return process_if(exp, env);
@@ -187,8 +197,9 @@ struct cell* process_cons(struct cell* exp, struct cell* env)
 	if(exp->car == s_begin) return progn(exp->cdr, env);
 	if(exp->car == s_lambda) return make_proc(exp->cdr->car, exp->cdr->cdr, env);
 	if(exp->car == quote) return exp->cdr->car;
-	if(exp->car == s_define) return(extend_top(exp->cdr->car, eval(exp->cdr->cdr->car, env)));
+	if(exp->car == s_define) return(extend_env(exp->cdr->car, eval(exp->cdr->cdr->car, env), env));
 	if(exp->car == s_setb) return process_setb(exp, env);
+	if(exp->car == s_let) return process_let(exp, env);
 	return apply(eval(exp->car, env), evlis(exp->cdr, env));
 }
 
@@ -466,6 +477,7 @@ void init_sl3()
 	s_define = make_sym("define");
 	s_setb = make_sym("set!");
 	s_begin = make_sym("begin");
+	s_let = make_sym("let");
 
 	/* Globals of interest */
 	all_symbols = make_cons(nil, nil);
@@ -480,6 +492,7 @@ void init_sl3()
 	spinup(s_define, s_define);
 	spinup(s_setb, s_setb);
 	spinup(s_begin, s_begin);
+	spinup(s_let, s_let);
 
 	/* Add Primitive Specials */
 	spinup(make_sym("+"), make_prim(prim_sum));

@@ -17,8 +17,10 @@
 * Current
 ** Added
 Added absolute addresses to High level assembler output to aid in debugging of complex assembly programs
+Added Let expressions to High Level prototype lisp
 
 ** Changed
+Converted High level prototype lisp from dynamic scope to Lexical
 
 ** Fixed
 Made Web debugger provide more useful information

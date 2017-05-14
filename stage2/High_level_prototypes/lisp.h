@@ -55,5 +55,16 @@ typedef struct cell
 struct cell* make_cons(struct cell* a, struct cell* b);
 
 /* Global objects */
-struct cell *all_symbols, *top_env, *nil, *tee, *quote, *s_if, *s_lambda, *s_define, *s_setb, *s_cond, *s_begin;
+struct cell *all_symbols;
+struct cell *top_env;
+struct cell *nil;
+struct cell *tee;
+struct cell *quote;
+struct cell *s_if;
+struct cell *s_lambda;
+struct cell *s_define;
+struct cell *s_setb;
+struct cell *s_cond;
+struct cell *s_begin;
+struct cell *s_let;
 FILE* output;
