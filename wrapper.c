@@ -53,6 +53,8 @@ void execute_vm(struct lilith* vm)
 
 void initialize_lilith(unsigned int size)
 {
+	tape_01_name = "tape_01";
+	tape_02_name = "tape_02";
 	struct lilith* vm;
 	vm = create_vm(size);
 	Globalvm = vm;

@@ -21,6 +21,7 @@
 
 ** Fixed
 Made Web debugger provide more useful information
+Fixed regression in web debugger's ability to read input files
 
 ** Removed
 
