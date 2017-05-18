@@ -14,6 +14,9 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
+The master repository for this work is located at:
+https://savannah.nongnu.org/projects/stage0/
+
 This is a set of manually created hex programs in a Cthulhu Path to madness fashion.
 Which only have the goal of creating a bootstrapping path to a C compiler capable of
 Compiling GCC, with only the explicit requirement of a single 1 KByte binary or less.
