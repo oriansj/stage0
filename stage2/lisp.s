@@ -2571,44 +2571,60 @@
 
 
 ;; unmark_cells
-;; Recieves a List in R0
+;; Recieves a List in R0 and R1 and a Count in R2
 ;; Returns nothing
 ;; Unmarks all connected Cells
 :unmark_cells
+	CMPSKIPI.LE R2 2            ; If Greater than 1
+	RET R15                     ; Just return
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
-	LOADUI R2 2                 ; GET MARKED
-	NOT R2 R2                   ; Use ~MARKED
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOADUI R4 2                 ; GET MARKED
+	NOT R4 R4                   ; Use ~MARKED
 
 :unmark_cells_0
 	JUMP.Z R0 @unmark_cells_done
-	LOAD32 R1 R0 0              ; Get I->TYPE
-	AND R1 R1 R2                ; Remove MARK
-	STORE32 R1 R0 0             ; Store the cleaned type
+	CMPSKIP.NE R0 R1            ; If LIST == STOP
+	ADDUI R2 R2 1               ; Increment Count
+	LOAD32 R3 R0 0              ; Get I->TYPE
+	AND R3 R3 R4                ; Remove MARK
+	STORE32 R3 R0 0             ; Store the cleaned type
 
 	;; Deal with CONS
-	CMPSKIPI.NE R1 16           ; If A CONS
-	JUMP @unmark_cells_proc     ; Deal with it
+	CMPSKIPI.NE R3 16           ; If A CONS
+	JUMP @unmark_cells_cons     ; Deal with it
 
 	;; Deal with PROC
-	CMPSKIPI.NE R1 32           ; If A PROC
+	CMPSKIPI.NE R3 32           ; If A PROC
 	JUMP @unmark_cells_proc     ; Deal with it
 
 	;; Everything else
 	JUMP @unmark_cells_1        ; Move onto NEXT
 
 :unmark_cells_proc
-	LOAD32 R1 R0 4              ; Using list->CAR
-	SWAP R0 R1                  ; Protect list
+	LOAD32 R3 R0 12            ; Using list->ENV
+	CMPSKIPI.NE R3 0            ; If NULL
+	JUMP @unmark_cells_cons     ; Skip
+	SWAP R0 R3                  ; Protect list
 	CALLI R15 @unmark_cells     ; Recurse until the ends
-	SWAP R0 R1                  ; Put list back
+	SWAP R0 R3                  ; Put list back
+
+:unmark_cells_cons
+	LOAD32 R3 R0 4              ; Using list->CAR
+	SWAP R0 R3                  ; Protect list
+	CALLI R15 @unmark_cells     ; Recurse until the ends
+	SWAP R0 R3                  ; Put list back
 
 :unmark_cells_1
 	LOAD32 R0 R0 8              ; Get list->CDR
 	JUMP @unmark_cells_0        ; Keep going down list
 
 :unmark_cells_done
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
@@ -2745,10 +2761,16 @@
 ;; The Core of Garbage Collection
 :garbage_collect
 	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
 	CALLI R15 @mark_all_cells   ; MARK_ALL_CELLS
 	LOADR R0 @all_symbols       ; Using ALL_SYMBOLS
+	COPY R1 R0                  ; Using it as STOP
+	FALSE R2                    ; Setting Counter to 0
 	CALLI R15 @unmark_cells     ; UNMARK ALL_SYMBOLS
 	LOADR R0 @top_env           ; Using TOP_ENV
+	COPY R1 R0                  ; Using it as STOP
+	FALSE R2                    ; Setting Counter to 0
 	CALLI R15 @unmark_cells     ; UNMARK TOP_ENV
 	CALLI R15 @reclaim_marked   ; RECLAIM_MARKED
 	CALLI R15 @update_remaining ; Fix the Count
@@ -2758,6 +2780,8 @@
 	CALLI R15 @compact          ; Compact
 	FALSE R0                    ; Using NULL
 	STORER R0 @top_allocated    ; Clear TOP_ALLOCATED
+	POPR R2 R15                 ; Restore R
+	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
 
