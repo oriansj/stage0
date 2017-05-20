@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.0.6 - 2017-05-20
+** Added
 Added absolute addresses to High level assembler output to aid in debugging of complex assembly programs
 Added Let expressions to High Level prototype lisp
 Added Let expressions to stage2 lisp implementation
