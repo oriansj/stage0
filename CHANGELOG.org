@@ -27,6 +27,7 @@ Converted stage2 lisp implementation from dynamic scope to Lexical
 ** Fixed
 Made Web debugger provide more useful information
 Fixed regression in web debugger's ability to read input files
+Fixed regression in stage2 lisp garbage collection interacting with let expressions
 Fixed SHA256SUM of stage2 lisp to match new binary result
 
 ** Removed

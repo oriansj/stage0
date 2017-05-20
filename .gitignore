@@ -25,6 +25,8 @@ libvm.so
 tape_*
 rom
 temp*
+*.qst
+*.tmp
 z_disassembled
 
 # Ignore custom fonts the users might load
