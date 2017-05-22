@@ -69,7 +69,7 @@ struct cell* assoc(struct cell* key, struct cell* alist)
 	if(nil == alist) return nil;
 	for(; nil != alist; alist = alist->cdr)
 	{
-		if(alist->car->car == key) return alist->car;
+		if(alist->car->car->string == key->string) return alist->car;
 	}
 	return nil;
 }

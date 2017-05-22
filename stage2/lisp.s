@@ -907,13 +907,15 @@
 	PUSHR R3 R15                ; Protect R3
 	PUSHR R4 R15                ; Protect R4
 	LOADUI R4 $NIL              ; Using NIL
+	LOAD32 R0 R0 4              ; Using KEY->CAR
 
 :assoc_0
 	CMPJUMPI.E R1 R4 @assoc_done
 	LOAD32 R2 R1 4              ; ALIST->CAR
 	LOAD32 R3 R2 4              ; ALIST->CAR->CAR
+	LOAD32 R3 R3 4              ; ALIST->CAR->CAR->CAR
 	LOAD32 R1 R1 8              ; ALIST = ALIST->CDR
-	CMPSKIP.E R0 R3             ; If ALIST->CAR->CAR != KEY
+	CMPSKIP.E R0 R3             ; If ALIST->CAR->CAR->CAR != KEY->CAR
 	JUMP @assoc_0               ; Iterate using ALIST->CDR
 
 	;; Found KEY

@@ -18,6 +18,14 @@
 First to get a vm that can run our code:
 make development
 
+For those of you who don't want to depend upon make, simply run:
+gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+
+However if you are trying to hand convert the source code to your TTL Logic
+or relay based computer to ensure complete immunity from the trusting trust attack,
+please instead implement the equivelent of:
+gcc vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm
+
 And we probably want a safe place to put the programs we make:
 mkdir roms
 
@@ -144,7 +152,7 @@ Then we use our M0 Line macro assembler to convert our assembly into hex2 format
 Then we need to assemble that hex into our desired program:
 ./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/lisp --memory 48K
 
-roms/lisp should have the sha256sum of a99a43cb11fd2889a94d9e2bc65e5487406eb62ae4d0d877d573437cb9d1c107
+roms/lisp should have the sha256sum of d9bb13beced1c98daa4a62512ba35faa137f3ed6f23cdc1cdf724e25e8c6d80a
 
 Our lisp will first attempt to evaluate any code in tape_01 and then evaluate any code that the user types in.
 It is recommended to run with no less than 4MB of Memory

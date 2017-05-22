@@ -20,6 +20,8 @@
 ** Changed
 
 ** Fixed
+Fixed failure to lookup symbols that are identical but are in different lexical scopes
+Updated Bootstrapping instructions to reflect new checksum and recommendation for most minimal requirements
 
 ** Removed
 
