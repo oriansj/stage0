@@ -18,6 +18,7 @@
 ** Added
 
 ** Changed
+Cleaned up x86 notes and moved into x86 folder
 
 ** Fixed
 Fixed failure to lookup symbols that are identical but are in different lexical scopes
