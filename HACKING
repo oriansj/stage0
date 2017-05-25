@@ -1,0 +1,138 @@
+* License
+## Copyright (C) 2016 Jeremiah Orians
+## This file is part of stage0.
+##
+## stage0 is free software: you an redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## stage0 is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+* Start HERE
+For those of you who wish to hack on and improve this code base,
+there are a few structural and organizational things you should be aware of.
+
+** structural
+*** What are the stages?
+Stage0 are the single core bootstrap binary at the heart of any port or bootstrap.
+These are to be as small as possible and generally 512 bytes is considered
+the upper limit for these sorts of programs (Excluding NOP or ZERO packing).
+
+Stage1 programs are those that can be written by the stage0 hex monitor in a
+moderate amount of effort or can be implemented by another stage1 program which
+can be built from the stage0 hex monitor. These tools will be among the most
+difficult to write as this is usually the stage where you are bringing up your
+first text editor and tools to calculate relative displacements for you. The
+last program to be written in this group is your assembler (the most primitive
+one that makes sense on your platform).
+
+Stage2 programs are those that can be written in the stage1 assembler syntax
+which was made available to you upon the completion of stage1. This is where
+your first high level languages start to appear. You probably want to keep your
+programs under 8KLOC as hand written  assembly can have hard to trace bugs.
+
+Further stages will be described as they are discovered as this is a learning
+process about the full source bootstrap from nothing process.
+
+*** How are the files organized?
+Custom ports are listed in their own folders, right now there is only the x86
+port which is currently on hold until someone chooses to pick it up again.
+
+To allow people to independently produce the bootstrap stage0 binary, we have
+the Linux Bootstrap folder which contains several tools that may be of use to
+produce a hex assembler capable of making any stage0 binary.
+
+In the root directly, you will find a collection of *.c, *.py and vm.h these are
+the core files needed to build and debug hex and assembly programs written for
+the virtual machine specification documented in ISA_HEX_Map.org
+
+In the public directory, you will find the javascript and css files which
+improve the user experience of the Web IDE as implemented by User_Interface.py,
+Knight.py and the libvm.so file (built from wrapper.c vm_instructions.c
+vm_decode.c vm.h tty.c) which are started with a command like:
+python3 Knight.py -M 4M -R rom
+
+All of the bootstrap programs are inside of the stage directories that directly
+correspond with the infrastructure required to enable their functionality.
+
+The Library function prototypes folder contains library functions that were
+thought to be useful or commonly used.
+
+*** Where should I put this file?
+If it is for a stage0 port, put it in that ports own folder structure. If it is
+not a port, is it a bootstrapping file? If so place it in the stage folder which
+matches the level of bootstrapping requirements it has. If it is a library
+function please put it in that folder, for extensions or enhancements to the
+virtual machine, debugging or IDE place it in the root directory. If it is a
+high level prototype, place it in the relevent high level prototype folder.
+
+*** WIll you accept my custom licensed program?
+No. We only accept programs which have licenses that have been classified as
+free by the Free Software Foundation (FSF) and have complete and corresponding
+source code.
+
+** organizational
+*** How can I join?
+Choose to contribute to the project and then let us know about the cool stuff
+that you are doing. Testers, developers, bug finders, documentation writers,
+artists, poets, painters, relay enginners and you are free to contribute
+whatever you think will help but please understand, it will be only accepted
+if others also find it useful/helpful/good.
+
+*** How do I get my changes merged?
+Send one of the developers a pull request or patches. They will either review
+them and merge them, tell you why they didn't merge them or point you at the
+person that you should be sending your changes to.
+
+*** Can I license my changes differently?
+No, all code in this project are to be licensed GPLv3 or Later. Exceptions are
+only granted in the case of project collective approval (70% or higher of
+contributors agree).
+
+*** What classifies someone as a contributor?
+They have joined the project and have either:
+1) Created changes that were considered useful and merged into the master
+2) Performed functions for the project considered essential and are generally
+recognized by community members as helpful to the project.
+AND to be considered a contributor for the purpose of voting, you must have
+performed one of the above in the last 1 year as those who have not contributed
+in that timefrmae are to be considered former contributors and thus are unable
+to vote on issues critical to the project.
+
+*** What is the process for a rule change?
+A request for rule change must be sent out to all active contributors of the
+project, stating exactly the change to be made (Diffs are valid) and a proposed
+vote deadline (Must be atleast 2 weeks from the date of formal annoucement). If
+no request for rescheduling has been made 24 hours prior to the proposed voting
+deadline, the voting will be done by the proposed deadline.
+
+Should the vote result in a 70% or higher acceptence of active contributors, the
+changes will be merged into the master.
+
+*** How is voting done?
+All voting is to be public, with only one of the following responses:
+Approve, Full support
+Approve
+Approve, Conditional support
+Obstain, Biased
+Obstain
+Obstain, No confidence
+Reject, Conditional
+Reject
+Reject, Unacceptable
+
+Failure to vote by the deadline is to be counted as an Obstain.
+
+*** What areas need the most help?
+Finding and reporting bugs
+Documentation
+Project organization
+Art work
+Porting to new hardware platforms
