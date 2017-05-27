@@ -14,6 +14,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
+# Don't rebuild the built things in bin or roms
+VPATH = bin:roms
 
 # Collections of tools
 all: libvm vm
@@ -36,7 +38,7 @@ vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.
 	gcc -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
 
 # libVM Builds for Development tools
-libvm: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
+libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 	gcc -ggdb -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 
 libvm-production: wrapper.c vm_instructions.c vm_decode.c vm.h
@@ -53,8 +55,9 @@ dis: High_level_prototypes/disasm.c
 clean:
 	rm libvm.so bin/vm
 
-clean-production:
-	rm libvm.so bin/vm
+clean-hard:
+	rm -rf bin/ roms/
 
-clean-development:
-	rm libvm.so bin/vm bin/asm bin/dis
+clean-hardest:
+	git reset --hard
+	git clean -fd
