@@ -61,9 +61,9 @@ clean-hard: clean
 	rm -rf bin/ roms/
 
 .PHONY: clean-hardest
-clean-hardest:
+clean-hardest-You-probably-do-NOT-want-this-option:
 	git reset --hard
-	git clean -fd
+	git clean -xdf
 
 # Our essential folders
 bin:
