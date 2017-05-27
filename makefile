@@ -20,44 +20,54 @@ VPATH = bin:roms
 # Collections of tools
 all: libvm vm
 
-production: libvm-production vm-production asm dis
+production: libvm-production.so vm-production asm dis
 
-development: vm libvm asm dis
+development: vm libvm.so asm dis
 
 # VM Builds
-vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c
-	gcc vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm
+vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c | bin
+	gcc vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
 
-vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c
+vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
 	gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
-vm-production: vm.h vm.c vm_instructions.c vm_decode.c
-	gcc vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm
+vm-production: vm.h vm.c vm_instructions.c vm_decode.c | bin
+	gcc vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm-production
 
-vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c
+vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c | bin
 	gcc -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 	gcc -ggdb -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 
-libvm-production: wrapper.c vm_instructions.c vm_decode.c vm.h
-	gcc -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
+libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
+	gcc -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
 
 # Primitive development tools, not required but it was handy
-asm: High_level_prototypes/asm.c
+asm: High_level_prototypes/asm.c | bin
 	gcc -ggdb High_level_prototypes/asm.c -o bin/asm
 
-dis: High_level_prototypes/disasm.c
+dis: High_level_prototypes/disasm.c | bin
 	gcc -ggdb High_level_prototypes/disasm.c -o bin/dis
 
 # Clean up after ourselves
+.PHONY: clean
 clean:
-	rm libvm.so bin/vm
+	rm -f libvm.so libvm-production.so bin/vm bin/vm-production
 
-clean-hard:
+.PHONY: clean-hard
+clean-hard: clean
 	rm -rf bin/ roms/
 
+.PHONY: clean-hardest
 clean-hardest:
 	git reset --hard
 	git clean -fd
+
+# Our essential folders
+bin:
+	mkdir -p bin
+
+roms:
+	mkdir -p roms
