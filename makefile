@@ -105,7 +105,7 @@ clean-hardest:
 	git clean -fd
 
 clean-SO-hard-You-probably-do-NOT-want-this-option-because-it-will-destory-everything:
-	echo "I REALLY REALLY HOPE you know what you are doing"
+	@echo "I REALLY REALLY HOPE you know what you are doing"
 	git reset --hard
 	git clean -xdf
 
