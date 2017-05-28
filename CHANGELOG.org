@@ -28,6 +28,7 @@ Changed the results of make all to include all of the essential roms
 Fixed failure to lookup symbols that are identical but are in different lexical scopes
 Updated Bootstrapping instructions to reflect new checksum and recommendation for most minimal requirements
 Fixed flaws in existing makefile
+Added build instructions to README and listed dependencies
 
 ** Removed
 Purged notes that no longer apply or belong outside of stage0
