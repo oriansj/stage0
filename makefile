@@ -90,6 +90,14 @@ libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
 	gcc -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
 
+# Tests
+Generate-rom-test: ALL-ROMS
+	mkdir -p test
+	sha256sum roms/* | sort -k2 >| test/SHA256SUMS
+
+test: ALL-ROMS test/SHA256SUMS
+	sha256sum -c test/SHA256SUMS
+
 # Clean up after ourselves
 .PHONY: clean
 clean:
