@@ -1360,6 +1360,22 @@
 	RET R15
 
 
+	;; nullp
+	;; Recieves a CELL in R0
+	;; Returns NIL if not NIL or TEE if NIL
+:nullp_String
+	"null?"
+:nullp
+	PUSHR R1 R15                ; Protect R1
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOADUI R1 $NIL              ; Using NIL
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	LOADUI R1 $TEE              ; Return TEE
+	MOVE R0 R1                  ; Put result in correct register
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; prim_sum
 ;; Recieves a list in R0
 ;; Adds all values and returns a Cell with result in R0
@@ -2263,6 +2279,13 @@
 	CALLI R15 @spinup           ; SPINUP
 
 	;; Add Primitive Specials
+	LOADUI R0 $nullp            ; Using NULLP
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $nullp_String     ; Using NULLP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
 	LOADUI R0 $prim_sum         ; Using PRIM_SUM
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location

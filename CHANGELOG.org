@@ -19,6 +19,7 @@
 Added HACKING guide covering critical sections
 Added rom building steps to make
 Added more advanced cleaning options to makefile
+Extended stage2 lisp with null?
 
 ** Changed
 Cleaned up x86 notes and moved into x86 folder
