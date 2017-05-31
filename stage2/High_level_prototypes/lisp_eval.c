@@ -205,6 +205,12 @@ struct cell* process_cons(struct cell* exp, struct cell* env)
 
 
 /*** Primitives ***/
+struct cell* nullp(struct cell* args)
+{
+	if(nil == args->car) return tee;
+	return nil;
+}
+
 struct cell* make_int(int a);
 struct cell* prim_sum(struct cell* args)
 {
@@ -411,6 +417,21 @@ struct cell* prim_output(struct cell* args, FILE* out)
 	return tee;
 }
 
+struct cell* prim_stringeq(struct cell* args)
+{
+	if(nil == args) return nil;
+
+	char* temp = args->car->string;
+	for(args = args->cdr; nil != args; args = args->cdr)
+	{
+		if(strcmp(temp, args->car->string))
+		{
+			return nil;
+		}
+	}
+	return tee;
+}
+
 struct cell* prim_display(struct cell* args)
 {
 	return prim_output(args, stdout);
@@ -495,6 +516,7 @@ void init_sl3()
 	spinup(s_let, s_let);
 
 	/* Add Primitive Specials */
+	spinup(make_sym("null?"), make_prim(nullp));
 	spinup(make_sym("+"), make_prim(prim_sum));
 	spinup(make_sym("-"), make_prim(prim_sub));
 	spinup(make_sym("*"), make_prim(prim_prod));
@@ -514,6 +536,7 @@ void init_sl3()
 	spinup(make_sym("ascii!"), make_prim(prim_ascii));
 	spinup(make_sym("list?"), make_prim(prim_listp));
 	spinup(make_sym("list"), make_prim(prim_list));
+	spinup(make_sym("string=?"), make_prim(prim_stringeq));
 	spinup(make_sym("cons"), make_prim(prim_cons));
 	spinup(make_sym("car"), make_prim(prim_car));
 	spinup(make_sym("cdr"), make_prim(prim_cdr));

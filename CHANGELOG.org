@@ -20,6 +20,7 @@ Added HACKING guide covering critical sections
 Added rom building steps to make
 Added more advanced cleaning options to makefile
 Extended stage2 lisp with null?
+Extended stage2 lisp with string=?
 
 ** Changed
 Cleaned up x86 notes and moved into x86 folder
@@ -30,6 +31,7 @@ Fixed failure to lookup symbols that are identical but are in different lexical 
 Updated Bootstrapping instructions to reflect new checksum and recommendation for most minimal requirements
 Fixed flaws in existing makefile
 Added build instructions to README and listed dependencies
+Imported High level prototypes for new functions
 
 ** Removed
 Purged notes that no longer apply or belong outside of stage0
