@@ -1927,6 +1927,48 @@
 	RET R15
 
 
+;; prim_stringeq
+;; Recieves a list in R0
+;; Compares strings and returns a Cell with the result in R0
+:prim_stringeq_String
+	"string=?"
+:prim_stringeq
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOADUI R3 $NIL              ; Using NIL
+	LOAD32 R1 R0 4              ; Get ARGS->CAR
+	LOAD32 R4 R1 4              ; Using ARGS->CAR->CAR as TEMP
+	LOAD32 R2 R0 8              ; Using ARGS->CDR as args
+
+:prim_stringeq_0
+	CMPJUMPI.E R2 R3 @prim_stringeq_1
+	LOAD32 R0 R2 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 4              ; Get ARGS->CAR->CAR
+	COPY R1 R4                  ; Restore TEMP for string comparison
+	CALLI R15 @strcmp           ; Compare the strings
+	JUMP.NE R0 @prim_stringeq_2 ; Stop if not equal
+	LOAD32 R2 R2 8              ; Set ARGS to ARGS->CDR
+	JUMP @prim_stringeq_0       ; Go to next list item
+
+:prim_stringeq_1
+	LOADUI R0 $TEE              ; Return TEE
+	JUMP @prim_stringeq_done    ; Be done
+
+:prim_stringeq_2
+	LOADUI R0 $NIL              ; Return NIL
+
+:prim_stringeq_done
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; prim_display
 ;; Recieves argslist in R0
 ;; Outputs to TTY R12 and returns TEE
@@ -2423,6 +2465,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_list_String ; Using PRIM_LIST_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_stringeq    ; Using PRIM_STRINGEQ
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_stringeq_String ; Using PRIM_STRINGEQ_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
