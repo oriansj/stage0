@@ -83,6 +83,9 @@ dis: High_level_prototypes/disasm.c | bin
 hex: Linux\ Bootstrap/hex.c | bin
 	gcc Linux\ Bootstrap/hex.c -o bin/hex
 
+xeh: Linux\ Bootstrap/xeh.c | bin
+	gcc Linux\ Bootstrap/xeh.c -o bin/xeh
+
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 	gcc -ggdb -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
