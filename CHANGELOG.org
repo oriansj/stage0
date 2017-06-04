@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.0.7 - 2017-06-03
+** Added
 Added HACKING guide covering critical sections
 Added rom building steps to make
 Added more advanced cleaning options to makefile
