@@ -16,8 +16,10 @@
 
 * Current
 ** Added
+Incorporated High level prototypes into makefile
 
 ** Changed
+Extended VPATH in makefile to shorten dependency names
 
 ** Fixed
 

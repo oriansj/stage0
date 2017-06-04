@@ -15,10 +15,10 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 # Don't rebuild the built things in bin or roms
-VPATH = bin:roms
+VPATH = bin:roms:prototypes:stage1/High_level_prototypes:stage2/High_level_prototypes
 
 # Collections of tools
-all: libvm.so vm ALL-ROMS
+all: libvm.so vm ALL-ROMS ALL-PROTOTYPES
 
 production: libvm-production.so vm-production asm dis ALL-ROMS
 
@@ -107,6 +107,37 @@ Generate-rom-test: ALL-ROMS
 test: ALL-ROMS test/SHA256SUMS
 	sha256sum -c test/SHA256SUMS
 
+# Prototypes
+ALL-PROTOTYPES: prototype_dehex prototype_M0 prototype_more prototype_SET prototype_stage1_assembler-1 prototype_stage1_assembler-2 prototype_lisp
+
+prototype_dehex: dehex.c | prototypes
+	gcc stage1/High_level_prototypes/dehex.c -o prototypes/prototype_dehex
+
+prototype_M0: M0-macro.c | prototypes
+	gcc stage1/High_level_prototypes/M0-macro.c -o prototypes/prototype_M0
+
+prototype_more: more.c tty.c | prototypes
+	gcc stage1/High_level_prototypes/more.c tty.c -o prototypes/prototype_more
+
+prototype_SET: SET.c tty.c | prototypes
+	gcc stage1/High_level_prototypes/SET.c tty.c -o prototypes/prototype_SET
+
+prototype_stage1_assembler-1: stage1_assembler-1.c | prototypes
+	gcc stage1/High_level_prototypes/stage1_assembler-1.c -o prototypes/prototype_stage1_assembler-1
+
+prototype_stage1_assembler-2: stage1_assembler-2.c | prototypes
+	gcc stage1/High_level_prototypes/stage1_assembler-2.c -o prototypes/prototype_stage1_assembler-2
+
+prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c | prototypes
+	gcc -O2 stage2/High_level_prototypes/lisp.h \
+	        stage2/High_level_prototypes/lisp.c \
+	        stage2/High_level_prototypes/lisp_cell.c \
+	        stage2/High_level_prototypes/lisp_eval.c \
+	        stage2/High_level_prototypes/lisp_print.c \
+	        stage2/High_level_prototypes/lisp_read.c \
+	        -o prototypes/prototype_lisp
+
+
 # Clean up after ourselves
 .PHONY: clean
 clean:
@@ -114,17 +145,19 @@ clean:
 
 .PHONY: clean-hard
 clean-hard: clean
-	rm -rf bin/ roms/
+	rm -rf bin/ roms/ prototypes/
 
 .PHONY: clean-hardest
 clean-hardest:
 	git reset --hard
 	git clean -fd
+	rm -rf bin/ roms/ prototypes/
 
 clean-SO-hard-You-probably-do-NOT-want-this-option-because-it-will-destory-everything:
 	@echo "I REALLY REALLY HOPE you know what you are doing"
 	git reset --hard
 	git clean -xdf
+	rm -rf bin/ roms/ prototypes/
 
 # Our essential folders
 bin:
@@ -132,3 +165,6 @@ bin:
 
 roms:
 	mkdir -p roms
+
+prototypes:
+	mkdir -p prototypes

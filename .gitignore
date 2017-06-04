@@ -19,6 +19,7 @@ bin/
 tmp/
 __pycache__/
 roms/
+prototypes/
 
 # Generated files that don't need to be version controlled
 libvm.so
