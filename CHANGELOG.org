@@ -21,6 +21,7 @@ Added rom building steps to make
 Added more advanced cleaning options to makefile
 Extended stage2 lisp with null?
 Extended stage2 lisp with string=?
+Exported DEHEX rom image to makefile and added checksum
 
 ** Changed
 Cleaned up x86 notes and moved into x86 folder

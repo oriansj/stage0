@@ -38,7 +38,7 @@ vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.
 	gcc -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
 
 # Build the roms
-ALL-ROMS: stage0_monitor stage1_assembler-0 SET stage1_assembler-1 stage1_assembler-2 M0 CAT lisp forth
+ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp forth
 
 stage0_monitor: hex stage0/stage0_monitor.hex0 | roms
 	./bin/hex < stage0/stage0_monitor.hex0 > roms/stage0_monitor
@@ -48,6 +48,9 @@ stage1_assembler-0: hex stage1/stage1_assembler-0.hex0 | roms
 
 SET: stage1_assembler-0 vm stage1/SET.hex0 | roms
 	./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/SET.hex0 --tape_02 roms/SET
+
+DEHEX: stage1_assembler-0 vm stage1/dehex.hex0 | roms
+	./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/dehex.hex0 --tape_02 roms/DEHEX
 
 stage1_assembler-1: stage1_assembler-0 vm stage1/stage1_assembler-1.hex0 | roms
 	./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/stage1_assembler-1.hex0  --tape_02 roms/stage1_assembler-1
