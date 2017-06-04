@@ -26,6 +26,7 @@ Exported DEHEX rom image to makefile and added checksum
 ** Changed
 Cleaned up x86 notes and moved into x86 folder
 Changed the results of make all to include all of the essential roms
+Made makefile parallel build friendly
 
 ** Fixed
 Fixed failure to lookup symbols that are identical but are in different lexical scopes

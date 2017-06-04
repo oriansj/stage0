@@ -24,7 +24,6 @@ roms/
 libvm.so
 tape_*
 rom
-temp*
 *.qst
 *.tmp
 z_disassembled
