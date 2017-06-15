@@ -22,6 +22,7 @@ Incorporated High level prototypes into makefile
 Extended VPATH in makefile to shorten dependency names
 
 ** Fixed
+Stack offset bug in stage2 forth was found and fixed by reepca in record time
 
 ** Removed
 

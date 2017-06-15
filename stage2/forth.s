@@ -154,7 +154,7 @@
 	NOP                         ; Flags
 	&Dup_Code                   ; Where assembly is Stored
 :Dup_Code
-	LOAD R0 R14 0               ; Get top of stack
+	LOAD R0 R14 -4              ; Get top of stack
 	PUSHR R0 R14                ; Push copy onto it
 	JSR_COROUTINE R11           ; NEXT
 
@@ -167,7 +167,7 @@
 	NOP                         ; Flags
 	&Over_Code                  ; Where assembly is Stored
 :Over_Code
-	LOAD R0 R14 -4              ; Get second from Top of stack
+	LOAD R0 R14 -8              ; Get second from Top of stack
 	PUSHR R0 R14                ; Push it onto top of stack
 	JSR_COROUTINE R11           ; NEXT
 
