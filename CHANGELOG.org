@@ -27,6 +27,8 @@ Updated checksum for stage2 forth
 ** Fixed
 Stack offset bug in stage2 forth was found and fixed by reepca in record time
 Fixed 2DUP and ?DUP in stage2 forth
+Swapped TRUE and FALSE values in stage2 forth to match http://lars.nocrew.org/dpans/dpans3.htm#3.1.3
+Adjusted order of comparisions to better match ans
 
 ** Removed
 

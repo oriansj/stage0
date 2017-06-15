@@ -366,11 +366,11 @@
 	NOP                         ; Flags
 	&Equal_Code                 ; Where assembly is Stored
 :Equal_Code
-	POPR R1 R14                 ; Get top of stack
-	POPR R2 R14                 ; Get second item on Stack
-	FALSE R0                    ; Assume comparision is True
+	POPR R2 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	TRUE R0                     ; Assume comparision is True
 	CMPSKIP.E R1 R2             ; Check if they are equal and skip if they are
-	TRUE R0                     ; Looks like our assumption was wrong
+	FALSE R0                    ; Looks like our assumption was wrong
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
@@ -383,11 +383,11 @@
 	NOP                         ; Flags
 	&NEqual_Code                ; Where assembly is Stored
 :NEqual_Code
-	POPR R1 R14                 ; Get top of stack
-	POPR R2 R14                 ; Get second item on Stack
-	FALSE R0                    ; Assume comparision is True
+	POPR R2 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	TRUE R0                     ; Assume comparision is True
 	CMPSKIP.NE R1 R2            ; Check if they are not equal and skip if they are
-	TRUE R0                     ; Looks like our assumption was wrong
+	FALSE R0                    ; Looks like our assumption was wrong
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
@@ -400,11 +400,11 @@
 	NOP                         ; Flags
 	&Less_Code                  ; Where assembly is Stored
 :Less_Code
-	POPR R1 R14                 ; Get top of stack
-	POPR R2 R14                 ; Get second item on Stack
-	FALSE R0                    ; Assume comparision is True
+	POPR R2 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	TRUE R0                     ; Assume comparision is True
 	CMPSKIP.L R1 R2             ; Check if less than and skip if they are
-	TRUE R0                     ; Looks like our assumption was wrong
+	FALSE R0                    ; Looks like our assumption was wrong
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
@@ -417,11 +417,11 @@
 	NOP                         ; Flags
 	&LEqual_Code                ; Where assembly is Stored
 :LEqual_Code
-	POPR R1 R14                 ; Get top of stack
-	POPR R2 R14                 ; Get second item on Stack
-	FALSE R0                    ; Assume comparision is True
+	POPR R2 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	TRUE R0                     ; Assume comparision is True
 	CMPSKIP.LE R1 R2            ; Check if they are less than or equal and skip if they are
-	TRUE R0                     ; Looks like our assumption was wrong
+	FALSE R0                    ; Looks like our assumption was wrong
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
@@ -434,11 +434,11 @@
 	NOP                         ; Flags
 	&Greater_Code               ; Where assembly is Stored
 :Greater_Code
-	POPR R1 R14                 ; Get top of stack
-	POPR R2 R14                 ; Get second item on Stack
-	FALSE R0                    ; Assume comparision is True
+	POPR R2 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	TRUE R0                     ; Assume comparision is True
 	CMPSKIP.G R1 R2             ; Check if greater and skip if they are
-	TRUE R0                     ; Looks like our assumption was wrong
+	FALSE R0                    ; Looks like our assumption was wrong
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
@@ -451,11 +451,11 @@
 	NOP                         ; Flags
 	&GEqual_Code                ; Where assembly is Stored
 :GEqual_Code
-	POPR R1 R14                 ; Get top of stack
-	POPR R2 R14                 ; Get second item on Stack
-	FALSE R0                    ; Assume comparision is True
+	POPR R2 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	TRUE R0                     ; Assume comparision is True
 	CMPSKIP.GE R1 R2            ; Check if they are equal and skip if they are
-	TRUE R0                     ; Looks like our assumption was wrong
+	FALSE R0                    ; Looks like our assumption was wrong
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
