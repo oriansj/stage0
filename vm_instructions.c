@@ -16,6 +16,7 @@
  */
 
 #include "vm.h"
+#include <sys/stat.h>
 FILE* tape_01;
 FILE* tape_02;
 
@@ -161,13 +162,25 @@ uint32_t shift_register(uint32_t source, uint32_t amount, bool left, bool zero)
 
 void vm_FOPEN_READ(struct lilith* vm)
 {
+	struct stat sb;
+
 	if(0x00001100 == vm->reg[0])
 	{
+		if(-1 == stat(tape_01_name, &sb))
+		{
+			fprintf(stderr, "File named %s does not exist\n", tape_01_name);
+			exit(EXIT_FAILURE);
+		}
 		tape_01 = fopen(tape_01_name, "r");
 	}
 
 	if (0x00001101 == vm->reg[0])
 	{
+			if(-1 == stat(tape_02_name, &sb))
+		{
+			fprintf(stderr, "File named %s does not exist\n", tape_02_name);
+			exit(EXIT_FAILURE);
+		}
 		tape_02 = fopen(tape_02_name, "r");
 	}
 }

@@ -17,6 +17,7 @@
 * Current
 ** Added
 Incorporated High level prototypes into makefile
+Added logic to catch non-existent input files and report a useful error message
 
 ** Changed
 Extended VPATH in makefile to shorten dependency names
