@@ -23,6 +23,7 @@ Added DP! to stage2 forth
 ** Changed
 Extended VPATH in makefile to shorten dependency names
 Updated checksum for stage2 forth
+Reversed the order of operands in stage2 forth arithmetic
 
 ** Fixed
 Stack offset bug in stage2 forth was found and fixed by reepca in record time

@@ -293,7 +293,7 @@
 :Sub_Code
 	POPR R0 R14                 ; Get top of stack
 	POPR R1 R14                 ; Get second item on Stack
-	SUB R0 R0 R1                ; Perform the subtraction
+	SUB R0 R1 R0                ; Perform the subtraction
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
@@ -338,7 +338,7 @@
 :DIV_Code
 	POPR R0 R14                 ; Get top of stack
 	POPR R1 R14                 ; Get second item on Stack
-	DIV R0 R0 R1                ; Perform division and keep top half
+	DIV R0 R1 R0                ; Perform division and keep top half
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
@@ -353,7 +353,7 @@
 :MOD_Code
 	POPR R0 R14                 ; Get top of stack
 	POPR R1 R14                 ; Get second item on Stack
-	MOD R0 R0 R1                ; Perform division and keep remainder
+	MOD R0 R1 R0                ; Perform division and keep remainder
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
