@@ -227,8 +227,8 @@
 	NOP                         ; Flags
 	&2Dup_Code                  ; Where assembly is Stored
 :2Dup_Code
-	LOAD R0 R14 0               ; Get top of stack
-	LOAD R1 R14 -4              ; Get second on stack
+	LOAD R0 R14 -4              ; Get top of stack
+	LOAD R1 R14 -8              ; Get second on stack
 	PUSHR R1 R14
 	PUSHR R0 R14
 	JSR_COROUTINE R11           ; NEXT
@@ -262,7 +262,7 @@
 	NOP                         ; Flags
 	&QDup_Code                  ; Where assembly is Stored
 :QDup_Code
-	LOAD R0 R14 0               ; Get Top of stack
+	LOAD R0 R14 -4              ; Get Top of stack
 	CMPSKIPI.E R0 0             ; Skip if Zero
 	PUSHR R0 R14                ; Duplicate value
 	JSR_COROUTINE R11           ; NEXT

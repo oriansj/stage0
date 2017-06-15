@@ -20,9 +20,11 @@ Incorporated High level prototypes into makefile
 
 ** Changed
 Extended VPATH in makefile to shorten dependency names
+Updated checksum for stage2 forth
 
 ** Fixed
 Stack offset bug in stage2 forth was found and fixed by reepca in record time
+Fixed 2DUP and ?DUP in stage2 forth
 
 ** Removed
 
