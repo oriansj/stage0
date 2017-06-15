@@ -18,6 +18,7 @@
 ** Added
 Incorporated High level prototypes into makefile
 Added logic to catch non-existent input files and report a useful error message
+Added DP! to stage2 forth
 
 ** Changed
 Extended VPATH in makefile to shorten dependency names

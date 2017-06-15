@@ -699,13 +699,25 @@
 	PUSHR R8 R14                ; Put HERE onto stack
 	JSR_COROUTINE R11           ; NEXT
 
+;; UPDATE_HERE
+:Update_Here_Text
+"DP!"
+:Update_Here_Entry
+	&Here_Entry                 ; Pointer to HERE
+	&Update_Here_Text           ; Pointer to Name
+	NOP                         ; Flags
+	&Update_Here_Code           ; Where assembly is Stored
+:Update_Here_Code
+	POPR R8 R14                 ; Pop STACK onto HERE
+	JSR_COROUTINE R11           ; NEXT
+
 ;; Return Stack functions
 
 ;; >R
 :TOR_Text
 ">R"
 :TOR_Entry
-	&Here_Entry                 ; Pointer to HERE
+	&Update_Here_Entry          ; Pointer to UPDATE_HERE
 	&TOR_Text                   ; Pointer to Name
 	NOP                         ; Flags
 	&TOR_Code                   ; Where assembly is Stored
@@ -1087,13 +1099,17 @@
 	NOP                         ; Flags
 	&Create_Code                ; Where assembly is Stored
 :Create_Code
-	COPY R0 R8                  ; Preserve HERE for next LATEST
-	PUSHR R9 R8                 ; Store LATEST onto HEAP
-	POPR R1 R14                 ; Get pointer to string
-	PUSHR R1 R8                 ; Store string pointer onto HEAP
-	FALSE R1                    ; Prepare NOP for Flag
-	PUSHR R1 R8                 ; Push NOP Flag
-	MOVE R0 R9                  ; Set LATEST
+	POPR R0 R14                 ; Get Length
+	POPR R1 R14                 ; Get Pointer
+	FALSE R2                    ; Set to Zero
+	CMPJUMPI.LE R0 R2 @Create_Code_1 ; Prevent size below 1
+:Create_Code_0
+	LOAD8 R2 R1 0               ; Read Byte
+	STORE8 R2 R8 0              ; Write at HERE
+	ADDUI R8 R8 1               ; Increment HERE
+	SUBUI R0 R0 1               ; Decrement Length
+	JUMP.NZ R0 @Create_Code_0   ; Keep Looping
+:Create_Code_1
 	JSR_COROUTINE R11           ; NEXT
 
 ;; DEFINE
