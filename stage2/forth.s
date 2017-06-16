@@ -1250,6 +1250,8 @@
 :Interpret_Code
 	CALLI R15 @Word_Direct      ; Get the Word
 	POPR R0 R14                 ; Remove Length
+	CMPSKIPI.NE R0 0            ; If Nothing read
+	JUMP @Interpret_Cleanup     ; Cleanup
 	POPR R0 R14                 ; Remove Pointer
 	PUSHR R0 R14                ; Protect Pointer
 	PUSHR R0 R14                ; Put Pointer
@@ -1286,6 +1288,10 @@
 	PUSHR R0 R8                 ; Append pointer to HEAP
 	POPR R0 R14                 ; Get Immediate value
 	PUSHR R0 R8                 ; Append Immediate to HEAP
+	JSR_COROUTINE R11           ; NEXT
+
+:Interpret_Cleanup
+	POPR R0 R14                 ; Remove Pointer
 	JSR_COROUTINE R11           ; NEXT
 
 ;; Cold done function
