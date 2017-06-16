@@ -37,6 +37,7 @@ Adjusted order of comparisions to better match ans
 Stack leak in stage2 forth found and corrected
 Stage2 forth no longer attempts to parse carriage returns
 Stage2 forth now will display and error and clear the stacks in the event of an undefined input
+Stage2 forth now respects the HIDDEN Flag
 
 ** Removed
 Removed need for sponge to be used to run webIDE

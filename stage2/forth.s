@@ -1093,6 +1093,9 @@
 	POPR R1 R14                 ; Get return value
 	POPR R0 R14                 ; Restore FIND string pointer
 	POPR R3 R14                 ; Restore Node pointer
+	LOAD R4 R3 8                ; Get Flags for Node
+	ANDI R4 R4 0x1              ; Mask all but HIDDEN
+	CMPSKIPI.NE R4 0            ; Ignore result if HIDDEN
 	JUMP.E R1 @Find_Done        ; If find was successful
 	LOAD R3 R3 0                ; Otherwise get next pointer
 	JUMP.NZ R3 @Find_Loop       ; If Not NULL keep looping
