@@ -22,6 +22,7 @@
 #include <string.h>
 
 FILE* binary_file;
+int32_t address;
 
 /* Unpacked instruction */
 struct Instruction
@@ -1344,6 +1345,7 @@ void decode_HALCODE(struct Instruction* c)
 
 void eval_instruction(struct Instruction* c)
 {
+	fprintf(stdout,"%08X\t", address);
 	switch(c->raw0)
 	{
 		case 0x01: /* Integer 4OP */
@@ -1414,6 +1416,7 @@ int main(int argc, char **argv)
 	binary_file = fopen(argv[1], "r");
 	struct Instruction* current;
 	current = calloc(1, sizeof(struct Instruction));
+	address = 0;
 
 	int32_t byte;
 	byte = fgetc(binary_file);
@@ -1423,6 +1426,7 @@ int main(int argc, char **argv)
 	{
 		read_instruction(current);
 		eval_instruction(current);
+		address = address + 4;
 		byte = fgetc(binary_file);
 		ungetc(byte, binary_file);
 	}
