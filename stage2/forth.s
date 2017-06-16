@@ -870,12 +870,20 @@
 
 :Word_Start
 	FGETC                       ; Read a byte
+
+	CMPSKIPI.NE R0 13           ; If Carriage return
+	LOADUI R0 10                ; Convert to linefeed
+
 	CMPSKIPI.NE R1 0            ; Don't output unless TTY
 	FPUTC                       ; Make it visible
 	CMPSKIPI.NE R0 9            ; If Tab
 	JUMP @Word_Start            ; Get another byte
 
 	CMPSKIPI.NE R0 32           ; If space
+	JUMP @Word_Start            ; Get another byte
+
+
+	CMPSKIPI.NE R0 10           ; If Newline
 	JUMP @Word_Start            ; Get another byte
 
 :Word_Main
@@ -966,9 +974,9 @@
 	MUL R3 R3 R4                ; Shift counter by 10
 	SUBI R0 R0 48               ; Convert ascii to number
 	CMPSKIPI.GE R0 0            ; If less than a number
-	JUMP @numerate_string_done  ; Terminate NOW
+	JUMP @ABORT_Code            ; Dealing with an undefined symbol
 	CMPSKIPI.L R0 10            ; If more than a number
-	JUMP @numerate_string_done  ; Terminate NOW
+	JUMP @ABORT_Code            ; Dealing with an undefined symbol
 	ADDU R3 R3 R0               ; Don't add to the count
 
 	ADDUI R1 R1 1               ; Move onto next byte
@@ -1003,11 +1011,42 @@
 	PUSHR R3 R14                ; Store result
 	RET R15                     ; Return to whoever called it
 
+;; ABORT
+:ABORT_Text
+"ABORT"
+:ABORT_Entry
+	&Number_Entry               ; Pointer to NUMBER
+	&ABORT_Text                 ; Pointer to Name
+	NOP                         ; Flags
+	&ABORT_Code                 ; Where assembly is Stored
+:ABORT_Code
+	MOVE R2 R1                  ; Protect the string pointer and set output to TTY
+	CALLI R15 @ABORT_PRINT      ; Print our unknown
+	LOADUI R2 $ABORT_String     ; Get our string
+	CALLI R15 @ABORT_PRINT      ; Print it
+	LOADUI R0 10                ; NEWLINE
+	FPUTC                       ; Printed
+	LOADR R15 @RETURN_BASE      ; Load Base of Return Stack
+	LOADR R14 @PARAMETER_BASE   ; Load Base of Parameter Stack
+	LOADUI R13 $Cold_Start      ; Intialize via QUIT
+	JSR_COROUTINE R11           ; NEXT
+
+:ABORT_String
+" was not defined nor a valid number"
+
+:ABORT_PRINT
+	LOAD8 R0 R2 0               ; Get a byte
+	ADDUI R2 R2 1               ; Increment to next byte
+	CMPSKIPI.NE R0 0            ; If NULL
+	RET R15                     ; Return to caller
+	FPUTC                       ; Write the CHAR
+	JUMP @ABORT_PRINT           ; Loop until NULL
+
 ;; strcmp
 :Strcmp_Text
 "STRCMP"
 :Strcmp_Entry
-	&Number_Entry               ; Pointer to NUMBER
+	&ABORT_Entry                ; Pointer to ABORT
 	&Strcmp_Text                ; Pointer to Name
 	NOP                         ; Flags
 	&Strcmp_Code                ; Where assembly is Stored
