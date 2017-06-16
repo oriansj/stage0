@@ -187,20 +187,17 @@ def get_disassembled():
 
 	temp = """	<div style="position:absolute; left:10px; top:280px; overflow-y: scroll; height:200px; width:60%;"> 
 <table class="Debug"><tbody>"""
-	i = 0
 	for line in f:
 		pieces = re.split(r'\t+', line)
-
+		i = int(pieces[0], 16)
 		if (i < Current_IP):
 			temp = temp + ""
 		elif (i == Current_IP):
-			temp = temp + """<tr class="current"><td>""" + formatRegister(i) + "</td><td>" + pieces[0] + "</td><td>" + pieces[1] + "</td></tr>\n"
+			temp = temp + """<tr class="current"><td>""" + pieces[0] + "</td><td>" + pieces[1] + "</td><td>" + pieces[2] + "</td></tr>\n"
 		elif i in Watchpoints:
-			temp = temp + """<tr class="breakpoint"><td>""" + formatRegister(i) + "</td><td>" + pieces[0] + "</td><td>" + pieces[1] + "</td></tr>\n"
+			temp = temp + """<tr class="breakpoint"><td>""" + pieces[0] + "</td><td>" + pieces[1] + "</td><td>" + pieces[2] + "</td></tr>\n"
 		else:
-			temp = temp + "<tr><td>" + formatRegister(i) + "</td><td>" + pieces[0] + "</td><td>" + pieces[1] + "</td></tr>\n"
-
-		i = i + 4
+			temp = temp + "<tr><td>" + pieces[0] + "</td><td>" + pieces[1] + "</td><td>" + pieces[2] + "</td></tr>\n"
 
 	f.close()
 	return temp + "</tbody></table>"
@@ -242,7 +239,7 @@ def main(argv):
 			elif arg.endswith('G'):
 				Memory_Size = (int(arg[:-1]) * 1024 * 1024 * 1024)
 
-	subprocess.call("./bin/dis " + ROM_Name + " | sponge z_disassembled", shell=True)
+	subprocess.call("./bin/dis " + ROM_Name + " >| z_disassembled", shell=True)
 	Reset_lilith()
 
 Current_IP = 0

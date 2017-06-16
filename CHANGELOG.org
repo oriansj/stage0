@@ -25,6 +25,7 @@ Added string print and address to output of High level prototype disassembler
 Extended VPATH in makefile to shorten dependency names
 Updated checksum for stage2 forth
 Reversed the order of operands in stage2 forth arithmetic
+Modified webIDE to leverage new enhanced disassembler output
 
 ** Fixed
 Stack offset bug in stage2 forth was found and fixed by reepca in record time
@@ -33,6 +34,7 @@ Swapped TRUE and FALSE values in stage2 forth to match http://lars.nocrew.org/dp
 Adjusted order of comparisions to better match ans
 
 ** Removed
+Removed need for sponge to be used to run webIDE
 
 * 0.0.7 - 2017-06-03
 ** Added
