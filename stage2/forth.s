@@ -1221,13 +1221,25 @@
 	ADD R13 R13 R0              ; Set NEXT to NEXT plus the offset
 	JSR_COROUTINE R11           ; NEXT
 
+;; EXECUTE
+:Execute_Text
+"EXECUTE"
+:Execute_Entry
+	&0Branch_Entry              ; Pointer to 0Branch
+	&Execute_Text               ; Pointer to Name
+	NOP                         ; Flags
+	&Execute_Code               ; Where assembly is Stored
+:Execute_Code
+	POPR R0 R14                 ; Get value off parameter stack
+	JSR_COROUTINE R0            ; Jump to that address
+
 ;; Interaction Commands
 
 ;; QUIT
 :Quit_Text
 "QUIT"
 :Quit_Entry
-	&0Branch_Entry              ; Pointer to 0Branch
+	&Execute_Entry              ; Pointer to Execute
 	&Quit_Text                  ; Pointer to Name
 	NOP                         ; Flags
 :Quit_Code
