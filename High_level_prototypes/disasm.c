@@ -85,6 +85,33 @@ Broken:
 	exit(EXIT_FAILURE);
 }
 
+void print_non_NULL(uint8_t c)
+{
+	if(0 != c)
+	{
+		fprintf(stdout, "%c", c);
+	}
+}
+
+void string_values(struct Instruction *c)
+{
+	print_non_NULL(c->raw0);
+	print_non_NULL(c->raw1);
+	print_non_NULL(c->raw2);
+	print_non_NULL(c->raw3);
+
+	if(0 != c->raw3)
+	{
+		read_instruction(c);
+		string_values(c);
+		address = address + 4;
+	}
+	else
+	{
+		fprintf(stdout, "\t #STRING\n");
+	}
+}
+
 void decode_Integer_4OP(struct Instruction* c)
 {
 	/* Parse Raw Data */
@@ -204,7 +231,8 @@ void decode_Integer_4OP(struct Instruction* c)
 		}
 		default: /* Unknown 4OP */
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 	fprintf(stdout, "%s reg%u reg%u reg%u reg%u\t", Name, c->reg0, c->reg1, c->reg2, c->reg3);
@@ -527,7 +555,8 @@ void decode_Integer_3OP(struct Instruction* c)
 		}
 		default: /* Unknown 3OP*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -704,7 +733,8 @@ void decode_Integer_2OP(struct Instruction* c)
 		}
 		default: /* Unknown 2OP*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -771,7 +801,8 @@ void decode_1OP(struct Instruction* c)
 		}
 		default: /* Unknown 1OP*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -812,7 +843,8 @@ void decode_0OP(struct Instruction* c)
 		}
 		default: /* Unknown 1OP*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -1003,7 +1035,8 @@ void decode_Integer_2OPI(struct Instruction* c)
 		}
 		default: /* Unknown 2OPI*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -1247,7 +1280,8 @@ void decode_1OPI(struct Instruction* c)
 		}
 		default: /* Unknown 1OPI*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -1280,7 +1314,8 @@ void decode_0OPI(struct Instruction* c)
 		}
 		default: /* Unknown 1OPI*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -1335,7 +1370,8 @@ void decode_HALCODE(struct Instruction* c)
 		}
 		default: /* Unknown HALCODE*/
 		{
-			break;
+			string_values(c);
+			return;
 		}
 	}
 
@@ -1398,7 +1434,8 @@ void eval_instruction(struct Instruction* c)
 		}
 		default: /* Not supported by this disassembler */
 		{
-			fprintf(stdout, "ILLEGAL INSTRUCTION\t# %s\n", c->operation);
+			string_values(c);
+			return;
 		}
 	}
 }
