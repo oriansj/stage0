@@ -29,6 +29,7 @@ Extended VPATH in makefile to shorten dependency names
 Updated checksum for stage2 forth
 Reversed the order of operands in stage2 forth arithmetic
 Modified webIDE to leverage new enhanced disassembler output
+Altered stage2 forth KEY to echo keypress so that S" and similiar functions behave like gforth
 
 ** Fixed
 Stack offset bug in stage2 forth was found and fixed by reepca in record time

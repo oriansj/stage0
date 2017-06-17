@@ -817,6 +817,8 @@
 :Key_Code
 	COPY R1 R7                  ; Using designated IO
 	FGETC                       ; Get a byte
+	CMPSKIPI.NE R1 0            ; If not TTY
+	FPUTC                       ; Skip Echoing
 	PUSHR R0 R14                ; And push it onto the stack
 	JSR_COROUTINE R11           ; NEXT
 

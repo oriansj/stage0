@@ -22,7 +22,8 @@ roms/
 prototypes/
 
 # Generated files that don't need to be version controlled
-libvm.so
+*.so
+*.o
 tape_*
 rom
 *.qst

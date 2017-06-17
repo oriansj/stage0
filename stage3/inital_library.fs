@@ -17,9 +17,10 @@
 
 \ Simply cat this file to the top of any forth program that leverages its functionality
 \ then execute the resulting out put as so:
-\ ./bin/vm-production --rom roms/forth --memory 1M --tape_01 The_combined_file
+\ ./bin/vm --rom roms/forth --memory 1M --tape_01 The_combined_file
 \ All writes via WRITE8 will be written to tape_02 or whatever name you prefer via the --tape_02 option
-
+\ However should you wish to leverage readline for interacting with forth use vm-production but be warned
+\ WILL see duplicate lines being printed when you hit enter as both readline and the forth are echoing your key strokes
 
 \ Define our CELL size as 4 bytes
 : CELL 4 ;
