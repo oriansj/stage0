@@ -22,6 +22,7 @@ Added DP! to stage2 forth
 Added EXECUTE to stage2 forth
 Added ABORT to stage2 forth
 Added string print and address to output of High level prototype disassembler
+Added initial prototype library for forth developers who want better ANS support
 
 ** Changed
 Extended VPATH in makefile to shorten dependency names
