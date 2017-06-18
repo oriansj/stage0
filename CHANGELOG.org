@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.0.8 - 2017-06-17
+** Added
 Incorporated High level prototypes into makefile
 Added logic to catch non-existent input files and report a useful error message
 Added DP! to stage2 forth
