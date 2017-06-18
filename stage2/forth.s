@@ -634,13 +634,11 @@
 	POPR R0 R14                 ; Get number of bytes to Move
 	POPR R1 R14                 ; Where to put the result
 	POPR R2 R14                 ; Where it is coming from
-	FALSE R4                    ; Prepare for Zeroing
 
 :Cmove_Main
 	CMPSKIPI.GE R0 4            ; Loop if we have 4 or more bytes to move
 	JUMP @Cmove_Slow            ; Otherwise slowly move bytes
 	LOAD R3 R2 0                ; Get 4 Bytes
-	STORE R4 R2 0               ; Overwrite that memory with Zeros
 	STORE R3 R1 0               ; Store them at the destination
 	ADDUI R1 R1 4               ; Increment Source by 4
 	ADDUI R2 R2 4               ; Increment Destination by 4
@@ -651,7 +649,6 @@
 	CMPSKIPI.G R0 0             ; While number of bytes is greater than 0
 	JUMP @Cmove_Done            ; Otherwise be done
 	LOADU8 R3 R2 0              ; Get 4 Bytes
-	STORE8 R4 R2 0              ; Overwrite that memory with Zeros
 	STORE8 R3 R1 0              ; Store them at the destination
 	ADDUI R1 R1 1               ; Increment Source by 1
 	ADDUI R2 R2 1               ; Increment Destination by 1
@@ -817,6 +814,8 @@
 :Key_Code
 	COPY R1 R7                  ; Using designated IO
 	FGETC                       ; Get a byte
+	CMPSKIPI.NE R0 13           ; If Carriage return
+	LOADUI R0 10                ; Replace with Line Feed
 	CMPSKIPI.NE R1 0            ; If not TTY
 	FPUTC                       ; Skip Echoing
 	PUSHR R0 R14                ; And push it onto the stack

@@ -40,6 +40,7 @@ Stack leak in stage2 forth found and corrected
 Stage2 forth no longer attempts to parse carriage returns
 Stage2 forth now will display and error and clear the stacks in the event of an undefined input
 Stage2 forth now respects the HIDDEN Flag
+Stage2 forth now no longer clears during CMOVE to better comply with the spec
 
 ** Removed
 Removed need for sponge to be used to run webIDE
