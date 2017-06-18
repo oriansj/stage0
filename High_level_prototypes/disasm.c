@@ -1368,6 +1368,11 @@ void decode_HALCODE(struct Instruction* c)
 			strncpy(Name, "FPUTC", 19);
 			break;
 		}
+		case 0x110000: /* HAL_MEM */
+		{
+			strncpy(Name, "HAL_MEM", 19);
+			break;
+		}
 		default: /* Unknown HALCODE*/
 		{
 			string_values(c);

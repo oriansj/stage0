@@ -572,7 +572,20 @@ The following 3 devices must exist with the following exact IDs
 |-------------+----------|
 | 42 10 03 00 | Reserved |
 | ...         | Reserved |
+| 42 10 FF FF | Reserved |
+
+**** Device physical specifications
+| Hex         | Name    | Comment                                                                      |
+|-------------+---------+------------------------------------------------------------------------------|
+| 42 11 00 00 | HAL_MEM | Loads the total amount of physical Memory that is functional into register 0 |
+
+**** Reserved Block for Future HALCODE Expansion
+| Hex         | Name     |
+|-------------+----------|
+| 42 12 00 00 | Reserved |
+| ...         | Reserved |
 | 42 FF FF FF | Reserved |
+
 
 ** Reserved Block 1
 At this time these instructions only produce a warning; but could do anything.

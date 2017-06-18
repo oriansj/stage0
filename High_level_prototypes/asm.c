@@ -419,6 +419,7 @@ void assemble(struct Token* p)
 	setExpression(p, "FSEEK", "42100004", 4);
 	setExpression(p, "FGETC", "42100100", 4);
 	setExpression(p, "FPUTC", "42100200", 4);
+	setExpression(p, "HAL_MEM", "42110000", 4);
 
 	/* 0OP Group*/
 	setExpression(p, "NOP", "00000000", 4);

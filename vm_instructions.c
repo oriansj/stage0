@@ -287,6 +287,12 @@ void vm_FPUTC(struct lilith* vm)
 	}
 }
 
+void vm_HAL_MEM(struct lilith* vm)
+{
+	vm->reg[0] = vm->amount_of_Ram;
+}
+
+
 /* Condition Codes */
 enum condition
 {

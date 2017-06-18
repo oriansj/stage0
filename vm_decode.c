@@ -283,6 +283,17 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			vm_FPUTC(vm);
 			break;
 		}
+		case 0x110000: /* HAL_MEM */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "HAL_MEM", 19);
+			#elif TRACE
+			record_trace("HAL_MEM");
+			#endif
+
+			vm_HAL_MEM(vm);
+			break;
+		}
 		default: return true;
 	}
 

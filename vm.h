@@ -59,6 +59,7 @@ void vm_FSEEK(struct lilith* vm);
 void vm_REWIND(struct lilith* vm);
 void vm_FGETC(struct lilith* vm);
 void vm_FPUTC(struct lilith* vm);
+void vm_HAL_MEM(struct lilith* vm);
 void ADD_CI(struct lilith* vm, struct Instruction* c);
 void ADD_CO(struct lilith* vm, struct Instruction* c);
 void ADD_CIO(struct lilith* vm, struct Instruction* c);
