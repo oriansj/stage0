@@ -30,6 +30,7 @@ Updated checksum for stage2 forth
 Reversed the order of operands in stage2 forth arithmetic
 Modified webIDE to leverage new enhanced disassembler output
 Altered stage2 forth KEY to echo keypress so that S" and similiar functions behave like gforth
+Altered EXECUTE in stage2 forth to set R12 and load its pointer and jump
 
 ** Fixed
 Stack offset bug in stage2 forth was found and fixed by reepca in record time

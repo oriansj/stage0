@@ -1273,7 +1273,8 @@
 	NOP                         ; Flags
 	&Execute_Code               ; Where assembly is Stored
 :Execute_Code
-	POPR R0 R14                 ; Get value off parameter stack
+	POPR R12 R14                ; Get address pointer off parameter stack
+	LOAD R0 R12 0               ; Get address from pointer
 	JSR_COROUTINE R0            ; Jump to that address
 
 ;; Interaction Commands
