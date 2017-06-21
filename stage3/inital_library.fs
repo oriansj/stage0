@@ -46,11 +46,13 @@
 \ The literal code address of LIT. Don't think too hard about it.
 : LITERAL [ ' LIT DUP , , ] , , ;
 
-\ Lookup a word and append some literals
+\ Compile the CFA of a word looked up as a literal
 : ['] ' LITERAL ; IMMEDIATE
 
-\ Define IF as if top of stack is false branch to Literal value not yet written
-: IF [ ' 0BRANCH LITERAL ] , HERE 0 , ; IMMEDIATE
+\ CONTROL STRUCTURES
+
+\ Compile a conditional forward branch, to be resolved by THEN or ELSE.
+: IF ['] 0BRANCH , HERE 0 , ; IMMEDIATE
 
 \ Get displacement between two address and write the difference to the address first given
 : TARGET! OVER - SWAP ! ;
@@ -61,20 +63,31 @@
 \ And our ELSE for our IF
 : ELSE HERE 2 CELLS + TARGET! ['] BRANCH , HERE 0 , ; IMMEDIATE
 
-\ Put here on the stack for the while to pickup and turn into an immediate jump
+\ A backwards branch destination, to be resolved by AGAIN, UNTIL, or REPEAT.
 : BEGIN HERE ; IMMEDIATE
 
-\ Use stack value from begin to loop if still true
-: WHILE [COMPILE] IF ; IMMEDIATE
+\ This forward conditional branch will be resolved by REPEAT.
+: WHILE [COMPILE] IF SWAP ; IMMEDIATE
 
-\ Who doesn't love repeat?
-: REPEAT HERE 2 CELLS + TARGET! ['] BRANCH , HERE SWAP TARGET! CELL ALLOT ; IMMEDIATE
+\ Resolve a backwards branch.
+: AGAIN ['] BRANCH , HERE SWAP TARGET! CELL ALLOT ; IMMEDIATE
 
-\ Writes our repetition target
-: AGAIN HERE SWAP TARGET! ; IMMEDIATE
+: UNTIL ['] 0BRANCH , HERE SWAP TARGET! CELL ALLOT ; IMMEDIATE
+
+\ Resolve the latest forward branch and compile a backwards branch.
+: REPEAT [COMPILE] AGAIN [COMPILE] THEN ; IMMEDIATE
+
+\ Note that it is possible to use multiple exits from a 
+\ BEGIN ... WHILE ... REPEAT loop, as long as you resolve the forward branches
+\ manually. For example, BEGIN ... WHILE ... WHILE ... REPEAT THEN will allow
+\ an exit from either WHILE. You can even put other stuff between the REPEAT and
+\ THEN if you need to handle certain exits specially. Use sparingly unless
+\ you're sure you understand how it works.
+
+: [CHAR]   KEY LITERAL ; IMMEDIATE
 
 \ If true put t otherwise put f
-: .BOOL IF 116 EMIT ELSE 102 EMIT THEN ;
+: .BOOL IF [CHAR] t ELSE [CHAR] f THEN EMIT ;
 
 \ Writes a Byte to HEAP
 : C, HERE C! 1 ALLOT ;
@@ -86,7 +99,7 @@
 : CR 10 EMIT ;
 
 \ Makes a string on the HEAP from everything between it and "
-: STR" HERE BEGIN KEY DUP 34 != WHILE C, REPEAT DROP HERE OVER - ;
+: STR" HERE BEGIN KEY DUP [CHAR] " != WHILE C, REPEAT DROP HERE OVER - ;
 
 \ Extends STR" to work in Compile mode
 : S" STATE IF ['] BRANCH , HERE 0 , STR" ROT HERE TARGET! SWAP LITERAL LITERAL ELSE STR" THEN ; IMMEDIATE
@@ -119,7 +132,10 @@
 : +C! OVER C! 1 + ;
 
 \ Given a number and address write out string form of number at address and returns address and length (address should have at least 10 free bytes).
-: NUM>STRING DUP >R OVER 0 < IF SWAP NEGATE SWAP 45 +C! THEN DUP >R SWAP BEGIN NEXT-DIGIT ROT SWAP 48 + +C! SWAP DUP WHILE REPEAT DROP R> 2DUP - REVERSE-STRING R> SWAP OVER - ;
+: NUM>STRING DUP >R OVER 0 < IF SWAP NEGATE SWAP [CHAR] - +C!
+			     THEN DUP >R SWAP
+	     BEGIN NEXT-DIGIT ROT SWAP 48 + +C! SWAP DUP WHILE REPEAT
+	     DROP R> 2DUP - REVERSE-STRING R> SWAP OVER - ;
 
 \ A user friendly way to print a number
 : . PAD NUM>STRING TYPE ;
