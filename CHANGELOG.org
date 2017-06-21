@@ -16,8 +16,12 @@
 
 * Current
 ** Added
+[CHAR] was incorporated into stage3 FORTH to reduce ascii lookup
+UNTIL was incorporated into stage3 FORTH
 
 ** Changed
+Minor refactor of stage3 FORTH by reepa
+Stage3 FORTH WHILE's compile-time stack effect is now consistent with gforth
 
 ** Fixed
 
