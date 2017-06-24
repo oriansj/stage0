@@ -42,6 +42,7 @@ Stage0 vm now will show an error message if the size of the rom exceeds the avai
 ** Fixed
 Updated checksums to reflect changes in stage2 FORTH
 Fixed dis behavior in regards to hex values in strings
+Updated checksums to reflect changes in stage2 Lisp
 
 ** Removed
 the HERE and DP! are gone from ' now in stage3 FORTH

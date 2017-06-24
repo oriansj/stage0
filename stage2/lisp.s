@@ -29,10 +29,20 @@
 
 ;; Start function
 :start
+	;; Check if we are going to hit outside the world
+	HAL_MEM                     ; Get total amount of Memory
+	LOADR R1 @MINIMAL_MEMORY    ; Get our Minimal Value
+	CMPSKIP.GE R0 R1            ; Check if we have enough
+	JUMP @FAILED_INITIALIZATION ; If not fail gracefully
+
 	LOADR R15 @stack_start      ; Put stack after CONS and HEAP
 	;; We will be using R14 for our condition codes
 	;; We will be using R13 for which Input we will be using
 	;; We will be using R12 for which Output we will be using
+
+	;; Ensure a known good state
+	FALSE R0                    ; Reset R0
+	FALSE R1                    ; Reset R1
 
 	;; Initialize
 	CALLI R15 @garbage_init
@@ -68,6 +78,22 @@
 
 :stack_start
 	'00180000'
+
+
+;; How much memory is too little
+:MINIMAL_MEMORY
+'00180000'
+
+;; Halt the machine in the event of insufficient Memory
+:FAILED_INITIALIZATION
+	FALSE R1                    ; Set output to TTY
+	LOADUI R0 $FAILED_STRING    ; Prepare our Message
+	CALLI R15 @Print_String     ; Print it
+	HALT                        ; Prevent any further damage
+
+:FAILED_STRING
+"Please provide 1600KB of Memory for this Lisp to run (More is recommended for large programs)
+"
 
 ;; Append_Cell
 ;; Adds a cell to the end of a CDR chain
