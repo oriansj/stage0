@@ -30,6 +30,8 @@ Added hex dump printer DUMP and support words to stage3 FORTH
 Added DOES> and supporting words, and used it to make VARIABLE, CONSTANT, and DEFER in stage3 FORTH
 Added TUCK, MIN, SPACES, :NONAME, FILL, and <> to stage3 FORTH
 Added LSHIFT and RSHIFT to stage2 FORTH
+Added PRINT to stage2 FORTH
+Added Low memory detection to stage2 FORTH and now exits gracefully
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa

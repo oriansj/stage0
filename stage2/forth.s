@@ -47,6 +47,10 @@
 	;; Loads contents of tape_01
 	;; Starts interface until Halted
 :start
+	HAL_MEM                     ; Get total amount of Memory
+	LOADR R1 @MINIMAL_MEMORY    ; Get our Minimal Value
+	CMPSKIP.GE R0 R1            ; Check if we have enough
+	JUMP @FAILED_INITIALIZATION ; If not fail gracefully
 	LOADR R15 @RETURN_BASE      ; Load Base of Return Stack
 	LOADR R14 @PARAMETER_BASE   ; Load Base of Parameter Stack
 	LOADUI R11 $NEXT            ; Get Address of Next
@@ -65,6 +69,9 @@
 :Cold_Start
 	&Quit_Code
 
+:MINIMAL_MEMORY
+'00100000'
+
 :RETURN_BASE
 '00080000'
 
@@ -74,8 +81,19 @@
 :STRING_BASE
 '000A0000'
 
-	;; The last function you'll ever need to run
-	;; HALT
+;; FAILED_INITIALIZATION
+:FAILED_INITIALIZATION
+	FALSE R1                    ; Set output to TTY
+	LOADUI R2 $FAILED_STRING    ; Prepare our Message
+	CALLI R15 @PRINT_Direct     ; Print it
+	HALT                        ; Be done
+
+:FAILED_STRING
+"Please provide 1MB or More of Memory for this FORTH to run
+"
+
+;; The last function you'll ever need to run
+;; HALT
 :HALT_Text
 "HALT"
 :HALT_Entry
@@ -1097,9 +1115,9 @@
 	&ABORT_Code                 ; Where assembly is Stored
 :ABORT_Code
 	MOVE R2 R1                  ; Protect the string pointer and set output to TTY
-	CALLI R15 @ABORT_PRINT      ; Print our unknown
+	CALLI R15 @PRINT_Direct     ; Print our unknown
 	LOADUI R2 $ABORT_String     ; Get our string
-	CALLI R15 @ABORT_PRINT      ; Print it
+	CALLI R15 @PRINT_Direct     ; Print it
 	LOADUI R0 10                ; NEWLINE
 	FPUTC                       ; Printed
 	LOADR R15 @RETURN_BASE      ; Load Base of Return Stack
@@ -1110,19 +1128,33 @@
 :ABORT_String
 " was not defined nor a valid number"
 
-:ABORT_PRINT
+;; PRINT
+:PRINT_Text
+"PRINT"
+:PRINT_Entry
+	&ABORT_Entry                ; Pointer to ABORT
+	&PRINT_Text                 ; Pointer to Name
+	NOP                         ; Flags
+	&PRINT_Code                 ; Where assembly is Stored
+:PRINT_Code
+	POPR R2 R14                 ; Load pointer to string
+	CALLI R15 @PRINT_Direct     ; Trick to allow direct calls
+	JSR_COROUTINE R11           ; NEXT
+
+:PRINT_Direct
 	LOAD8 R0 R2 0               ; Get a byte
 	ADDUI R2 R2 1               ; Increment to next byte
 	CMPSKIPI.NE R0 0            ; If NULL
 	RET R15                     ; Return to caller
 	FPUTC                       ; Write the CHAR
-	JUMP @ABORT_PRINT           ; Loop until NULL
+	JUMP @PRINT_Direct          ; Loop until NULL
+
 
 ;; strcmp
 :Strcmp_Text
 "STRCMP"
 :Strcmp_Entry
-	&ABORT_Entry                ; Pointer to ABORT
+	&PRINT_Entry                ; Pointer to PRINT
 	&Strcmp_Text                ; Pointer to Name
 	NOP                         ; Flags
 	&Strcmp_Code                ; Where assembly is Stored

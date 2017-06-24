@@ -174,7 +174,7 @@ Then we use our M0 Line macro assembler to convert our assembly into hex2 format
 Then we need to assemble that hex into our desired program:
 ./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/forth --memory 48K
 
-roms/forth should with the sha256sum of 53619f77736729edc06b79d27d835ada6a4235954c467dd0514e312ec4acf3dc
+roms/forth should with the sha256sum of 3a4a15691297345ac808ce41fae26d5592cd09d759d2feef88c1ef262ddaa5b8
 
 Our forth will first attempt to evaluate any code in tape_01 and then evaluate any code that the user types in
 (Otherwise there is no way for a forth fan to have a chance against the lisp in terms of being able to bootstrap something cool)
