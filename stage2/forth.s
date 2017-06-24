@@ -379,11 +379,39 @@
 	PUSHR R0 R14                ; Store the result
 	JSR_COROUTINE R11           ; NEXT
 
+:LSHIFT_Text
+"LSHIFT"
+:LSHIFT_Entry
+	&MOD_Entry                  ; Pointer to %
+	&LSHIFT_Text                ; Pointer to Name
+	NOP                         ; Flags
+	&LSHIFT_Code                ; Where assembly is Stored
+:LSHIFT_Code
+	POPR R0 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	SAL R0 R1 R0                ; Left Shift
+	PUSHR R0 R14                ; Store the result
+	JSR_COROUTINE R11           ; NEXT
+
+:RSHIFT_Text
+"RSHIFT"
+:RSHIFT_Entry
+	&LSHIFT_Entry               ; Pointer to LSHIFT
+	&RSHIFT_Text                ; Pointer to Name
+	NOP                         ; Flags
+	&RSHIFT_Code                ; Where assembly is Stored
+:RSHIFT_Code
+	POPR R0 R14                 ; Get top of stack
+	POPR R1 R14                 ; Get second item on Stack
+	SAR R0 R1 R0                ; Left Shift
+	PUSHR R0 R14                ; Store the result
+	JSR_COROUTINE R11           ; NEXT
+
 ;; =
 :Equal_Text
 "="
 :Equal_Entry
-	&MOD_Entry                  ; Pointer to %
+	&RSHIFT_Entry               ; Pointer to RSHIFT
 	&Equal_Text                 ; Pointer to Name
 	NOP                         ; Flags
 	&Equal_Code                 ; Where assembly is Stored
