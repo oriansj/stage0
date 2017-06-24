@@ -29,6 +29,13 @@ void load_program(struct lilith* vm, char* rom_name)
 	size_t end = ftell(program);
 	rewind(program);
 
+	/* Deal with the special case of the ROM is bigger than available memory */
+	if(end > vm->amount_of_Ram)
+	{
+		fprintf(stderr, "Program %s is %d bytes large but only %d bytes of memory have been allocated!\n", rom_name, (int)end, (int)vm->amount_of_Ram);
+		exit(EXIT_FAILURE);
+	}
+
 	/* Load the entire tape into memory */
 	fread(vm->memory, 1, end, program);
 

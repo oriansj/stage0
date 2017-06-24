@@ -87,14 +87,25 @@ Broken:
 
 void print_non_NULL(uint8_t c)
 {
-	if(0 != c)
+	switch(c)
 	{
-		fprintf(stdout, "%c", c);
+		case 0: return;
+		case 32 ... 126:
+		{
+			fprintf(stdout, "%c", c);
+			break;
+		}
+		default: fprintf(stdout, "0x%X ", c);
 	}
 }
 
-void string_values(struct Instruction *c)
+void string_values(struct Instruction *c, bool first)
 {
+	if(first)
+	{
+		fprintf(stdout, "\"");
+	}
+
 	print_non_NULL(c->raw0);
 	print_non_NULL(c->raw1);
 	print_non_NULL(c->raw2);
@@ -103,12 +114,12 @@ void string_values(struct Instruction *c)
 	if(0 != c->raw3)
 	{
 		read_instruction(c);
-		string_values(c);
+		string_values(c, false);
 		address = address + 4;
 	}
 	else
 	{
-		fprintf(stdout, "\t #STRING\n");
+		fprintf(stdout, "\"\t #STRING\n");
 	}
 }
 
@@ -231,7 +242,7 @@ void decode_Integer_4OP(struct Instruction* c)
 		}
 		default: /* Unknown 4OP */
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -555,7 +566,7 @@ void decode_Integer_3OP(struct Instruction* c)
 		}
 		default: /* Unknown 3OP*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -733,7 +744,7 @@ void decode_Integer_2OP(struct Instruction* c)
 		}
 		default: /* Unknown 2OP*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -801,7 +812,7 @@ void decode_1OP(struct Instruction* c)
 		}
 		default: /* Unknown 1OP*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -843,7 +854,7 @@ void decode_0OP(struct Instruction* c)
 		}
 		default: /* Unknown 1OP*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -1035,7 +1046,7 @@ void decode_Integer_2OPI(struct Instruction* c)
 		}
 		default: /* Unknown 2OPI*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -1280,7 +1291,7 @@ void decode_1OPI(struct Instruction* c)
 		}
 		default: /* Unknown 1OPI*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -1314,7 +1325,7 @@ void decode_0OPI(struct Instruction* c)
 		}
 		default: /* Unknown 1OPI*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -1375,7 +1386,7 @@ void decode_HALCODE(struct Instruction* c)
 		}
 		default: /* Unknown HALCODE*/
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
@@ -1439,7 +1450,7 @@ void eval_instruction(struct Instruction* c)
 		}
 		default: /* Not supported by this disassembler */
 		{
-			string_values(c);
+			string_values(c, true);
 			return;
 		}
 	}
