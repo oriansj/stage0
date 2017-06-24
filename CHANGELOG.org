@@ -18,14 +18,28 @@
 ** Added
 [CHAR] was incorporated into stage3 FORTH to reduce ascii lookup
 UNTIL was incorporated into stage3 FORTH
+'DODOES was incorporated into stage2 FORTH
+LATEST! was incorporated into stage2 FORTH
+R@ was incorporated into stage2 FORTH
+DODOES was incorporated into stage2 FORTH
+DOVAR was incorporated into stage2 FORTH
+Added a variable BASE to control what base numbers are printed in stage3 FORTH
+Added BOUNDS for common setup for sequence-iterating loops in stage3 FORTH
+Added region-comment "(" (note that it doesn't nest) to stage3 FORTH
+Added hex dump printer DUMP and support words to stage3 FORTH
+Added DOES> and supporting words, and used it to make VARIABLE, CONSTANT, and DEFER in stage3 FORTH
+Added TUCK, MIN, SPACES, :NONAME, FILL, and <> to stage3 FORTH
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa
 Stage3 FORTH WHILE's compile-time stack effect is now consistent with gforth
+Changed behavior of stage2 FORTH's CREATE to better match the way it usually works.
 
 ** Fixed
+Updated checksums to reflect changes in stage2 FORTH
 
 ** Removed
+the HERE and DP! are gone from ' now in stage3 FORTH
 
 * 0.0.8 - 2017-06-17
 ** Added

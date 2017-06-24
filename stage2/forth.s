@@ -110,7 +110,7 @@
 
 
 :DODOES
-	ADDI R1 R12 4		    ; Get Parameter Field Address
+	ADDI R1 R12 4               ; Get Parameter Field Address
 	PUSHR R1 R14                ; Put it on data stack
 	LOAD R12 R12 0              ; Get location of the jump to this
 	JUMP @DOCOL                 ; Go to the high-level forth
@@ -129,7 +129,7 @@
 	LOADUI R0 $DODOES           ; Get address of DODOES
 	PUSHR R0 R14                ; Put it on data stack
 	JSR_COROUTINE R11           ; NEXT
-	
+
 ;; DOCOL Function
 ;; The Interpreter for DO COLON
 ;; Jumps to NEXT
