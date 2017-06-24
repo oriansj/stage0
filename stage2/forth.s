@@ -108,6 +108,28 @@
 	LOAD R0 R12 0               ; Get Code word target
 	JSR_COROUTINE R0            ; Jump to Code word
 
+
+:DODOES
+	ADDI R1 R12 4		    ; Get Parameter Field Address
+	PUSHR R1 R14                ; Put it on data stack
+	LOAD R12 R12 0              ; Get location of the jump to this
+	JUMP @DOCOL                 ; Go to the high-level forth
+
+;; 'DODOES - gives the address of the
+;; assembly for DODOES. We need that particular bit
+;; of assembly to implement DOES>.
+:DODOES_ADDR_Text
+"'DODOES"
+:DODOES_ADDR_Entry
+	&EXIT_Entry                 ; Pointer to EXIT
+	&DODOES_ADDR_Text           ; Pointer to name
+	NOP                         ; Flags
+	&DODOES_ADDR_Code           ; Where assembly is stored
+:DODOES_ADDR_Code
+	LOADUI R0 $DODOES           ; Get address of DODOES
+	PUSHR R0 R14                ; Put it on data stack
+	JSR_COROUTINE R11           ; NEXT
+	
 ;; DOCOL Function
 ;; The Interpreter for DO COLON
 ;; Jumps to NEXT
@@ -122,7 +144,7 @@
 :Drop_Text
 "DROP"
 :Drop_Entry
-	&EXIT_Entry                 ; Pointer to EXIT
+	&DODOES_ADDR_Entry          ; Pointer to 'DODOES
 	&Drop_Text                  ; Pointer to Name
 	NOP                         ; Flags
 	&Drop_Code                  ; Where assembly is Stored
@@ -684,11 +706,23 @@
 	PUSHR R9 R14                ; Put LATEST onto stack
 	JSR_COROUTINE R11           ; NEXT
 
+;; LATEST!
+:SetLatest_Text
+"LATEST!"
+:SetLatest_Entry
+	&Latest_Entry               ; Pointer to LATEST
+	&SetLatest_Text             ; Pointer to Name
+	NOP                         ; Flags
+	&SetLatest_Code             ; Where assembly is stored
+:SetLatest_Code
+	POPR R9 R14                 ; Set LATEST from stack
+	JSR_COROUTINE R11           ; NEXT
+
 ;; HERE
 :Here_Text
 "HERE"
 :Here_Entry
-	&Latest_Entry               ; Pointer to LATEST
+	&SetLatest_Entry            ; Pointer to LATEST!
 	&Here_Text                  ; Pointer to Name
 	NOP                         ; Flags
 	&Here_Code                  ; Where assembly is Stored
@@ -723,11 +757,24 @@
 	PUSHR R0 R15                ; Shove it onto return stack
 	JSR_COROUTINE R11           ; NEXT
 
+;; R@
+:COPYR_Text
+"R@"
+:COPYR_Entry
+	&TOR_Entry                  ; Pointer to >R
+	&COPYR_Text                 ; Pointer to Name
+	NOP                         ; Flags
+	&COPYR_Code                 ; Where assembly is stored
+:COPYR_Code
+	LOAD R0 R15 4               ; Get top of return stack
+	PUSHR R0 R14                ; Put it on data stack
+	JSR_COROUTINE R11           ; NEXT
+
 ;; R>
 :FROMR_Text
 "R>"
 :FROMR_Entry
-	&TOR_Entry                  ; Pointer to >R
+	&COPYR_Entry                  ; Pointer to >R
 	&FROMR_Text                 ; Pointer to Name
 	NOP                         ; Flags
 	&FROMR_Code                 ; Where assembly is Stored
@@ -1133,6 +1180,12 @@
 	PUSHR R0 R14                ; Push the result
 	JSR_COROUTINE R11           ; NEXT
 
+
+:DOVAR
+	ADDUI R0 R12 4              ; Locate Parameter Field Address
+	PUSHR R0 R14                ; Push on stack
+	JSR_COROUTINE R11           ; NEXT
+
 ;; CREATE
 :Create_Text
 "CREATE"
@@ -1142,16 +1195,30 @@
 	NOP                         ; Flags
 	&Create_Code                ; Where assembly is Stored
 :Create_Code
+	CALLI R15 @Word_Direct      ; Get Word
 	POPR R0 R14                 ; Get Length
 	POPR R1 R14                 ; Get Pointer
 	FALSE R2                    ; Set to Zero
 	CMPJUMPI.LE R0 R2 @Create_Code_1 ; Prevent size below 1
+	COPY R3 R8                  ; Remember HERE for header
 :Create_Code_0
 	LOAD8 R2 R1 0               ; Read Byte
 	STORE8 R2 R8 0              ; Write at HERE
 	ADDUI R8 R8 1               ; Increment HERE
 	SUBUI R0 R0 1               ; Decrement Length
+	ADDUI R1 R1 1               ; Increment string pointer
 	JUMP.NZ R0 @Create_Code_0   ; Keep Looping
+	FALSE R2                    ; Set to Zero
+	STORE8 R2 R8 0              ; Write null terminator
+	ADDUI R8 R8 1               ; Increment HERE
+	COPY R0 R8                  ; Remember HERE to set LATEST
+	; R9 has latest
+	PUSHR R9 R8                 ; Push pointer to current LATEST
+	COPY R9 R0                  ; Set LATEST to this header
+	PUSHR R3 R8                 ; Push location of name
+	PUSHR R2 R8                 ; Push empty flags
+	LOADUI R0 $DOVAR            ; Load address of DOVAR
+	PUSHR R0 R8                 ; Push address of DOVAR
 :Create_Code_1
 	JSR_COROUTINE R11           ; NEXT
 

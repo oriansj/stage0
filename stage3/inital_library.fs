@@ -37,8 +37,8 @@
 \ Define ALLOT to allocate a give number of bytes
 : ALLOT HERE + DP! ;
 
-\ Read a word, lookup and return pointer to its definition and don't use up HEAP space doing it
-: ' HERE WORD DROP FIND >CFA SWAP DP! ;
+\ Read a word, lookup and return pointer to its definition.
+: '  WORD DROP FIND >CFA ;
 
 \ Lookup a word and write the address of its definition
 : [COMPILE] ' , ; IMMEDIATE
@@ -92,8 +92,11 @@
 \ Writes a Byte to HEAP
 : C, HERE C! 1 ALLOT ;
 
+\ addr count -- high low
+: BOUNDS   OVER + SWAP ;
+
 \ Prints Memory from address a to a + b when invoked as a b TYPE
-: TYPE OVER + SWAP BEGIN 2DUP > WHILE DUP C@ EMIT 1 + REPEAT 2DROP ;
+: TYPE BOUNDS BEGIN 2DUP > WHILE DUP C@ EMIT 1 + REPEAT 2DROP ;
 
 \ So we don't have to type 10 EMIT for newlines anymore
 : CR 10 EMIT ;
@@ -102,7 +105,8 @@
 : STR" HERE BEGIN KEY DUP [CHAR] " != WHILE C, REPEAT DROP HERE OVER - ;
 
 \ Extends STR" to work in Compile mode
-: S" STATE IF ['] BRANCH , HERE 0 , STR" ROT HERE TARGET! SWAP LITERAL LITERAL ELSE STR" THEN ; IMMEDIATE
+: S" STATE IF ['] BRANCH , HERE 0 , STR" ROT HERE TARGET! SWAP LITERAL LITERAL
+	   ELSE STR" THEN ; IMMEDIATE
 
 \ Extends S" to behave the way most users want "
 : ." [COMPILE] S" STATE IF ['] TYPE , ELSE TYPE THEN ; IMMEDIATE
@@ -113,8 +117,11 @@
 \ add ANS keyword for getting both Quotent and Remainder
 : /MOD 2DUP MOD >R / R> ;
 
+\ valid bases are from 2 to 36.
+CREATE BASE 10 ,
+
 \ Primitive needed for printing base 10 numbers
-: NEXT-DIGIT 10 /MOD ;
+: NEXT-DIGIT BASE @ /MOD ;
 
 \ Give us a 400bytes of storage to play with
 : PAD HERE 100 CELLS + ;
@@ -125,16 +132,23 @@
 \ Swap the contents of 2 Memory addresses
 : CSWAP! 2DUP C@ SWAP C@ ROT C! SWAP C! ;
 
-\ Given an address and a number of Chars, reverses a string (handy for little endian systems that have bytes in the wrong order)
-: REVERSE-STRING OVER + 1 - BEGIN 2DUP < WHILE 2DUP CSWAP! 1 - SWAP 1 + SWAP REPEAT 2DROP ;
+\ Given an address and a number of Chars, reverses a string (handy for little
+\ endian systems that have bytes in the wrong order)
+: REVERSE-STRING OVER + 1 -
+		 BEGIN 2DUP < WHILE 2DUP CSWAP! 1 - SWAP 1 + SWAP REPEAT 2DROP ;
 
 \ Given an address and number, writeout number at address and increment address
 : +C! OVER C! 1 + ;
 
-\ Given a number and address write out string form of number at address and returns address and length (address should have at least 10 free bytes).
+
+\ works for hex and stuff
+: >ASCII-DIGIT   DUP 10 < IF 48 ELSE 87 THEN + ;
+
+\ Given a number and address write out string form of number at address and
+\ returns address and length (address should have at least 10 free bytes).
 : NUM>STRING DUP >R OVER 0 < IF SWAP NEGATE SWAP [CHAR] - +C!
-			     THEN DUP >R SWAP
-	     BEGIN NEXT-DIGIT ROT SWAP 48 + +C! SWAP DUP WHILE REPEAT
+			     THEN DUP >R SWAP \ R: str-start digits-start
+	     BEGIN NEXT-DIGIT ROT SWAP >ASCII-DIGIT +C! SWAP DUP WHILE REPEAT
 	     DROP R> 2DUP - REVERSE-STRING R> SWAP OVER - ;
 
 \ A user friendly way to print a number
@@ -144,13 +158,90 @@
 : STACK-BASE 0x00090000 ;
 
 \ Given current stack pointer calculate and display number of underflowed cells
-: .UNDERFLOW   ." Warning: stack is underflowed by " STACK-BASE SWAP - CELL / . ."  cells!" CR ;
+: .UNDERFLOW   ." Warning: stack is underflowed by "
+	       STACK-BASE SWAP - CELL / . ."  cells!" CR ;
 
 \ Display the number of entries on stack in <n> form
 : .HEIGHT STACK-BASE - CELL / ." <" . ." > " ;
 
 \ Display count and contents of stack or error message if Underflow
-: .S DSP@ DUP STACK-BASE < IF .UNDERFLOW ELSE DUP .HEIGHT STACK-BASE BEGIN 2DUP > WHILE DUP @ . 32 EMIT CELL + REPEAT 2DROP THEN ;
+: .S DSP@ DUP STACK-BASE < IF .UNDERFLOW
+			   ELSE DUP .HEIGHT STACK-BASE
+				BEGIN 2DUP > WHILE DUP @ . 32 EMIT CELL + REPEAT
+				2DROP
+			   THEN ;
 
 \ Pop off contents of stack to Zero stack
 : CLEAR-STACK BEGIN DSP@ STACK-BASE > WHILE .S 10 EMIT DROP REPEAT STACK-BASE DSP! ;
+: (   BEGIN KEY [CHAR] ) = UNTIL ; IMMEDIATE
+\ Note: for further reading, see brad rodriguez's moving forth stuff.
+\ The return address currently on the stack points to the next word to be
+\ executed. DOER! should only be compiled by DOES> or other similar words, so
+\ the address on the return stack should be right past DOER!'s. Which should be
+\ the code to make the action for the latest word. Since we only want to set
+\ this code as the latest word's action, not actually execute it at this point,
+\ we don't bother putting anything back on the return stack - we'll return
+\ straight up past the word we came from.
+
+\ For example: consider this definition
+\ : CONSTANT   CREATE , DOES> @ ;
+\ This compiles to the sequence: DOCOL CREATE , DOER! @ EXIT
+\ DOER! will point the latest word (the CREATEd one) to the code right past it -
+\ the @ EXIT - and then exit the definition it's in.
+: DOER!   R> SWAP >CFA ! ;
+\ This is a tricky one. Basically, we need to compile a little bit of machine
+\ code that will invoke the code that follows. Notes: R12 should, at this point,
+\ have the address of the place we got here from. So we should just put
+\ that+cell on the stack (for use by what follows DOES>) and run DOCOL. (Note:
+\ implemented in forth.s)
+\ Assumes most significant byte is at lower address
+\ I'm not sure why that 65535 AND is necessary, but it seems to be. Some issue
+\ with signed division I guess.
+: 2C,      65535 AND DUP 256 / C, 255 AND C, ; \ ghetto right shift
+\ Compiles an assembly-level jump to a location. Note that this isn't
+\ future-proof, as if HERE gets past 30k or so 16 bits won't be large enough for
+\ that jump. We may have to compile more than just a jump in the future in order
+\ for DOES> to work properly - we'd need to load the address into a register,
+\ having the actual address nearby, and then use that coroutine jump thing. 12
+\ bytes. 
+: JUMP-TO, HERE 0x3C C, 0x00 C, - 2C, ;
+\ Sets the action of the latest word
+: DOES>   ['] LATEST , ['] DOER! , 'DODOES JUMP-TO, ; IMMEDIATE
+\ Sets the action of a certain word
+: DOER>   ['] DOER! , 'DODOES JUMP-TO, ; IMMEDIATE
+: TUCK   SWAP OVER ;
+
+: MIN    2DUP < IF SWAP THEN DROP ;
+: HEX    16 BASE ! ;
+: DECIMAL   10 BASE ! ;
+
+CREATE LINE-SIZE CELL ,
+: PRINTABLE?   DUP 127 < SWAP 31 > AND ;
+: EMIT-PRINTABLE   DUP PRINTABLE? IF EMIT ELSE DROP [CHAR] . EMIT THEN ;
+: DUMP-TYPE    BOUNDS BEGIN 2DUP > WHILE DUP C@ EMIT-PRINTABLE 1 + REPEAT 2DROP ;
+\ will always print two characters.
+: .HEX-BYTE   DUP 16 / >ASCII-DIGIT EMIT 15 AND >ASCII-DIGIT EMIT ;
+: DUMP-LINE   2DUP BOUNDS BEGIN 2DUP > WHILE DUP C@ .HEX-BYTE ."  " 1 + REPEAT
+	      2DROP ."    " DUMP-TYPE CR ;
+: DUMP-LINES  LINE-SIZE @ * BOUNDS
+	      BEGIN 2DUP > WHILE DUP LINE-SIZE @ TUCK DUMP-LINE + REPEAT 2DROP ;
+: DUMP   LINE-SIZE @ /MOD -ROT 2DUP DUMP-LINES LINE-SIZE @ * + SWAP DUMP-LINE ;
+
+: VARIABLE   CREATE 0 , ;
+: CONSTANT   CREATE , DOES> @ ;
+: NOOP ;
+: DEFER      CREATE ['] NOOP , DOES> @ EXECUTE ;
+: IS         ' CELL + STATE IF LITERAL ['] ! , ELSE ! THEN ; IMMEDIATE
+
+
+\ emits n spaces.
+: SPACES   BEGIN DUP WHILE 32 EMIT 1 - REPEAT DROP ;
+' NOOP @ CONSTANT 'DOCOL
+\ Starts a definition without a name, leaving the execution token (the thing
+\ that can be passed to EXECUTE) on the stack.
+: :NONAME   HERE 'DOCOL , ] ;
+
+\ fill n bytes with char.
+\ addr n char --
+: FILL   >R BOUNDS BEGIN 2DUP > WHILE DUP R@ C! 1 + REPEAT 2DROP R> DROP ;
+: <> != ;
