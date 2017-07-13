@@ -108,7 +108,7 @@
 : S" STATE IF ['] BRANCH , HERE 0 , STR" ROT HERE TARGET! SWAP LITERAL LITERAL
 	   ELSE STR" THEN ; IMMEDIATE
 
-\ Extends S" to behave the way most users want "
+\ Extends S" to behave the way most users want
 : ." [COMPILE] S" STATE IF ['] TYPE , ELSE TYPE THEN ; IMMEDIATE
 
 \ add the ANS keyword for modulus
@@ -142,7 +142,7 @@ CREATE BASE 10 ,
 
 
 \ works for hex and stuff
-: >ASCII-DIGIT   DUP 10 < IF 48 ELSE 87 THEN + ;
+: >ASCII-DIGIT   DUP 10 < IF 48 ELSE 55 THEN + ;
 
 \ Given a number and address write out string form of number at address and
 \ returns address and length (address should have at least 10 free bytes).
@@ -195,15 +195,13 @@ CREATE BASE 10 ,
 \ that+cell on the stack (for use by what follows DOES>) and run DOCOL. (Note:
 \ implemented in forth.s)
 \ Assumes most significant byte is at lower address
-\ I'm not sure why that 65535 AND is necessary, but it seems to be. Some issue
-\ with signed division I guess.
-: 2C,      65535 AND DUP 256 / C, 255 AND C, ; \ ghetto right shift
+: 2C, DUP 0xFF00 AND 8 RSHIFT C, 0xFF AND C, ;
 \ Compiles an assembly-level jump to a location. Note that this isn't
 \ future-proof, as if HERE gets past 30k or so 16 bits won't be large enough for
 \ that jump. We may have to compile more than just a jump in the future in order
 \ for DOES> to work properly - we'd need to load the address into a register,
 \ having the actual address nearby, and then use that coroutine jump thing. 12
-\ bytes. 
+\ bytes.
 : JUMP-TO, HERE 0x3C C, 0x00 C, - 2C, ;
 \ Sets the action of the latest word
 : DOES>   ['] LATEST , ['] DOER! , 'DODOES JUMP-TO, ; IMMEDIATE

@@ -32,12 +32,14 @@ Added TUCK, MIN, SPACES, :NONAME, FILL, and <> to stage3 FORTH
 Added LSHIFT and RSHIFT to stage2 FORTH
 Added PRINT to stage2 FORTH
 Added Low memory detection to stage2 FORTH and now exits gracefully
+Added Low memory detection to stage2 Lisp and now exists gracefully
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa
 Stage3 FORTH WHILE's compile-time stack effect is now consistent with gforth
 Changed behavior of stage2 FORTH's CREATE to better match the way it usually works.
 Stage0 vm now will show an error message if the size of the rom exceeds the available memory
+Modified stage3 forth library to dump upper case hex values
 
 ** Fixed
 Updated checksums to reflect changes in stage2 FORTH
