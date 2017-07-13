@@ -196,13 +196,14 @@ CREATE BASE 10 ,
 \ implemented in forth.s)
 \ Assumes most significant byte is at lower address
 : 2C, DUP 0xFF00 AND 8 RSHIFT C, 0xFF AND C, ;
-\ Compiles an assembly-level jump to a location. Note that this isn't
-\ future-proof, as if HERE gets past 30k or so 16 bits won't be large enough for
-\ that jump. We may have to compile more than just a jump in the future in order
+
+\ Compiles an assembly-level jump to a location.
+\ We may have to compile more than just a jump in the future in order
 \ for DOES> to work properly - we'd need to load the address into a register,
-\ having the actual address nearby, and then use that coroutine jump thing. 12
-\ bytes.
-: JUMP-TO, HERE 0x3C C, 0x00 C, - 2C, ;
+\ having the actual address nearby, and then use that coroutine jump thing.
+\ CMPSKIP.E R0 R0, the address, LOADRU32 R0 -4, JSR_COROUTINE R0
+: JUMP-TO, 0x09030200 , , 0x2E60FFFC , 0x0D010000 , ;
+
 \ Sets the action of the latest word
 : DOES>   ['] LATEST , ['] DOER! , 'DODOES JUMP-TO, ; IMMEDIATE
 \ Sets the action of a certain word
