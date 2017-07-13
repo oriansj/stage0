@@ -33,6 +33,7 @@ Added LSHIFT and RSHIFT to stage2 FORTH
 Added PRINT to stage2 FORTH
 Added Low memory detection to stage2 FORTH and now exits gracefully
 Added Low memory detection to stage2 Lisp and now exists gracefully
+Improved ISA Notes about M0 and hex2 to help bootstrappers
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa
