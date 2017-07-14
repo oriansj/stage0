@@ -1138,6 +1138,7 @@
 	&PRINT_Code                 ; Where assembly is Stored
 :PRINT_Code
 	POPR R2 R14                 ; Load pointer to string
+	COPY R1 R7                  ; Write to standard out
 	CALLI R15 @PRINT_Direct     ; Trick to allow direct calls
 	JSR_COROUTINE R11           ; NEXT
 
