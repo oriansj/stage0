@@ -34,6 +34,7 @@ Added PRINT to stage2 FORTH
 Added Low memory detection to stage2 FORTH and now exits gracefully
 Added Low memory detection to stage2 Lisp and now exists gracefully
 Improved ISA Notes about M0 and hex2 to help bootstrappers
+Added rain1's new user forth starting script, which is not actually required for bootstrapping but rather convenience
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa
@@ -41,11 +42,13 @@ Stage3 FORTH WHILE's compile-time stack effect is now consistent with gforth
 Changed behavior of stage2 FORTH's CREATE to better match the way it usually works.
 Stage0 vm now will show an error message if the size of the rom exceeds the available memory
 Modified stage3 forth library to dump upper case hex values
+Modified stage3 forth JUMP-TO, to support 32bit absolute addresses
 
 ** Fixed
 Updated checksums to reflect changes in stage2 FORTH
 Fixed dis behavior in regards to hex values in strings
 Updated checksums to reflect changes in stage2 Lisp
+Added missing library reference form stage2 lisp High level prototype
 
 ** Removed
 the HERE and DP! are gone from ' now in stage3 FORTH
