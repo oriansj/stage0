@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 
 enum otype
 {
