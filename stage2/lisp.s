@@ -21,7 +21,7 @@
 	;;
 	;; Type maps to the following values
 	;; FREE = 1, MARKED = (1 << 1),INT = (1 << 2),SYM = (1 << 3),
-	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),ASCII = (1 << 7)
+	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),ASCII = (1 << 7), STRING = (1 << 8)
 
 	;; CONS space: End of program -> 1MB (0x100000)
 	;; HEAP space: 1MB -> 1.5MB (0x180000)
@@ -139,9 +139,21 @@
 	CMPSKIPI.G R3 32            ; If control character or SPACE
 	JUMP @tokenize_append       ; Stop
 
+	CMPSKIPI.NE R3 34           ; If raw string
+	JUMP @tokenize_string       ; Process that whole thing
+
 	;; Walk further down string
 	ADDUI R4 R4 1               ; Next char
 	JUMP @tokenize_loop         ; And try again
+
+:tokenize_string
+	;; Walk further down string
+	ADDUI R4 R4 1               ; Next char
+	LOADXU8 R3 R1 R4            ; Get char
+	CMPSKIPI.NE R3 34           ; If Found matching quote
+	JUMP @tokenize_append       ; Stop
+
+	JUMP @tokenize_string       ; And try again
 
 :tokenize_append
 	FALSE R3                    ; NULL terminate
@@ -289,7 +301,7 @@
 	LOADU8 R2 R1 0              ; Get first Char
 
 	CMPSKIPI.E R2 39            ; If Not Quote Char
-	JUMP @atom_integer          ; Move to next type
+	JUMP @atom_string           ; Move to next type
 
 	;; When dealing with a quote
 	ADDUI R1 R1 1               ; Move past quote Char
@@ -301,6 +313,21 @@
 	LOADUI R0 $s_quote          ; Using S_QUOTE
 	CALLI R15 @make_cons        ; Make a CONS with the CONS
 	MOVE R1 R0                  ; Put What is being returned into R1
+	JUMP @atom_done             ; We are done
+
+:atom_string
+	CMPSKIPI.E R2 34            ; If Not Double quote
+	JUMP @atom_integer          ; Move to next type
+
+	;; a->string = a->string + 1
+	ADDUI R1 R1 1               ; Move past quote Char
+	STORE32 R1 R0 4             ; And write to CAR
+
+	;; a->type = STRING
+	LOADUI R1 256               ; Using STRING
+	STORE32 R1 R0 0             ; Set type to Integer
+
+	COPY R1 R0                  ; Put the cell we were given in the right place
 	JUMP @atom_done             ; We are done
 
 :atom_integer
@@ -496,6 +523,9 @@
 	CMPSKIPI.G R0 32            ; If SPACE or below
 	JUMP @Readline_1
 
+	CMPSKIPI.NE R0 34           ; Look for double quote
+	JUMP @Readline_string       ; Keep looping until then
+
 	CMPSKIPI.NE R0 59           ; If LINE Comment (;)
 	JUMP @Readline_0            ; Drop until the end of Line
 
@@ -519,6 +549,25 @@
 	JUMP @Readline_loop         ; Resume
 
 	JUMP @Readline_0            ; Otherwise Keep Looping
+
+	;; Deal with strings
+:Readline_string
+	STOREX8 R0 R2 R3            ; Append to String
+	ADDUI R3 R3 1               ; Increment Size
+	FGETC                       ; Get a Byte
+
+	CMPSKIPI.NE R0 13           ; Deal with CR
+	LOADUI R0 10                ; Convert to LF
+
+	CMPSKIPI.NE R13 0           ; Don't display unless TTY
+	FPUTC                       ; Display the Char we just pressed
+
+	CMPSKIPI.E R0 34            ; Look for double quote
+	JUMP @Readline_string       ; Keep looping until then
+
+	STOREX8 R0 R2 R3            ; Append to String
+	ADDUI R3 R3 1               ; Increment Size
+	JUMP @Readline_loop         ; Resume
 
 	;; Deal with Whitespace and Control Chars
 :Readline_1
@@ -672,6 +721,9 @@
 	CMPSKIPI.NE R2 128          ; If ASCII
 	JUMP @writeobj_ASCII        ; Print the Char
 
+	CMPSKIPI.NE R2 256          ; If STRING
+	JUMP @writeobj_STRING       ; Print the String
+
 	;; What the hell is that???
 	LOADUI R0 $writeobj_Error
 	FALSE R1
@@ -737,6 +789,11 @@
 
 :writeobj_PROC
 	LOADUI R0 $PROC_String      ; Using the desired string
+	CALLI R15 @Print_String     ; Write it to output
+	JUMP @writeobj_done         ; Be Done
+
+:writeobj_STRING
+	LOAD32 R0 R3 4              ; Get HEAD->CAR
 	CALLI R15 @Print_String     ; Write it to output
 	JUMP @writeobj_done         ; Be Done
 
@@ -1152,8 +1209,12 @@
 
 :eval_ascii
 	CMPSKIPI.E R4 128           ; If EXP->TYPE is NOT ASCII
-	JUMP @eval_error            ; Move onto next Case
+	JUMP @eval_string           ; Move onto next Case
+	JUMP @eval_done
 
+:eval_string
+	CMPSKIPI.E R4 256           ; If EXP->TYPE is NOT ASCII
+	JUMP @eval_error            ; Move onto next Case
 	JUMP @eval_done
 
 :eval_error
