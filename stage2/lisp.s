@@ -2140,6 +2140,50 @@
 	RET R15
 
 
+;; prim_integer_to_char
+;; Recieves a list in R0
+;; Converts all integers to ASCII
+:prim_integer_to_char_String
+	"integer->char"
+:prim_integer_to_char
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADUI R2 128               ; Using Type CHAR
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R1 4            ; If Type INT
+	STORE32 R2 R0 0             ; Update ARGS->CAR->TYPE
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; prim_char_to_integer
+;; Recieves a list in R0
+;; Converts all integers to ASCII
+:prim_char_to_integer_String
+	"char->integer"
+:prim_char_to_integer
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADUI R2 4                 ; Using Type INT
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R1 128          ; If Type CHAR
+	STORE32 R2 R0 0             ; Update ARGS->CAR->TYPE
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; prim_halt
 ;; Simply HALTS
 :prim_halt_String
@@ -2538,6 +2582,20 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_ascii_String ; Using PRIM_ASCII_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_integer_to_char ; Using PRIM_INTEGER_TO_CHAR
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_integer_to_char_String ; Using PRIM_INTEGER_TO_CHAR_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_char_to_integer ; Using PRIM_CHAR_TO_INTEGER
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_char_to_integer_String ; Using PRIM_CHAR_TO_INTEGER_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
