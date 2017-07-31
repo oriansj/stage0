@@ -152,7 +152,7 @@ Then we use our M0 Line macro assembler to convert our assembly into hex2 format
 Then we need to assemble that hex into our desired program:
 ./bin/vm --rom roms/stage1_assembler-2 --tape_01 temp2 --tape_02 roms/lisp --memory 48K
 
-roms/lisp should have the sha256sum of ff5955ddee3e35bb1d7c11e0d3030f4ff4dcdcde5e87c3062b775c2dd5e9bb6b
+roms/lisp should have the sha256sum of e0a4f0fb97d0c40ffe3e69dbf226d6e12be61068faa4543c4b92aec35c2b0c60
 
 Our lisp will first attempt to evaluate any code in tape_01 and then evaluate any code that the user types in.
 It is recommended to run with no less than 4MB of Memory

@@ -40,6 +40,7 @@ Added integer->char and char->integer to stage2 lisp
 Added string->list primitive to stage2 lisp
 Added char? primitive to stage2 lisp
 Added string? primitive to stage2 lisp
+Added make_string internal function to stage2 lisp
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa
@@ -48,6 +49,7 @@ Changed behavior of stage2 FORTH's CREATE to better match the way it usually wor
 Stage0 vm now will show an error message if the size of the rom exceeds the available memory
 Modified stage3 forth library to dump upper case hex values
 Modified stage3 forth JUMP-TO, to support 32bit absolute addresses
+Converted from ascii to CHAR in stage2 lisp
 
 ** Fixed
 Updated checksums to reflect changes in stage2 FORTH

@@ -21,7 +21,7 @@
 	;;
 	;; Type maps to the following values
 	;; FREE = 1, MARKED = (1 << 1),INT = (1 << 2),SYM = (1 << 3),
-	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),ASCII = (1 << 7), STRING = (1 << 8)
+	;; CONS = (1 << 4),PROC = (1 << 5),PRIMOP = (1 << 6),CHAR = (1 << 7), STRING = (1 << 8)
 
 	;; CONS space: End of program -> 1MB (0x100000)
 	;; HEAP space: 1MB -> 1.5MB (0x180000)
@@ -718,8 +718,8 @@
 	CMPSKIPI.NE R2 64           ; If PRIMOP
 	JUMP @writeobj_PRIMOP       ; Print Label
 
-	CMPSKIPI.NE R2 128          ; If ASCII
-	JUMP @writeobj_ASCII        ; Print the Char
+	CMPSKIPI.NE R2 128          ; If CHAR
+	JUMP @writeobj_CHAR         ; Print the Char
 
 	CMPSKIPI.NE R2 256          ; If STRING
 	JUMP @writeobj_STRING       ; Print the String
@@ -797,7 +797,7 @@
 	CALLI R15 @Print_String     ; Write it to output
 	JUMP @writeobj_done         ; Be Done
 
-:writeobj_ASCII
+:writeobj_CHAR
 	LOADU8 R0 R3 7              ; Using bottom 8 bits of HEAD->CAR
 	FPUTC                       ; We write our desired output
 
@@ -1205,15 +1205,15 @@
 
 :eval_primop
 	CMPSKIPI.E R4 64            ; If EXP->TYPE is NOT PRIMOP
-	JUMP @eval_ascii            ; Move onto next Case
+	JUMP @eval_char             ; Move onto next Case
 
-:eval_ascii
-	CMPSKIPI.E R4 128           ; If EXP->TYPE is NOT ASCII
+:eval_char
+	CMPSKIPI.E R4 128           ; If EXP->TYPE is NOT CHAR
 	JUMP @eval_string           ; Move onto next Case
 	JUMP @eval_done
 
 :eval_string
-	CMPSKIPI.E R4 256           ; If EXP->TYPE is NOT ASCII
+	CMPSKIPI.E R4 256           ; If EXP->TYPE is NOT STRING
 	JUMP @eval_error            ; Move onto next Case
 	JUMP @eval_done
 
@@ -2008,8 +2008,8 @@
 	CMPSKIPI.NE R2 16           ; If CONS
 	CALLI R15 @prim_output      ; Recurse
 
-	CMPSKIPI.NE R2 128          ; If ASCII
-	CALLI R15 @prim_output_ASCII ; Just print the last Char
+	CMPSKIPI.NE R2 128          ; If CHAR
+	CALLI R15 @prim_output_CHAR ; Just print the last Char
 
 	LOAD32 R0 R3 8              ; Get ARGS->CDR
 	JUMP @prim_output_0         ; Loop until we hit NIL
@@ -2049,10 +2049,10 @@
 	RET R15
 
 
-;; prim_output_ASCII
-;; Recieves an ASCII CELL in R0 and desired Output in R1
+;; prim_output_CHAR
+;; Recieves an CHAR CELL in R0 and desired Output in R1
 ;; Outputs Last CHAR and returns
-:prim_output_ASCII
+:prim_output_CHAR
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	LOADU8 R0 R0 7              ; Get ARG->CAR [bottom 8 bits]
@@ -2152,12 +2152,12 @@
 	"Remaining Cells: "
 
 
-;; prim_ascii
+;; prim_char
 ;; Recieves a list in R0
-;; Converts all integers to ASCII
-:prim_ascii_String
+;; Converts all integers to CHARs
+:prim_char_String
 	"ascii!"
-:prim_ascii
+:prim_char
 	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
 	RET R15                     ; Just get the Hell out
 	PUSHR R0 R15                ; Protect R0
@@ -2166,21 +2166,21 @@
 	PUSHR R3 R15                ; Protect R3
 	LOADUI R3 $NIL              ; Using NIL
 
-:prim_ascii_0
-	CMPJUMPI.E R0 R3 @prim_ascii_done
+:prim_char_0
+	CMPJUMPI.E R0 R3 @prim_char_done
 	LOAD32 R1 R0 4              ; Get ARGS->CAR
 	LOAD32 R2 R1 0              ; Get ARGS->CAR->TYPE
 	LOAD32 R0 R0 8              ; Set ARGS to ARGS->CDR
 	CMPSKIPI.NE R2 4            ; If Type is INT
-	JUMP @prim_ascii_1          ; Convert to ASCII
-	JUMP @prim_ascii_0          ; Go to next list item
+	JUMP @prim_char_1           ; Convert to CHAR
+	JUMP @prim_char_0           ; Go to next list item
 
-:prim_ascii_1
-	LOADUI R2 128               ; Using Type ASCII
+:prim_char_1
+	LOADUI R2 128               ; Using Type CHAR
 	STORE32 R2 R1 0             ; Update ARGS->CAR->TYPE
-	JUMP @prim_ascii_0          ; Keep looping
+	JUMP @prim_char_0           ; Keep looping
 
-:prim_ascii_done
+:prim_char_done
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
@@ -2190,7 +2190,7 @@
 
 ;; prim_integer_to_char
 ;; Recieves a list in R0
-;; Converts all integers to ASCII
+;; Converts INT to CHAR
 :prim_integer_to_char_String
 	"integer->char"
 :prim_integer_to_char
@@ -2212,7 +2212,7 @@
 
 ;; prim_char_to_integer
 ;; Recieves a list in R0
-;; Converts all integers to ASCII
+;; Converts CHAR to INT
 :prim_char_to_integer_String
 	"char->integer"
 :prim_char_to_integer
@@ -2697,10 +2697,10 @@
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
-	LOADUI R0 $prim_ascii       ; Using PRIM_ASCII
+	LOADUI R0 $prim_char        ; Using PRIM_CHAR
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
-	LOADUI R0 $prim_ascii_String ; Using PRIM_ASCII_STRING
+	LOADUI R0 $prim_char_String ; Using PRIM_char_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
@@ -3208,6 +3208,20 @@
 	CALLI R15 @pop_cons         ; Get a CELL
 	STORE32 R1 R0 4             ; Set C->CAR
 	LOADUI R1 128               ; Using CHAR
+	STORE32 R1 R0 0             ; Set C->TYPE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; make_string
+;; Recieves a string pointer in R0
+;; Returns a CELL in R0
+:make_string
+	PUSHR R1 R15                ; Protect R1
+	MOVE R1 R0                  ; Protect Integer
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R1 R0 4             ; Set C->CAR
+	LOADUI R1 256               ; Using STRING
 	STORE32 R1 R0 0             ; Set C->TYPE
 	POPR R1 R15                 ; Restore R1
 	RET R15
