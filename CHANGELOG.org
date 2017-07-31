@@ -37,6 +37,7 @@ Improved ISA Notes about M0 and hex2 to help bootstrappers
 Added rain1's new user forth starting script, which is not actually required for bootstrapping but rather convenience
 Added Most primitive raw string support to stage2 lisp
 Added integer->char and char->integer to stage2 lisp
+Added string->list primitive to stage2 lisp
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa

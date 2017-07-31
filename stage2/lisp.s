@@ -2184,6 +2184,63 @@
 	RET R15
 
 
+;; string_to_list
+;; Recieves a pointer to string in R0
+;; Returns a list of chars
+:string_to_list
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	MOVE R1 R0                  ; Put string safely out of the way
+	LOAD8 R0 R1 0               ; Get string[0]
+	JUMP.Z R0 @string_to_list_null
+	CALLI R15 @make_char        ; Make seperate CHAR
+	SWAP R0 R1                  ; Protect RESULT
+	ADDUI R0 R0 1               ; Increment to next iteration
+	CALLI R15 @string_to_list   ; Recurse down STRING
+	SWAP R0 R1                  ; Put RESULT and TAIL in right spot
+	CALLI R15 @make_cons        ; Combine into a Cons
+	JUMP @string_to_list_done   ; And simply return result
+
+:string_to_list_null
+	LOADUI R0 $NIL              ; Nil terminate list
+
+:string_to_list_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; prim_string_to_list
+;; Recieves a pointer to a CONS whose CAR should be a STRING
+;; Returns a list of CHARs in R0
+:prim_string_to_list_String
+	"string->list"
+:prim_string_to_list
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R1 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.E R1 256           ; If Not Type STRING
+	JUMP @prim_string_to_list_fail
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR->STRING
+	CALLI R15 @string_to_list   ; Convert to List
+	JUMP @prim_string_to_list_done
+
+:prim_string_to_list_fail
+	LOADUI R0 $NIL              ; Nil terminate list
+
+:prim_string_to_list_done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; prim_halt
 ;; Simply HALTS
 :prim_halt_String
@@ -2596,6 +2653,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_char_to_integer_String ; Using PRIM_CHAR_TO_INTEGER_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_string_to_list ; Using PRIM_STRING_TO_LIST
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_string_to_list_String ; Using PRIM_STRING_TO_LIST_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
@@ -3068,6 +3132,20 @@
 	CALLI R15 @pop_cons         ; Get a CELL
 	STORE32 R1 R0 4             ; Set C->CAR
 	LOADUI R1 4                 ; Using INT
+	STORE32 R1 R0 0             ; Set C->TYPE
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; make_char
+;; Recieves a CHAR in R0
+;; Returns a CELL in R0
+:make_char
+	PUSHR R1 R15                ; Protect R1
+	MOVE R1 R0                  ; Protect Integer
+	CALLI R15 @pop_cons         ; Get a CELL
+	STORE32 R1 R0 4             ; Set C->CAR
+	LOADUI R1 128               ; Using CHAR
 	STORE32 R1 R0 0             ; Set C->TYPE
 	POPR R1 R15                 ; Restore R1
 	RET R15
