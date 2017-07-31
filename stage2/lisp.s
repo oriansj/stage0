@@ -1958,6 +1958,30 @@
 	RET R15
 
 
+;; prim_stringp
+;; Recieves argslist in R0
+;; Returns #t if CHAR else NIL
+:prim_stringp_String
+	"string?"
+:prim_stringp
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	LOAD32 R0 R0 0              ; Get ARGS->CAR->TYPE
+	CMPSKIPI.NE R0 256          ; If CHAR
+	JUMP @prim_stringp_0        ; Return TEE
+
+	LOADUI R0 $NIL              ; Otherwise return NIL
+	JUMP @prim_stringp_done
+
+:prim_stringp_0
+	LOADUI R0 $TEE              ; Make TEE
+
+:prim_stringp_done
+	RET R15
+
+
 ;; prim_output
 ;; Recieves argslist in R0
 ;; Outputs to whatever is specified in R12 and returns TEE
@@ -2642,6 +2666,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_charp_String ; Using PRIM_CHARP_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_stringp     ; Using PRIM_STRINGP
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_stringp_String ; Using PRIM_STRINGP_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
