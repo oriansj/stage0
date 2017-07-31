@@ -60,6 +60,7 @@ Fixed bug in stage2 FORTH PRINT function
 
 ** Removed
 the HERE and DP! are gone from ' now in stage3 FORTH
+Removed ascii! from stage2 lisp because it can easily be replaced by a simple function
 
 * 0.0.8 - 2017-06-17
 ** Added
