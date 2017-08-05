@@ -58,6 +58,7 @@ Updated checksums to reflect changes in stage2 Lisp
 Added missing library reference form stage2 lisp High level prototype
 Fixed bug in stage2 FORTH PRINT function
 Updated changed stage2 lisp Checksums to match
+Made stage3 Forth better comply with new stage0 encoding recommendation.
 
 ** Removed
 the HERE and DP! are gone from ' now in stage3 FORTH

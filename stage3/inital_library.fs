@@ -201,8 +201,8 @@ CREATE BASE 10 ,
 \ We may have to compile more than just a jump in the future in order
 \ for DOES> to work properly - we'd need to load the address into a register,
 \ having the actual address nearby, and then use that coroutine jump thing.
-\ CMPSKIP.E R0 R0, the address, LOADRU32 R0 -4, JSR_COROUTINE R0
-: JUMP-TO, 0x09030200 , , 0x2E60FFFC , 0x0D010000 , ;
+\ JUMP over the Address, the address, LOADRU32 R0 -4, JSR_COROUTINE R0
+: JUMP-TO, 0x3C000008 , , 0x2E60FFFC , 0x0D010000 , ;
 
 \ Sets the action of the latest word
 : DOES>   ['] LATEST , ['] DOER! , 'DODOES JUMP-TO, ; IMMEDIATE
