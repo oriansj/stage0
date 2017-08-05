@@ -778,3 +778,114 @@ There is a direct and consistent relationship between the nybbles and the regist
 |   D | REG13 |
 |   E | REG14 |
 |   F | REG15 |
+
+** Instruction Formats
+All instructions are encoded left to right with the first byte being the lowest address.
+This ordering was selected simply because makes the starting IP address 0 and is the obvious ordering for those with left to right written langauges.
+
+*** Class A 4OP
+|--------------+-----------+------------+------------+------------+------------|
+| opcode 8bits | XOP 8bits | Reg0 4bits | Reg1 4bits | Reg2 4bits | Reg3 4bits |
+|--------------+-----------+------------+------------+------------+------------|
+
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+|     01 | Integer group  |               4 |
+
+*** Class B 3OP
+|--------------+------------+------------+------------+------------|
+| opcode 8bits | XOP 12bits | Reg0 4bits | Reg1 4bits | Reg2 4bits |
+|--------------+------------+------------+------------+------------|
+
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+|     05 | Integer group  |               4 |
+
+*** Class C 2OP
+|--------------+------------+------------+------------|
+| opcode 8bits | XOP 16bits | Reg0 4bits | Reg1 4bits |
+|--------------+------------+------------+------------|
+
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+|     09 | Integer group  |               4 |
+
+*** Class D 1OP
+|--------------+------------+------------|
+| opcode 8bits | XOP 20bits | Reg0 4bits |
+|--------------+------------+------------|
+
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+|     0D | Integer group  |               4 |
+
+*** Class E 2OPI
+This is a very rare and special group as each entry consumes a piece of the precious 256 entry opcode space.
+|--------------+------------+------------+------------------|
+| opcode 8bits | Reg0 4bits | Reg1 4bits | Immediate 16bits |
+|--------------+------------+------------+------------------|
+
+| Opcode  | Function group | Length in Bytes |
+|---------+----------------+-----------------|
+| 0E - 19 | Integer group  |               4 |
+| 1A - 1E | Reserved       |       Undefined |
+| 1F - 23 | Integer group  |               4 |
+| 24 - 2B | Reserved       |       Undefined |
+| B0 - B5 | Integer group  |               4 |
+| B6 - BF | Reserved       |       Undefined |
+| C0 - C5 | Integer group  |               4 |
+| C6 - CF | Reserved       |       Undefined |
+| D0 - D1 | Integer group  |               4 |
+| D2 - D3 | Reserved       |       Undefined |
+| D4 - D5 | Integer group  |               4 |
+
+*** Class F 1OPI
+|--------------+-----------+------------+------------------|
+| opcode 8bits | XOP 4bits | Reg0 4bits | Immediate 16bits |
+|--------------+-----------+------------+------------------|
+
+| Opcode  | Function group | Length in Bytes |
+|---------+----------------+-----------------|
+| 2C - 2F | Integer group  |               4 |
+| A0 - A1 | Integer group  |               4 |
+
+*** Class G 0OPI
+|--------------+-----------+------------------|
+| opcode 8bits | XOP 8bits | Immediate 16bits |
+|--------------+-----------+------------------|
+
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+| 3C     | Integer group  |               4 |
+
+*** Class H Halcode
+|--------------+----------------|
+| opcode 8bits | HALCODE 24bits |
+|--------------+----------------|
+
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+|     42 | HALCODE        |               4 |
+
+*** Class I 0OP
+|--------------+------------|
+| opcode 8bits | XOP 24bits |
+|--------------+------------|
+
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+| 00     | NOP            |               4 |
+| FF     | HALT           |               4 |
+
+** Exotic behavior
+*** compare and skip instructions
+All compare and skip instructions lookup the first byte following themselves to determine the number of bytes to skip to allow the correct behavior to occur with shorter and longer instruction formats.
+To ensure consistent behavior, all undefined opcodes are to be treated like illegal instructions and for hardware/operating system combinations that lack an illegal instruction handler, the result is that of HALT.
+Assemblers should throw an exception in the event that a register is compared to itself as jumps and nops are the preferred alternative in such cases and their encoding could be repurposed in the event of opcode starvation.
+
+*** compare and jump instructions
+Assemblers should throw an exception in the event that a register is compared to itself as jumps and nops are the preferred alternative in such cases and their encoding could be repurposed in the event of opcode starvation.
+
+*** HALCODE
+On systems that support an IOMMU and Kernel mode, all HALCODES can be modified or replaced by the kernel. Those listed in this document are those that must be supported on bootup.
+Systems supporting more HALCODES than those listed in this document must implement HALCODE 0x42FFFFFF which must provide a DEVICE LIST and HALCODE 0x42000000 which must provide a HALCODE LIST
