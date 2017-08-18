@@ -2253,6 +2253,77 @@
 	RET R15
 
 
+;; list_to_string
+;; Recieves an index in R0, a String pointer in R1
+;; And a list of arguments in R2
+;; Alters only R0
+:list_to_string
+	CMPSKIPI.NE R2 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+
+:list_to_string_0
+	CMPSKIPI.NE R2 $NIL         ; If NIL Expression
+	JUMP @list_to_string_done   ; We are done
+	LOAD32 R4 R2 4              ; Get ARGS->CAR
+	LOAD32 R3 R4 0              ; Get ARGS->CAR->TYPE
+
+	CMPSKIPI.NE R3 128          ; If Type CHAR
+	CALLI R15 @list_to_string_CHAR ; Process
+
+	;; Guess CONS
+	SWAP R2 R4                  ; Put i->CAR in i's spot
+	CMPSKIPI.NE R3 16           ; If Type CONS
+	CALLI R15 @list_to_string   ; Recurse
+	SWAP R2 R4                  ; Undo the Guess
+
+	;; Everything else just iterate
+	LOAD32 R2 R2 8              ; i = i->CDR
+	JUMP @list_to_string_0      ; Lets go again
+
+:list_to_string_CHAR
+	LOAD32 R3 R4 4              ; Get ARGS->CAR->VALUE
+	STOREX8 R3 R0 R1            ; STRING[INDEX] = i->CAR->VALUE
+	ADDUI R0 R0 1               ; INDEX = INDEX + 1
+	RET R15                     ; Get back in there
+
+:list_to_string_done
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; prim_list_to_string
+;; Recieves a list in R0
+;; Returns a String CELL in R0
+:prim_list_to_string_String
+	"list->string"
+:prim_list_to_string
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+
+	MOVE R2 R0                  ; Put Args in correct location and Zero R0
+	CALLI R15 @malloc           ; Get where space is free
+	MOVE R1 R0                  ; Put String pointer in correct location and Zero R0
+	CALLI R15 @list_to_string   ; Call backing function
+	ADDUI R0 R0 1               ; NULL Terminate string
+	CALLI R15 @malloc           ; Correct malloc
+
+	CALLI R15 @make_string      ; Use pointer to make our string CELL
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; prim_halt
 ;; Simply HALTS
 :prim_halt_String
@@ -2679,6 +2750,13 @@
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
 	LOADUI R0 $prim_string_to_list_String ; Using PRIM_STRING_TO_LIST_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
+	LOADUI R0 $prim_list_to_string ; Using PRIM_LIST_TO_STRING
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_list_to_string_String ; Using PRIM_LIST_TO_STRING_STRING
 	CALLI R15 @make_sym         ; MAKE_SYM
 	CALLI R15 @spinup           ; SPINUP
 
