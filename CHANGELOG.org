@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Chnaged
+
+** Fixed
+
+** Removed
+
+* 0.0.9 - 2017-08-17
+** Added
 [CHAR] was incorporated into stage3 FORTH to reduce ascii lookup
 UNTIL was incorporated into stage3 FORTH
 'DODOES was incorporated into stage2 FORTH
