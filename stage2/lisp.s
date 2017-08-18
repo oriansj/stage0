@@ -475,7 +475,7 @@
 	RET R15
 
 ;; Our static value for malloc pointer
-;; Starting at 64KB
+;; Starting at 1MB
 :malloc_pointer
 	'00100000'
 
