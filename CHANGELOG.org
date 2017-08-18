@@ -43,6 +43,8 @@ Added string? primitive to stage2 lisp
 Added make_string internal function to stage2 lisp
 Added list->string primitive to stage2 lisp
 Added number? and symbol? to stage2 lisp
+Added apply to stage2 lisp
+Imported ascension.scm library
 
 ** Changed
 Minor refactor of stage3 FORTH by reepa

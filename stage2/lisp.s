@@ -1447,9 +1447,29 @@
 	RET R15
 
 
-	;; nullp
-	;; Recieves a CELL in R0
-	;; Returns NIL if not NIL or TEE if NIL
+;; prim_apply
+;; Recieves arglist in R0
+;; Returns result of applying ARGS->CAR to ARGS->CDR->CAR
+:prim_apply_String
+	"apply"
+:prim_apply
+	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
+	RET R15                     ; Just get the Hell out
+	PUSHR R1 R15                ; Protect R1
+
+	LOAD32 R1 R0 8              ; Get ARGS->CDR
+	LOAD32 R1 R1 4              ; Get ARGS->CDR->CAR
+	LOAD32 R0 R0 4              ; Get ARGS->CAR
+	CALLI R15 @apply            ; Use backing function
+
+	;; Cleanup
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; nullp
+;; Recieves a CELL in R0
+;; Returns NIL if not NIL or TEE if NIL
 :nullp_String
 	"null?"
 :nullp
@@ -2640,6 +2660,13 @@
 	CALLI R15 @spinup           ; SPINUP
 
 	;; Add Primitive Specials
+	LOADUI R0 $prim_apply       ; Using PRIM_APPLY
+	CALLI R15 @make_prim        ; MAKE_PRIM
+	MOVE R1 R0                  ; Put Primitive in correct location
+	LOADUI R0 $prim_apply_String ; Using PRIM_APPLY_STRING
+	CALLI R15 @make_sym         ; MAKE_SYM
+	CALLI R15 @spinup           ; SPINUP
+
 	LOADUI R0 $nullp            ; Using NULLP
 	CALLI R15 @make_prim        ; MAKE_PRIM
 	MOVE R1 R0                  ; Put Primitive in correct location
