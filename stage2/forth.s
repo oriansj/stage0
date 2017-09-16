@@ -812,7 +812,7 @@
 	NOP                         ; Flags
 	&COPYR_Code                 ; Where assembly is stored
 :COPYR_Code
-	LOAD R0 R15 4               ; Get top of return stack
+	LOAD R0 R15 -4              ; Get top of return stack
 	PUSHR R0 R14                ; Put it on data stack
 	JSR_COROUTINE R11           ; NEXT
 
