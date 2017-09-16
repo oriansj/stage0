@@ -21,6 +21,7 @@
 
 ** Fixed
 Fixed behavior of R@ thanks to reepca
+Updated changed checksums for stage2 FORTH
 
 ** Removed
 
