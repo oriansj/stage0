@@ -76,12 +76,58 @@ unsigned int step_lilith()
 
 unsigned int get_register(unsigned int reg)
 {
-	return Globalvm->reg[reg];
+	unsigned int i;
+	switch(reg)
+	{
+		case 0 ... 15:
+		{
+			i = Globalvm->reg[reg];
+			break;
+		}
+		case 16: /* Get PC */
+		{
+			i = Globalvm->ip;
+			break;
+		}
+		case 17: /* Instruction count */
+		{
+			i = performance_counter;
+			break;
+		}
+		default:
+		{
+			fprintf(stderr, "What have you done????\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+	return i;
 }
 
 void set_register(unsigned int reg, unsigned int value)
 {
-	Globalvm->reg[reg] = value;
+	switch(reg)
+	{
+		case 0 ... 15:
+		{
+			Globalvm->reg[reg] = value;
+			break;
+		}
+		case 16: /* Set PC */
+		{
+			Globalvm->ip = value;
+			break;
+		}
+		case 17: /* No one mess with the Instruction count */
+		{
+			fprintf(stderr, "Don't be a moron!!!!\n");
+			break;
+		}
+		default:
+		{
+			fprintf(stderr, "What are you trying to do????\n");
+			exit(EXIT_FAILURE);
+		}
+	}
 }
 
 void set_memory(unsigned int address, unsigned char value)

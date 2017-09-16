@@ -27,6 +27,8 @@ vm.get_memory.restype = ctypes.c_char_p
 vm.step_lilith.restype = ctypes.c_uint
 vm.set_register.argtype = (ctypes.c_uint, ctypes.c_uint)
 vm.set_memory.argtype = (ctypes.c_uint, ctypes.c_ubyte)
+vm.get_register.argtype = ctypes.c_uint
+vm.get_register.restype = ctypes.c_uint
 
 def Reset_lilith():
 	global Memory_Size
@@ -68,7 +70,7 @@ def Set_Register(register, value):
 	return
 
 def returnPage():
-	return get_header() + (vm.get_memory(Current_Page)).decode('utf-8') + get_spacer1() + get_registers(0) + get_registers(8) + get_spacer2() + get_Window_shortcut() + get_disassembled() + get_footer()
+	return get_header() + (vm.get_memory(Current_Page)).decode('utf-8') + get_spacer1() + get_registers(0) + get_registers(9) + get_spacer2() + get_Window_shortcut() + get_disassembled() + get_footer()
 
 hexlookup = { 0 : '0', 1 : '1', 2 : '2', 3 : '3', 4 : '4', 5 : '5', 6 : '6', 7 : '7', 8 : '8', 9 : '9', 10 : 'A', 11 : 'B', 12 : 'C', 13 : 'D', 14 : 'E', 15 : 'F' }
 
@@ -147,24 +149,24 @@ def get_spacer1():
 """
 
 def get_registers(index):
-	vm.get_register.argtype = ctypes.c_uint
-	vm.get_register.restype = ctypes.c_uint
-
-# R0 = vm.get_register(3)
-# print("Register R0 value:")
-# print(R0)
-
 	temp = """	<table class="Registers">
 		<thead>
 			<tr>
 				<th>Register</th>
 				<th>Value</th>
+				<th>Name</th>
 			</tr>
 		</thead>
 		<tbody>"""
 
-	for i in range(0,8):
-		temp = temp + """<tr><td>R""" + str(index + i) + "</td><td>" + formatRegister(vm.get_register(index + i)) + "</td></tr>\n"
+	if (0 == index):
+		for i in range(0,9):
+			temp = temp + """<tr><td>R""" + str(index + i) + "</td><td>" + formatRegister(vm.get_register(index + i)) + "</td>" + "<td>REG" + str(index + i) +"</tr>\n"
+	else:
+		for i in range(0,7):
+			temp = temp + """<tr><td>R""" + str(index + i) + "</td><td>" + formatRegister(vm.get_register(index + i)) + "</td>" + "<td>REG" + str(index + i) +"</tr>\n"
+		temp = temp + """<tr><td>R16</td><td>""" + formatRegister(vm.get_register(16)) + "</td><td> PC </td></tr>\n"
+		temp = temp + """<tr><td>R17</td><td>""" + formatRegister(vm.get_register(17)) + "</td><td>Counter</td></tr>\n"
 
 	return temp + """		</tbody>
 	</table> """
@@ -183,6 +185,7 @@ def get_Window_shortcut():
 """
 
 def get_disassembled():
+	Current_IP = vm.get_register(16)
 	f = open('z_disassembled', "r")
 
 	temp = """	<div style="position:absolute; left:10px; top:280px; overflow-y: scroll; height:200px; width:60%;"> 
