@@ -26,16 +26,16 @@ development: vm libvm.so asm dis ALL-ROMS
 
 # VM Builds
 vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c | bin
-	gcc vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
+	$(CC) vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
 
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
-	gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+	$(CC) -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c | bin
-	gcc vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm-production
+	$(CC) vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm-production
 
 vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c | bin
-	gcc -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
+	$(CC) -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
 
 # Build the roms
 ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp forth
@@ -81,23 +81,23 @@ forth: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/forth.s | roms
 
 # Primitive development tools, not required but it was handy
 asm: High_level_prototypes/asm.c | bin
-	gcc -ggdb High_level_prototypes/asm.c -o bin/asm
+	$(CC) -ggdb High_level_prototypes/asm.c -o bin/asm
 
 dis: High_level_prototypes/disasm.c | bin
-	gcc -ggdb High_level_prototypes/disasm.c -o bin/dis
+	$(CC) -ggdb High_level_prototypes/disasm.c -o bin/dis
 
 hex: Linux\ Bootstrap/hex.c | bin
-	gcc Linux\ Bootstrap/hex.c -o bin/hex
+	$(CC) Linux\ Bootstrap/hex.c -o bin/hex
 
 xeh: Linux\ Bootstrap/xeh.c | bin
-	gcc Linux\ Bootstrap/xeh.c -o bin/xeh
+	$(CC) Linux\ Bootstrap/xeh.c -o bin/xeh
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	gcc -ggdb -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
+	$(CC) -ggdb -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	gcc -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
+	$(CC) -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
 
 # Tests
 Generate-rom-test: ALL-ROMS
@@ -111,25 +111,25 @@ test: ALL-ROMS test/SHA256SUMS
 ALL-PROTOTYPES: prototype_dehex prototype_M0 prototype_more prototype_SET prototype_stage1_assembler-1 prototype_stage1_assembler-2 prototype_lisp
 
 prototype_dehex: dehex.c | prototypes
-	gcc stage1/High_level_prototypes/dehex.c -o prototypes/prototype_dehex
+	$(CC) stage1/High_level_prototypes/dehex.c -o prototypes/prototype_dehex
 
 prototype_M0: M0-macro.c | prototypes
-	gcc stage1/High_level_prototypes/M0-macro.c -o prototypes/prototype_M0
+	$(CC) stage1/High_level_prototypes/M0-macro.c -o prototypes/prototype_M0
 
 prototype_more: more.c tty.c | prototypes
-	gcc stage1/High_level_prototypes/more.c tty.c -o prototypes/prototype_more
+	$(CC) stage1/High_level_prototypes/more.c tty.c -o prototypes/prototype_more
 
 prototype_SET: SET.c tty.c | prototypes
-	gcc stage1/High_level_prototypes/SET.c tty.c -o prototypes/prototype_SET
+	$(CC) stage1/High_level_prototypes/SET.c tty.c -o prototypes/prototype_SET
 
 prototype_stage1_assembler-1: stage1_assembler-1.c | prototypes
-	gcc stage1/High_level_prototypes/stage1_assembler-1.c -o prototypes/prototype_stage1_assembler-1
+	$(CC) stage1/High_level_prototypes/stage1_assembler-1.c -o prototypes/prototype_stage1_assembler-1
 
 prototype_stage1_assembler-2: stage1_assembler-2.c | prototypes
-	gcc stage1/High_level_prototypes/stage1_assembler-2.c -o prototypes/prototype_stage1_assembler-2
+	$(CC) stage1/High_level_prototypes/stage1_assembler-2.c -o prototypes/prototype_stage1_assembler-2
 
 prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c | prototypes
-	gcc -O2 stage2/High_level_prototypes/lisp.h \
+	$(CC) -O2 stage2/High_level_prototypes/lisp.h \
 	        stage2/High_level_prototypes/lisp.c \
 	        stage2/High_level_prototypes/lisp_cell.c \
 	        stage2/High_level_prototypes/lisp_eval.c \
