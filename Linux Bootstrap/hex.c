@@ -35,21 +35,25 @@ void purge_line_comments()
 
 int hex(char c)
 {
-	switch(c)
+	if (c >= '0' && c <= '9')
 	{
-		case '0' ... '9': return (c - 48);
-		case 'a' ... 'f': return (c - 87);
-		case 'A' ... 'F': return (c - 55);
-		default: break;
+		return (c - 48);
 	}
-
-	printf("You managed to call a hex function without a hex value!!!\n");
-	exit(EXIT_FAILURE);
+	else if (c >= 'a' && c <= 'z')
+	{
+		return (c - 87);
+	}
+	else if (c >= 'A' && c <= 'Z')
+	{
+		return (c - 55);
+	}
+        printf("You managed to call a hex function without a hex value!!!\n");
+        exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
 {
-	char c;
+	int c;
 	int sum;
 	bool toggle;
 	toggle = false;
@@ -57,27 +61,23 @@ int main(int argc, char *argv[])
 	do
 	{
 		c = getchar();
-		switch(c)
+                if (c == '#')
+                	purge_line_comments();
+		else if ((c >= '0' && c <= '9')
+                         || (c >= 'a' && c <= 'z')
+                         || (c >= 'A' && c <= 'Z'))
 		{
-			case '0' ... '9':
-			case 'a' ... 'f':
-			case 'A' ... 'F':
+			if(!toggle)
 			{
-				if(!toggle)
-				{
-					sum = hex(c);
-					toggle = true;
-				}
-				else
-				{
-					sum = (sum * 16) + hex(c);
-					toggle = false;
-					putc(sum, stdout);
-				}
-				break;
+				sum = hex(c);
+				toggle = true;
 			}
-			case '#': purge_line_comments();
-			default: break;
+			else
+			{
+				sum = (sum * 16) + hex(c);
+				toggle = false;
+				fputc(sum, stdout);
+			}
 		}
 	}while(c != EOF);
 
