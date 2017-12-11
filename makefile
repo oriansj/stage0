@@ -141,14 +141,10 @@ prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c |
 # Clean up after ourselves
 .PHONY: clean
 clean:
-	rm -f libvm.so libvm-production.so bin/vm bin/vm-production
-
-.PHONY: clean-hard
-clean-hard: clean
 	rm -rf bin/ roms/ prototypes/
 
 .PHONY: clean-hardest
-clean-hardest:
+clean-hard:
 	git reset --hard
 	git clean -fd
 	rm -rf bin/ roms/ prototypes/

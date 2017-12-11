@@ -24,6 +24,7 @@ Expanded stage0 web IDE to include the PC and instruction counter
 Fixed behavior of R@ thanks to reepca
 Updated changed checksums for stage2 FORTH
 Corrected behavior when using the web IDE and attempting to set registers that don't exist
+Fixed regression in hex.c caused by refactoring
 
 ** Removed
 

@@ -79,7 +79,6 @@ int main(int argc, char *argv[])
 				toggle = false;
 				putc(sum, stdout);
 			}
-			break;
 		}
 	}while(c != EOF);
 
