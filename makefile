@@ -29,7 +29,7 @@ vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c | bin
 	gcc vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
 
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
-	gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+	gcc -ggdb -DVM32=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c | bin
 	gcc vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm-production
@@ -94,10 +94,10 @@ xeh: Linux\ Bootstrap/xeh.c | bin
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	gcc -ggdb -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
+	gcc -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	gcc -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
+	gcc -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
 
 # Tests
 Generate-rom-test: ALL-ROMS
@@ -141,7 +141,7 @@ prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c |
 # Clean up after ourselves
 .PHONY: clean
 clean:
-	rm -rf bin/ roms/ prototypes/
+	rm -rf bin/ roms/ prototypes/ *.so
 
 .PHONY: clean-hardest
 clean-hard:

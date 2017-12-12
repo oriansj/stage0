@@ -21,13 +21,40 @@
 #include <stdbool.h>
 #include <string.h>
 
+#ifdef VM256
+typedef __int512_t signed_wide_register;
+typedef __uint512_t unsigned_wide_register;
+typedef __int256_t signed_vm_register;
+typedef __uint256_t unsigned_vm_register;
+#elif VM128
+typedef __int256_t signed_wide_register;
+typedef __uint256_t unsigned_wide_register;
+typedef __int128_t signed_vm_register;
+typedef __uint128_t unsigned_vm_register;
+#elif VM64
+typedef __int128_t signed_wide_register;
+typedef __uint128_t unsigned_wide_register;
+typedef int64_t signed_vm_register;
+typedef uint64_t unsigned_vm_register;
+#elif VM32
+typedef int64_t signed_wide_register;
+typedef uint64_t unsigned_wide_register;
+typedef int32_t signed_vm_register;
+typedef uint32_t unsigned_vm_register;
+#else
+typedef int32_t signed_wide_register;
+typedef uint32_t unsigned_wide_register;
+typedef int16_t signed_vm_register;
+typedef uint16_t unsigned_vm_register;
+#endif
+
 /* Virtual machine state */
 struct lilith
 {
 	uint8_t *memory;
 	size_t amount_of_Ram;
-	uint32_t reg[16];
-	uint32_t ip;
+	unsigned_vm_register reg[16];
+	unsigned_vm_register ip;
 	bool halted;
 	bool exception;
 };
@@ -35,7 +62,7 @@ struct lilith
 /* Unpacked instruction */
 struct Instruction
 {
-	uint32_t ip;
+	unsigned_vm_register ip;
 	uint8_t raw0, raw1, raw2, raw3;
 	char opcode[3];
 	uint32_t raw_XOP;
@@ -258,7 +285,7 @@ struct lilith* create_vm(size_t size);
 void destroy_vm(struct lilith* vm);
 void read_instruction(struct lilith* vm, struct Instruction *current);
 void eval_instruction(struct lilith* vm, struct Instruction* current);
-void outside_of_world(struct lilith* vm, uint32_t place, char* message);
+void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* message);
 
 /* Allow tape names to be effectively changed */
 char* tape_01_name;

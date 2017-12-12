@@ -25,10 +25,10 @@ char tty_getchar();
 #endif
 
 /* Correctly write out bytes on little endian hardware */
-void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
+void writeout_Reg(struct lilith* vm, unsigned_vm_register p, unsigned_vm_register value)
 {
 	uint8_t raw0, raw1, raw2, raw3;
-	uint32_t tmp = value;
+	unsigned_vm_register tmp = value;
 	raw3 = tmp%0x100;
 	tmp = tmp/0x100;
 	raw2 = tmp%0x100;
@@ -46,12 +46,12 @@ void writeout_Reg(struct lilith* vm, uint32_t p, uint32_t value)
 }
 
 /* Allow the use of native data format for Register operations */
-uint32_t readin_Reg(struct lilith* vm, uint32_t p)
+unsigned_vm_register readin_Reg(struct lilith* vm, unsigned_vm_register p)
 {
 	outside_of_world(vm, p, "READIN REG Address is outside of World");
 
 	uint8_t raw0, raw1, raw2, raw3;
-	uint32_t sum;
+	unsigned_vm_register sum;
 	raw0 = vm->memory[p];
 	raw1 = vm->memory[p + 1];
 	raw2 = vm->memory[p + 2];
@@ -66,31 +66,31 @@ uint32_t readin_Reg(struct lilith* vm, uint32_t p)
 }
 
 /* Unify byte write functionality */
-void writeout_byte(struct lilith* vm, uint32_t p, uint32_t value)
+void writeout_byte(struct lilith* vm, unsigned_vm_register p, unsigned_vm_register value)
 {
 	outside_of_world(vm, p, "Write Byte Address is outside of World");
 	vm->memory[p] = (uint8_t)(value%0x100);
 }
 
 /* Unify byte read functionality*/
-uint32_t readin_byte(struct lilith* vm, uint32_t p, bool Signed)
+unsigned_vm_register readin_byte(struct lilith* vm, unsigned_vm_register p, bool Signed)
 {
 	outside_of_world(vm, p, "Read Byte Address is outside of World");
 	if(Signed)
 	{
-		int32_t raw0;
+		signed_vm_register raw0;
 		raw0 = (int8_t)(vm->memory[p]);
-		return (uint32_t)(raw0);
+		return (unsigned_vm_register)(raw0);
 	}
 
-	return (uint32_t)(vm->memory[p]);
+	return (unsigned_vm_register)(vm->memory[p]);
 }
 
 /* Unify doublebyte write functionality */
-void writeout_doublebyte(struct lilith* vm, uint32_t p, uint32_t value)
+void writeout_doublebyte(struct lilith* vm, unsigned_vm_register p, unsigned_vm_register value)
 {
 	uint8_t uraw0, uraw1;
-	uint32_t utmp = value;
+	unsigned_vm_register utmp = value;
 	utmp = utmp%0x10000;
 	uraw1 = utmp%0x100;
 	utmp = utmp/0x100;
@@ -103,23 +103,23 @@ void writeout_doublebyte(struct lilith* vm, uint32_t p, uint32_t value)
 }
 
 /* Unify doublebyte read functionality*/
-uint32_t readin_doublebyte(struct lilith* vm, uint32_t p, bool Signed)
+unsigned_vm_register readin_doublebyte(struct lilith* vm, unsigned_vm_register p, bool Signed)
 {
 	outside_of_world(vm, p, "Read Doublebyte Address is outside of World");
 
 	if(Signed)
 	{
 		int8_t raw0, raw1;
-		int32_t sum;
+		signed_vm_register sum;
 		raw0 = vm->memory[p];
 		raw1 = vm->memory[p + 1];
 
 		sum = raw0*0x100 + raw1;
-		return (uint32_t)(sum);
+		return (unsigned_vm_register)(sum);
 	}
 
 	uint8_t uraw0, uraw1;
-	uint32_t usum;
+	unsigned_vm_register usum;
 	uraw0 = vm->memory[p];
 	uraw1 = vm->memory[p + 1];
 
@@ -128,9 +128,9 @@ uint32_t readin_doublebyte(struct lilith* vm, uint32_t p, bool Signed)
 }
 
 /* Determine the result of bit shifting */
-uint32_t shift_register(uint32_t source, uint32_t amount, bool left, bool zero)
+unsigned_vm_register shift_register(unsigned_vm_register source, unsigned_vm_register amount, bool left, bool zero)
 {
-	uint32_t tmp = source;
+	unsigned_vm_register tmp = source;
 
 	if(left)
 	{
@@ -239,7 +239,7 @@ void vm_REWIND(struct lilith* vm)
 
 void vm_FGETC(struct lilith* vm)
 {
-	int32_t byte = -1;
+	signed_vm_register byte = -1;
 
 	if (0x00000000 == vm->reg[1])
 	{
@@ -266,7 +266,7 @@ void vm_FGETC(struct lilith* vm)
 
 void vm_FPUTC(struct lilith* vm)
 {
-	int32_t byte = vm->reg[0];
+	signed_vm_register byte = vm->reg[0];
 
 	if (0x00000000 == vm->reg[1])
 	{
@@ -304,41 +304,41 @@ EQual = (1 << 1),
 LessThan = 1
 };
 
-bool Carry_bit_set(uint32_t a)
+bool Carry_bit_set(unsigned_vm_register a)
 {
 	return a & Carry;
 }
 
-bool Borrow_bit_set(uint32_t a)
+bool Borrow_bit_set(unsigned_vm_register a)
 {
 	return a & Borrow;
 }
 
-bool Overflow_bit_set(uint32_t a)
+bool Overflow_bit_set(unsigned_vm_register a)
 {
 	return a & Overflow;
 }
 
-bool GreaterThan_bit_set(uint32_t a)
+bool GreaterThan_bit_set(unsigned_vm_register a)
 {
 	return a & GreaterThan;
 }
 
-bool EQual_bit_set(uint32_t a)
+bool EQual_bit_set(unsigned_vm_register a)
 {
 	return a & EQual;
 }
 
-bool LessThan_bit_set(uint32_t a)
+bool LessThan_bit_set(unsigned_vm_register a)
 {
 	return a & LessThan;
 }
 
 void ADD_CI(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
 	/* If carry bit set add in the carry */
 	if(Carry_bit_set(vm->reg[c->reg3]))
@@ -353,11 +353,11 @@ void ADD_CI(struct lilith* vm, struct Instruction* c)
 
 void ADD_CO(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	int64_t btmp1;
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
-	btmp1 = ((int64_t)tmp1) + ((int64_t)tmp2);
+	signed_vm_register tmp1, tmp2;
+	signed_wide_register btmp1;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
+	btmp1 = ((signed_wide_register)tmp1) + ((signed_wide_register)tmp2);
 
 	/* If addition exceeds int32_t MAX, set carry bit */
 	if(1 == ( btmp1 >> 31 ))
@@ -375,13 +375,13 @@ void ADD_CO(struct lilith* vm, struct Instruction* c)
 
 void ADD_CIO(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	int64_t btmp1;
+	signed_vm_register tmp1, tmp2;
+	signed_wide_register btmp1;
 	bool C = Carry_bit_set(vm->reg[c->reg3]);
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
-	btmp1 = ((int64_t)tmp1) + ((int64_t)tmp2);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
+	btmp1 = ((signed_wide_register)tmp1) + ((signed_wide_register)tmp2);
 
 	/* If addition exceeds int32_t MAX, set carry bit */
 	if(1 == ( btmp1 >> 31 ))
@@ -406,7 +406,7 @@ void ADD_CIO(struct lilith* vm, struct Instruction* c)
 
 void ADDU_CI(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
+	unsigned_vm_register utmp1, utmp2;
 
 	utmp1 = vm->reg[c->reg1];
 	utmp2 = vm->reg[c->reg2];
@@ -424,12 +424,12 @@ void ADDU_CI(struct lilith* vm, struct Instruction* c)
 
 void ADDU_CO(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
-	uint64_t ubtmp1;
+	unsigned_vm_register utmp1, utmp2;
+	unsigned_wide_register ubtmp1;
 
 	utmp1 = vm->reg[c->reg1];
 	utmp2 = vm->reg[c->reg2];
-	ubtmp1 = ((uint64_t)utmp1) + ((uint64_t)utmp2);
+	ubtmp1 = ((unsigned_wide_register)utmp1) + ((unsigned_wide_register)utmp2);
 
 	/* If addition exceeds uint32_t MAX, set carry bit */
 	if(0 != ( ubtmp1 >> 32 ))
@@ -447,14 +447,14 @@ void ADDU_CO(struct lilith* vm, struct Instruction* c)
 
 void ADDU_CIO(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
-	uint64_t ubtmp1;
+	unsigned_vm_register utmp1, utmp2;
+	unsigned_wide_register ubtmp1;
 	bool C;
 
 	C = Carry_bit_set(vm->reg[c->reg3]);
 	utmp1 = vm->reg[c->reg1];
 	utmp2 = vm->reg[c->reg2];
-	ubtmp1 = ((uint64_t)utmp1) + ((uint64_t)utmp2);
+	ubtmp1 = ((unsigned_wide_register)utmp1) + ((unsigned_wide_register)utmp2);
 
 	/* If addition exceeds uint32_t MAX, set carry bit */
 	if(0 != ( ubtmp1 >> 32 ))
@@ -479,10 +479,10 @@ void ADDU_CIO(struct lilith* vm, struct Instruction* c)
 
 void SUB_BI(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
 	/* If borrow bit set subtract out the borrow */
 	if(Borrow_bit_set(vm->reg[c->reg3]))
@@ -497,12 +497,12 @@ void SUB_BI(struct lilith* vm, struct Instruction* c)
 
 void SUB_BO(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	int64_t btmp1;
+	signed_vm_register tmp1, tmp2;
+	signed_wide_register btmp1;
 
-	btmp1 = (int64_t)(vm->reg[c->reg1]);
-	tmp1 = (int32_t)(vm->reg[c->reg2]);
-	tmp2 = (int32_t)(btmp1 - tmp1);
+	btmp1 = (signed_wide_register)(vm->reg[c->reg1]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg2]);
+	tmp2 = (signed_vm_register)(btmp1 - tmp1);
 
 	/* If subtraction goes below int32_t MIN set borrow */
 	if(btmp1 != (tmp2 + tmp1))
@@ -520,14 +520,14 @@ void SUB_BO(struct lilith* vm, struct Instruction* c)
 
 void SUB_BIO(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	int64_t btmp1;
+	signed_vm_register tmp1, tmp2;
+	signed_wide_register btmp1;
 	bool B;
 
 	B = Borrow_bit_set(vm->reg[c->reg3]);
-	btmp1 = (int64_t)(vm->reg[c->reg1]);
-	tmp1 = (int32_t)(vm->reg[c->reg2]);
-	tmp2 = (int32_t)(btmp1 - tmp1);
+	btmp1 = (signed_wide_register)(vm->reg[c->reg1]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg2]);
+	tmp2 = (signed_vm_register)(btmp1 - tmp1);
 
 	/* If subtraction goes below int32_t MIN set borrow */
 	if(btmp1 != (tmp2 + tmp1))
@@ -552,7 +552,7 @@ void SUB_BIO(struct lilith* vm, struct Instruction* c)
 
 void SUBU_BI(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
+	unsigned_vm_register utmp1, utmp2;
 
 	utmp1 = vm->reg[c->reg1];
 	utmp2 = vm->reg[c->reg2];
@@ -570,12 +570,12 @@ void SUBU_BI(struct lilith* vm, struct Instruction* c)
 
 void SUBU_BO(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
-	uint64_t ubtmp1;
+	unsigned_vm_register utmp1, utmp2;
+	unsigned_wide_register ubtmp1;
 
 	utmp1 = vm->reg[c->reg1];
 	utmp2 = vm->reg[c->reg2];
-	ubtmp1 = (uint64_t)(utmp1 - utmp2);
+	ubtmp1 = (unsigned_wide_register)(utmp1 - utmp2);
 
 	/* If subtraction goes below uint32_t MIN set borrow */
 	if(utmp1 != (ubtmp1 + utmp2))
@@ -593,14 +593,14 @@ void SUBU_BO(struct lilith* vm, struct Instruction* c)
 
 void SUBU_BIO(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
-	uint64_t ubtmp1;
+	unsigned_vm_register utmp1, utmp2;
+	unsigned_wide_register ubtmp1;
 	bool B;
 
 	B = Borrow_bit_set(vm->reg[c->reg3]);
 	utmp1 = vm->reg[c->reg1];
 	utmp2 = vm->reg[c->reg2];
-	ubtmp1 = (uint64_t)(utmp1 - utmp2);
+	ubtmp1 = (unsigned_wide_register)(utmp1 - utmp2);
 
 	/* If subtraction goes below uint32_t MIN set borrow */
 	if(utmp1 != (ubtmp1 + utmp2))
@@ -625,38 +625,38 @@ void SUBU_BIO(struct lilith* vm, struct Instruction* c)
 
 void MULTIPLY(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	int64_t btmp1;
+	signed_vm_register tmp1, tmp2;
+	signed_wide_register btmp1;
 
-	tmp1 = (int32_t)(vm->reg[c->reg2]);
-	tmp2 = (int32_t)( vm->reg[c->reg3]);
-	btmp1 = ((int64_t)tmp1) * ((int64_t)tmp2);
-	vm->reg[c->reg0] = (int32_t)(btmp1 % 0x100000000);
-	vm->reg[c->reg1] = (int32_t)(btmp1 / 0x100000000);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg2]);
+	tmp2 = (signed_vm_register)( vm->reg[c->reg3]);
+	btmp1 = ((signed_wide_register)tmp1) * ((signed_wide_register)tmp2);
+	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x100000000);
+	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x100000000);
 }
 
 void MULTIPLYU(struct lilith* vm, struct Instruction* c)
 {
-	uint64_t ubtmp1;
+	unsigned_wide_register ubtmp1;
 
-	ubtmp1 = (uint64_t)(vm->reg[c->reg2]) * (uint64_t)(vm->reg[c->reg3]);
+	ubtmp1 = (unsigned_wide_register)(vm->reg[c->reg2]) * (unsigned_wide_register)(vm->reg[c->reg3]);
 	vm->reg[c->reg0] = ubtmp1 % 0x100000000;
 	vm->reg[c->reg1] = ubtmp1 / 0x100000000;
 }
 
 void DIVIDE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg2]);
-	tmp2 = (int32_t)(vm->reg[c->reg3]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg2]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg3]);
 	vm->reg[c->reg0] = tmp1 / tmp2;
 	vm->reg[c->reg1] = tmp1 % tmp2;
 }
 
 void DIVIDEU(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
+	unsigned_vm_register utmp1, utmp2;
 
 	utmp1 = vm->reg[c->reg2];
 	utmp2 = vm->reg[c->reg3];
@@ -678,10 +678,10 @@ void NMUX(struct lilith* vm, struct Instruction* c)
 
 void SORT(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg2]);
-	tmp2 = (int32_t)(vm->reg[c->reg3]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg2]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg3]);
 
 	if(tmp1 > tmp2)
 	{
@@ -697,7 +697,7 @@ void SORT(struct lilith* vm, struct Instruction* c)
 
 void SORTU(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1, utmp2;
+	unsigned_vm_register utmp1, utmp2;
 
 	utmp1 = vm->reg[c->reg2];
 	utmp2 = vm->reg[c->reg3];
@@ -716,12 +716,12 @@ void SORTU(struct lilith* vm, struct Instruction* c)
 
 void ADD(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
-	vm->reg[c->reg0] = (int32_t)(tmp1 + tmp2);
+	vm->reg[c->reg0] = (signed_vm_register)(tmp1 + tmp2);
 }
 
 void ADDU(struct lilith* vm, struct Instruction* c)
@@ -731,12 +731,12 @@ void ADDU(struct lilith* vm, struct Instruction* c)
 
 void SUB(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
-	vm->reg[c->reg0] = (int32_t)(tmp1 - tmp2);
+	vm->reg[c->reg0] = (signed_vm_register)(tmp1 - tmp2);
 }
 
 void SUBU(struct lilith* vm, struct Instruction* c)
@@ -746,11 +746,11 @@ void SUBU(struct lilith* vm, struct Instruction* c)
 
 void CMP(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	uint32_t result = 0;
+	signed_vm_register tmp1, tmp2;
+	unsigned_vm_register result = 0;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
 	/* Set condition bits accordingly*/
 	if(tmp1 > tmp2)
@@ -769,7 +769,7 @@ void CMP(struct lilith* vm, struct Instruction* c)
 
 void CMPU(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t result = 0;
+	unsigned_vm_register result = 0;
 
 	if(vm->reg[c->reg1] > vm->reg[c->reg2])
 	{
@@ -787,12 +787,12 @@ void CMPU(struct lilith* vm, struct Instruction* c)
 
 void MUL(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
-	int64_t sum = tmp1 * tmp2;
+	signed_wide_register sum = tmp1 * tmp2;
 
 	/* We only want the bottom 32bits */
 	vm->reg[c->reg0] = sum % 0x100000000;
@@ -800,12 +800,12 @@ void MUL(struct lilith* vm, struct Instruction* c)
 
 void MULH(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
-	int64_t sum = tmp1 * tmp2;
+	signed_wide_register sum = tmp1 * tmp2;
 
 	/* We only want the top 32bits */
 	vm->reg[c->reg0] = sum / 0x100000000;
@@ -813,7 +813,7 @@ void MULH(struct lilith* vm, struct Instruction* c)
 
 void MULU(struct lilith* vm, struct Instruction* c)
 {
-	uint64_t tmp1, tmp2, sum;
+	unsigned_wide_register tmp1, tmp2, sum;
 
 	tmp1 = vm->reg[c->reg1];
 	tmp2 = vm->reg[c->reg2];
@@ -825,7 +825,7 @@ void MULU(struct lilith* vm, struct Instruction* c)
 
 void MULUH(struct lilith* vm, struct Instruction* c)
 {
-	uint64_t tmp1, tmp2, sum;
+	unsigned_wide_register tmp1, tmp2, sum;
 
 	tmp1 = vm->reg[c->reg1];
 	tmp2 = vm->reg[c->reg2];
@@ -837,20 +837,20 @@ void MULUH(struct lilith* vm, struct Instruction* c)
 
 void DIV(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
 	vm->reg[c->reg0] = tmp1 / tmp2;
 }
 
 void MOD(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
 	vm->reg[c->reg0] = tmp1 % tmp2;
 }
@@ -867,10 +867,10 @@ void MODU(struct lilith* vm, struct Instruction* c)
 
 void MAX(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
 	if(tmp1 > tmp2)
 	{
@@ -896,10 +896,10 @@ void MAXU(struct lilith* vm, struct Instruction* c)
 
 void MIN(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
+	signed_vm_register tmp1, tmp2;
 
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	tmp2 = (int32_t)(vm->reg[c->reg2]);
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
 	if(tmp1 < tmp2)
 	{
@@ -1005,7 +1005,7 @@ void SR1(struct lilith* vm, struct Instruction* c)
 
 void ROL(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t i, tmp;
+	unsigned_vm_register i, tmp;
 	bool bit;
 
 	tmp = vm->reg[c->reg1];
@@ -1020,7 +1020,7 @@ void ROL(struct lilith* vm, struct Instruction* c)
 
 void ROR(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t i, tmp;
+	unsigned_vm_register i, tmp;
 	bool bit;
 
 	tmp = vm->reg[c->reg1];
@@ -1090,36 +1090,36 @@ void STOREX32(struct lilith* vm, struct Instruction* c)
 
 void NEG(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = (int32_t)(vm->reg[c->reg1]) * -1;
+	vm->reg[c->reg0] = (signed_vm_register)(vm->reg[c->reg1]) * -1;
 }
 
 void ABS(struct lilith* vm, struct Instruction* c)
 {
-	if(0 <= (int32_t)(vm->reg[c->reg1]))
+	if(0 <= (signed_vm_register)(vm->reg[c->reg1]))
 	{
 		vm->reg[c->reg0] = vm->reg[c->reg1];
 	}
 	else
 	{
-		vm->reg[c->reg0] = (int32_t)(vm->reg[c->reg1]) * -1;
+		vm->reg[c->reg0] = (signed_vm_register)(vm->reg[c->reg1]) * -1;
 	}
 }
 
 void NABS(struct lilith* vm, struct Instruction* c)
 {
-	if(0 > (int32_t)(vm->reg[c->reg1]))
+	if(0 > (signed_vm_register)(vm->reg[c->reg1]))
 	{
 		vm->reg[c->reg0] = vm->reg[c->reg1];
 	}
 	else
 	{
-		vm->reg[c->reg0] = (int32_t)(vm->reg[c->reg1]) * -1;
+		vm->reg[c->reg0] = (signed_vm_register)(vm->reg[c->reg1]) * -1;
 	}
 }
 
 void SWAP(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t utmp1;
+	unsigned_vm_register utmp1;
 
 	utmp1 = vm->reg[c->reg1];
 	vm->reg[c->reg1] = vm->reg[c->reg0];
@@ -1176,7 +1176,17 @@ void FALSE(struct lilith* vm, struct Instruction* c)
 
 void TRUE(struct lilith* vm, struct Instruction* c)
 {
+#ifdef VM256
+	vm->reg[c->reg0] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+#elif VM128
+	vm->reg[c->reg0] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+#elif VM64
+	vm->reg[c->reg0] = 0xFFFFFFFFFFFFFFFF;
+#elif VM32
 	vm->reg[c->reg0] = 0xFFFFFFFF;
+#else
+	vm->reg[c->reg0] = 0xFFFF;
+#endif
 }
 
 void JSR_COROUTINE(struct lilith* vm, struct Instruction* c)
@@ -1219,9 +1229,9 @@ void POPPC(struct lilith* vm, struct Instruction* c)
 
 void ADDI(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1;
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	vm->reg[c->reg0] = (int32_t)(tmp1 + c->raw_Immediate);
+	signed_vm_register tmp1;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	vm->reg[c->reg0] = (signed_vm_register)(tmp1 + c->raw_Immediate);
 }
 
 void ADDUI(struct lilith* vm, struct Instruction* c)
@@ -1231,9 +1241,9 @@ void ADDUI(struct lilith* vm, struct Instruction* c)
 
 void SUBI(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1;
-	tmp1 = (int32_t)(vm->reg[c->reg1]);
-	vm->reg[c->reg0] = (int32_t)(tmp1 - c->raw_Immediate);
+	signed_vm_register tmp1;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
+	vm->reg[c->reg0] = (signed_vm_register)(tmp1 - c->raw_Immediate);
 }
 
 void SUBUI(struct lilith* vm, struct Instruction* c)
@@ -1243,13 +1253,13 @@ void SUBUI(struct lilith* vm, struct Instruction* c)
 
 void CMPI(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t result = 0;
+	unsigned_vm_register result = 0;
 
-	if((int32_t)(vm->reg[c->reg1]) > c->raw_Immediate)
+	if((signed_vm_register)(vm->reg[c->reg1]) > c->raw_Immediate)
 	{
 		vm->reg[c->reg0] = result | GreaterThan;
 	}
-	else if((int32_t)(vm->reg[c->reg1]) == c->raw_Immediate)
+	else if((signed_vm_register)(vm->reg[c->reg1]) == c->raw_Immediate)
 	{
 		vm->reg[c->reg0] = result | EQual;
 	}
@@ -1296,13 +1306,13 @@ void LOADU32(struct lilith* vm, struct Instruction* c)
 
 void CMPUI(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t result = 0;
+	unsigned_vm_register result = 0;
 
-	if(vm->reg[c->reg1] > (uint32_t)c->raw_Immediate)
+	if(vm->reg[c->reg1] > (unsigned_vm_register)c->raw_Immediate)
 	{
 		vm->reg[c->reg0] = result | GreaterThan;
 	}
-	else if(vm->reg[c->reg1] == (uint32_t)c->raw_Immediate)
+	else if(vm->reg[c->reg1] == (unsigned_vm_register)c->raw_Immediate)
 	{
 		vm->reg[c->reg0] = result | EQual;
 	}
@@ -1543,8 +1553,8 @@ void JUMP(struct lilith* vm, struct Instruction* c)
 
 void JUMP_P(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	signed_vm_register tmp1;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
 	if(0 <= tmp1)
 	{
 		vm->ip = vm->ip + c->raw_Immediate - 4;
@@ -1553,8 +1563,8 @@ void JUMP_P(struct lilith* vm, struct Instruction* c)
 
 void JUMP_NP(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
+	signed_vm_register tmp1;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
 	if(0 > tmp1)
 	{
 		vm->ip = vm->ip + c->raw_Immediate - 4;
@@ -1563,9 +1573,9 @@ void JUMP_NP(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMPI_G(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 > tmp2)
 	{
 		vm->ip = vm->ip + c->raw_Immediate - 4;
@@ -1574,9 +1584,9 @@ void CMPJUMPI_G(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMPI_GE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 >= tmp2)
 	{
 		vm->ip = vm->ip + c->raw_Immediate - 4;
@@ -1601,9 +1611,9 @@ void CMPJUMPI_NE(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMPI_LE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 <= tmp2)
 	{
 		vm->ip = vm->ip + c->raw_Immediate - 4;
@@ -1612,9 +1622,9 @@ void CMPJUMPI_LE(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMPI_L(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 < tmp2)
 	{
 		vm->ip = vm->ip + c->raw_Immediate - 4;
@@ -1655,9 +1665,9 @@ void CMPJUMPUI_L(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPI_G(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(c->raw_Immediate);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(c->raw_Immediate);
 
 	if(tmp1 > tmp2)
 	{
@@ -1667,9 +1677,9 @@ void CMPSKIPI_G(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPI_GE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(c->raw_Immediate);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(c->raw_Immediate);
 
 	if(tmp1 >= tmp2)
 	{
@@ -1703,9 +1713,9 @@ void CMPSKIPI_NE(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPI_LE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(c->raw_Immediate);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(c->raw_Immediate);
 
 	if(tmp1 <= tmp2)
 	{
@@ -1715,9 +1725,9 @@ void CMPSKIPI_LE(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIPI_L(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(c->raw_Immediate);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(c->raw_Immediate);
 
 	if(tmp1 < tmp2)
 	{
@@ -1795,7 +1805,7 @@ void PUSH32(struct lilith* vm, struct Instruction* c)
 }
 void POPR(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t tmp;
+	unsigned_vm_register tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
 	tmp = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
@@ -1835,7 +1845,7 @@ void POPU16(struct lilith* vm, struct Instruction* c)
 }
 void POP32(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp;
+	signed_vm_register tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
 	tmp = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
@@ -1843,7 +1853,7 @@ void POP32(struct lilith* vm, struct Instruction* c)
 }
 void POPU32(struct lilith* vm, struct Instruction* c)
 {
-	uint32_t tmp;
+	unsigned_vm_register tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
 	tmp = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
@@ -1887,9 +1897,9 @@ void NOT(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIP_G(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 
 	if(tmp1 > tmp2)
 	{
@@ -1899,9 +1909,9 @@ void CMPSKIP_G(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIP_GE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 
 	if(tmp1 >= tmp2)
 	{
@@ -1927,9 +1937,9 @@ void CMPSKIP_NE(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIP_LE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 
 	if(tmp1 <= tmp2)
 	{
@@ -1939,9 +1949,9 @@ void CMPSKIP_LE(struct lilith* vm, struct Instruction* c)
 
 void CMPSKIP_L(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 
 	if(tmp1 < tmp2)
 	{
@@ -1983,9 +1993,9 @@ void CMPSKIPU_L(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMP_G(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 > tmp2)
 	{
 		vm->ip = vm->reg[c->reg2];
@@ -1994,9 +2004,9 @@ void CMPJUMP_G(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMP_GE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 >= tmp2)
 	{
 		vm->ip = vm->reg[c->reg2];
@@ -2021,9 +2031,9 @@ void CMPJUMP_NE(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMP_LE(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 <= tmp2)
 	{
 		vm->ip = vm->reg[c->reg2];
@@ -2032,9 +2042,9 @@ void CMPJUMP_LE(struct lilith* vm, struct Instruction* c)
 
 void CMPJUMP_L(struct lilith* vm, struct Instruction* c)
 {
-	int32_t tmp1, tmp2;
-	tmp1 = (int32_t)(vm->reg[c->reg0]);
-	tmp2 = (int32_t)(vm->reg[c->reg1]);
+	signed_vm_register tmp1, tmp2;
+	tmp1 = (signed_vm_register)(vm->reg[c->reg0]);
+	tmp2 = (signed_vm_register)(vm->reg[c->reg1]);
 	if(tmp1 < tmp2)
 	{
 		vm->ip = vm->reg[c->reg2];

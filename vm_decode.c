@@ -16,7 +16,7 @@
  */
 
 #include "vm.h"
-uint32_t performance_counter;
+unsigned_vm_register performance_counter;
 
 #ifdef TRACE
 void record_trace(char* c);
@@ -44,7 +44,7 @@ void destroy_vm(struct lilith* vm)
 }
 
 /* Validate Memory Addresses*/
-void outside_of_world(struct lilith* vm, uint32_t place, char* message)
+void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* message)
 {
 	if(vm->amount_of_Ram <= place)
 	{
