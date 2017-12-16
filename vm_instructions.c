@@ -31,106 +31,50 @@ int next_instruction_size(struct lilith* vm)
 }
 
 /* Correctly write out bytes on little endian hardware */
-void writeout_Reg(struct lilith* vm, unsigned_vm_register p, unsigned_vm_register value)
+void writeout_bytes(struct lilith* vm, unsigned_vm_register pointer, unsigned_vm_register value, int count)
 {
-	uint8_t raw0, raw1, raw2, raw3;
-	unsigned_vm_register tmp = value;
-	raw3 = tmp%0x100;
-	tmp = tmp/0x100;
-	raw2 = tmp%0x100;
-	tmp = tmp/0x100;
-	raw1 = tmp%0x100;
-	tmp = tmp/0x100;
-	raw0 = tmp%0x100;
+	uint8_t raw0;
+	outside_of_world(vm, pointer, "Writeout bytes Address_1 is outside of World");
+	outside_of_world(vm, pointer+count, "Writeout bytes Address_2 is outside of World");
 
-	outside_of_world(vm, p, "Writeout Reg Address is outside of World");
-
-	vm->memory[p] = raw0;
-	vm->memory[p + 1] = raw1;
-	vm->memory[p + 2] = raw2;
-	vm->memory[p + 3] = raw3;
+	while(0 < count)
+	{
+		raw0 = (value >> (8 * (count - 1))) & 0xff;
+		vm->memory[pointer] = raw0;
+		pointer = pointer + 1;
+		count = count - 1;
+	}
 }
 
 /* Allow the use of native data format for Register operations */
-unsigned_vm_register readin_Reg(struct lilith* vm, unsigned_vm_register p)
+unsigned_vm_register readin_bytes(struct lilith* vm, unsigned_vm_register pointer, bool Signed, int count)
 {
-	outside_of_world(vm, p, "READIN REG Address is outside of World");
+	outside_of_world(vm, pointer, "READIN bytes Address_1 is outside of World");
+	outside_of_world(vm, pointer+count, "READIN bytes Address_2 is outside of World");
 
-	uint8_t raw0, raw1, raw2, raw3;
-	unsigned_vm_register sum;
-	raw0 = vm->memory[p];
-	raw1 = vm->memory[p + 1];
-	raw2 = vm->memory[p + 2];
-	raw3 = vm->memory[p + 3];
+	uint8_t raw0;
+	if(Signed)
+	{
+		signed_vm_register sum = (int8_t) vm->memory[pointer];
+		while(1 < count)
+		{
+			pointer = pointer + 1;
+			count = count - 1;
+			raw0 = vm->memory[pointer];
+			sum = (sum << 8) + raw0;
+		}
+		return sum;
+	}
 
-	sum = raw0*0x1000000 +
-		  raw1*0x10000 +
-		  raw2*0x100 +
-		  raw3;
-
+	unsigned_vm_register sum = 0;
+	while(0 < count)
+	{
+		raw0 = vm->memory[pointer];
+		sum = (sum << 8) + raw0;
+		pointer = pointer + 1;
+		count = count - 1;
+	}
 	return sum;
-}
-
-/* Unify byte write functionality */
-void writeout_byte(struct lilith* vm, unsigned_vm_register p, unsigned_vm_register value)
-{
-	outside_of_world(vm, p, "Write Byte Address is outside of World");
-	vm->memory[p] = (uint8_t)(value%0x100);
-}
-
-/* Unify byte read functionality*/
-unsigned_vm_register readin_byte(struct lilith* vm, unsigned_vm_register p, bool Signed)
-{
-	outside_of_world(vm, p, "Read Byte Address is outside of World");
-	if(Signed)
-	{
-		signed_vm_register raw0;
-		raw0 = (int8_t)(vm->memory[p]);
-		return (unsigned_vm_register)(raw0);
-	}
-
-	return (unsigned_vm_register)(vm->memory[p]);
-}
-
-/* Unify doublebyte write functionality */
-void writeout_doublebyte(struct lilith* vm, unsigned_vm_register p, unsigned_vm_register value)
-{
-	uint8_t uraw0, uraw1;
-	unsigned_vm_register utmp = value;
-	utmp = utmp%0x10000;
-	uraw1 = utmp%0x100;
-	utmp = utmp/0x100;
-	uraw0 = utmp%0x100;
-
-	outside_of_world(vm, p, "Write DoubleByte Address is outside of World");
-
-	vm->memory[p] = uraw0;
-	vm->memory[p + 1] = uraw1;
-}
-
-/* Unify doublebyte read functionality*/
-unsigned_vm_register readin_doublebyte(struct lilith* vm, unsigned_vm_register p, bool Signed)
-{
-	outside_of_world(vm, p, "Read Doublebyte Address is outside of World");
-
-	if(Signed)
-	{
-		int8_t raw0, raw1;
-		signed_vm_register sum;
-		raw0 = vm->memory[p];
-		raw1 = vm->memory[p + 1];
-
-		sum = raw0*0x100 + raw1;
-		return (unsigned_vm_register)(sum);
-	}
-
-	uint8_t uraw0, uraw1;
-	unsigned_vm_register usum;
-	uraw0 = vm->memory[p];
-	uraw1 = vm->memory[p + 1];
-
-	usum = uraw0*0x100 + uraw1;
-	return usum;
 }
 
 /* Determine the result of bit shifting */
@@ -1041,57 +985,57 @@ void ROR(struct lilith* vm, struct Instruction* c)
 
 void LOADX(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2]);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true, reg_size);
 }
 
 void LOADX8(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true, 1);
 }
 
 void LOADXU8(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], false);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], false, 1);
 }
 
 void LOADX16(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true, 2);
 }
 
 void LOADXU16(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1] + vm->reg[c->reg2], false);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], false, 2);
 }
 
 void LOADX32(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2]);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true, 4);
 }
 
 void LOADXU32(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2]);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true, 4);
 }
 
 void STOREX(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0], reg_size);
 }
 
 void STOREX8(struct lilith* vm, struct Instruction* c)
 {
-	writeout_byte(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0], 1);
 }
 
 void STOREX16(struct lilith* vm, struct Instruction* c)
 {
-	writeout_doublebyte(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0], 2);
 }
 
 void STOREX32(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0], 4);
 }
 
 void NEG(struct lilith* vm, struct Instruction* c)
@@ -1146,7 +1090,7 @@ void MOVE(struct lilith* vm, struct Instruction* c)
 void BRANCH(struct lilith* vm, struct Instruction* c)
 {
 	/* Write out the PC */
-	writeout_Reg(vm, vm->reg[c->reg1], vm->ip);
+	writeout_bytes(vm, vm->reg[c->reg1], vm->ip, reg_size);
 
 	/* Update PC */
 	vm->ip = vm->reg[c->reg0];
@@ -1155,7 +1099,7 @@ void BRANCH(struct lilith* vm, struct Instruction* c)
 void CALL(struct lilith* vm, struct Instruction* c)
 {
 	/* Write out the PC */
-	writeout_Reg(vm, vm->reg[c->reg1], vm->ip);
+	writeout_bytes(vm, vm->reg[c->reg1], vm->ip, reg_size);
 
 	/* Update our index */
 	vm->reg[c->reg1] = vm->reg[c->reg1] + reg_size;
@@ -1220,16 +1164,16 @@ void RET(struct lilith* vm, struct Instruction* c)
 	vm->reg[c->reg0] = vm->reg[c->reg0] - reg_size;
 
 	/* Read in the new PC */
-	vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
+	vm->ip = readin_bytes(vm, vm->reg[c->reg0], false, reg_size);
 
 	/* Clear Stack Values */
-	writeout_Reg(vm, vm->reg[c->reg0], 0);
+	writeout_bytes(vm, vm->reg[c->reg0], 0, reg_size);
 }
 
 void PUSHPC(struct lilith* vm, struct Instruction* c)
 {
 	/* Write out the PC */
-	writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
+	writeout_bytes(vm, vm->reg[c->reg0], vm->ip, reg_size);
 
 	/* Update our index */
 	vm->reg[c->reg0] = vm->reg[c->reg0] + reg_size;
@@ -1241,10 +1185,10 @@ void POPPC(struct lilith* vm, struct Instruction* c)
 	vm->reg[c->reg0] = vm->reg[c->reg0] - reg_size;
 
 	/* Read in the new PC */
-	vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
+	vm->ip = readin_bytes(vm, vm->reg[c->reg0], false, reg_size);
 
 	/* Clear memory where PC was */
-	writeout_Reg(vm, vm->reg[c->reg0], 0);
+	writeout_bytes(vm, vm->reg[c->reg0], 0, reg_size);
 }
 
 void ADDI(struct lilith* vm, struct Instruction* c)
@@ -1291,37 +1235,37 @@ void CMPI(struct lilith* vm, struct Instruction* c)
 
 void LOAD(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, (vm->reg[c->reg1] + c->raw_Immediate));
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), false,reg_size);
 }
 
 void LOAD8(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1] + c->raw_Immediate, true);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + c->raw_Immediate, true, 1);
 }
 
 void LOADU8(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_byte(vm, vm->reg[c->reg1] + c->raw_Immediate, false);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + c->raw_Immediate, false, 1);
 }
 
 void LOAD16(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1] + c->raw_Immediate, true);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + c->raw_Immediate, true, 2);
 }
 
 void LOADU16(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_doublebyte(vm, vm->reg[c->reg1] + c->raw_Immediate, false);
+	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + c->raw_Immediate, false, 2);
 }
 
 void LOAD32(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, (vm->reg[c->reg1] + c->raw_Immediate));
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), true, 4);
 }
 
 void LOADU32(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, (vm->reg[c->reg1] + c->raw_Immediate));
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), false, 4);
 }
 
 void CMPUI(struct lilith* vm, struct Instruction* c)
@@ -1344,22 +1288,22 @@ void CMPUI(struct lilith* vm, struct Instruction* c)
 
 void STORE(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0], reg_size);
 }
 
 void STORE8(struct lilith* vm, struct Instruction* c)
 {
-	writeout_byte(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0], 1);
 }
 
 void STORE16(struct lilith* vm, struct Instruction* c)
 {
-	writeout_doublebyte(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0], 2);
 }
 
 void STORE32(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0], 4);
 }
 
 void JUMP_C(struct lilith* vm, struct Instruction* c)
@@ -1464,7 +1408,7 @@ void JUMP_NZ(struct lilith* vm, struct Instruction* c)
 void CALLI(struct lilith* vm, struct Instruction* c)
 {
 	/* Write out the PC */
-	writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
+	writeout_bytes(vm, vm->reg[c->reg0], vm->ip, reg_size);
 
 	/* Update our index */
 	vm->reg[c->reg0] = vm->reg[c->reg0] + reg_size;
@@ -1515,55 +1459,55 @@ void SR1I(struct lilith* vm, struct Instruction* c)
 
 void LOADR(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, (vm->ip + c->raw_Immediate -4));
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate -4), false, reg_size);
 }
 void LOADR8(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_byte(vm, (vm->ip + c->raw_Immediate -4), true);
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate -4), true, 1);
 }
 
 void LOADRU8(struct lilith* vm, struct Instruction* c)
 {
-vm->reg[c->reg0] = readin_byte(vm, (vm->ip + c->raw_Immediate -4), false);
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate -4), false, 1);
 }
 
 void LOADR16(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_doublebyte(vm, (vm->ip + c->raw_Immediate -4), true);
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate -4), true, 2);
 }
 
 void LOADRU16(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_doublebyte(vm, (vm->ip + c->raw_Immediate -4), false);
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate -4), false, 2);
 }
 
 void LOADR32(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, (vm->ip + c->raw_Immediate -4));
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate -4), true, 4);
 }
 void LOADRU32(struct lilith* vm, struct Instruction* c)
 {
-	vm->reg[c->reg0] = readin_Reg(vm, (vm->ip + c->raw_Immediate -4));
+	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate -4), false, 4);
 }
 
 void STORER(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0], reg_size);
 }
 
 void STORER8(struct lilith* vm, struct Instruction* c)
 {
-	writeout_byte(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0], 1);
 }
 
 void STORER16(struct lilith* vm, struct Instruction* c)
 {
-	writeout_doublebyte(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0], 2);
 }
 
 void STORER32(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0]);
+	writeout_bytes(vm, (vm->ip + c->raw_Immediate - 4), vm->reg[c->reg0], 4);
 }
 
 void JUMP(struct lilith* vm, struct Instruction* c)
@@ -1805,78 +1749,78 @@ void CMPSKIPUI_L(struct lilith* vm, struct Instruction* c)
 
 void PUSHR(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, vm->reg[c->reg1], vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1], vm->reg[c->reg0], reg_size);
 	vm->reg[c->reg1] = vm->reg[c->reg1] + next_instruction_size(vm);
 }
 void PUSH8(struct lilith* vm, struct Instruction* c)
 {
-	writeout_byte(vm, vm->reg[c->reg1] , vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1] , vm->reg[c->reg0], 1);
 	vm->reg[c->reg1] = vm->reg[c->reg1] + 1;
 }
 void PUSH16(struct lilith* vm, struct Instruction* c)
 {
-	writeout_doublebyte(vm, vm->reg[c->reg1] , vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1] , vm->reg[c->reg0], 2);
 	vm->reg[c->reg1] = vm->reg[c->reg1] + 2;
 }
 void PUSH32(struct lilith* vm, struct Instruction* c)
 {
-	writeout_Reg(vm, vm->reg[c->reg1] , vm->reg[c->reg0]);
+	writeout_bytes(vm, vm->reg[c->reg1] , vm->reg[c->reg0], 4);
 	vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
 }
 void POPR(struct lilith* vm, struct Instruction* c)
 {
 	unsigned_vm_register tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - reg_size;
-	tmp = readin_Reg(vm, vm->reg[c->reg1]);
-	writeout_Reg(vm, vm->reg[c->reg1], 0);
+	tmp = readin_bytes(vm, vm->reg[c->reg1], false, reg_size);
+	writeout_bytes(vm, vm->reg[c->reg1], 0, reg_size);
 	vm->reg[c->reg0] = tmp;
 }
 void POP8(struct lilith* vm, struct Instruction* c)
 {
 	int8_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 1;
-	tmp = readin_byte(vm, vm->reg[c->reg1], true);
-	writeout_byte(vm, vm->reg[c->reg1], 0);
+	tmp = readin_bytes(vm, vm->reg[c->reg1], true, 1);
+	writeout_bytes(vm, vm->reg[c->reg1], 0, 1);
 	vm->reg[c->reg0] = tmp;
 }
 void POPU8(struct lilith* vm, struct Instruction* c)
 {
 	uint8_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 1;
-	tmp = readin_byte(vm, vm->reg[c->reg1], false);
-	writeout_byte(vm, vm->reg[c->reg1], 0);
+	tmp = readin_bytes(vm, vm->reg[c->reg1], false, 1);
+	writeout_bytes(vm, vm->reg[c->reg1], 0, 1);
 	vm->reg[c->reg0] = tmp;
 }
 void POP16(struct lilith* vm, struct Instruction* c)
 {
 	int16_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 2;
-	tmp = readin_doublebyte(vm, vm->reg[c->reg1], true);
-	writeout_doublebyte(vm, vm->reg[c->reg1], 0);
+	tmp = readin_bytes(vm, vm->reg[c->reg1], true, 2);
+	writeout_bytes(vm, vm->reg[c->reg1], 0, 2);
 	vm->reg[c->reg0] = tmp;
 }
 void POPU16(struct lilith* vm, struct Instruction* c)
 {
 	uint16_t tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 2;
-	tmp = readin_doublebyte(vm, vm->reg[c->reg1], false);
-	writeout_doublebyte(vm, vm->reg[c->reg1], 0);
+	tmp = readin_bytes(vm, vm->reg[c->reg1], false, 2);
+	writeout_bytes(vm, vm->reg[c->reg1], 0, 2);
 	vm->reg[c->reg0] = tmp;
 }
 void POP32(struct lilith* vm, struct Instruction* c)
 {
 	signed_vm_register tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
-	tmp = readin_Reg(vm, vm->reg[c->reg1]);
-	writeout_Reg(vm, vm->reg[c->reg1], 0);
+	tmp = readin_bytes(vm, vm->reg[c->reg1], true, 4);
+	writeout_bytes(vm, vm->reg[c->reg1], 0, 4);
 	vm->reg[c->reg0] = tmp;
 }
 void POPU32(struct lilith* vm, struct Instruction* c)
 {
 	unsigned_vm_register tmp;
 	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
-	tmp = readin_Reg(vm, vm->reg[c->reg1]);
-	writeout_Reg(vm, vm->reg[c->reg1], 0);
+	tmp = readin_bytes(vm, vm->reg[c->reg1], false, 4);
+	writeout_bytes(vm, vm->reg[c->reg1], 0, 4);
 	vm->reg[c->reg0] = tmp;
 }
 
