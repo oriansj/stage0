@@ -15,9 +15,7 @@
 ; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 :start
-	LOADUI R10 0x0F             ; Byte mask
 	LOADUI R11 1                ; Our toggle
-	LOADUI R13 0x600            ; Where we are starting our Stack
 	;; R14 is storing our condition code
 	;; R15 is storing our nybble
 
@@ -37,26 +35,21 @@
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
-	CMPI R14 R0 0
-	JUMP.GE R14 @.L1
-	CALLI R13 @finish
+	JUMP.NP R0 @finish
 
-:.L1
-	LOADUI R1 0                 ; Write to Char to TTY
-	FPUTC                       ; Print the Char
-	CALLI R13 @hex              ; Convert it
-	CMPI R14 R0 0               ; Check if it is hex
-	JUMP.L R14 @loop            ; Don't use nonhex chars
-	JUMP.Z R11 @.L99            ; Jump if toggled
+	JUMP @hex                   ; Convert it
+:loop_1
+	JUMP.NP R0 @loop             ; Don't use nonhex chars
+	JUMP.Z R11 @loop_2          ; Jump if toggled
 
 	;; Process first byte of pair
-	AND R15 R0 R10              ; Store First nibble
+	ANDI R15 R0 0xF             ; Store First nibble
 	FALSE R11                   ; Flip the toggle
 	JUMP @loop
 
-:.L99
+:loop_2
 	SL0I R15 4                  ; Shift our first nibble
-	AND R0 R0 R10               ; Mask out top
+	ANDI R0 R0 0xF              ; Mask out top
 	ADD R0 R0 R15               ; Combine nibbles
 	LOADI R11 1                 ; Flip the toggle
 	LOADUI R1 0x1101            ; Write the combined byte
@@ -98,16 +91,16 @@
 
 :ascii_num
 	SUBUI R0 R0 48
-	RET R13
+	JUMP @loop_1
 :ascii_low
 	SUBUI R0 R0 87
-	RET R13
+	JUMP @loop_1
 :ascii_high
 	SUBUI R0 R0 55
-	RET R13
+	JUMP @loop_1
 :ascii_other
 	TRUE R0
-	RET R13
+	JUMP @loop_1
 :ascii_comment
 	LOADUI R1 0x1100            ; Read from TAPE_01
 	FGETC                       ; Read another char

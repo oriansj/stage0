@@ -1,7 +1,7 @@
 ## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
-## stage0 is free software: you an redistribute it and/or modify
+## stage0 is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
@@ -14,51 +14,52 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-# start
-2D2A000f	# LOADUI R10 0x0F ; Byte mask
+#:start
 2D2B0001	# LOADUI R11 1 ; Our toggle
-2D2D0600	# LOADUI R13 0x600 ; Where we are starting our Stack
+# ;; R14 is storing our condition code
+# ;; R15 is storing our nybble
 
 # ;; Prep TAPE_01
-2D201100	# LOADUI R0 0x1100
+2D201100	 # LOADUI R0 0x1100
 42100000	# FOPEN_READ
 
 # ;; Prep TAPE_02
 2D201101	# LOADUI R0 0x1101
 42100001	# FOPEN_WRITE
 
-# loop
+# ;; Main program loop
+# ;; Halts when done
+#:loop 14
 2D211100	# LOADUI R1 0x1100 ; Read from tape_01
 42100100	# FGETC ; Read a Char
 
 # ;; Check for EOF
-12E00000	# CMPI R14 R0 0
-2C4E0008	# JUMP.GE R14 @.L1
-2D0D00c4	# CALLI R13 @finish
+2CC000b8	# JUMP.NP R0 @finish
+3C000034	# JUMP @hex ; Convert it
 
-# .L1
-2D210000	# LOADUI R1 0 ; Write to Char to TTY
-42100200	# FPUTC ; Print the Char
-2D0D0038	# CALLI R13 @hex ; Convert it
-12E00000	# CMPI R14 R0 0 ; Check if it is hex
-2C8Effdc	# JUMP.L R14 @loop ; Don't use nonhex chars
-2C9B0010	# JUMP.Z R11 @.L99 ; Jump if toggled
+# :loop_1 24
+2CC0fff0	# JUMP.NP R0 @loop ; Don't use nonhex chars
+2C9B0010	# JUMP.Z R11 @loop_2 ; Jump if toggled
 
 # ;; Process first byte of pair
-05020F0A	# AND R15 R0 R10 ; Store First nibble
+B0F0000f	# ANDI R15 R0 0xF ; Store First nibble
 0D00002B	# FALSE R11 ; Flip the toggle
-3C00ffcc	# JUMP @loop
+3C00ffe0	# JUMP @loop
 
-# .L99
+# :loop_2 38
 2D5F0004	# SL0I R15 4 ; Shift our first nibble
-0502000A	# AND R0 R0 R10 ; Mask out top
+B000000f	# ANDI R0 R0 0xF ; Mask out top
 0500000F	# ADD R0 R0 R15 ; Combine nibbles
 2D1B0001	# LOADI R11 1 ; Flip the toggle
 2D211101	# LOADUI R1 0x1101 ; Write the combined byte
 42100200	# FPUTC ; To TAPE_02
-3C00ffb0	# JUMP @loop ; Try to get more bytes
+3C00ffc4	# JUMP @loop ; Try to get more bytes
 
-# hex
+# ;; Hex function
+# ;; Converts Ascii chars to their hex values
+# ;; Or -1 if not a hex char
+# ;; Returns to whatever called it
+#:hex 54
 # ;; Deal with line comments starting with #
 1FE00023	# CMPUI R14 R0 35
 2C5E0060	# JUMP.E R14 @ascii_comment
@@ -86,23 +87,19 @@
 # ;; Ignore the rest
 3C00001c	# JUMP @ascii_other
 
-# ascii_num
+# :ascii_num 98
 11000030	# SUBUI R0 R0 48
-0D01001D	# RET R13
-
-# ascii_low
+3C00ff88	# JUMP @loop_1
+# :ascii_low a0
 11000057	# SUBUI R0 R0 87
-0D01001D	# RET R13
-
-# ascii_high
+3C00ff80	# JUMP @loop_1
+# :ascii_high a8
 11000037	# SUBUI R0 R0 55
-0D01001D	# RET R13
-
-# ascii_other
+3C00ff78	# JUMP @loop_1
+# :ascii_other b0
 0D000030	# TRUE R0
-0D01001D	# RET R13
-
-# ascii_comment
+3C00ff70	# JUMP @loop_1
+# :ascii_comment b8
 2D211100	# LOADUI R1 0x1100 ; Read from TAPE_01
 42100100	# FGETC ; Read another char
 1FE0000a	# CMPUI R14 R0 10 ; Stop at the end of line
@@ -111,7 +108,10 @@
 2C6Effec	# JUMP.NE R14 @ascii_comment ; Otherwise keep looping
 3C00ffe0	# JUMP @ascii_other
 
-# finish
+# ;; Finish function
+# ;; Cleans up at the end of the program
+# ;; Performs the HALT
+# :finish d4
 2D201100	# LOADUI R0 0x1100 ; Close TAPE_01
 42100002	# FCLOSE
 2D201101	# LOADUI R0 0x1101 ; Close TAPE_02
