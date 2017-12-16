@@ -27,6 +27,7 @@ Corrected behavior when using the web IDE and attempting to set registers that d
 Fixed regression in hex.c caused by refactoring
 
 ** Removed
+Removed stage1_assembler-0's need for Memory and reduced size of program while at it
 
 * 0.0.9 - 2017-08-17
 ** Added
