@@ -24,6 +24,12 @@ FILE* tape_02;
 char tty_getchar();
 #endif
 
+/* Stub as the current specification makes all instructions 4 bytes but future enhancements may change that */
+int next_instruction_size(struct lilith* vm)
+{
+	return 4;
+}
+
 /* Correctly write out bytes on little endian hardware */
 void writeout_Reg(struct lilith* vm, unsigned_vm_register p, unsigned_vm_register value)
 {
@@ -152,7 +158,7 @@ unsigned_vm_register shift_register(unsigned_vm_register source, unsigned_vm_reg
 			amount = amount - 1;
 			if(!zero)
 			{
-				tmp = tmp | (1 << 31);
+				tmp = tmp | (1 << imax);
 			}
 		}
 	}
@@ -360,7 +366,7 @@ void ADD_CO(struct lilith* vm, struct Instruction* c)
 	btmp1 = ((signed_wide_register)tmp1) + ((signed_wide_register)tmp2);
 
 	/* If addition exceeds int32_t MAX, set carry bit */
-	if(1 == ( btmp1 >> 31 ))
+	if(1 == ( btmp1 >> imax ))
 	{
 		vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
 	}
@@ -384,7 +390,7 @@ void ADD_CIO(struct lilith* vm, struct Instruction* c)
 	btmp1 = ((signed_wide_register)tmp1) + ((signed_wide_register)tmp2);
 
 	/* If addition exceeds int32_t MAX, set carry bit */
-	if(1 == ( btmp1 >> 31 ))
+	if(1 == ( btmp1 >> imax ))
 	{
 		vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
 	}
@@ -432,7 +438,7 @@ void ADDU_CO(struct lilith* vm, struct Instruction* c)
 	ubtmp1 = ((unsigned_wide_register)utmp1) + ((unsigned_wide_register)utmp2);
 
 	/* If addition exceeds uint32_t MAX, set carry bit */
-	if(0 != ( ubtmp1 >> 32 ))
+	if(0 != ( ubtmp1 >> umax ))
 	{
 		vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
 	}
@@ -457,7 +463,7 @@ void ADDU_CIO(struct lilith* vm, struct Instruction* c)
 	ubtmp1 = ((unsigned_wide_register)utmp1) + ((unsigned_wide_register)utmp2);
 
 	/* If addition exceeds uint32_t MAX, set carry bit */
-	if(0 != ( ubtmp1 >> 32 ))
+	if(0 != ( ubtmp1 >> umax ))
 	{
 		vm->reg[c->reg3] = vm->reg[c->reg3] | Carry;
 	}
@@ -1012,7 +1018,7 @@ void ROL(struct lilith* vm, struct Instruction* c)
 	for(i = vm->reg[c->reg2]; i > 0; i = i - 1)
 	{
 		bit = (tmp & 1);
-		tmp = (tmp / 2) + (bit << 31);
+		tmp = (tmp / 2) + (bit << imax);
 	}
 
 	vm->reg[c->reg0] = tmp;
@@ -1026,7 +1032,7 @@ void ROR(struct lilith* vm, struct Instruction* c)
 	tmp = vm->reg[c->reg1];
 	for(i = vm->reg[c->reg2]; i > 0; i = i - 1)
 	{
-		bit = ((tmp >> 31) & 1);
+		bit = ((tmp >> imax) & 1);
 		tmp = (tmp * 2) + bit;
 	}
 
@@ -1152,7 +1158,7 @@ void CALL(struct lilith* vm, struct Instruction* c)
 	writeout_Reg(vm, vm->reg[c->reg1], vm->ip);
 
 	/* Update our index */
-	vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
+	vm->reg[c->reg1] = vm->reg[c->reg1] + reg_size;
 
 	/* Update PC */
 	vm->ip = vm->reg[c->reg0];
@@ -1165,8 +1171,22 @@ void READPC(struct lilith* vm, struct Instruction* c)
 
 void READSCID(struct lilith* vm, struct Instruction* c)
 {
-	/* We only support Base 8,16 and 32*/
-	vm->reg[c->reg0] = 0x00000007;
+#ifdef VM256
+	/* We only support Base 8, 16, 32, 64, 128 and 256 */
+	vm->reg[c->reg0] = 0x00000005;
+#elif VM128
+	/* We only support Base 8, 16, 32, 64 and 128 */
+	vm->reg[c->reg0] = 0x00000004;
+#elif VM64
+	/* We only support Base 8, 16, 32 and 64 */
+	vm->reg[c->reg0] = 0x00000003;
+#elif VM32
+	/* We only support Base 8, 16 and 32 */
+	vm->reg[c->reg0] = 0x00000002;
+#else
+	/* We only support Base 8 and 16 */
+	vm->reg[c->reg0] = 0x00000001;
+#endif
 }
 
 void FALSE(struct lilith* vm, struct Instruction* c)
@@ -1197,7 +1217,7 @@ void JSR_COROUTINE(struct lilith* vm, struct Instruction* c)
 void RET(struct lilith* vm, struct Instruction* c)
 {
 	/* Update our index */
-	vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
+	vm->reg[c->reg0] = vm->reg[c->reg0] - reg_size;
 
 	/* Read in the new PC */
 	vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
@@ -1212,13 +1232,13 @@ void PUSHPC(struct lilith* vm, struct Instruction* c)
 	writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
 
 	/* Update our index */
-	vm->reg[c->reg0] = vm->reg[c->reg0] + 4;
+	vm->reg[c->reg0] = vm->reg[c->reg0] + reg_size;
 }
 
 void POPPC(struct lilith* vm, struct Instruction* c)
 {
 	/* Update our index */
-	vm->reg[c->reg0] = vm->reg[c->reg0] - 4;
+	vm->reg[c->reg0] = vm->reg[c->reg0] - reg_size;
 
 	/* Read in the new PC */
 	vm->ip = readin_Reg(vm, vm->reg[c->reg0]);
@@ -1447,7 +1467,7 @@ void CALLI(struct lilith* vm, struct Instruction* c)
 	writeout_Reg(vm, vm->reg[c->reg0], vm->ip);
 
 	/* Update our index */
-	vm->reg[c->reg0] = vm->reg[c->reg0] + 4;
+	vm->reg[c->reg0] = vm->reg[c->reg0] + reg_size;
 
 	/* Update PC */
 	vm->ip = vm->ip + c->raw_Immediate - 4;
@@ -1683,7 +1703,7 @@ void CMPSKIPI_GE(struct lilith* vm, struct Instruction* c)
 
 	if(tmp1 >= tmp2)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1695,7 +1715,7 @@ void CMPSKIPI_E(struct lilith* vm, struct Instruction* c)
 
 	if((vm->reg[c->reg0]) == utmp1)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1707,7 +1727,7 @@ void CMPSKIPI_NE(struct lilith* vm, struct Instruction* c)
 
 	if((vm->reg[c->reg0]) != utmp1)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1719,7 +1739,7 @@ void CMPSKIPI_LE(struct lilith* vm, struct Instruction* c)
 
 	if(tmp1 <= tmp2)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1731,7 +1751,7 @@ void CMPSKIPI_L(struct lilith* vm, struct Instruction* c)
 
 	if(tmp1 < tmp2)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1743,7 +1763,7 @@ void CMPSKIPUI_G(struct lilith* vm, struct Instruction* c)
 
 	if((vm->reg[c->reg0]) > utmp1)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1755,7 +1775,7 @@ void CMPSKIPUI_GE(struct lilith* vm, struct Instruction* c)
 
 	if((vm->reg[c->reg0]) >= utmp1)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1767,7 +1787,7 @@ void CMPSKIPUI_LE(struct lilith* vm, struct Instruction* c)
 
 	if((vm->reg[c->reg0]) <= utmp1)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1779,14 +1799,14 @@ void CMPSKIPUI_L(struct lilith* vm, struct Instruction* c)
 
 	if((vm->reg[c->reg0]) < utmp1)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
 void PUSHR(struct lilith* vm, struct Instruction* c)
 {
 	writeout_Reg(vm, vm->reg[c->reg1], vm->reg[c->reg0]);
-	vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
+	vm->reg[c->reg1] = vm->reg[c->reg1] + next_instruction_size(vm);
 }
 void PUSH8(struct lilith* vm, struct Instruction* c)
 {
@@ -1806,7 +1826,7 @@ void PUSH32(struct lilith* vm, struct Instruction* c)
 void POPR(struct lilith* vm, struct Instruction* c)
 {
 	unsigned_vm_register tmp;
-	vm->reg[c->reg1] = vm->reg[c->reg1] - 4;
+	vm->reg[c->reg1] = vm->reg[c->reg1] - reg_size;
 	tmp = readin_Reg(vm, vm->reg[c->reg1]);
 	writeout_Reg(vm, vm->reg[c->reg1], 0);
 	vm->reg[c->reg0] = tmp;
@@ -1903,7 +1923,7 @@ void CMPSKIP_G(struct lilith* vm, struct Instruction* c)
 
 	if(tmp1 > tmp2)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1915,7 +1935,7 @@ void CMPSKIP_GE(struct lilith* vm, struct Instruction* c)
 
 	if(tmp1 >= tmp2)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1923,7 +1943,7 @@ void CMPSKIP_E(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) == (vm->reg[c->reg1]))
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1931,7 +1951,7 @@ void CMPSKIP_NE(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) != (vm->reg[c->reg1]))
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1943,7 +1963,7 @@ void CMPSKIP_LE(struct lilith* vm, struct Instruction* c)
 
 	if(tmp1 <= tmp2)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1955,7 +1975,7 @@ void CMPSKIP_L(struct lilith* vm, struct Instruction* c)
 
 	if(tmp1 < tmp2)
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1963,7 +1983,7 @@ void CMPSKIPU_G(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) > (vm->reg[c->reg1]))
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1971,7 +1991,7 @@ void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) >= (vm->reg[c->reg1]))
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1979,7 +1999,7 @@ void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) <= (vm->reg[c->reg1]))
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
@@ -1987,7 +2007,7 @@ void CMPSKIPU_L(struct lilith* vm, struct Instruction* c)
 {
 	if((vm->reg[c->reg0]) < (vm->reg[c->reg1]))
 	{
-		vm->ip = vm->ip + 4;
+		vm->ip = vm->ip + next_instruction_size(vm);
 	}
 }
 
