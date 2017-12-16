@@ -44,22 +44,31 @@
 	;; Check for EOF
 	JUMP.NP R0 @finish
 
-:.L1
+	;; Write out unprocessed byte
 	LOADUI R1 0x1101            ; Write to TAPE_02
 	FPUTC                       ; Print the Char
+
+	;; Convert byte to nybble
 	CALLI R13 @hex              ; Convert it
+
+	;; Get another byte if nonhex
 	JUMP.NP R0 @loop            ; Don't use nonhex chars
-	JUMP.Z R11 @.L99            ; Jump if toggled
+
+	;; Deal with the case of second nybble
+	JUMP.Z R11 @second_nybble   ; Jump if toggled
 
 	;; Process first byte of pair
 	ANDI R15 R0 0x0F            ; Store First nibble
 	FALSE R11                   ; Flip the toggle
 	JUMP @loop
 
-:.L99
+	;; Combined second nybble in pair with first
+:second_nybble
 	SL0I R15 4                  ; Shift our first nibble
 	ANDI R0 R0 0x0F             ; Mask out top
 	ADD R0 R0 R15               ; Combine nibbles
+
+	;; Writeout and prepare for next cycle
 	LOADI R11 1                 ; Flip the toggle
 	LOADUI R1 0x1100            ; Write the combined byte
 	FPUTC                       ; To TAPE_01
