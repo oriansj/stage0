@@ -65,8 +65,11 @@ class StringGenerator(object):
 
 	@cherrypy.expose
 	def DEBUG(self, Inst=""):
-		UI.Watchpoints
-		UI.Watchpoints.add(int(Inst, 16))
+		if int(Inst, 16) in UI.Watchpoints:
+			UI.Watchpoints.remove(int(Inst, 16))
+			print("Watchpoint Deleted: " + Inst)
+		else:
+			UI.Watchpoints.add(int(Inst, 16))
 		return UI.returnPage()
 
 	@cherrypy.expose

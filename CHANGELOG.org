@@ -16,6 +16,7 @@
 
 * Current
 ** Added
+Added the ability to remove watch points in the webide
 
 ** Changed
 Expanded stage0 web IDE to include the PC and instruction counter
