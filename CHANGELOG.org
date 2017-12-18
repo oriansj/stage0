@@ -17,6 +17,7 @@
 * Current
 ** Added
 Added the ability to remove watch points in the webide
+Added program to search for unusual characters that are not human detectable
 
 ** Changed
 Expanded stage0 web IDE to include the PC and instruction counter
@@ -26,6 +27,7 @@ Fixed behavior of R@ thanks to reepca
 Updated changed checksums for stage2 FORTH
 Corrected behavior when using the web IDE and attempting to set registers that don't exist
 Fixed regression in hex.c caused by refactoring
+Fixed output of large negative numbers in hex
 
 ** Removed
 Removed stage1_assembler-0's need for Memory and reduced size of program while at it

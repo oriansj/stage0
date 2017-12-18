@@ -581,7 +581,7 @@ void eval_immediates(struct Token* p)
 
 		if(('0' == p->Text[0]) || (0 != value))
 		{
-			sprintf(p->Expression, "%04x", value);
+			sprintf(p->Expression, "%04x", value & 0xFFFF);
 		}
 	}
 
