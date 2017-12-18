@@ -1,7 +1,7 @@
 ## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
-## stage0 is free software: you an redistribute it and/or modify
+## stage0 is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
@@ -14,14 +14,11 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-# start
-2D2801e8	# LOADUI R8 @table ; Where we are putting our address pointers
-2D2900ff	# LOADUI R9 0xFF ; Byte mask
-2D2A000f	# LOADUI R10 0x0F ; nybble mask
-2D2B0001	# LOADUI R11 1 ; Our toggle
-0D00002C	# FALSE R12 ; Our PC counter
-2D2D0600	# LOADUI R13 0x600 ; Where we are starting our Stack
-# ;; We will be using R14 for our condition codes
+#:start 0
+2D2B019C	# LOADUI R11 $table ; Where we are putting our address pointers
+0D00003C	# TRUE R12 ; Our toggle
+0D00002D	# FALSE R13 ; Our PC counter
+2D2E0040	# LOADUI R14 $getLables_2 ; our first iterator
 # ;; We will be using R15 for holding our processed nybbles
 
 # ;; Prep TAPE_01
@@ -32,211 +29,194 @@
 2D201101	# LOADUI R0 0x1101
 42100001	# FOPEN_WRITE
 
-# ;; Function for collecting the address of all labels
-# getLables
 2D211100	# LOADUI R1 0x1100 ; Read from tape_01
-42100100	# FGETC ; Read a Char
 
-# ;; Check for EOF
-A0100000	# CMPSKIPI.GE R0 0
-3C00005c	# JUMP @stage2
+# ;; Function for collecting the address of all labels
+#:getLables 24
+42100100	# FGETC ; Read a Char
+2CC00048	# JUMP.NP R0 @stage2 ; Check for EOF
 
 # ;; Check for Label
-A030003a	# CMPSKIPI.NE R0 58 ; If the Char is : the next char is the label
-2D0D0040	# CALLI R13 @storeLabel
+A030003A	# CMPSKIPI.NE R0 58 ; If the Char is : the next char is the label
+3C000030	# JUMP @storeLabel
 
 # ;; Check for pointer to label
-1FE00040	# CMPUI R14 R0 64 ; If the Char is @ the next char is the pointer to a label
-2C6E0014	# JUMP.NE R14 @.L0
+A0300040	# CMPSKIPI.NE R0 64 ; If the Char is @ the next char is the pointer to a label
+3C00001C	# JUMP @ignorePointer
 
-# ;; Ignore the pointer for now
-2D211100	# LOADUI R1 0x1100 ; Read from tape_01
-42100100	# FGETC ; Read a Char
-0FCC0002	# ADDUI R12 R12 2 ; The pointer will end up taking 2 bytes
-3C00ffd4	# JUMP @getLables
-
-# .L0
 # ;; Otherwise attempt to process
-2D0D00fc	# CALLI R13 @hex ; Convert it
-A0100000	# CMPSKIPI.GE R0 0 ; Don't record, nonhex values
-3C00ffc8	# JUMP @getLables ; Move onto Next char
+3C0000DC	# JUMP @hex ; Convert it
 
-# ;; Determine if we got a full byte
-2C9B000c	# JUMP.Z R11 @.L1 ; Jump if toggled
+#:getLables_2 40
+2CC0FFE4	# JUMP.NP R0 @getLables ; Don't record, nonhex values
+090006CC	# NOT R12 R12 ; Flip the toggle
+2C9CFFDC	# JUMP.Z R12 @getLables ; First half doesn't need anything
 
-# ;; Deal with case of first half of byte
-0D00002B	# FALSE R11 ; Flip the toggle
-3C00ffbc	# JUMP @getLables
-
-# .L1
 # ;; Deal with case of second half of byte
-0D00003B	# TRUE R11 ; Flip the toggle
-0FCC0001	# ADDUI R12 R12 1 ; increment PC now that we have a full byte
-3C00ffb0	# JUMP @getLables
+0FDD0001	# ADDUI R13 R13 1 ; increment PC now that we have a full byte
+3C00FFD4	# JUMP @getLables
+
+#:ignorePointer 54
+# ;; Ignore the pointer for now
+42100100	# FGETC ; Read a Char
+0FDD0002	# ADDUI R13 R13 2 ; The pointer will end up taking 2 bytes
+3C00FFC8	# JUMP @getLables
 
 # ;; Function for storing the address of the label
-# storeLabel
+#:storeLabel 60
 # ;; Get the char of the Label
-2D211100	# LOADUI R1 0x1100 ; Read from tape_01
 42100100	# FGETC ; Read a Char
 
-# ;; We require 4 bytes to store the pointer values
-2D500002	# SL0I R0 2 ; Thus we multiply our label by 4
+# ;; We require 2 bytes to store the pointer values
+2D500001	# SL0I R0 1 ; Thus we multiply our label by 2
 
 # ;; Store the current Program counter
-05048C80	# STOREX R12 R8 R0
+0504ADB0	# STOREX16 R13 R11 R0
 
 # ;; Label is safely stored, return
-0D01001D	# RET R13
+3C00FFB8	# JUMP @getLables
 
-# ;; Main Functionality
-# stage2
+
+# ;; Now that we have all of the label addresses,
+# ;; We can process input to produce our output
+#:stage2 70
 # ;; We first need to rewind tape_01 to perform our second pass
 2D201100	# LOADUI R0 0x1100
 42100003	# REWIND
 
-# ;; Reset our toggle and counter, just in case
-2D2B0001	# LOADUI R11 1 ; Our toggle
-0D00002C	# FALSE R12 ; Our PC counter
+# ;; Reset our toggle and counter
+2D291101	# LOADUI R9 0x1101 ; Where to write the combined byte
+0D00003C	# TRUE R12 ; Our toggle
+0D00002D	# FALSE R13 ; Our PC counter
+2D2E00A4	# LOADUI R14 $loop_hex ; The hex return target
 
-# loop
-2D211100	# LOADUI R1 0x1100 ; Read from tape_01
+#:loop 88
 42100100	# FGETC ; Read a Char
-
-# ;; Check for EOF
-A0100000	# CMPSKIPI.GE R0 0
-3C000128	# JUMP @finish
+2CC000FC	# JUMP.NP R0 @finish ; Check for EOF
 
 # ;; Check for Label
-1FE0003a	# CMPUI R14 R0 58 ; Make sure we jump over the label
-2C6E0010	# JUMP.NE R14 @.L97
+A030003A	# CMPSKIPI.NE R0 58 ; Make sure we jump over the label
+3C000044	# JUMP @ignoreLabel
 
-# ;; Consume next char
-2D211100	# LOADUI R1 0x1100 ; Read from tape_01
-42100100	# FGETC ; Read a Char
-3C00ffe0	# JUMP @loop
-
-# .L97
 # ;; Check for Pointer
-1FE00040	# CMPUI R14 R0 64 ; If it is a pointer Deal with it
-2C6E000c	# JUMP.NE R14 @.L98 ; Otherwise attempt to process it
-2D0D004c	# CALLI R13 @storePointer
-3C00ffd0	# JUMP @loop
+A0300040	# CMPSKIPI.NE R0 64 ; If it is a pointer Deal with it
+3C000044	# JUMP @storePointer
 
-# .L98
 # ;; Process Char
-2D210000	# LOADUI R1 0 ; Write to Char to TTY
-42100200	# FPUTC ; Print the Char
-2D0D0078	# CALLI R13 @hex ; Convert it
-12E00000	# CMPI R14 R0 0 ; Check if it is hex
-2C8Effbc	# JUMP.L R14 @loop ; Don't use nonhex chars
-2C9B0010	# JUMP.Z R11 @.L99 ; Jump if toggled
+3C000078	# JUMP @hex ; Convert it
+
+#:loop_hex a4
+2CC0FFE4	# JUMP.NP R0 @loop ; Don't use nonhex chars
+090006CC	# NOT R12 R12 ; Flip the toggle
+2CAC000C	# JUMP.NZ R12 @loop_second_nybble ; Jump if toggled
 
 # ;; Process first byte of pair
-05020F0A	# AND R15 R0 R10 ; Store First nibble
-0D00002B	# FALSE R11 ; Flip the toggle
-3C00ffac	# JUMP @loop
+B0F0000F	# ANDI R15 R0 0xF ; Store First nibble
+3C00FFD4	# JUMP @loop
 
-# .L99
+#:loop_second_nybble b8
 2D5F0004	# SL0I R15 4 ; Shift our first nibble
-0502000A	# AND R0 R0 R10 ; Mask out top
+B000000F	# ANDI R0 R0 0xF ; Mask out top
 0500000F	# ADD R0 R0 R15 ; Combine nibbles
-0D00003B	# TRUE R11 ; Flip the toggle
-2D211101	# LOADUI R1 0x1101 ; Write the combined byte
+09000319	# SWAP R1 R9 ; Set to write to tape_2
 42100200	# FPUTC ; To TAPE_02
-0FCC0001	# ADDUI R12 R12 1 ; increment PC now that we have a full byte
-3C00ff8c	# JUMP @loop ; Try to get more bytes
+09000319	# SWAP R1 R9 ; Restore from tape_1
+0FDD0001	# ADDUI R13 R13 1 ; increment PC now that we have a full byte
+3C00FFB4	# JUMP @loop ; Try to get more bytes
 
-# storePointer
+#:ignoreLabel d8
+# ;; Consume next char
+42100100	# FGETC ; Read a Char
+3C00FFAC	# JUMP @loop
+
+#:storePointer e0
 # ;; Correct the PC to reflect the size of the pointer
-0FCC0002	# ADDUI R12 R12 2 ; Exactly 2 bytes
+0FDD0002	# ADDUI R13 R13 2 ; Exactly 2 bytes
 
 # ;; Get the char of the Label
-2D211100	# LOADUI R1 0x1100 ; Read from tape_01
 42100100	# FGETC ; Read a Char
 
-# ;; Since we stored a full pointer taking up 4 bytes
-2D500002	# SL0I R0 2 ; Thus we multiply our label by 4 to get where it is stored
-05038280	# LOADX R2 R8 R0 ; Load the address of the label
+# ;; Since we stored a short pointer taking up 2 bytes
+2D500001	# SL0I R0 1 ; Thus we multiply our label by 2 to get where it is stored
+0503C3B0	# LOADXU16 R3 R11 R0 ; Load the address of the label
 
 # ;; We now have to calculate the distance and store the 2 bytes
-0500222C	# SUB R2 R2 R12 ; First determine the difference between the current PC and the stored PC of the label
-0F220004	# ADDUI R2 R2 4 ; Adjust for relative positioning
+0500233D	# SUB R3 R3 R13 ; First determine the difference between the current PC and the stored PC of the label
+0F330004	# ADDUI R3 R3 4 ; Adjust for relative positioning
 
 # ;; Store Upper byte
-09000402	# COPY R0 R2
+B003FF00	# ANDI R0 R3 0xFF00 ; Mask out everything but top byte
 2D400008	# SARI R0 8 ; Drop the bottom 8 bits
-05020009	# AND R0 R0 R9 ; Mask out everything but bottom bits
-2D211101	# LOADUI R1 0x1101 ; Write the byte
+09000319	# SWAP R1 R9 ; Write the byte
 42100200	# FPUTC ; To TAPE_02
 
 # ;; Store Lower byte
-05020029	# AND R0 R2 R9 ; Drop everything but the bottom 8 bits
+B00300FF	# ANDI R0 R3 0xFF ; Preserve bottom half for later
 42100200	# FPUTC ; Write the byte to TAPE_02
-0D01001D	# RET R13
+09000319	# SWAP R1 R9 ; Restore Read
+3C00FF74	# JUMP @loop
 
-# hex
+# ;; Hex function
+# ;; Returns hex value of ascii char
+# ;; Or -1 if not a hex char
+#:hex 118
 # ;; Deal with line comments starting with #
-1FE00023	# CMPUI R14 R0 35
-2C5E0060	# JUMP.E R14 @ascii_comment
+A0300023	# CMPSKIPI.NE R0 35
+3C000058	# JUMP @ascii_comment
 
 # ;; Deal with line comments starting with ;
-1FE0003b	# CMPUI R14 R0 59
-2C5E0058	# JUMP.E R14 @ascii_comment
+A030003B	# CMPSKIPI.NE R0 59
+3C000050	# JUMP @ascii_comment
 
 # ;; Deal with all ascii less than '0'
-1FE00030	# CMPUI R14 R0 48
-2C8E0048	# JUMP.L R14 @ascii_other
+A0100030	# CMPSKIPI.GE R0 48
+3C000054	# JUMP @ascii_other
 
 # ;; Deal with '0'-'9'
-1FE00039	# CMPUI R14 R0 57
-2C7E0028	# JUMP.LE R14 @ascii_num
+A0000039	# CMPSKIPI.G R0 57
+3C000028	# JUMP @ascii_num
 
 # ;; Deal with all ascii less than 'A'
-1FE00041	# CMPUI R14 R0 65
-2C8E0038	# JUMP.L R14 @ascii_other
+A0100041	# CMPSKIPI.GE R0 65
+3C000044	# JUMP @ascii_other
 
 # ;; Deal with 'A'-'F'
-1FE00046	# CMPUI R14 R0 70
-2C7E0028	# JUMP.LE R14 @ascii_high
+A0000046	# CMPSKIPI.G R0 70
+3C000028	# JUMP @ascii_high
 
 # ;; Deal with all ascii less than 'a'
-1FE00061	# CMPUI R14 R0 97
-2C8E0028	# JUMP.L R14 @ascii_other
+A0100061	# CMPSKIPI.GE R0 97
+3C000034	# JUMP @ascii_other
 
 # ;;  Deal with 'a'-'f'
-1FE00066	# CMPUI R14 R0 102
-2C7E0010	# JUMP.LE R14 @ascii_low
+A0000066	# CMPSKIPI.G R0 102
+3C000010	# JUMP @ascii_low
 
 # ;; Ignore the rest
-3C00001c	# JUMP @ascii_other
+3C000028	# JUMP @ascii_other
 
-# ascii_num
+#:ascii_num 15c
 11000030	# SUBUI R0 R0 48
-0D01001D	# RET R13
+0D01000E	# JSR_COROUTINE R14
 
-# ascii_low
+#:ascii_low 164
 11000057	# SUBUI R0 R0 87
-0D01001D	# RET R13
+0D01000E	# JSR_COROUTINE R14
 
-# ascii_high
+#:ascii_high 16c
 11000037	# SUBUI R0 R0 55
-0D01001D	# RET R13
+0D01000E	# JSR_COROUTINE R14
 
-# ascii_other
-0D000030	# TRUE R0
-0D01001D	# RET R13
-
-# ascii_comment
-2D211100	# LOADUI R1 0x1100 ; Read from TAPE_01
+#:ascii_comment 174
 42100100	# FGETC ; Read another char
-1FE0000a	# CMPUI R14 R0 10 ; Stop at the end of line
-2D210000	# LOADUI R1 0 ; Write to TTY
-42100200	# FPUTC ; The char we just read
-2C6Effec	# JUMP.NE R14 @ascii_comment ; Otherwise keep looping
-3C00ffe0	# JUMP @ascii_other
+A020000A	# CMPSKIPI.E R0 10 ; Stop at the end of line
+3C00FFF8	# JUMP @ascii_comment ; Otherwise keep looping
 
-# finish
+#:ascii_other 180
+0D000030	# TRUE R0
+0D01000E	# JSR_COROUTINE R14
+
+#:finish 188
 2D201100	# LOADUI R0 0x1100 ; Close TAPE_01
 42100002	# FCLOSE
 2D201101	# LOADUI R0 0x1101 ; Close TAPE_02
@@ -244,4 +224,4 @@ A0100000	# CMPSKIPI.GE R0 0
 FFFFFFFF	# HALT
 
 # ;; Where all of our pointers will be stored for our locations
-# table
+#:table 19c

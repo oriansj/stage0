@@ -21,6 +21,7 @@ Added program to search for unusual characters that are not human detectable
 
 ** Changed
 Expanded stage0 web IDE to include the PC and instruction counter
+Performance tuned hex1 to reduce both size and instruction count
 
 ** Fixed
 Fixed behavior of R@ thanks to reepca
@@ -31,6 +32,7 @@ Fixed output of large negative numbers in hex
 
 ** Removed
 Removed stage1_assembler-0's need for Memory and reduced size of program while at it
+Removed stage1_assembler-1's hex1 implementation as it ended up being useless in bootstrapping
 
 * 0.0.9 - 2017-08-17
 ** Added
