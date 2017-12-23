@@ -15,7 +15,7 @@
 ; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 :start
-	LOADUI R11 $table           ; Where we are putting our address pointers
+	LOADUI R11 0x200            ; Where we are putting our address pointers
 	TRUE R12                    ; Our toggle
 	FALSE R13                   ; Our PC counter
 	LOADUI R14 $getLables_2     ; our first iterator
@@ -179,23 +179,16 @@
 	;; Deal with all ascii less than 'A'
 	CMPSKIPI.GE R0 65
 	JUMP @ascii_other
+	;; Unset high bit to set everything into uppercase
+	ANDI R0 R0 0xDF
 	;; Deal with 'A'-'F'
 	CMPSKIPI.G R0 70
 	JUMP @ascii_high
-	;; Deal with all ascii less than 'a'
-	CMPSKIPI.GE R0 97
-	JUMP @ascii_other
-	;;  Deal with 'a'-'f'
-	CMPSKIPI.G R0 102
-	JUMP @ascii_low
 	;; Ignore the rest
 	JUMP @ascii_other
 
 :ascii_num
 	SUBUI R0 R0 48
-	JSR_COROUTINE R14
-:ascii_low
-	SUBUI R0 R0 87
 	JSR_COROUTINE R14
 :ascii_high
 	SUBUI R0 R0 55

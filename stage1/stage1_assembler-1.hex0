@@ -15,7 +15,7 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 #:start 0
-2D2B019C	# LOADUI R11 $table ; Where we are putting our address pointers
+2D2B0200	# LOADUI R11 0x200 ; Where we are putting our address pointers
 0D00003C	# TRUE R12 ; Our toggle
 0D00002D	# FALSE R13 ; Our PC counter
 2D2E0040	# LOADUI R14 $getLables_2 ; our first iterator
@@ -92,7 +92,8 @@ A0300040	# CMPSKIPI.NE R0 64 ; If the Char is @ the next char is the pointer to 
 
 #:loop 88
 42100100	# FGETC ; Read a Char
-2CC000FC	# JUMP.NP R0 @finish ; Check for EOF
+# ;; Check for EOF
+2CC000E8	# JUMP.NP R0 @finish
 
 # ;; Check for Label
 A030003A	# CMPSKIPI.NE R0 58 ; Make sure we jump over the label
@@ -162,61 +163,49 @@ B00300FF	# ANDI R0 R3 0xFF ; Preserve bottom half for later
 #:hex 118
 # ;; Deal with line comments starting with #
 A0300023	# CMPSKIPI.NE R0 35
-3C000058	# JUMP @ascii_comment
+3C000044	# JUMP @ascii_comment
 
 # ;; Deal with line comments starting with ;
 A030003B	# CMPSKIPI.NE R0 59
-3C000050	# JUMP @ascii_comment
+3C00003C	# JUMP @ascii_comment
 
 # ;; Deal with all ascii less than '0'
 A0100030	# CMPSKIPI.GE R0 48
-3C000054	# JUMP @ascii_other
+3C000040	# JUMP @ascii_other
 
 # ;; Deal with '0'-'9'
 A0000039	# CMPSKIPI.G R0 57
-3C000028	# JUMP @ascii_num
+3C00001C	# JUMP @ascii_num
 
 # ;; Deal with all ascii less than 'A'
 A0100041	# CMPSKIPI.GE R0 65
-3C000044	# JUMP @ascii_other
+3C000030	# JUMP @ascii_other
+
+# ;; Unset high bit to set everything into uppercase
+B00000DF	# ANDI R0 R0 0xDF
 
 # ;; Deal with 'A'-'F'
 A0000046	# CMPSKIPI.G R0 70
-3C000028	# JUMP @ascii_high
-
-# ;; Deal with all ascii less than 'a'
-A0100061	# CMPSKIPI.GE R0 97
-3C000034	# JUMP @ascii_other
-
-# ;;  Deal with 'a'-'f'
-A0000066	# CMPSKIPI.G R0 102
-3C000010	# JUMP @ascii_low
+3C000010	# JUMP @ascii_high
 
 # ;; Ignore the rest
-3C000028	# JUMP @ascii_other
+3C000020	# JUMP @ascii_other
 
-#:ascii_num 15c
+#:ascii_num 150
 11000030	# SUBUI R0 R0 48
 0D01000E	# JSR_COROUTINE R14
-
-#:ascii_low 164
-11000057	# SUBUI R0 R0 87
-0D01000E	# JSR_COROUTINE R14
-
-#:ascii_high 16c
+#:ascii_high 158
 11000037	# SUBUI R0 R0 55
 0D01000E	# JSR_COROUTINE R14
-
-#:ascii_comment 174
+#:ascii_comment 160
 42100100	# FGETC ; Read another char
 A020000A	# CMPSKIPI.E R0 10 ; Stop at the end of line
 3C00FFF8	# JUMP @ascii_comment ; Otherwise keep looping
-
-#:ascii_other 180
+#:ascii_other 16c
 0D000030	# TRUE R0
 0D01000E	# JSR_COROUTINE R14
 
-#:finish 188
+#:finish 174
 2D201100	# LOADUI R0 0x1100 ; Close TAPE_01
 42100002	# FCLOSE
 2D201101	# LOADUI R0 0x1101 ; Close TAPE_02
@@ -224,4 +213,4 @@ A020000A	# CMPSKIPI.E R0 10 ; Stop at the end of line
 FFFFFFFF	# HALT
 
 # ;; Where all of our pointers will be stored for our locations
-#:table 19c
+#:table 188

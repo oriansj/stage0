@@ -93,7 +93,7 @@ So we are going to limit ourselves to single character labels and pointers (:a a
 To build our improved hex assembler:
 ./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/stage1_assembler-1.hex0  --tape_02 roms/stage1_assembler-1
 
-roms/stage1_assembler-1 should have the sha256sum of e59338381ca3ab01a14fa0fc85d0fa1c6e4d59a06ac2d9d75668d878ab469769
+roms/stage1_assembler-1 should have the sha256sum of b6aabcc3418a0a28f4ed32ace43b20103d9d21dffae03e7936cb14fa0e044013
 
 * Step 4 get even long label support
 Now that we have labels and pointers, I want the ability to have labels like :main_function and :stack_start and be able to reference the absolute address of things in my code like $stack_start and complex objects that have 32bit pointers like &foo_bar.
