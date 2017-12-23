@@ -60,7 +60,7 @@ or
 If you fail to specificy --tape_01 and/or --tape_02, this will produce tape_01 with the resulting binary and tape_02 with the source code input
 (this is really important for bootstrapping a text editor)
 
-stage1_assembler-0 should have the sha256sum of 85e5c06ac07f2b97d01dfb5454f5a698b3ec6c21fe53bf3fa57b386aac7b9601
+stage1_assembler-0 should have the sha256sum of 3ea7fed1429400c1d6fc5b85180c4114755dfb1e6b88d69e7ecc465a40523bc8
 
 * Step 2b Lets make a Line text editor
 Now I don't know about you but I suck at not making mistakes and having to fix a whole line instead of an entire file is a hell of an improvement.

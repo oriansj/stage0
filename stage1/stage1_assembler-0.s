@@ -27,11 +27,11 @@
 	LOADUI R0 0x1101
 	FOPEN_WRITE
 
+	LOADUI R1 0x1100            ; Read from tape_01
 
 ;; Main program loop
 ;; Halts when done
 :loop
-	LOADUI R1 0x1100            ; Read from tape_01
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
@@ -39,7 +39,7 @@
 
 	JUMP @hex                   ; Convert it
 :loop_1
-	JUMP.NP R0 @loop             ; Don't use nonhex chars
+	JUMP.NP R0 @loop            ; Don't use nonhex chars
 	JUMP.Z R11 @loop_2          ; Jump if toggled
 
 	;; Process first byte of pair
@@ -54,6 +54,7 @@
 	LOADI R11 1                 ; Flip the toggle
 	LOADUI R1 0x1101            ; Write the combined byte
 	FPUTC                       ; To TAPE_02
+	LOADUI R1 0x1100            ; Read from tape_01
 	JUMP @loop                  ; Try to get more bytes
 
 
@@ -63,52 +64,41 @@
 ;; Returns to whatever called it
 :hex
 	;; Deal with line comments starting with #
-	CMPUI R14 R0 35
-	JUMP.E R14 @ascii_comment
+	CMPSKIPI.NE R0 35
+	JUMP @ascii_comment
 	;; Deal with line comments starting with ;
-	CMPUI R14 R0 59
-	JUMP.E R14 @ascii_comment
+	CMPSKIPI.NE R0 59
+	JUMP @ascii_comment
 	;; Deal with all ascii less than '0'
-	CMPUI R14 R0 48
-	JUMP.L R14 @ascii_other
+	CMPSKIPI.GE R0 48
+	JUMP @ascii_other
 	;; Deal with '0'-'9'
-	CMPUI R14 R0 57
-	JUMP.LE R14 @ascii_num
+	CMPSKIPI.G R0 57
+	JUMP @ascii_num
+	;; Unset high bit to set everything into uppercase
+	ANDI R0 R0 0xDF
 	;; Deal with all ascii less than 'A'
-	CMPUI R14 R0 65
-	JUMP.L R14 @ascii_other
+	CMPSKIPI.GE R0 65
+	JUMP @ascii_other
 	;; Deal with 'A'-'F'
-	CMPUI R14 R0 70
-	JUMP.LE R14 @ascii_high
-	;; Deal with all ascii less than 'a'
-	CMPUI R14 R0 97
-	JUMP.L R14 @ascii_other
-	;;  Deal with 'a'-'f'
-	CMPUI R14 R0 102
-	JUMP.LE R14 @ascii_low
+	CMPSKIPI.G R0 70
+	JUMP @ascii_high
 	;; Ignore the rest
 	JUMP @ascii_other
 
 :ascii_num
 	SUBUI R0 R0 48
 	JUMP @loop_1
-:ascii_low
-	SUBUI R0 R0 87
-	JUMP @loop_1
 :ascii_high
 	SUBUI R0 R0 55
 	JUMP @loop_1
+:ascii_comment
+	FGETC                       ; Read another char
+	CMPSKIPI.E R0 10            ; Stop at the end of line
+	JUMP @ascii_comment         ; Otherwise keep looping
 :ascii_other
 	TRUE R0
 	JUMP @loop_1
-:ascii_comment
-	LOADUI R1 0x1100            ; Read from TAPE_01
-	FGETC                       ; Read another char
-	CMPUI R14 R0 10             ; Stop at the end of line
-	LOADUI R1 0                 ; Write to TTY
-	FPUTC                       ; The char we just read
-	JUMP.NE R14 @ascii_comment  ; Otherwise keep looping
-	JUMP @ascii_other
 
 
 ;; Finish function
