@@ -23,6 +23,7 @@ Added program to search for unusual characters that are not human detectable
 Expanded stage0 web IDE to include the PC and instruction counter
 Performance tuned hex1 to reduce both size and instruction count
 Performance tuned hex0 to reduce both size and instruction count
+Performance tuned hex2 to reduce both size and isntruction count
 
 ** Fixed
 Fixed behavior of R@ thanks to reepca
@@ -35,6 +36,8 @@ Updated checksums to reflect changed made in performance tuning
 ** Removed
 Removed stage1_assembler-0's need for Memory and reduced size of program while at it
 Removed stage1_assembler-1's hex1 implementation as it ended up being useless in bootstrapping
+Removed stage1_assembler-2's hex0 and hex2 implementation as it ended up being useless in bootstrapping
+Removed Checksums.org as it didn't really end up as useful at this time.
 
 * 0.0.9 - 2017-08-17
 ** Added

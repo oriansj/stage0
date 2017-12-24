@@ -14,24 +14,45 @@
 ; You should have received a copy of the GNU General Public License
 ; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
+;; Node format:
+;; PREV->pointer (register size)
+;; Address (register size)
+;; NULL terminated string (strln + 1)
+
 :start
-	LOADUI R13 @table           ; Where we are putting our table
-	;; We will be using R14 for our condition codes
-	LOADUI R15 0x7FFF           ; We will be using R15 for our stack
+	;; R1 is reserved for reading/writing bytes (don't touch)
+	;; We will be using R8 for our malloc pointer
+	;; We will be using R9 for our header size in bytes
+	;; We will be using R10 for our toggle
+	;; We will be using R11 for our PC counter
+	;; We will be using R12 for holding our nybble
+	;; We will be using R13 for our register size in bytes
+	;; We will be using R14 for our head-node
+	LOADUI R15 $stack           ; We will be using R15 for our stack
 
 
 ;; Main program functionality
 ;; Reads in Tape_01 and writes out results onto Tape_02
 ;; Accepts no arguments and HALTS when done
 :main
+	;; Initialize header info
+	READSCID R0                 ; Get process capabilities
+	ANDI R1 R0 0xF              ; We only care about size nybble
+	LOADUI R0 1                 ; Assume we are 8bit
+	SL0 R13 R0 R1               ; Let size nybble correct answer
+	COPY R9 R13                 ; Prepare Header size
+	SL0I R9 1                   ; Double to make proper size
+
 	;; Prep TAPE_01
 	LOADUI R0 0x1100
 	FOPEN_READ
 
 	;; Intialize environment
+	LOADUI R1 0x1100            ; Read from tape_01
 	FALSE R12                   ; Set holder to zero
 	FALSE R11                   ; Set PC counter to zero
-	LOADUI R10 1                ; Our toggle
+	FALSE R10                   ; Our toggle
+	LOADUI R8 0x500             ; Where we want our heap to start
 
 	;; Perform first pass
 	CALLI R15 @first_pass
@@ -43,9 +64,7 @@
 	;; Reintialize environment
 	FALSE R12                   ; Set holder to zero
 	FALSE R11                   ; Set PC counter to zero
-	LOADUI R10 1                ; Our toggle
-	LOADUI R9 0xFF              ; Byte mask
-	LOADUI R8 0x0F              ; nybble mask
+	FALSE R10                   ; Our toggle
 
 	;; Prep TAPE_02
 	LOADUI R0 0x1101
@@ -66,7 +85,6 @@
 ;; Will Overwrite R0 R10 R11
 ;; Returns to Main function when done
 :first_pass
-	LOADUI R1 0x1100            ; Read from tape_01
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
@@ -92,19 +110,13 @@
 
 	;; Otherwise attempt to process
 	CALLI R15 @hex              ; Convert it
-	CMPSKIPI.GE R0 0            ; Don't record, nonhex values
-	JUMP @first_pass            ; Move onto Next char
+	JUMP.NP R0 @first_pass      ; Don't record, nonhex values
 
-	;; Determine if we got a full byte
-	JUMP.Z R10 @first_pass_0    ; Jump if toggled
+	;; Flip the toggle
+	NOT R10 R10
+	JUMP.Z R10 @first_pass      ; Jump if toggled
 
-	;; Deal with case of first half of byte
-	FALSE R10                   ; Flip the toggle
-	JUMP @first_pass
-
-:first_pass_0
 	;; Deal with case of second half of byte
-	TRUE R10                    ; Flip the toggle
 	ADDUI R11 R11 1             ; increment PC now that that we have a full byte
 	JUMP @first_pass
 
@@ -115,7 +127,6 @@
 ;; Will Overwrite R0 R10 R11
 ;; Returns to Main function when done
 :second_pass
-	LOADUI R1 0x1100            ; Read from tape_01
 	FGETC                       ; Read a Char
 
 	;; Check for EOF
@@ -142,21 +153,21 @@
 	JUMP @second_pass           ; Move onto Next char
 
 	;; Determine if we got a full byte
+	NOT R10 R10
 	JUMP.Z R10 @second_pass_0   ; Jump if toggled
 
 	;; Deal with case of first half of byte
-	AND R12 R0 R8               ; Store our first nibble
-	FALSE R10                   ; Flip the toggle
+	ANDI R12 R0 0x0F            ; Store our first nibble
 	JUMP @second_pass
 
 :second_pass_0
 	;; Deal with case of second half of byte
 	SL0I R12 4                  ; Shift our first nybble
-	AND R0 R0 R8                ; Mask out top
+	ANDI R0 R0 0x0F             ; Mask out top
 	ADD R0 R0 R12               ; Combine nybbles
-	TRUE R10                    ; Flip the toggle
 	LOADUI R1 0x1101            ; Write the combined byte
 	FPUTC                       ; To TAPE_02
+	LOADUI R1 0x1100            ; Read from tape_01
 	ADDUI R11 R11 1             ; increment PC now that that we have a full byte
 	JUMP @second_pass
 
@@ -167,32 +178,24 @@
 ;; Will overwrite R0
 ;; Returns to first pass when done
 :storeLabel
-	LOADR R0 @current_index     ; Get address of first open index
-	CMPSKIPI.NE R0 0            ; If zero intialize from R13
-	COPY R0 R13
+	COPY R0 R8                  ; get current malloc
+	ADD R8 R8 R9                ; update malloc
 
-	;; Store the PC of the label
-	STORE32 R11 R0 0
+	;; Add node info
+	STOREX R11 R0 R13           ; Store the PC of the label
+	STORE R14 R0 0              ; Store the Previous Head
+	MOVE R14 R0                 ; Update Head
 
 	;; Store the name of the Label
-	ADDUI R0 R0 4               ; Increment the offset of the index
 	CALLI R15 @writeout_token
 
-	;; Update our index
-	ADDUI R0 R0 60              ; Hopefully our tokens are less than 60 bytes long
-	STORER R0 @current_index
 	;; And be done
 	JUMP @first_pass
-
-;; Where we are storing the location of the next free table entry
-:current_index
-	NOP
 
 
 ;; StoreRelativepointer function
 ;; Deals with the special case of relative pointers
-;; Clears Temp
-;; Stores string in Temp
+;; Stores string
 ;; Finds match in Table
 ;; Writes out the offset
 ;; Modifies R0 R11
@@ -200,11 +203,7 @@
 :StoreRelativePointer
 	;; Correct the PC to reflect the size of the pointer
 	ADDUI R11 R11 2             ; Exactly 2 bytes
-	LOADUI R0 $Temp             ; Set where we want to shove our string
-	CALLI R15 @Clear_string     ; Clear it
-	CALLI R15 @writeout_token   ; Write it
 	CALLI R15 @Match_string     ; Find the Match
-	LOAD32 R0 R0 -4             ; Get the value we care about
 	SUB R0 R0 R11               ; Determine the difference
 	ADDUI R0 R0 4               ; Adjust for relative positioning
 	CALLI R15 @ProcessImmediate ; Write out the value
@@ -213,8 +212,7 @@
 
 ;; StoreAbsolutepointer function
 ;; Deals with the special case of absolute pointers
-;; Clears Temp
-;; Stores string in Temp
+;; Stores string
 ;; Finds match in Table
 ;; Writes out the absolute address of match
 ;; Modifies R0 R11
@@ -222,19 +220,14 @@
 :StoreAbsolutePointer
 	;; Correct the PC to reflect the size of the pointer
 	ADDUI R11 R11 2             ; Exactly 2 bytes
-	LOADUI R0 $Temp             ; Set where we want to shove our string
-	CALLI R15 @Clear_string     ; Clear it
-	CALLI R15 @writeout_token   ; Write it
 	CALLI R15 @Match_string     ; Find the Match
-	LOAD32 R0 R0 -4             ; Get the value we care about
 	CALLI R15 @ProcessImmediate ; Write out the value
 	JUMP @second_pass
 
 
 ;; StoreAbsoluteAddress function
 ;; Deal with the special case of absolute Addresses
-;; Clear Temp
-;; Stores string in Temp
+;; Stores string
 ;; Finds match in Table
 ;; Writes out the full absolute address [32 bit machine]
 ;; Modifies R0 R11
@@ -242,36 +235,26 @@
 :StoreAbsoluteAddress
 	;; COrrect the PC to reflect the size of the address
 	ADDUI R11 R11 4             ; 4 Bytes on 32bit machines
-	LOADUI R0 $Temp             ; Set where we ant to shove our string
-	CALLI R15 @Clear_string     ; Clear it
-	CALLI R15 @writeout_token   ; Write it
 	CALLI R15 @Match_string     ; Find the Match
-	PUSHR R14 R15               ; Get a temp storage place
-	LOAD32 R14 R0 -4            ; Get the value we care about
-	COPY R0 R14                 ; We need to print the top 2 bytes first
+	ANDI R2 R0 0xFFFF           ; Save bottom half for next function
 	SARI R0 16                  ; Drop bottom 16 bits
 	CALLI R15 @ProcessImmediate ; Write out top 2 bytes
-	LOADUI R0 0xFFFF            ; Provide mask to keep bottom 2 bytes
-	AND R0 R0 R14               ; Drop top 16 bits
-	POPR R14 R15                ; Restore R14
+	MOVE R0 R2                  ; Use the saved 16bits
 	CALLI R15 @ProcessImmediate ; Write out bottom 2 bytes
 	JUMP @second_pass
 
 
 ;; Writeout Token Function
 ;; Writes the Token [minus first char] to the address
-;; It recieves in R0 until it reaches a delimiter
-;; All register values are preserved
-;; Returns to whatever called it
+;; given by malloc and updates malloc pointer
+;; Returns starting address of string
 :writeout_token
 	;; Preserve registers
-	PUSHR R0 R15
 	PUSHR R1 R15
 	PUSHR R2 R15
 
 	;; Initialize
-	MOVE R2 R0                  ; Set R2 as our index
-	LOADUI R1 0x1100            ; Read from tape_01
+	COPY R2 R8                  ; Get current malloc pointer
 
 	;; Our core loop
 :writeout_token_0
@@ -284,54 +267,31 @@
 	JUMP @writeout_token_done
 	CMPSKIPI.NE R0 10           ; Finished if newline
 	JUMP @writeout_token_done
+	CMPSKIPI.NE R0 -1           ; Finished if EOF
+	JUMP @writeout_token_done
 
 	;; Deal with valid input
-	STORE8 R0 R2 0              ; Write out the byte
-	ADDUI R2 R2 1               ; Increment
+	STORE8 R0 R8 0              ; Write out the byte
+	ADDUI R8 R8 1               ; Increment
 	JUMP @writeout_token_0      ; Keep looping
 
 	;; Clean up now that we are done
 :writeout_token_done
+	;; Fix malloc
+	ADDUI R8 R8 1
+	;; Prepare for return
+	MOVE R0 R2
 	;; Restore registers
 	POPR R2 R15
 	POPR R1 R15
-	POPR R0 R15
 	;; And be done
 	RET R15
 
 
-;; Clear string function
-;; Clears string pointed at by the value of R0
-;; Until a null character is reached
-;; Doesn't alter any registers
-;; Returns to the function that calls it
-:Clear_string
-	;; Preserve registers
-	PUSHR R0 R15
-	PUSHR R1 R15
-	PUSHR R2 R15
-	PUSHR R3 R15
-	;; Setup registers
-	MOVE R1 R0
-	LOADUI R2 0
-	LOADUI R3 0
-:clear_byte
-	LOADXU8 R0 R1 R2            ; Get the byte
-	STOREX8 R3 R1 R2            ; Overwrite with a Zero
-	ADDUI R2 R2 1               ; Prep for next loop
-	JUMP.NZ R0 @clear_byte      ; Stop if byte is NULL
-;; Done
-	;; Restore registers
-	POPR R3 R15
-	POPR R2 R15
-	POPR R1 R15
-	POPR R0 R15
-	RET R15
-
-
 ;; Match string function
-;; Walks down table until match is found
-;; Then returns address of matching string in R0
+;; Walks down list until match is found or returns -1
+;; Reads a token
+;; Then returns address of match in R0
 ;; Returns to whatever called it
 :Match_string
 	;; Preserve registers
@@ -339,23 +299,24 @@
 	PUSHR R2 R15
 
 	;; Initialize for Loop
-	LOADUI R1 $Temp             ; We always compare against Temp
-	LOADUI R2 $table            ; Begin at start of table
-	ADDUI R2 R2 4               ; Where the string is located
+	CALLI R15 @writeout_token   ; Get our desired string
+	MOVE R1 R0                  ; Position our desired string
+	COPY R2 R14                 ; Begin at our head node
 
 ;; Loop until we find a match
 :Match_string_0
-	COPY R0 R2                  ; Set R0 to our current string
+	ADD R0 R2 R9                ; Where the string is located
 	CALLI R15 @strcmp
 	JUMP.E R0 @Match_string_1   ; It is a match!
 	;; Prepare for next loop
-	LOADUI R1 $Temp             ; That function clears R1
-	ADDUI R2 R2 64              ; Each Index is 64 bytes
-	JUMP @Match_string_0        ; Keep looping
+	LOAD R2 R2 0                ; Move to next node
+	JUMP.NZ R2 @Match_string_0  ; Keep looping
+	TRUE R2                     ; Set result to -1 if not found
 
 :Match_string_1
 	;; Store the correct answer
-	MOVE R0 R2
+	CMPSKIPI.E R2 -1            ; Otherwise get the value
+	LOADX R0 R2 R13             ; Get the value we care about
 	;; Restore registers
 	POPR R2 R15
 	POPR R1 R15
@@ -365,10 +326,10 @@
 ;; Our simple string compare function
 ;; Recieves two pointers in R0 and R1
 ;; Returns the difference between the strings in R0
-;; Clears R1
 ;; Returns to whatever called it
 :strcmp
 	;; Preserve registers
+	PUSHR R1 R15
 	PUSHR R2 R15
 	PUSHR R3 R15
 	PUSHR R4 R15
@@ -377,18 +338,19 @@
 	MOVE R3 R1
 	LOADUI R4 0
 :cmpbyte
-	LOADXU8 R0 R2 R4        ; Get a byte of our first string
-	LOADXU8 R1 R3 R4        ; Get a byte of our second string
-	ADDUI R4 R4 1           ; Prep for next loop
-	CMP R1 R0 R1            ; Compare the bytes
-	CMPSKIPI.E R0 0         ; Stop if byte is NULL
-	JUMP.E R1 @cmpbyte      ; Loop if bytes are equal
+	LOADXU8 R0 R2 R4            ; Get a byte of our first string
+	LOADXU8 R1 R3 R4            ; Get a byte of our second string
+	ADDUI R4 R4 1               ; Prep for next loop
+	CMP R1 R0 R1                ; Compare the bytes
+	CMPSKIPI.E R0 0             ; Stop if byte is NULL
+	JUMP.E R1 @cmpbyte          ; Loop if bytes are equal
 ;; Done
-	MOVE R0 R1              ; Prepare for return
+	MOVE R0 R1                  ; Prepare for return
 	;; Restore registers
 	POPR R4 R15
 	POPR R3 R15
 	POPR R2 R15
+	POPR R1 R15
 	RET R15
 
 
@@ -403,16 +365,15 @@
 	PUSHR R1 R15
 	PUSHR R2 R15
 	;; Break up Immediate
-	AND R2 R0 R9            ; Put lower byte in R2
-	SARI R0 8               ; Drop Bottom byte from R0
-	AND R0 R0 R9            ; Maskout everything outside of top byte
+	ANDI R2 R0 0xFF             ; Put lower byte in R2
+	SARI R0 8                   ; Drop Bottom byte from R0
+	ANDI R0 R0 0xFF             ; Maskout everything outside of top byte
 	;; Write out Top Byte
 	LOADUI R1 0x1101            ; Write the byte
 	FPUTC                       ; To TAPE_02
 
 	;; Write out bottom Byte
 	MOVE R0 R2                  ; Put Lower byte in R0
-	LOADUI R1 0x1101            ; Write the byte
 	FPUTC                       ; To TAPE_02
 
 	;; Restore registers
@@ -460,7 +421,6 @@
 ;; This Will alter the values of R0 R1
 ;; Returns back to whatever called it
 :throwAwayToken
-	LOADUI R1 0x1100            ; Read from tape_01
 	FGETC                       ; Read a Char
 
 	;; Stop looping if space
@@ -475,6 +435,10 @@
 	CMPSKIPI.NE R0 10
 	RET R15
 
+	;; Stop looping if EOF
+	CMPSKIPI.NE R0 -1
+	RET R15
+
 	;; Otherwise keep looping
 	JUMP @throwAwayToken
 
@@ -484,75 +448,47 @@
 ;; Identifying hex characters
 ;; Purging line comments
 ;; Returning the converted value of a hex character
-;; This function will alter the values of R0 R14
+;; This function will alter the values of R0
 ;; Returns back to whatever called it
 :hex
 	;; Deal with line comments starting with #
-	CMPUI R14 R0 35
-	JUMP.E R14 @ascii_comment
+	CMPSKIPI.NE R0 35
+	JUMP @ascii_comment
 	;; Deal with line comments starting with ;
-	CMPUI R14 R0 59
-	JUMP.E R14 @ascii_comment
+	CMPSKIPI.NE R0 59
+	JUMP @ascii_comment
 	;; Deal with all ascii less than '0'
-	CMPUI R14 R0 48
-	JUMP.L R14 @ascii_other
+	CMPSKIPI.GE R0 48
+	JUMP @ascii_other
 	;; Deal with '0'-'9'
-	CMPUI R14 R0 57
-	JUMP.LE R14 @ascii_num
+	CMPSKIPI.G R0 57
+	JUMP @ascii_num
 	;; Deal with all ascii less than 'A'
-	CMPUI R14 R0 65
-	JUMP.L R14 @ascii_other
+	CMPSKIPI.GE R0 65
+	JUMP @ascii_other
+	;; Unset high bit to set everything into uppercase
+	ANDI R0 R0 0xDF
 	;; Deal with 'A'-'F'
-	CMPUI R14 R0 70
-	JUMP.LE R14 @ascii_high
-	;; Deal with all ascii less than 'a'
-	CMPUI R14 R0 97
-	JUMP.L R14 @ascii_other
-	;;  Deal with 'a'-'f'
-	CMPUI R14 R0 102
-	JUMP.LE R14 @ascii_low
+	CMPSKIPI.G R0 70
+	JUMP @ascii_high
 	;; Ignore the rest
 	JUMP @ascii_other
 
 :ascii_num
 	SUBUI R0 R0 48
 	RET R15
-:ascii_low
-	SUBUI R0 R0 87
-	RET R15
 :ascii_high
 	SUBUI R0 R0 55
 	RET R15
+:ascii_comment
+	FGETC                       ; Read another char
+	JUMP.NP R0 @ascii_other     ; Stop with EOF
+	CMPSKIPI.E R0 10            ; Stop at the end of line
+	JUMP @ascii_comment         ; Otherwise keep looping
 :ascii_other
 	TRUE R0
 	RET R15
-:ascii_comment
-	LOADUI R1 0x1100            ; Read from TAPE_01
-	FGETC                       ; Read another char
-	CMPUI R14 R0 10             ; Stop at the end of line
-	JUMP.NE R14 @ascii_comment  ; Otherwise keep looping
-	JUMP @ascii_other
 
 
-;; Where we are storing our Temp
-:Temp
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-	NOP
-
-
-;; Where we will putting our Table
-:table
+;; Where we will putting our stack
+:stack
