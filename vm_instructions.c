@@ -1750,7 +1750,7 @@ void CMPSKIPUI_L(struct lilith* vm, struct Instruction* c)
 void PUSHR(struct lilith* vm, struct Instruction* c)
 {
 	writeout_bytes(vm, vm->reg[c->reg1], vm->reg[c->reg0], reg_size);
-	vm->reg[c->reg1] = vm->reg[c->reg1] + next_instruction_size(vm);
+	vm->reg[c->reg1] = vm->reg[c->reg1] + reg_size;
 }
 void PUSH8(struct lilith* vm, struct Instruction* c)
 {

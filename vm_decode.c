@@ -16,7 +16,7 @@
  */
 
 #include "vm.h"
-unsigned_vm_register performance_counter;
+uint64_t performance_counter;
 
 #ifdef TRACE
 void record_trace(char* c);
