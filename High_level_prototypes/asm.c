@@ -534,6 +534,23 @@ void hexify_string(char* s, char* d, int max)
 	}
 }
 
+int get_hex_size(char* a)
+{
+	int count = 0;
+	while(0 != a[0])
+	{
+		switch(a[0])
+		{
+			case '0' ... '9':
+			case 'A' ... 'F':
+			case 'a' ... 'f': count = count + 1; break;
+			default: break;
+		}
+		a = a + 1;
+	}
+	return (count / 2);
+}
+
 void process_string(struct Token* p)
 {
 	/* Adjust hex and ascii strings */
@@ -542,7 +559,7 @@ void process_string(struct Token* p)
 		if('\'' == p->Text[0])
 		{ /* Handle Hex strings */
 			strncpy(p->Expression, p->Text + 1, max_string);
-			p->size = strnlen(p->Expression, max_string)/2;
+			p->size = get_hex_size(p->Expression);
 		}
 		else if('"' == p->Text[0])
 		{ /* Handle ASCII strings */
