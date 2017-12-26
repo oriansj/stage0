@@ -32,6 +32,7 @@ Corrected behavior when using the web IDE and attempting to set registers that d
 Fixed regression in hex.c caused by refactoring
 Fixed output of large negative numbers in hex
 Updated checksums to reflect changed made in performance tuning
+Fixed M0 performance by a factor of 4
 
 ** Removed
 Removed stage1_assembler-0's need for Memory and reduced size of program while at it

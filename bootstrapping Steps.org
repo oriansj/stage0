@@ -116,7 +116,7 @@ To build our line macro assembler:
 
 Now with our new line macro assembler, which with our definition file High_level_prototypes/defs means we can write straight assembly from here on out.
 
-roms/M0 should have the sha256sum of 2b9727381aec15a504c0898189fbc2344209d8e04451e3fa5d743e08e38f64cf
+roms/M0 should have the sha256sum of 47bc5a29e37bbe4cac31ba612f5e452210b0c4364e529116b9a1c4976912c29d
 
 * Step 5b Saving a bunch of duplicate work
 Assuming that you have been doing all of the above the hard way on physical hardware with real paper tapes, this step is for you.
