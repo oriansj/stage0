@@ -24,6 +24,7 @@ Expanded stage0 web IDE to include the PC and instruction counter
 Performance tuned hex1 to reduce both size and instruction count
 Performance tuned hex0 to reduce both size and instruction count
 Performance tuned hex2 to reduce both size and isntruction count
+The stage0 vm now halts on ALL invalid instructions
 
 ** Fixed
 Fixed behavior of R@ thanks to reepca

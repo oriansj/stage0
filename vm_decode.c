@@ -48,7 +48,7 @@ void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* messa
 {
 	if(vm->amount_of_Ram <= place)
 	{
-		fprintf(stderr, "Invalid state reached after: %i instructions\n", performance_counter);
+		fprintf(stderr, "Invalid state reached after: %lu instructions\n", performance_counter);
 		fprintf(stderr, "%i: %s\n", place, message);
 		vm->halted = true;
 		#ifdef TRACE
@@ -58,6 +58,26 @@ void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* messa
 		exit(EXIT_FAILURE);
 	}
 
+}
+
+/* Deal with illegal instructions and their encodings */
+void illegal_instruction(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "Invalid instruction was recieved at address:%08X\n", c->ip);
+	fprintf(stderr, "After %lu instructions\n", performance_counter);
+	fprintf(stderr, "Unable to execute the following instruction:\n\t%s\n", c->operation);
+	c->invalid = true;
+	vm->halted = true;
+
+	#ifdef DEBUG
+	fprintf(stderr, "Computer Program has Halted\n");
+	#endif
+
+	#ifdef TRACE
+	record_trace("HALT");
+	print_traces();
+	#endif
+	exit(EXIT_FAILURE);
 }
 
 /* Deal with 4OP */
@@ -294,7 +314,12 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 			vm_HAL_MEM(vm);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			fprintf(stderr, "Invalid HALCODE\nComputer Program has Halted\n");
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 
 	#ifdef DEBUG
@@ -532,7 +557,11 @@ bool eval_4OP_Int(struct lilith* vm, struct Instruction* c)
 			SORTU(vm, c);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 	#ifdef DEBUG
 	fprintf(stdout, "# %s reg%u reg%u reg%u reg%u\n", Name, c->reg0, c->reg1, c->reg2, c->reg3);
@@ -756,13 +785,7 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 		case 0x01A: /* PACK32.CO */
 		case 0x01B: /* PACK32U.CO */
 		{
-			#ifdef DEBUG
-			strncpy(Name, "ILLEGAL INSTRUCTION", 19);
-			#elif TRACE
-			record_trace("ILLEGAL_INSTRUCTION");
-			#endif
-
-			exit(EXIT_FAILURE);
+			illegal_instruction(vm, c);
 			break;
 		}
 		case 0x020: /* AND */
@@ -1194,7 +1217,11 @@ bool eval_3OP_Int(struct lilith* vm, struct Instruction* c)
 			CMPJUMPU_L(vm, c);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 	#ifdef DEBUG
 	fprintf(stdout, "# %s reg%u reg%u reg%u\n", Name, c->reg0, c->reg1, c->reg2);
@@ -1541,7 +1568,11 @@ bool eval_2OP_Int(struct lilith* vm, struct Instruction* c)
 			CMPSKIPU_L(vm, c);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 	#ifdef DEBUG
 	fprintf(stdout, "# %s reg%u reg%u\n", Name, c->reg0, c->reg1);
@@ -1646,7 +1677,11 @@ bool eval_1OP_Int(struct lilith* vm, struct Instruction* c)
 			POPPC(vm, c);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 	#ifdef DEBUG
 	fprintf(stdout, "# %s reg%u\n", Name, c->reg0);
@@ -2028,7 +2063,11 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 			CMPJUMPUI_L(vm, c);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 	#ifdef DEBUG
 	fprintf(stdout, "# %s reg%u reg%u %i\n", Name, c->reg0, c->reg1, c->raw_Immediate);
@@ -2520,7 +2559,11 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 			CMPSKIPUI_L(vm, c);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 	#ifdef DEBUG
 	fprintf(stdout, "# %s reg%u %d\n", Name, c->reg0, c->raw_Immediate);
@@ -2548,7 +2591,11 @@ bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 			JUMP(vm, c);
 			break;
 		}
-		default: return true;
+		default:
+		{
+			illegal_instruction(vm, c);
+			break;
+		}
 	}
 	#ifdef DEBUG
 	fprintf(stdout, "# %s %d\n", Name, c->raw_Immediate);
@@ -2559,7 +2606,6 @@ bool eval_Integer_0OPI(struct lilith* vm, struct Instruction* c)
 /* Use Opcode to decide what to do and then have it done */
 void eval_instruction(struct lilith* vm, struct Instruction* current)
 {
-	bool invalid = false;
 	performance_counter = performance_counter + 1;
 
 	#ifdef DEBUG
@@ -2571,74 +2617,69 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 	{
 		case 0x00: /* Deal with NOPs */
 		{
-			return;
+			if(0 == current->raw0 && 0 == current->raw1 && 0 == current->raw2 && 0 == current->raw3)
+			{
+				#ifdef TRACE
+				record_trace("NOP");
+				#endif
+				return;
+			}
+			illegal_instruction(vm, current);
 		}
 		case 0x01: /* Integer 4OP */
 		{
 			decode_4OP(current);
-			invalid = eval_4OP_Int(vm, current);
-			if ( invalid) goto fail;
+			eval_4OP_Int(vm, current);
 			break;
 		}
 		case 0x05: /* Integer 3OP */
 		{
 			decode_3OP(current);
-			invalid = eval_3OP_Int(vm, current);
-			if ( invalid) goto fail;
+			eval_3OP_Int(vm, current);
 			break;
 		}
 		case 0x09: /* Integer 2OP */
 		{
 			decode_2OP(current);
-			invalid = eval_2OP_Int(vm, current);
-			if ( invalid) goto fail;
+			eval_2OP_Int(vm, current);
 			break;
 		}
 		case 0x0D: /* Integer 1OP */
 		{
 			decode_1OP(current);
-			invalid = eval_1OP_Int(vm, current);
-			if ( invalid) goto fail;
+			eval_1OP_Int(vm, current);
 			break;
 		}
 		case 0x0E ... 0x2B: /* Integer 2OPI */
 		case 0xB0 ... 0xDF:
 		{
 			decode_2OPI(current);
-			invalid = eval_2OPI_Int(vm, current);
-			if ( invalid) goto fail;
+			eval_2OPI_Int(vm, current);
 			break;
 		}
 		case 0x2C ... 0x2F: /* Integer 1OPI */
 		case 0xA0 ... 0xA1:
 		{
 			decode_1OPI(current);
-			invalid = eval_Integer_1OPI(vm, current);
-			if ( invalid) goto fail;
+			eval_Integer_1OPI(vm, current);
 			break;
 		}
 		case 0x3C: /* Integer 0OPI */
 		{
 			decode_0OPI(current);
-			invalid = eval_Integer_0OPI(vm, current);
-			if ( invalid) goto fail;
+			eval_Integer_0OPI(vm, current);
 			break;
 		}
 		case 0x42: /* HALCODE */
 		{
 			decode_HALCODE(current);
-			invalid = eval_HALCODE(vm, current);
-			if ( invalid )
-			{
-				vm->halted = true;
-				fprintf(stderr, "Invalid HALCODE\nComputer Program has Halted\n");
-			}
+			eval_HALCODE(vm, current);
 			break;
 		}
 		case 0xFF: /* Deal with HALT */
 		{
 			vm->halted = true;
-			fprintf(stderr, "Computer Program has Halted\nAfter Executing %i instructions\n", performance_counter);
+			fprintf(stderr, "Computer Program has Halted\nAfter Executing %lu instructions\n", performance_counter);
 
 			#ifdef TRACE
 			record_trace("HALT");
@@ -2648,15 +2689,7 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		}
 		default: /* Deal with illegal instruction */
 		{
-fail:
-			fprintf(stderr, "Unable to execute the following instruction:\n%c %c %c %c\n", current->raw0, current->raw1, current->raw2, current->raw3);
-			fprintf(stderr, "%s\n", current->operation);
-			current->invalid = true;
-
-			#ifdef DEBUG
-			vm->halted = true;
-			fprintf(stderr, "Computer Program has Halted\n");
-			#endif
+			illegal_instruction(vm, current);
 			break;
 		}
 	}
