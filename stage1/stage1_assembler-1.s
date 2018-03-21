@@ -145,7 +145,6 @@
 
 	;; We now have to calculate the distance and store the 2 bytes
 	SUB R3 R3 R13               ; First determine the difference between the current PC and the stored PC of the label
-	ADDUI R3 R3 4               ; Adjust for relative positioning
 
 	;; Store Upper byte
 	ANDI R0 R3 0xFF00           ; Mask out everything but top byte

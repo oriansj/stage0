@@ -46,8 +46,8 @@ stage0_monitor: hex stage0/stage0_monitor.hex0 | roms
 stage1_assembler-0: hex stage1/stage1_assembler-0.hex0 | roms
 	./bin/hex < stage1/stage1_assembler-0.hex0 > roms/stage1_assembler-0
 
-SET: stage1_assembler-0 vm stage1/SET.hex0 | roms
-	./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/SET.hex0 --tape_02 roms/SET
+SET: stage1_assembler-2 vm stage1/SET.hex2 | roms
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 stage1/SET.hex2 --tape_02 roms/SET
 
 DEHEX: stage1_assembler-0 vm stage1/dehex.hex0 | roms
 	./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/dehex.hex0 --tape_02 roms/DEHEX

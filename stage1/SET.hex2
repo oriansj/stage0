@@ -1,7 +1,7 @@
 ## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
-## stage0 is free software: you an redistribute it and/or modify
+## stage0 is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
@@ -15,28 +15,28 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 :start
-2D2F $stack	# LOADUI R15 $stack ; Put stack at end of program
+E0002D2F $stack	# LOADUI R15 $stack ; Put stack at end of program
 # ;; We will be using R14 for our condition codes
 # ;; We will be using R13 for storage of Head
-
+E0002D2C4000	# LOADUI R12 0x4000 ; We will be using R12 for the HEAP
 
 # ;; Main program
 # ;; Reads contents of Tape_01 and writes desired contents onto Tape_02
 # ;; Accepts no arguments and HALTS when done
 :main
 # ;; Prep TAPE_01
-2D201100	# LOADUI R0 0x1100
+E0002D201100	# LOADUI R0 0x1100
 42100000	# FOPEN_READ
 # ;; Prepare to Read File
 0D00002E	# FALSE R14
 0D000021	# FALSE R1
-2D0F @ReadFile	# CALLI R15 @ReadFile
+E0002D0F @ReadFile	# CALLI R15 @ReadFile
 # ;; Done reading File
-2D201100	# LOADUI R0 0x1100 ; Close TAPE_01
+E0002D201100	# LOADUI R0 0x1100 ; Close TAPE_01
 42100002	# FCLOSE
 # ;; Enter Editor Loop
 090005D1	# MOVE R13 R1 ; Set R13 to Head
-2D0F @EditorLoop	# CALLI R15 @EditorLoop
+E0002D0F @EditorLoop	# CALLI R15 @EditorLoop
 # ;; And We are Done
 FFFFFFFF	# HALT
 
@@ -48,18 +48,18 @@ FFFFFFFF	# HALT
 # ;; Returns to whatever called it
 :ReadFile
 # ;; Allocate another Node
-2D20000c	# LOADUI R0 12
-2D0F @malloc	# CALLI R15 @malloc
+0900040C	# COPY R0 R12 ; Copy Current free into R0
+E1000FCC000c	# ADDUI R12 R12 12 ; Allocate Node
 # ;; Get another line into list
 0902001F	# PUSHR R1 R15
-2D211100	# LOADUI R1 0x1100 ; Read from tape_01
-2D0F @Readline	# CALLI R15 @Readline
+E0002D211100	# LOADUI R1 0x1100 ; Read from tape_01
+E0002D0F @Readline	# CALLI R15 @Readline
 0902801F	# POPR R1 R15
 09000301	# SWAP R0 R1
-2D0F @addline	# CALLI R15 @addline
+E0002D0F @addline	# CALLI R15 @addline
 09000301	# SWAP R0 R1
 # ;; Loop if not reached EOF
-2C9E @ReadFile	# JUMP.Z R14 @ReadFile
+E0002C9E @ReadFile	# JUMP.Z R14 @ReadFile
 0D01001F	# RET R15
 
 
@@ -79,44 +79,49 @@ FFFFFFFF	# HALT
 0902004F	# PUSHR R4 R15
 # ;; Initialize
 09000540	# MOVE R4 R0
-2D200100	# LOADUI R0 256
-2D0F @malloc	# CALLI R15 @malloc
+0900040C	# COPY R0 R12 ; Get where space is free
 09000520	# MOVE R2 R0
 0D000023	# FALSE R3
 :Readline_0
 42100100	# FGETC ; Read a Char
 # ;; Flag if reached EOF
-A0100000	# CMPSKIPI.GE R0 0
+E000A0100000	# CMPSKIPI.GE R0 0
 0D00003E	# TRUE R14
 # ;; Stop if EOF
-A0100000	# CMPSKIPI.GE R0 0
+E000A0100000	# CMPSKIPI.GE R0 0
 3C00 @Readline_2	# JUMP @Readline_2
 # ;; Handle Backspace
-A020007f	# CMPSKIPI.E R0 127
+E000A020007f	# CMPSKIPI.E R0 127
 3C00 @Readline_1	# JUMP @Readline_1
 # ;; Move back 1 character if R3 > 0
-A0430000	# CMPSKIPI.LE R3 0
-11330001	# SUBUI R3 R3 1
+E000A0430000	# CMPSKIPI.LE R3 0
+E10011330001	# SUBUI R3 R3 1
 # ;; Hopefully they keep typing
 3C00 @Readline_0	# JUMP @Readline_0
 :Readline_1
 # ;; Replace all CR with LF
-A030000d	# CMPSKIPI.NE R0 13
-2D20000a	# LOADUI R0 10
+E000A030000d	# CMPSKIPI.NE R0 13
+E0002D20000a	# LOADUI R0 10
 # ;; Store the Byte
 05049023	# STOREX8 R0 R2 R3
-# ;; Check for EOL
-A030000a	# CMPSKIPI.NE R0 10
-3C00 @Readline_2	# JUMP @Readline_2
-# ;; Prevent lines from exceeding 255 chars
-A04300ff	# CMPSKIPI.LE R3 255
-3C00 @Readline_2	# JUMP @Readline_2
+
 # ;; Prep for next loop
-0F330001	# ADDUI R3 R3 1
+E1000F330001	# ADDUI R3 R3 1
+
+# ;; Check for EOL
+E000A030000a	# CMPSKIPI.NE R0 10
+3C00 @Readline_2	# JUMP @Readline_2
+
+# ;; Otherwise loop
 3C00 @Readline_0	# JUMP @Readline_0
+
 :Readline_2
 # ;; Set Text pointer
-23240008	# STORE32 R2 R4 8
+E000A0230000	# CMPSKIPI.E R3 0 ; Don't bother for Empty strings
+E10023240008	# STORE32 R2 R4 8
+
+# ;; Correct Malloc
+05000CC3	# ADD R12 R12 R3 ; Ensure actually allocates exactly the amount of space required
 # ;; Restore Registers
 0902804F	# POPR R4 R15
 0902803F	# POPR R3 R15
@@ -137,54 +142,32 @@ A04300ff	# CMPSKIPI.LE R3 255
 0902001F	# PUSHR R1 R15
 0902000F	# PUSHR R0 R15
 # ;; Handle if Head is NULL
-2CA0 @addline_0	# JUMP.NZ R0 @addline_0
+E0002CA0 @addline_0	# JUMP.NZ R0 @addline_0
 0902800F	# POPR R0 R15
 0902001F	# PUSHR R1 R15
 3C00 @addline_2	# JUMP @addline_2
 :addline_0
 # ;; Handle if Head->next is NULL
-18200000	# LOAD32 R2 R0 0
-2CA2 @addline_1	# JUMP.NZ R2 @addline_1
+E10018200000	# LOAD32 R2 R0 0
+E0002CA2 @addline_1	# JUMP.NZ R2 @addline_1
 # ;; Set head->next = p
-23100000	# STORE32 R1 R0 0
+E10023100000	# STORE32 R1 R0 0
 # ;; Set p->prev = head
-23010004	# STORE32 R0 R1 4
+E10023010004	# STORE32 R0 R1 4
 3C00 @addline_2	# JUMP @addline_2
 :addline_1
 # ;; Handle case of Head->next not being NULL
-18000000	# LOAD32 R0 R0 0
-2D0F @addline	# CALLI R15 @addline
+E10018000000	# LOAD32 R0 R0 0 ; Move to next node
+E10018200000	# LOAD32 R2 R0 0 ; Get node->next
+E000A0220000	# CMPSKIPI.E R2 0 ; If it is not null
+3C00 @addline_1	# JUMP @addline_1 ; Move to the next node and try again
+3C00 @addline_0	# JUMP @addline_0 ; Else simply act as if we got this node in the first place
 :addline_2
 # ;; Restore registers
 0902800F	# POPR R0 R15
 0902801F	# POPR R1 R15
 0902802F	# POPR R2 R15
 0D01001F	# RET R15
-
-
-# ;; Primative malloc function
-# ;; Recieves number of bytes to allocate in R0
-# ;; Returns pointer to block of that size in R0
-# ;; Returns to whatever called it
-:malloc
-# ;; Preserve registers
-0902001F	# PUSHR R1 R15
-# ;; Get current malloc pointer
-2E01 @malloc_pointer	# LOADR R1 @malloc_pointer
-# ;; Deal with special case
-A0310000	# CMPSKIPI.NE R1 0 ; If Zero set to our start of heap space
-2D214000	# LOADUI R1 0x4000
-# ;; update malloc pointer
-09000301	# SWAP R0 R1
-05000101	# ADD R1 R0 R1
-2F01 @malloc_pointer	# STORER R1 @malloc_pointer
-# ;; Done
-# ;; Restore registers
-0902801F	# POPR R1 R15
-0D01001F	# RET R15
-# ;; Our static value for malloc pointer
-:malloc_pointer
-00000000	# NOP
 
 
 # ;; Editor Loop
@@ -196,76 +179,76 @@ A0310000	# CMPSKIPI.NE R1 0 ; If Zero set to our start of heap space
 0D000021	# FALSE R1 ; Read from tty
 42100100	# FGETC ; Read a Char
 # ;; Quit if q
-A0300071	# CMPSKIPI.NE R0 113
+E000A0300071	# CMPSKIPI.NE R0 113
 0D01001F	# RET R15
 # ;; Print if p
-1FE00070	# CMPUI R14 R0 112
-2C6E @EditorLoop_0	# JUMP.NE R14 @EditorLoop_0
-180D0008	# LOAD32 R0 R13 8
+E1001FE00070	# CMPUI R14 R0 112
+E0002C6E @EditorLoop_0	# JUMP.NE R14 @EditorLoop_0
+E100180D0008	# LOAD32 R0 R13 8
 0D000021	# FALSE R1
-2D0F @PrintLine	# CALLI R15 @PrintLine
+E0002D0F @PrintLine	# CALLI R15 @PrintLine
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_0
 # ;; Move forward if f
-1FE00066	# CMPUI R14 R0 102
-2C6E @EditorLoop_1	# JUMP.NE R14 @EditorLoop_1
-180D0000	# LOAD32 R0 R13 0 ; Load head->next
+E1001FE00066	# CMPUI R14 R0 102
+E0002C6E @EditorLoop_1	# JUMP.NE R14 @EditorLoop_1
+E100180D0000	# LOAD32 R0 R13 0 ; Load head->next
 # ;; If head->next isn't null make it the new head
-A0200000	# CMPSKIPI.E R0 0
+E000A0200000	# CMPSKIPI.E R0 0
 090005D0	# MOVE R13 R0
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_1
 # ;; Move backward if b
-1FE00062	# CMPUI R14 R0 98
-2C6E @EditorLoop_2	# JUMP.NE R14 @EditorLoop_2
-180D0004	# LOAD32 R0 R13 4 ; Load head->prev
+E1001FE00062	# CMPUI R14 R0 98
+E0002C6E @EditorLoop_2	# JUMP.NE R14 @EditorLoop_2
+E100180D0004	# LOAD32 R0 R13 4 ; Load head->prev
 # ;; If head->prev isn't null make it the new head
-A0200000	# CMPSKIPI.E R0 0
+E000A0200000	# CMPSKIPI.E R0 0
 090005D0	# MOVE R13 R0
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_2
 # ;; Edit Line if e
-1FE00065	# CMPUI R14 R0 101
-2C6E @EditorLoop_3	# JUMP.NE R14 @EditorLoop_3
+E1001FE00065	# CMPUI R14 R0 101
+E0002C6E @EditorLoop_3	# JUMP.NE R14 @EditorLoop_3
 # ;; Change Head's Text
 0900040D	# COPY R0 R13
 0D000021	# FALSE R1 ; Read from tty
-2D0F @Readline	# CALLI R15 @Readline
+E0002D0F @Readline	# CALLI R15 @Readline
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_3
 # ;; Writeout to tape_02 if w
-1FE00077	# CMPUI R14 R0 119
-2C6E @EditorLoop_4	# JUMP.NE R14 @EditorLoop_4
+E1001FE00077	# CMPUI R14 R0 119
+E0002C6E @EditorLoop_4	# JUMP.NE R14 @EditorLoop_4
 # ;; Prep TAPE_02
-2D201101	# LOADUI R0 0x1101
+E0002D201101	# LOADUI R0 0x1101
 42100001	# FOPEN_WRITE
 0900040D	# COPY R0 R13
-2D211101	# LOADUI R1 0x1101
-2D0F @GetRoot	# CALLI R15 @GetRoot
-2D0F @PrintAll	# CALLI R15 @PrintAll
-2D201101	# LOADUI R0 0x1101 ; Close TAPE_02
+E0002D211101	# LOADUI R1 0x1101
+E0002D0F @GetRoot	# CALLI R15 @GetRoot
+E0002D0F @PrintAll	# CALLI R15 @PrintAll
+E0002D201101	# LOADUI R0 0x1101 ; Close TAPE_02
 42100002	# FCLOSE
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_4
 # ;; Append node if a
-1FE00061	# CMPUI R14 R0 97
-2C6E @EditorLoop_5	# JUMP.NE R14 @EditorLoop_5
+E1001FE00061	# CMPUI R14 R0 97
+E0002C6E @EditorLoop_5	# JUMP.NE R14 @EditorLoop_5
 0900040D	# COPY R0 R13
-2D0F @AppendLine	# CALLI R15 @AppendLine
+E0002D0F @AppendLine	# CALLI R15 @AppendLine
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_5
 # ;; Insert node if i
-1FE00069	# CMPUI R14 R0 105
-2C6E @EditorLoop_6	# JUMP.NE R14 @EditorLoop_6
+E1001FE00069	# CMPUI R14 R0 105
+E0002C6E @EditorLoop_6	# JUMP.NE R14 @EditorLoop_6
 0900040D	# COPY R0 R13
-2D0F @InsertLine	# CALLI R15 @InsertLine
+E0002D0F @InsertLine	# CALLI R15 @InsertLine
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_6
 # ;; Delete node if d
-1FE00064	# CMPUI R14 R0 100
-2C6E @EditorLoop_7	# JUMP.NE R14 @EditorLoop_7
+E1001FE00064	# CMPUI R14 R0 100
+E0002C6E @EditorLoop_7	# JUMP.NE R14 @EditorLoop_7
 0900040D	# COPY R0 R13
-2D0F @RemoveLine	# CALLI R15 @RemoveLine
+E0002D0F @RemoveLine	# CALLI R15 @RemoveLine
 090005D0	# MOVE R13 R0
 3C00 @EditorLoop	# JUMP @EditorLoop
 :EditorLoop_7
@@ -281,8 +264,8 @@ A0200000	# CMPSKIPI.E R0 0
 0902001F	# PUSHR R1 R15
 :GetRoot_0
 # ;; Get Head->Prev
-18100004	# LOAD32 R1 R0 4
-A0310000	# CMPSKIPI.NE R1 0
+E10018100004	# LOAD32 R1 R0 4
+E000A0310000	# CMPSKIPI.NE R1 0
 3C00 @GetRoot_1	# JUMP @GetRoot_1
 09000501	# MOVE R0 R1
 3C00 @GetRoot_0	# JUMP @GetRoot_0
@@ -303,10 +286,10 @@ A0310000	# CMPSKIPI.NE R1 0
 0902001F	# PUSHR R1 R15
 0902002F	# PUSHR R2 R15
 :PrintAll_0
-18200000	# LOAD32 R2 R0 0 ; Store Head->Next in R2
-18000008	# LOAD32 R0 R0 8 ; Set R0 to Head->Text
-2D0F @PrintLine	# CALLI R15 @PrintLine ; Prints Head->Text
-A0320000	# CMPSKIPI.NE R2 0 ; If Head->Next is NULL
+E10018200000	# LOAD32 R2 R0 0 ; Store Head->Next in R2
+E10018000008	# LOAD32 R0 R0 8 ; Set R0 to Head->Text
+E0002D0F @PrintLine	# CALLI R15 @PrintLine ; Prints Head->Text
+E000A0320000	# CMPSKIPI.NE R2 0 ; If Head->Next is NULL
 3C00 @PrintAll_1	# JUMP @PrintAll_1 ; Stop Looping
 09000502	# MOVE R0 R2 ; Otherwise Move to Next Node
 3C00 @PrintAll_0	# JUMP @PrintAll_0 ; And Loop
@@ -333,16 +316,16 @@ A0320000	# CMPSKIPI.NE R2 0 ; If Head->Next is NULL
 09000520	# MOVE R2 R0
 0D000023	# FALSE R3
 # ;; Deal with NULL Pointer
-A0320000	# CMPSKIPI.NE R2 0
+E000A0320000	# CMPSKIPI.NE R2 0
 3C00 @PrintLine_1	# JUMP @PrintLine_1
 :PrintLine_0
 0503A023	# LOADXU8 R0 R2 R3 ; Load char from string
 # ;; Don't print NULLs
-A0300000	# CMPSKIPI.NE R0 0
+E000A0300000	# CMPSKIPI.NE R0 0
 3C00 @PrintLine_1	# JUMP @PrintLine_1
 42100200	# FPUTC
 # ; Print the char
-0F330001	# ADDUI R3 R3 1 ; Prep for next loop
+E1000F330001	# ADDUI R3 R3 1 ; Prep for next loop
 3C00 @PrintLine_0	# JUMP @PrintLine_0
 :PrintLine_1
 # ;; Restore registers
@@ -366,16 +349,16 @@ A0300000	# CMPSKIPI.NE R0 0
 # ;; Initialize
 09000510	# MOVE R1 R0
 # ;; Allocate another Node
-2D20000c	# LOADUI R0 12
-2D0F @malloc	# CALLI R15 @malloc
+0900040C	# COPY R0 R12
+E1000FCC000c	# ADDUI R12 R12 12
 # ;; Check if head->Next is null
-18210000	# LOAD32 R2 R1 0
-A0220000	# CMPSKIPI.E R2 0 ; If head->Next is something
-23020004	# STORE32 R0 R2 4 ; Set head->next->prev to p
+E10018210000	# LOAD32 R2 R1 0
+E000A0220000	# CMPSKIPI.E R2 0 ; If head->Next is something
+E10023020004	# STORE32 R0 R2 4 ; Set head->next->prev to p
 # ;; Setup p and head
-23200000	# STORE32 R2 R0 0 ; p->next = head->next
-23100004	# STORE32 R1 R0 4 ; p->prev = head
-23010000	# STORE32 R0 R1 0 ; head->next = p
+E10023200000	# STORE32 R2 R0 0 ; p->next = head->next
+E10023100004	# STORE32 R1 R0 4 ; p->prev = head
+E10023010000	# STORE32 R0 R1 0 ; head->next = p
 # ;; Restore Registers
 0902802F	# POPR R2 R15
 0902801F	# POPR R1 R15
@@ -396,16 +379,16 @@ A0220000	# CMPSKIPI.E R2 0 ; If head->Next is something
 # ;; Initialize
 09000510	# MOVE R1 R0
 # ;; Allocate another Node
-2D20000c	# LOADUI R0 12
-2D0F @malloc	# CALLI R15 @malloc
+0900040C	# COPY R0 R12
+E1000FCC000c	# ADDUI R12 R12 12
 # ;; Check if Head->Prev is Null
-18210004	# LOAD32 R2 R1 4
-A0220000	# CMPSKIPI.E R2 0 ; If head->prev is something
-23020000	# STORE32 R0 R2 0 ; Set head->prev->next to p
+E10018210004	# LOAD32 R2 R1 4
+E000A0220000	# CMPSKIPI.E R2 0 ; If head->prev is something
+E10023020000	# STORE32 R0 R2 0 ; Set head->prev->next to p
 # ;; Setup p and head
-23200004	# STORE32 R2 R0 4 ; p->prev = head->prev
-23100000	# STORE32 R1 R0 0 ; p->next = head
-23010004	# STORE32 R0 R1 4 ; head->prev = p
+E10023200004	# STORE32 R2 R0 4 ; p->prev = head->prev
+E10023100000	# STORE32 R1 R0 0 ; p->next = head
+E10023010004	# STORE32 R0 R1 4 ; head->prev = p
 # ;; Restore Registers
 0902802F	# POPR R2 R15
 0902801F	# POPR R1 R15
@@ -423,15 +406,15 @@ A0220000	# CMPSKIPI.E R2 0 ; If head->prev is something
 0902002F	# PUSHR R2 R15
 # ;; Initialize
 09000510	# MOVE R1 R0
-18010004	# LOAD32 R0 R1 4 ; put p->prev in R0
-18210000	# LOAD32 R2 R1 0 ; put p->next in R2
+E10018010004	# LOAD32 R0 R1 4 ; put p->prev in R0
+E10018210000	# LOAD32 R2 R1 0 ; put p->next in R2
 # ;; Keep links
-A0200000	# CMPSKIPI.E R0 0 ; If p->prev is not null
-23200000	# STORE32 R2 R0 0 ; p->prev->next = p->next
-A0220000	# CMPSKIPI.E R2 0 ; If p->next is not null
-23020004	# STORE32 R0 R2 4 ; p->next->prev = p->prev
+E000A0200000	# CMPSKIPI.E R0 0 ; If p->prev is not null
+E10023200000	# STORE32 R2 R0 0 ; p->prev->next = p->next
+E000A0220000	# CMPSKIPI.E R2 0 ; If p->next is not null
+E10023020004	# STORE32 R0 R2 4 ; p->next->prev = p->prev
 # ;; Attempt to save what is left of the list
-A0300000	# CMPSKIPI.NE R0 0 ; If p->prev is null
+E000A0300000	# CMPSKIPI.NE R0 0 ; If p->prev is null
 09000502	# MOVE R0 R2 ; return p->next
 # ;; Restore Registers
 0902802F	# POPR R2 R15

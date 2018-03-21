@@ -52,7 +52,7 @@
 	FALSE R12                   ; Set holder to zero
 	FALSE R11                   ; Set PC counter to zero
 	FALSE R10                   ; Our toggle
-	LOADUI R8 0x500             ; Where we want our heap to start
+	LOADUI R8 0x700             ; Where we want our heap to start
 
 	;; Perform first pass
 	CALLI R15 @first_pass
@@ -205,7 +205,6 @@
 	ADDUI R11 R11 2             ; Exactly 2 bytes
 	CALLI R15 @Match_string     ; Find the Match
 	SUB R0 R0 R11               ; Determine the difference
-	ADDUI R0 R0 4               ; Adjust for relative positioning
 	CALLI R15 @ProcessImmediate ; Write out the value
 	JUMP @second_pass
 

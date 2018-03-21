@@ -69,6 +69,8 @@ this is primarily used for pointer comparisons involving hand encoded objects.
 For pointers starting with &, it is assumed that the user wants the 32bit absolute address of the label;
 this is primarily for hand encoding objects or instructions that want 32bit absolute addresses
 
+Should one wish to manually calculate the displacement field of an instruction, simply subtract the address of the byte after the immediate from the address of the target.
+
 *** More advanced?
 It is possible for a hex2 assembler to support more than just the minimal set as defined above and is frequently the case on complicated instruction sets.
 However, to be considered hex2 compliant a program should not depend on those additions.
@@ -429,135 +431,6 @@ The Opcodes will be preserved should we wish in the future to be binary compatab
 | ...         | Reserved |
 | 0D FF FF Fx | Reserved |
 
-** 2OPI Groups
-2OPI ii ii is the Immediate, a = b OP ii ii
-
-*** 2OPI Integer
-| Hex         | Name            | Comment                  |
-|-------------+-----------------+--------------------------|
-| 0E ab ii ii | ADDI a b ii ii  | a = b + ii ii [signed]   |
-| 0F ab ii ii | ADDUI a b ii ii | a = b + ii ii [unsigned] |
-| 10 ab ii ii | SUBI a b ii ii  | a = b - ii ii [signed]   |
-| 11 ab ii ii | SUBUI a b ii ii | a = b - ii ii [unsigned] |
-
-*** 2OPI Integer signed compare
-| Hex         | Name           | Comment                  |
-|-------------+----------------+--------------------------|
-| 12 ab ii ii | CMPI a b ii ii | a = b CMP ii ii [signed] |
-
-*** 2OPI Integer Load
-| Hex         | Name              | Comment                              |
-|-------------+-------------------+--------------------------------------|
-| 13 ab ii ii | LOAD a b ii ii    | a = MEM[b + ii ii]                   |
-| 14 ab ii ii | LOAD8 a b ii ii   | a = MEM[b + ii ii] [signed 8bits]    |
-| 15 ab ii ii | LOADU8 a b ii ii  | a = MEM[b + ii ii] [unsigned 8bits]  |
-| 16 ab ii ii | LOAD16 a b ii ii  | a = MEM[b + ii ii] [signed 16bits]   |
-| 17 ab ii ii | LOADU16 a b ii ii | a = MEM[b + ii ii] [unsigned 16bits] |
-| 18 ab ii ii | LOAD32 a b ii ii  | a = MEM[b + ii ii] [signed 32bits]   |
-| 19 ab ii ii | LOADU32 a b ii ii | a = MEM[b + ii ii] [unsigned 32bits] |
-| 1A ab ii ii | Reserved          |                                      |
-| 1B ab ii ii | Reserved          |                                      |
-| 1C ab ii ii | Reserved          |                                      |
-| 1D ab ii ii | Reserved          |                                      |
-| 1E ab ii ii | Reserved          |                                      |
-
-*** 2OPI Integer unsigned compare
-| Hex         | Name            | Comment                    |
-|-------------+-----------------+----------------------------|
-| 1F ab ii ii | CMPUI a b ii ii | a = b CMP ii ii [unsigned] |
-
-*** 2OPI Integer store
-| Hex         | Name           | Comment                            |
-|-------------+----------------+------------------------------------|
-| 20 ab ii ii | STORE a b ii   | MEM[b + ii ii] = a                 |
-| 21 ab ii ii | STORE8 a b ii  | MEM[b + ii ii] = a [signed 8bits]  |
-| 22 ab ii ii | STORE16 a b ii | MEM[b + ii ii] = a [signed 16bits] |
-| 23 ab ii ii | STORE32 a b ii | MEM[b + ii ii] = a [signed 32bits] |
-| 24 ab ii ii | Reserved       |                                    |
-| 25 ab ii ii | Reserved       |                                    |
-| 26 ab ii ii | Reserved       |                                    |
-| 27 ab ii ii | Reserved       |                                    |
-| 28 ab ii ii | Reserved       |                                    |
-| 29 ab ii ii | Reserved       |                                    |
-| 2A ab ii ii | Reserved       |                                    |
-| 2B ab ii ii | Reserved       |                                    |
-
-** 1OPI Groups
-1OPI i ii ii is the Immediate, a = a OP i ii ii
-
-*** Conditional Integer Jumps
-| Hex         | Name            | Comment                              |
-|-------------+-----------------+--------------------------------------|
-| 2C 0a ii ii | JUMP.C a ii ii  | Carry? a; PC = PC + i ii ii          |
-| 2C 1a ii ii | JUMP.B a ii ii  | Borrow? a; PC = PC + i ii ii         |
-| 2C 2a ii ii | JUMP.O a ii ii  | Overflow? a; PC = PC + i ii ii       |
-| 2C 3a ii ii | JUMP.G a ii ii  | GT? a; PC = PC + i ii ii             |
-| 2C 4a ii ii | JUMP.GE a ii ii | GT? a \vert EQ? a; PC = PC + i ii ii |
-| 2C 5a ii ii | JUMP.E a ii ii  | EQ? a; PC = PC + i ii ii             |
-| 2C 6a ii ii | JUMP.NE a ii ii | NEQ? a; PC = PC + i ii ii            |
-| 2C 7a ii ii | JUMP.LE a ii ii | LT? a \vert EQ? a; PC = PC + i ii ii |
-| 2C 8a ii ii | JUMP.L a ii ii  | LT? a; PC = PC + i ii ii             |
-| 2C 9a ii ii | JUMP.Z a ii ii  | ZERO? a; PC = PC + i ii ii           |
-| 2C Aa ii ii | JUMP.NZ a ii ii | NZERO? a; PC = PC + i ii ii          |
-| 2C Ba ii ii | JUMP.P          | POSITIVE? a; PC = PC + ii ii         |
-| 2C Ca ii ii | JUMP.NP         | NEGATIVE? a; PC = PC + ii ii         |
-| 2C Dx xx xx | Reserved        |                                      |
-| 2C Ex xx xx | Reserved        |                                      |
-| 2C Fx xx xx | Reserved        |                                      |
-
-*** Branch Immediates
-| Hex         | Name           | Comment                                                        |
-|-------------+----------------+----------------------------------------------------------------|
-| 2D 0a ii ii | CALLI a ii ii  | MEM[a] = PC; a = a + (register size in bytes); PC = PC + ii ii |
-| 2D 1a ii ii | LOADI a ii ii  | a = ii ii (signed)                                             |
-| 2D 2a ii ii | LOADUI a ii ii | a = ii ii (unsigned)                                           |
-| 2D 3a ii ii | SALI a ii ii   | a = a << ii ii [arithmetically]                                |
-| 2D 4a ii ii | SARI a ii ii   | a = a >> ii ii [arithmetically]                                |
-| 2D 5a ii ii | SL0I a ii ii   | a = a << ii ii [Fill with zeros]                               |
-| 2D 6a ii ii | SR0I a ii ii   | a = a >> ii ii [Fill with zeros]                               |
-| 2D 7a ii ii | SL1I a ii ii   | a = a << ii ii [Fill with ones]                                |
-| 2D 8a ii ii | SR1I a ii ii   | a = a >> ii ii [Fill with ones]                                |
-
-*** Relative Loads
-| Hex         | Name             | Comment                                |
-|-------------+------------------+----------------------------------------|
-| 2E 0a ii ii | LOADR a ii ii    | a = MEM[ip + ii ii]                    |
-| 2E 1a ii ii | LOADR8 a ii ii   | a = MEM[ip + ii ii] [signed 8 bits]    |
-| 2E 2a ii ii | LOADRU8 a ii ii  | a = MEM[ip + ii ii] [unsigned 8 bits]  |
-| 2E 3a ii ii | LOADR16 a ii ii  | a = MEM[ip + ii ii] [signed 16 bits]   |
-| 2E 4a ii ii | LOADRU16 a ii ii | a = MEM[ip + ii ii] [unsigned 16 bits] |
-| 2E 5a ii ii | LOADR32 a ii ii  | a = MEM[ip + ii ii] [signed 32 bits]   |
-| 2E 6a ii ii | LOADRU32 a ii ii | a = MEM[ip + ii ii] [unsigned 32 bits] |
-| 2E 7a ii ii | Reserved         |                                        |
-| 2E 8a ii ii | Reserved         |                                        |
-| 2E 9a ii ii | Reserved         |                                        |
-| 2E Aa ii ii | Reserved         |                                        |
-| 2E Ba ii ii | Reserved         |                                        |
-| 2E Ca ii ii | Reserved         |                                        |
-| 2E Da ii ii | Reserved         |                                        |
-| 2E Ea ii ii | Reserved         |                                        |
-| 2E Fa ii ii | Reserved         |                                        |
-
-*** Relative Stores
-| Hex         | Name             | Comment                              |
-|-------------+------------------+--------------------------------------|
-| 2F 0a ii ii | STORER a ii ii   | MEM[ip + ii ii] = a                  |
-| 2F 1a ii ii | STORER8 a ii ii  | MEM[ip + ii ii] = a [signed 8 bits]  |
-| 2F 2a ii ii | STORER16 a ii ii | MEM[ip + ii ii] = a [signed 16 bits] |
-| 2F 3a ii ii | STORER32 a ii ii | MEM[ip + ii ii] = a [signed 32 bits] |
-| 2F 4a ii ii | Reserved         |                                      |
-| 2F 5a ii ii | Reserved         |                                      |
-| 2F 6a ii ii | Reserved         |                                      |
-| 2F 7a ii ii | Reserved         |                                      |
-| 2F 8a ii ii | Reserved         |                                      |
-| 2F 9a ii ii | Reserved         |                                      |
-| 2F Aa ii ii | Reserved         |                                      |
-| 2F Ba ii ii | Reserved         |                                      |
-| 2F Ca ii ii | Reserved         |                                      |
-| 2F Da ii ii | Reserved         |                                      |
-| 2F Ea ii ii | Reserved         |                                      |
-| 2F Fa ii ii | Reserved         |                                      |
-
 ** 0OPI group
 0OPI ii ii is the Immediate, OP ii ii
 
@@ -674,37 +547,6 @@ DO NOT USE.
 |-------------+----------|
 | 43 00 00 00 | Reserved |
 | ...         | Reserved |
-| 9F FF FF FF | Reserved |
-
-** CMPSKIPI Group
-| Hex         | Name                 | Comment                            |
-|-------------+----------------------+------------------------------------|
-| A0 0a ii ii | CMPSKIPI.G a ii ii   | a > ii ii ? Skip Next instruction  |
-| A0 1a ii ii | CMPSKIPI.GE a ii ii  | a >= ii ii ? Skip Next instruction |
-| A0 2a ii ii | CMPSKIPI.E a ii ii   | a == ii ii ? Skip Next instruction |
-| A0 3a ii ii | CMPSKIPI.NE a ii ii  | a != ii ii ? Skip Next instruction |
-| A0 4a ii ii | CMPSKIPI.LE a ii ii  | a <= ii ii ? Skip Next instruction |
-| A0 5a ii ii | CMPSKIPI.L a ii ii   | a < ii ii ? Skip Next instruction  |
-| A0 6a ii ii | Reserved             |                                    |
-| ...         | Reserved             |                                    |
-| A0 Fa ii ii | Reserved             |                                    |
-| A1 0a ii ii | CMPSKIPUI.G a ii ii  | a > ii ii ? Skip Next instruction  |
-| A1 1a ii ii | CMPSKIPUI.GE a ii ii | a >= ii ii ? Skip Next instruction |
-| A1 2a ii ii | Reserved             |                                    |
-| A1 3a ii ii | Reserved             |                                    |
-| A1 4a ii ii | CMPSKIPUI.LE a ii ii | a <= ii ii ? Skip Next instruction |
-| A1 5a ii ii | CMPSKIPUI.L a ii ii  | a < ii ii ? Skip Next instruction  |
-| A1 6a ii ii | Reserved             |                                    |
-| ...         | Reserved             |                                    |
-| A1 Fa ii ii | Reserved             |                                    |
-
-** Reserved Block 2
-At this time these instructions only produce a warning; but could do anything.
-DO NOT USE.
-| Hex         | Name     |
-|-------------+----------|
-| A2 00 00 00 | Reserved |
-| ...         | Reserved |
 | AF FF FF FF | Reserved |
 
 ** Bit optimization group
@@ -720,36 +562,198 @@ DO NOT USE.
 | ...         | Reserved        |                    |
 | BF FF FF FF | Reserved        |                    |
 
-** CMPJUMPI Group
-| Hex         | Name                   | Comment                             |
-|-------------+------------------------+-------------------------------------|
-| C0 ab ii ii | CMPJUMPI.G a b ii ii   | a > b ? PC = PC + ii ii             |
-| C1 ab ii ii | CMPJUMPI.GE a b ii ii  | a >= b ? PC = PC + ii ii            |
-| C2 ab ii ii | CMPJUMPI.E a b ii ii   | a == b ? PC = PC + ii ii            |
-| C3 ab ii ii | CMPJUMPI.NE a b ii ii  | a != b ? PC = PC + ii ii            |
-| C4 ab ii ii | CMPJUMPI.LE a b ii ii  | a <= b ? PC = PC + ii ii            |
-| C5 ab ii ii | CMPJUMPI.L a b ii ii   | a < b ? PC = PC + ii ii             |
-| C6 ab ii ii | Reserved               |                                     |
-| ...         | Reserved               |                                     |
-| CF ab ii ii | Reserved               |                                     |
-| D0 ab ii ii | CMPJUMPUI.G a b ii ii  | a > b ? PC = PC + ii ii (unsigned)  |
-| D1 ab ii ii | CMPJUMPUI.GE a b ii ii | a >= b ? PC = PC + ii ii (unsigned) |
-| D2 ab ii ii | Reserved               |                                     |
-| D3 ab ii ii | Reserved               |                                     |
-| D4 ab ii ii | CMPJUMPUI.LE a b ii ii | a <= b ? PC = PC + ii ii (unsigned) |
-| D5 ab ii ii | CMPJUMPUI.L a b ii ii  | a < b ? PC = PC + ii ii (unsigned)  |
-| D6 ab ii ii | Reserved               |                                     |
-| ...         | Reserved               |                                     |
-| DF ab ii ii | Reserved               |                                     |
+** Extended instruction block
+This block specified for instructions that require immediates
+*** 1OPI Groups
+1OPI i ii ii is the Immediate, a = a OP i ii ii
 
-** Reserved Block 3
+**** Conditional Integer Jumps
+| Hex               | Name            | Comment                              |
+|-------------------+-----------------+--------------------------------------|
+| E0 00 2C 0a ii ii | JUMP.C a ii ii  | Carry? a; PC = PC + i ii ii          |
+| E0 00 2C 1a ii ii | JUMP.B a ii ii  | Borrow? a; PC = PC + i ii ii         |
+| E0 00 2C 2a ii ii | JUMP.O a ii ii  | Overflow? a; PC = PC + i ii ii       |
+| E0 00 2C 3a ii ii | JUMP.G a ii ii  | GT? a; PC = PC + i ii ii             |
+| E0 00 2C 4a ii ii | JUMP.GE a ii ii | GT? a \vert EQ? a; PC = PC + i ii ii |
+| E0 00 2C 5a ii ii | JUMP.E a ii ii  | EQ? a; PC = PC + i ii ii             |
+| E0 00 2C 6a ii ii | JUMP.NE a ii ii | NEQ? a; PC = PC + i ii ii            |
+| E0 00 2C 7a ii ii | JUMP.LE a ii ii | LT? a \vert EQ? a; PC = PC + i ii ii |
+| E0 00 2C 8a ii ii | JUMP.L a ii ii  | LT? a; PC = PC + i ii ii             |
+| E0 00 2C 9a ii ii | JUMP.Z a ii ii  | ZERO? a; PC = PC + i ii ii           |
+| E0 00 2C Aa ii ii | JUMP.NZ a ii ii | NZERO? a; PC = PC + i ii ii          |
+| E0 00 2C Ba ii ii | JUMP.P          | POSITIVE? a; PC = PC + ii ii         |
+| E0 00 2C Ca ii ii | JUMP.NP         | NEGATIVE? a; PC = PC + ii ii         |
+| E0 00 2C Dx xx xx | Reserved        |                                      |
+| E0 00 2C Ex xx xx | Reserved        |                                      |
+| E0 00 2C Fx xx xx | Reserved        |                                      |
+
+**** Branch Immediates
+| Hex               | Name           | Comment                                                        |
+|-------------------+----------------+----------------------------------------------------------------|
+| E0 00 2D 0a ii ii | CALLI a ii ii  | MEM[a] = PC; a = a + (register size in bytes); PC = PC + ii ii |
+
+**** Load Immediates
+| Hex               | Name           | Comment                                                        |
+|-------------------+----------------+----------------------------------------------------------------|
+| E0 00 2D 1a ii ii | LOADI a ii ii  | a = ii ii (signed)                                             |
+| E0 00 2D 2a ii ii | LOADUI a ii ii | a = ii ii (unsigned)                                           |
+
+**** Shift Immediates
+| Hex               | Name           | Comment                                                        |
+|-------------------+----------------+----------------------------------------------------------------|
+| E0 00 2D 3a ii ii | SALI a ii ii   | a = a << ii ii [arithmetically]                                |
+| E0 00 2D 4a ii ii | SARI a ii ii   | a = a >> ii ii [arithmetically]                                |
+| E0 00 2D 5a ii ii | SL0I a ii ii   | a = a << ii ii [Fill with zeros]                               |
+| E0 00 2D 6a ii ii | SR0I a ii ii   | a = a >> ii ii [Fill with zeros]                               |
+| E0 00 2D 7a ii ii | SL1I a ii ii   | a = a << ii ii [Fill with ones]                                |
+| E0 00 2D 8a ii ii | SR1I a ii ii   | a = a >> ii ii [Fill with ones]                                |
+
+**** Relative Loads
+| Hex               | Name             | Comment                                |
+|-------------------+------------------+----------------------------------------|
+| E0 00 2E 0a ii ii | LOADR a ii ii    | a = MEM[ip + ii ii]                    |
+| E0 00 2E 1a ii ii | LOADR8 a ii ii   | a = MEM[ip + ii ii] [signed 8 bits]    |
+| E0 00 2E 2a ii ii | LOADRU8 a ii ii  | a = MEM[ip + ii ii] [unsigned 8 bits]  |
+| E0 00 2E 3a ii ii | LOADR16 a ii ii  | a = MEM[ip + ii ii] [signed 16 bits]   |
+| E0 00 2E 4a ii ii | LOADRU16 a ii ii | a = MEM[ip + ii ii] [unsigned 16 bits] |
+| E0 00 2E 5a ii ii | LOADR32 a ii ii  | a = MEM[ip + ii ii] [signed 32 bits]   |
+| E0 00 2E 6a ii ii | LOADRU32 a ii ii | a = MEM[ip + ii ii] [unsigned 32 bits] |
+| E0 00 2E 7a ii ii | Reserved         |                                        |
+| E0 00 2E 8a ii ii | Reserved         |                                        |
+| E0 00 2E 9a ii ii | Reserved         |                                        |
+| E0 00 2E Aa ii ii | Reserved         |                                        |
+| E0 00 2E Ba ii ii | Reserved         |                                        |
+| E0 00 2E Ca ii ii | Reserved         |                                        |
+| E0 00 2E Da ii ii | Reserved         |                                        |
+| E0 00 2E Ea ii ii | Reserved         |                                        |
+| E0 00 2E Fa ii ii | Reserved         |                                        |
+
+**** Relative Stores
+| Hex               | Name             | Comment                              |
+|-------------------+------------------+--------------------------------------|
+| E0 00 2F 0a ii ii | STORER a ii ii   | MEM[ip + ii ii] = a                  |
+| E0 00 2F 1a ii ii | STORER8 a ii ii  | MEM[ip + ii ii] = a [signed 8 bits]  |
+| E0 00 2F 2a ii ii | STORER16 a ii ii | MEM[ip + ii ii] = a [signed 16 bits] |
+| E0 00 2F 3a ii ii | STORER32 a ii ii | MEM[ip + ii ii] = a [signed 32 bits] |
+| E0 00 2F 4a ii ii | Reserved         |                                      |
+| E0 00 2F 5a ii ii | Reserved         |                                      |
+| E0 00 2F 6a ii ii | Reserved         |                                      |
+| E0 00 2F 7a ii ii | Reserved         |                                      |
+| E0 00 2F 8a ii ii | Reserved         |                                      |
+| E0 00 2F 9a ii ii | Reserved         |                                      |
+| E0 00 2F Aa ii ii | Reserved         |                                      |
+| E0 00 2F Ba ii ii | Reserved         |                                      |
+| E0 00 2F Ca ii ii | Reserved         |                                      |
+| E0 00 2F Da ii ii | Reserved         |                                      |
+| E0 00 2F Ea ii ii | Reserved         |                                      |
+| E0 00 2F Fa ii ii | Reserved         |                                      |
+
+**** CMPSKIPI Group
+| Hex               | Name                 | Comment                            |
+|-------------------+----------------------+------------------------------------|
+| E0 00 A0 0a ii ii | CMPSKIPI.G a ii ii   | a > ii ii ? Skip Next instruction  |
+| E0 00 A0 1a ii ii | CMPSKIPI.GE a ii ii  | a >= ii ii ? Skip Next instruction |
+| E0 00 A0 2a ii ii | CMPSKIPI.E a ii ii   | a == ii ii ? Skip Next instruction |
+| E0 00 A0 3a ii ii | CMPSKIPI.NE a ii ii  | a != ii ii ? Skip Next instruction |
+| E0 00 A0 4a ii ii | CMPSKIPI.LE a ii ii  | a <= ii ii ? Skip Next instruction |
+| E0 00 A0 5a ii ii | CMPSKIPI.L a ii ii   | a < ii ii ? Skip Next instruction  |
+| E0 00 A0 6a ii ii | Reserved             |                                    |
+| ...               | Reserved             |                                    |
+| E0 00 A0 Fa ii ii | Reserved             |                                    |
+| E0 00 A1 0a ii ii | CMPSKIPUI.G a ii ii  | a > ii ii ? Skip Next instruction  |
+| E0 00 A1 1a ii ii | CMPSKIPUI.GE a ii ii | a >= ii ii ? Skip Next instruction |
+| E0 00 A1 2a ii ii | Reserved             |                                    |
+| E0 00 A1 3a ii ii | Reserved             |                                    |
+| E0 00 A1 4a ii ii | CMPSKIPUI.LE a ii ii | a <= ii ii ? Skip Next instruction |
+| E0 00 A1 5a ii ii | CMPSKIPUI.L a ii ii  | a < ii ii ? Skip Next instruction  |
+| E0 00 A1 6a ii ii | Reserved             |                                    |
+| ...               | Reserved             |                                    |
+| E0 00 A1 Fa ii ii | Reserved             |                                    |
+
+*** 2OPI Groups
+2OPI ii ii is the Immediate, a = b OP ii ii
+
+**** 2OPI Integer
+| Hex               | Name            | Comment                  |
+|-------------------+-----------------+--------------------------|
+| E1 00 0E ab ii ii | ADDI a b ii ii  | a = b + ii ii [signed]   |
+| E1 00 0F ab ii ii | ADDUI a b ii ii | a = b + ii ii [unsigned] |
+| E1 00 10 ab ii ii | SUBI a b ii ii  | a = b - ii ii [signed]   |
+| E1 00 11 ab ii ii | SUBUI a b ii ii | a = b - ii ii [unsigned] |
+
+**** 2OPI Integer signed compare
+| Hex               | Name           | Comment                  |
+|-------------------+----------------+--------------------------|
+| E1 00 12 ab ii ii | CMPI a b ii ii | a = b CMP ii ii [signed] |
+
+**** 2OPI Integer Load
+| Hex               | Name              | Comment                              |
+|-------------------+-------------------+--------------------------------------|
+| E1 00 13 ab ii ii | LOAD a b ii ii    | a = MEM[b + ii ii]                   |
+| E1 00 14 ab ii ii | LOAD8 a b ii ii   | a = MEM[b + ii ii] [signed 8bits]    |
+| E1 00 15 ab ii ii | LOADU8 a b ii ii  | a = MEM[b + ii ii] [unsigned 8bits]  |
+| E1 00 16 ab ii ii | LOAD16 a b ii ii  | a = MEM[b + ii ii] [signed 16bits]   |
+| E1 00 17 ab ii ii | LOADU16 a b ii ii | a = MEM[b + ii ii] [unsigned 16bits] |
+| E1 00 18 ab ii ii | LOAD32 a b ii ii  | a = MEM[b + ii ii] [signed 32bits]   |
+| E1 00 19 ab ii ii | LOADU32 a b ii ii | a = MEM[b + ii ii] [unsigned 32bits] |
+| E1 00 1A ab ii ii | Reserved          |                                      |
+| E1 00 1B ab ii ii | Reserved          |                                      |
+| E1 00 1C ab ii ii | Reserved          |                                      |
+| E1 00 1D ab ii ii | Reserved          |                                      |
+| E1 00 1E ab ii ii | Reserved          |                                      |
+
+**** 2OPI Integer unsigned compare
+| Hex               | Name            | Comment                    |
+|-------------------+-----------------+----------------------------|
+| E1 00 1F ab ii ii | CMPUI a b ii ii | a = b CMP ii ii [unsigned] |
+
+**** 2OPI Integer store
+| Hex               | Name           | Comment                            |
+|-------------------+----------------+------------------------------------|
+| E1 00 20 ab ii ii | STORE a b ii   | MEM[b + ii ii] = a                 |
+| E1 00 21 ab ii ii | STORE8 a b ii  | MEM[b + ii ii] = a [signed 8bits]  |
+| E1 00 22 ab ii ii | STORE16 a b ii | MEM[b + ii ii] = a [signed 16bits] |
+| E1 00 23 ab ii ii | STORE32 a b ii | MEM[b + ii ii] = a [signed 32bits] |
+| E1 00 24 ab ii ii | Reserved       |                                    |
+| E1 00 25 ab ii ii | Reserved       |                                    |
+| E1 00 26 ab ii ii | Reserved       |                                    |
+| E1 00 27 ab ii ii | Reserved       |                                    |
+| E1 00 28 ab ii ii | Reserved       |                                    |
+| E1 00 29 ab ii ii | Reserved       |                                    |
+| E1 00 2A ab ii ii | Reserved       |                                    |
+| E1 00 2B ab ii ii | Reserved       |                                    |
+
+**** CMPJUMPI Group
+| Hex               | Name                   | Comment                             |
+|-------------------+------------------------+-------------------------------------|
+| E1 00 C0 ab ii ii | CMPJUMPI.G a b ii ii   | a > b ? PC = PC + ii ii             |
+| E1 00 C1 ab ii ii | CMPJUMPI.GE a b ii ii  | a >= b ? PC = PC + ii ii            |
+| E1 00 C2 ab ii ii | CMPJUMPI.E a b ii ii   | a == b ? PC = PC + ii ii            |
+| E1 00 C3 ab ii ii | CMPJUMPI.NE a b ii ii  | a != b ? PC = PC + ii ii            |
+| E1 00 C4 ab ii ii | CMPJUMPI.LE a b ii ii  | a <= b ? PC = PC + ii ii            |
+| E1 00 C5 ab ii ii | CMPJUMPI.L a b ii ii   | a < b ? PC = PC + ii ii             |
+| E1 00 C6 ab ii ii | Reserved               |                                     |
+| ...               | Reserved               |                                     |
+| E1 00 CF ab ii ii | Reserved               |                                     |
+| E1 00 D0 ab ii ii | CMPJUMPUI.G a b ii ii  | a > b ? PC = PC + ii ii (unsigned)  |
+| E1 00 D1 ab ii ii | CMPJUMPUI.GE a b ii ii | a >= b ? PC = PC + ii ii (unsigned) |
+| E1 00 D2 ab ii ii | Reserved               |                                     |
+| E1 00 D3 ab ii ii | Reserved               |                                     |
+| E1 00 D4 ab ii ii | CMPJUMPUI.LE a b ii ii | a <= b ? PC = PC + ii ii (unsigned) |
+| E1 00 D5 ab ii ii | CMPJUMPUI.L a b ii ii  | a < b ? PC = PC + ii ii (unsigned)  |
+| E1 00 D6 ab ii ii | Reserved               |                                     |
+| ...               | Reserved               |                                     |
+| E1 00 DF ab ii ii | Reserved               |                                     |
+
+*** Reserved Block 2
 At this time these instructions only produce a warning; but could do anything.
 DO NOT USE.
-| Hex         | Name     |
-|-------------+----------|
-| E0 00 00 00 | Reserved |
-| ...         | Reserved |
-| FE FF FF FF | Reserved |
+
+| Hex               | Name     |
+|-------------------+----------|
+| E1 01 00 00 00 00 | Reserved |
+| ...               | Reserved |
+| EF FF FF FF FF FF | Reserved |
 
 ** 0OP
 | Hex         | Name             | Comment                                                                    |
@@ -821,33 +825,23 @@ This ordering was selected simply because makes the starting IP address 0 and is
 
 *** Class E 2OPI
 This is a very rare and special group as each entry consumes a piece of the precious 256 entry opcode space.
-|--------------+------------+------------+------------------|
-| opcode 8bits | Reg0 4bits | Reg1 4bits | Immediate 16bits |
-|--------------+------------+------------+------------------|
+|--------------+------------+------------+------------+------------------|
+| opcode 8bits | XOP 16bits | Reg0 4bits | Reg1 4bits | Immediate 16bits |
+|--------------+------------+------------+------------+------------------|
 
-| Opcode  | Function group | Length in Bytes |
-|---------+----------------+-----------------|
-| 0E - 19 | Integer group  |               4 |
-| 1A - 1E | Reserved       |       Undefined |
-| 1F - 23 | Integer group  |               4 |
-| 24 - 2B | Reserved       |       Undefined |
-| B0 - B5 | Integer group  |               4 |
-| B6 - BF | Reserved       |       Undefined |
-| C0 - C5 | Integer group  |               4 |
-| C6 - CF | Reserved       |       Undefined |
-| D0 - D1 | Integer group  |               4 |
-| D2 - D3 | Reserved       |       Undefined |
-| D4 - D5 | Integer group  |               4 |
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+| E1    | Integer group  |               6 |
 
 *** Class F 1OPI
-|--------------+-----------+------------+------------------|
-| opcode 8bits | XOP 4bits | Reg0 4bits | Immediate 16bits |
-|--------------+-----------+------------+------------------|
+|--------------+------------+------------+------------------|
+| opcode 8bits | XOP 20bits | Reg0 4bits | Immediate 16bits |
+|--------------+------------+------------+------------------|
 
-| Opcode  | Function group | Length in Bytes |
-|---------+----------------+-----------------|
-| 2C - 2F | Integer group  |               4 |
-| A0 - A1 | Integer group  |               4 |
+| Opcode | Function group | Length in Bytes |
+|--------+----------------+-----------------|
+| E0     | Integer group  |               6 |
+
 
 *** Class G 0OPI
 |--------------+-----------+------------------|
@@ -878,13 +872,16 @@ This is a very rare and special group as each entry consumes a piece of the prec
 | FF     | HALT           |               4 |
 
 ** Exotic behavior
+*** Illegal instructions
+To ensure consistent behavior, all undefined opcodes are to be treated like illegal instructions and for hardware/operating system combinations that lack an illegal instruction handler, the result is that of HALT.
+Should an illegal instruction handler be implemented, the implementor should if possible emulate the instruction via software and jump to instruction that follows.
+
+*** Illegal encoding
+Assemblers should throw an exception in the event that a register is compared to itself.
+As such code is likely wrong and such sequences are reserved for future opcode harvesting in the event of opcode starvation.
+
 *** compare and skip instructions
 All compare and skip instructions lookup the first byte following themselves to determine the number of bytes to skip to allow the correct behavior to occur with shorter and longer instruction formats.
-To ensure consistent behavior, all undefined opcodes are to be treated like illegal instructions and for hardware/operating system combinations that lack an illegal instruction handler, the result is that of HALT.
-Assemblers should throw an exception in the event that a register is compared to itself as jumps and nops are the preferred alternative in such cases and their encoding could be repurposed in the event of opcode starvation.
-
-*** compare and jump instructions
-Assemblers should throw an exception in the event that a register is compared to itself as jumps and nops are the preferred alternative in such cases and their encoding could be repurposed in the event of opcode starvation.
 
 *** HALCODE
 On systems that support an IOMMU and Kernel mode, all HALCODES can be modified or replaced by the kernel. Those listed in this document are those that must be supported on bootup.

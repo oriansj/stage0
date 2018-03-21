@@ -31,7 +31,7 @@ struct Instruction
 	char opcode[3];
 	uint32_t raw_XOP;
 	char XOP[6];
-	char operation[9];
+	char operation[13];
 	int16_t raw_Immediate;
 	char Immediate[7];
 	uint32_t HAL_CODE;
@@ -865,19 +865,25 @@ void decode_0OP(struct Instruction* c)
 
 void decode_Integer_2OPI(struct Instruction* c)
 {
-	/* Parse Raw Data */
-	c->raw_Immediate = c->raw2*0x100 + c->raw3;
-	c->Immediate[0] = c->operation[4];
-	c->Immediate[1] = c->operation[5];
-	c->Immediate[2] = c->operation[6];
-	c->Immediate[3] = c->operation[7];
-	c->reg0 = c->raw1/16;
-	c->reg1 = c->raw1%16;
+	/* Get Immediate pieces */
+	c->raw_Immediate = fgetc(binary_file);
+	int a = fgetc(binary_file);
+
+	/* Unpack immediate */
+	unpack_byte(c->raw_Immediate, &(c->operation[8]));
+	unpack_byte(a, &(c->operation[10]));
+
+	/* Process registers and immediate */
+	c->raw_Immediate = c->raw_Immediate * 0x100 + a;
+	c->reg0 = c->raw3/16;
+	c->reg1 = c->raw3%16;
 
 	char Name[20] = "ILLEGAL_2OPI";
 
+	if(c->raw1 != 0) goto broken_2OPI;
+
 	/* Convert to Human readable form */
-	switch(c->raw0)
+	switch(c->raw2)
 	{
 		case 0x0E: /* ADDI */
 		{
@@ -1046,6 +1052,7 @@ void decode_Integer_2OPI(struct Instruction* c)
 		}
 		default: /* Unknown 2OPI*/
 		{
+broken_2OPI:
 			string_values(c, true);
 			return;
 		}
@@ -1057,19 +1064,23 @@ void decode_Integer_2OPI(struct Instruction* c)
 
 void decode_1OPI(struct Instruction* c)
 {
+	/* Get Immediate pieces */
+	c->raw_Immediate = fgetc(binary_file);
+	int a = fgetc(binary_file);
+
+	/* Unpack immediate */
+	unpack_byte(c->raw_Immediate, &(c->operation[8]));
+	unpack_byte(a, &(c->operation[10]));
+
 	/* Parse Raw Data */
-	c->raw_Immediate = c->raw2*0x100 + c->raw3;
-	c->Immediate[0] = c->operation[3];
-	c->Immediate[1] = c->operation[4];
-	c->Immediate[2] = c->operation[5];
-	c->Immediate[3] = c->operation[6];
-	c->Immediate[4] = c->operation[7];
-	c->HAL_CODE = 0;
-	c->raw_XOP = c->raw1/16;
-	c->reg0 = c->raw1%16;
+	c->raw_Immediate = c->raw_Immediate*0x100 + a;
+	c->raw_XOP = c->raw3/16;
+	c->reg0 = c->raw3%16;
 
 	char Name[20] = "ILLEGAL_1OPI";
-	uint32_t Opcode = (c->raw0 * 16) + c->raw_XOP;
+	uint32_t Opcode = (c->raw2 * 16) + c->raw_XOP;
+
+	if(0 != c->raw1) goto Broken_1OPI;
 
 	/* Convert to Human readable form */
 	switch(Opcode)
@@ -1291,6 +1302,7 @@ void decode_1OPI(struct Instruction* c)
 		}
 		default: /* Unknown 1OPI*/
 		{
+Broken_1OPI:
 			string_values(c, true);
 			return;
 		}
@@ -1403,54 +1415,62 @@ void eval_instruction(struct Instruction* c)
 		case 0x01: /* Integer 4OP */
 		{
 			decode_Integer_4OP(c);
+			address = address + 4;
 			break;
 		}
 		case 0x05: /* Integer 3OP */
 		{
 			decode_Integer_3OP(c);
+			address = address + 4;
 			break;
 		}
 		case 0x09: /* Integer 2OP */
 		{
 			decode_Integer_2OP(c);
+			address = address + 4;
 			break;
 		}
 		case 0x0D: /* 1OP */
 		{
 			decode_1OP(c);
-			break;
-		}
-		case 0x0E ... 0x2B: /* 2OPI */
-		case 0xB0 ... 0xDF:
-		{
-			decode_Integer_2OPI(c);
-			break;
-		}
-		case 0x2C ... 0x2F: /* 1OPI */
-		case 0xA0 ... 0xA1:
-		{
-			decode_1OPI(c);
+			address = address + 4;
 			break;
 		}
 		case 0x3C: /* Core 0OPI */
 		{
 			decode_0OPI(c);
+			address = address + 4;
 			break;
 		}
 		case 0x42: /* HALCODE */
 		{
 			decode_HALCODE(c);
+			address = address + 4;
+			break;
+		}
+			case 0xE1: /* 2OPI */
+		{
+			decode_Integer_2OPI(c);
+			address = address + 6;
+			break;
+		}
+		case 0xE0: /* 1OPI */
+		{
+			decode_1OPI(c);
+			address = address + 6;
 			break;
 		}
 		case 0x00: /* NOP */
 		case 0xFF: /* HALT */
 		{
 			decode_0OP(c);
+			address = address + 4;
 			break;
 		}
 		default: /* Not supported by this disassembler */
 		{
 			string_values(c, true);
+			address = address + 4;
 			return;
 		}
 	}
@@ -1479,7 +1499,6 @@ int main(int argc, char **argv)
 	{
 		read_instruction(current);
 		eval_instruction(current);
-		address = address + 4;
 		byte = fgetc(binary_file);
 		ungetc(byte, binary_file);
 	}

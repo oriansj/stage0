@@ -25,6 +25,10 @@ Performance tuned hex1 to reduce both size and instruction count
 Performance tuned hex0 to reduce both size and instruction count
 Performance tuned hex2 to reduce both size and isntruction count
 The stage0 vm now halts on ALL invalid instructions
+Displacements in the Stage0-vm no longer match that of the Knight hardware platform; instead of from the start of the instruction, from the end of the immediate to the target address.
+The Stage0-vm has relocated the 2OPI and 1OPI instructions and adjusted their encodings accordingly to simplify instruction size logic.
+The Skip class instructions now lookup the first byte of the instruction that follows them and skips the appropriate size instead of 4 bytes always.
+The assembler, disassembler and definitions files were adjusted accordingly
 
 ** Fixed
 Fixed behavior of R@ thanks to reepca

@@ -18,6 +18,7 @@
 	LOADUI R15 $stack           ; Put stack at end of program
 	;; We will be using R14 for our condition codes
 	;; We will be using R13 for storage of Head
+	LOADUI R12 0x4000           ; We will be using R12 for the HEAP
 
 
 ;; Main program
@@ -52,8 +53,8 @@
 ;; Returns to whatever called it
 :ReadFile
 	;; Allocate another Node
-	LOADUI R0 12
-	CALLI R15 @malloc
+	COPY R0 R12                 ; Copy Current free into R0
+	ADDUI R12 R12 12            ; Allocate Node
 	;; Get another line into list
 	PUSHR R1 R15
 	LOADUI R1 0x1100            ; Read from tape_01
@@ -83,8 +84,7 @@
 	PUSHR R4 R15
 	;; Initialize
 	MOVE R4 R0
-	FALSE R0                    ; Get where space is free
-	CALLI R15 @malloc
+	COPY R0 R12                 ; Get where space is free
 	MOVE R2 R0
 	FALSE R3
 :Readline_0
@@ -132,8 +132,7 @@
 	CMPSKIPI.E R3 0             ; Don't bother for Empty strings
 	STORE32 R2 R4 8
 	;; Correct Malloc
-	MOVE R0 R3                  ; Ensure actually allocates exactly
-	CALLI R15 @malloc           ; the amount of space required
+	ADD R12 R12 R3              ; Ensure actually allocates exactly the amount of space required
 	;; Restore Registers
 	POPR R4 R15
 	POPR R3 R15
@@ -185,33 +184,6 @@
 	POPR R1 R15
 	POPR R2 R15
 	RET R15
-
-
-;; Primative malloc function
-;; Recieves number of bytes to allocate in R0
-;; Returns pointer to block of that size in R0
-;; Returns to whatever called it
-:malloc
-	;; Preserve registers
-	PUSHR R1 R15
-	;; Get current malloc pointer
-	LOADR R1 @malloc_pointer
-	;; Deal with special case
-	CMPSKIPI.NE R1 0            ; If Zero set to our start of heap space
-	LOADUI R1 0x4000
-
-	;; update malloc pointer
-	SWAP R0 R1
-	ADD R1 R0 R1
-	STORER R1 @malloc_pointer
-
-;; Done
-	;; Restore registers
-	POPR R1 R15
-	RET R15
-;; Our static value for malloc pointer
-:malloc_pointer
-	NOP
 
 
 ;; Editor Loop
@@ -414,8 +386,8 @@
 	;; Initialize
 	MOVE R1 R0
 	;; Allocate another Node
-	LOADUI R0 12
-	CALLI R15 @malloc
+	COPY R0 R12
+	ADDUI R12 R12 12
 
 	;; Check if head->Next is null
 	LOAD32 R2 R1 0
@@ -447,8 +419,8 @@
 	;; Initialize
 	MOVE R1 R0
 	;; Allocate another Node
-	LOADUI R0 12
-	CALLI R15 @malloc
+	COPY R0 R12
+	ADDUI R12 R12 12
 
 	;; Check if Head->Prev is Null
 	LOAD32 R2 R1 4

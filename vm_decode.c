@@ -133,29 +133,37 @@ void decode_1OP(struct Instruction* c)
 }
 
 /* Deal with 2OPI */
-void decode_2OPI(struct Instruction* c)
+void decode_2OPI(struct lilith* vm, struct Instruction* c)
 {
-	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->raw_Immediate = (uint8_t)vm->memory[vm->ip];
+	vm->ip = vm->ip + 1;
+	uint8_t hold = (uint8_t)vm->memory[vm->ip];
+	vm->ip = vm->ip + 1;
+	c->raw_Immediate = c->raw_Immediate*0x100 + hold;
 	c->Immediate[0] = c->operation[4];
 	c->Immediate[1] = c->operation[5];
 	c->Immediate[2] = c->operation[6];
 	c->Immediate[3] = c->operation[7];
-	c->reg0 = c->raw1/16;
-	c->reg1 = c->raw1%16;
+	c->reg0 = c->raw3/16;
+	c->reg1 = c->raw3%16;
 }
 
 /* Deal with 1OPI */
-void decode_1OPI(struct Instruction* c)
+void decode_1OPI(struct lilith* vm, struct Instruction* c)
 {
-	c->raw_Immediate = c->raw2*0x100 + c->raw3;
+	c->raw_Immediate = (uint8_t)vm->memory[vm->ip];
+	vm->ip = vm->ip + 1;
+	uint8_t hold = (uint8_t)vm->memory[vm->ip];
+	vm->ip = vm->ip + 1;
+	c->raw_Immediate = c->raw_Immediate*0x100 + hold;
 	c->Immediate[0] = c->operation[4];
 	c->Immediate[1] = c->operation[5];
 	c->Immediate[2] = c->operation[6];
 	c->Immediate[3] = c->operation[7];
 	c->HAL_CODE = 0;
-	c->raw_XOP = c->raw1/16;
-	c->XOP[0] = c->operation[2];
-	c->reg0 = c->raw1%16;
+	c->raw_XOP = c->raw3/16;
+	c->XOP[0] = c->operation[7];
+	c->reg0 = c->raw3%16;
 }
 /* Deal with 0OPI */
 void decode_0OPI(struct Instruction* c)
@@ -1698,7 +1706,7 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 
 	/* 0x0E ... 0x2B */
 	/* 0xB0 ... 0xDF */
-	switch(c->raw0)
+	switch(c->raw2)
 	{
 		case 0x0E: /* ADDI */
 		{
@@ -2082,7 +2090,7 @@ bool eval_Integer_1OPI(struct lilith* vm, struct Instruction* c)
 	char Name[20] = "ILLEGAL_1OPI";
 	#endif
 
-	uint32_t Opcode = (c->raw0 * 16) + c->raw_XOP;
+	uint32_t Opcode = (c->raw2 * 16) + c->raw_XOP;
 
 	switch(Opcode)
 	{
@@ -2650,17 +2658,15 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 			eval_1OP_Int(vm, current);
 			break;
 		}
-		case 0x0E ... 0x2B: /* Integer 2OPI */
-		case 0xB0 ... 0xDF:
+		case 0xE1: /* Integer 2OPI */
 		{
-			decode_2OPI(current);
+			decode_2OPI(vm, current);
 			eval_2OPI_Int(vm, current);
 			break;
 		}
-		case 0x2C ... 0x2F: /* Integer 1OPI */
-		case 0xA0 ... 0xA1:
+		case 0xE0: /* Integer 1OPI */
 		{
-			decode_1OPI(current);
+			decode_1OPI(vm, current);
 			eval_Integer_1OPI(vm, current);
 			break;
 		}
