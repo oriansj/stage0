@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.1.0 - 2018-03-20
+** Added
 Added the ability to remove watch points in the webide
 Added program to search for unusual characters that are not human detectable
 
