@@ -41,14 +41,16 @@ int main(int argc, char **argv)
 		c = fgetc(source_file);
 		switch(c)
 		{
+			case -1: fprintf(stderr, "Reached end of File\n"); break;
 			case 48 ... 57: numbers = numbers + 1; break;
 			case 65 ... 90: upppers = upppers + 1; break;
-			case 97 ... 123: lowers = lowers + 1; break;
+			case 97 ... 122: lowers = lowers + 1; break;
 			case 9:
 			case 10:
 			case 32 ... 47:
 			case 58 ... 64:
-			case 91 ... 96: others = others + 1; break;
+			case 91 ... 96:
+			case 123 ...126: others = others + 1; break;
 			default: fprintf(stderr, "read %02X\n", c);
 		}
 	} while(EOF != c);
