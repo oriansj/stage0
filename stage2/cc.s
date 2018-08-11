@@ -714,14 +714,123 @@ Missing ;
 	POPR R1 R15                 ; Restore R1
 	RET R15
 
-:require_match
-	RET R15
-
-:line_error
-	RET R15
-
 :type_name_string0
 "Unknown type "
+
+
+;; line_error function
+;; Recieves Nothing
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns nothing
+:line_error
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOADUI R0 $line_error_string0 ; Our leading string
+	FALSE R1                    ; We want the user to see
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R13 16            ; GLOBAL_TOKEN->LINENUMBER
+	CALLI R15 @numerate_number  ; Get a string pointer for number
+	CALLI R15 @file_print       ; And print it
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:line_error_string0
+	"In file: TTY1 On line: "
+
+;; require_match function
+;; Recieves char* in R0 and char* in R1
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns Nothing
+:require_match
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R2 R15                ; Protect R2
+	MOVE R2 R0                  ; Get MESSAGE out of the way
+	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; Check if GLOBAL_TOKEN->S == REQUIRED
+	JUMP.NZ R0 @require_match_done ; Looks like it was a match
+
+	;; Terminate with an error
+	MOVE R0 R2                  ; Put MESSAGE in required spot
+	FALSE R1                    ; We want to write for user
+	CALLI R15 @file_print       ; Write it
+	CALLI R15 @line_error       ; And provide some debug info
+	HALT                        ; Then Stop immediately
+
+:require_match_done
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	POPR R2 R15                 ; Restore R2
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; numerate_numberfunction
+;; Recieves int in R0
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns pointer to string generated
+:numerate_number
+	PUSHR R1 R15                ; Preserve R1
+	PUSHR R2 R15                ; Preserve R2
+	PUSHR R3 R15                ; Preserve R3
+	PUSHR R4 R15                ; Preserve R4
+	PUSHR R5 R15                ; Preserve R5
+	PUSHR R6 R15                ; Preserve R6
+	MOVE R3 R0                  ; Move Integer out of the way
+	COPY R1 R14                 ; Get pointer result
+	ADDUI R14 R14 16            ; CALLOC the 16 chars of space
+	FALSE R6                    ; Set index to 0
+
+	JUMP.Z R3 @numerate_number_ZERO ; Deal with Special case of ZERO
+	JUMP.P R3 @numerate_number_Positive
+	LOADUI R0 45                ; Using -
+	STOREX8 R0 R1 R6            ; write leading -
+	ADDUI R6 R6 1               ; Increment by 1
+	NOT R3 R3                   ; Flip into positive
+	ADDUI R3 R3 1               ; Adjust twos
+
+:numerate_number_Positive
+	LOADR R2 @Max_Decimal       ; Starting from the Top
+	LOADUI R5 10                ; We move down by 10
+	FALSE R4                    ; Flag leading Zeros
+
+:numerate_number_0
+	DIVIDE R0 R3 R3 R2          ; Break off top 10
+	CMPSKIPI.E R0 0             ; If Not Zero
+	TRUE R4                     ; Flip the Flag
+
+	JUMP.Z R4 @numerate_number_1 ; Skip leading Zeros
+	ADDUI R0 R0 48              ; Shift into ASCII
+	STOREX8 R0 R1 R6            ; write digit
+	ADDUI R6 R6 1               ; Increment by 1
+
+:numerate_number_1
+	DIV R2 R2 R5                ; Look at next 10
+	CMPSKIPI.E R2 0             ; If we reached the bottom STOP
+	JUMP @numerate_number_0     ; Otherwise keep looping
+
+:numerate_number_done
+	LOADUI R0 10                ; Using LINEFEED
+	STOREX8 R0 R1 R6            ; write
+	MOVE R0 R1                  ; Return pointer to our string
+	;; Cleanup
+	POPR R6 R15                 ; Restore R6
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:numerate_number_ZERO
+	LOADUI R0 48                ; Using Zero
+	STOREX8 R0 R1 R6            ; write
+	ADDUI R6 R6 1               ; Increment by 1
+	JUMP @numerate_number_done  ; Be done
+
+:Max_Decimal
+	'3B9ACA00'
+
+
 
 ;; Keywords
 :union
