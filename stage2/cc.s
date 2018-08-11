@@ -491,8 +491,19 @@ NOP
 :sym_declare
 	RET R15
 
+
+;; emit function
+;; Recieves struct char* in R0, struct token_list* in R1
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns struct token_list* in R0
 :emit
-	COPY R0 R1
+	PUSHR R2 R15                ; Protect R2
+	COPY R2 R14                 ; Pointer to T
+	ADDUI R14 R14 20            ; CALLOC struct token_list
+	STORE32 R1 R2 0             ; T->NEXT = HEAD
+	STORE32 R0 R2 8             ; T->S = S
+	MOVE R0 R2                  ; Put T in proper spot for return
+	POPR R2 R15                 ; Restore R2
 	RET R15
 
 ;; file_print function
