@@ -43,45 +43,38 @@
 	LOADUI R15 $STACK           ; Setup Initial STACK
 	CALLI R15 @read_all_tokens  ; Read all Tokens in Tape_01
 	CALLI R15 @reverse_list     ; Fix Token Order
-;	STORER32 R0 @global_token   ; Set global_token for future reading
-;	FALSE R0                    ; Pass NULL to program
-;	CALLI R15 @program          ; Build our output
+	MOVE R13 R0                 ; Set global_token for future reading
+	FALSE R12                   ; Set struct token_list* out to NULL
+	FALSE R11                   ; Set struct token_list* list_strings to NULL
+	FALSE R10                   ; Set struct token_list* globals_list to NULL
+	CALLI R15 @program          ; Build our output
 	LOADUI R0 $header_string1   ; Using our first header string
 	LOADUI R1 0x1101            ; Using Tape_02
 	CALLI R15 @file_print       ; Write string
-;	LOADUI R0 $output_list      ; using Contents of output_list
-;	CALLI R15 @recursive_output ; Recursively write
+	MOVE R0 R12                 ; using Contents of output_list
+	CALLI R15 @recursive_output ; Recursively write
 	LOADUI R0 $header_string2   ; Using our second header string
 	CALLI R15 @file_print       ; Write string
-;	LOADUI R0 $globals_list     ; using Contents of globals_list
-;	CALLI R15 @recursive_output ; Recursively write
+	MOVE R0 R10                 ; using Contents of globals_list
+	CALLI R15 @recursive_output ; Recursively write
 	LOADUI R0 $header_string3   ; Using our third header string
 	CALLI R15 @file_print       ; Write string
-;	LOADUI R0 $strings_list     ; using Contents of strings_list
-;	CALLI R15 @recursive_output ; Recursively write
+	MOVE R0 R11                 ; using Contents of strings_list
+	CALLI R15 @recursive_output ; Recursively write
 	LOADUI R0 $header_string4   ; Using our fourth header string
 	CALLI R15 @file_print       ; Write string
 	HALT                        ; We have completed compiling our input
 
+;; Symbol lists
+:global_constant_list
+	NOP
+
+:global_symbol_list
+	NOP
+
 ;; Pointer to initial HEAP ADDRESS
 :HEAP
 	'00180000'
-
-;; Pointer to our list of tokens collected in the input
-:global_token
-	NOP
-
-;; Pointer to our list of assembly tokens generated
-:output_list
-	NOP
-
-;; Pointer to our list of globals
-:globals_list
-	NOP
-
-;; Pointer to our list of string tokens generated
-:strings_list
-	NOP
 
 ;; Output strings
 :header_string1
@@ -294,7 +287,7 @@
 	;; Check for string
 :get_token_string
 	CMPSKIPI.E R0 34            ; Check if "
-	JUMP @get_token_comment     ; Not a "
+	JUMP @get_token_EOF         ; Not a "
 	COPY R2 R0                  ; Prepare for consume_word
 	CALLI R15 @consume_word     ; Call it
 	JUMP @get_token_done        ; Be done with token
@@ -412,9 +405,95 @@
 	POPR R2 R15                 ; Restore R2
 	RET R15
 
+
+;; file_print function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	and struct token_list* global_list in R10
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_list modified
 :program
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+:program_iter
+	JUMP.Z R13 @program_done    ; Looks like we read all the tokens
+	LOADUI R0 $constant         ; Using the constant string
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; Check if they match
+	JUMP.Z R0 @program_type     ; Looks like not
+
+	;; Deal with CONSTANT case
+	LOADUI R3 $global_constant_list ; Where we store our global constant
+	LOAD32 R2 R3 0              ; Get contents of global constants
+	FALSE R1                    ; Set NULL
+	LOAD32 R0 R13 0             ; GLOBAL_TOKEN->NEXT
+	LOAD32 R0 R0 8              ; GLOBAL_TOKEN->NEXT->S
+	CALLI R15 @sym_declare      ; Declare the global constant
+	STORE32 R0 R3 0             ; Update global constant
+	LOAD32 R2 R13 0             ; GLOBAL_TOKEN->NEXT
+	LOAD32 R2 R2 0              ; GLOBAL_TOKEN->NEXT->NEXT
+	STORE32 R0 R2 16            ; GLOBAL_CONSTANT_LIST->ARGUMENTS = GLOBAL_TOKEN->NEXT->NEXT
+	LOAD32 R13 R2 0             ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT->NEXT->NEXT
+	JUMP @program_iter          ; Loop again
+
+:program_type
+	CALLI R15 @type_name        ; Get the type
+	JUMP.Z R0 @program_iter     ; If newly defined type iterate
+
+	;; Looks like we got a defined type
+	MOVE R1 R0                  ; Put the type where it can be used
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADUI R3 $global_symbol_list ; Get address of global symbol list
+	LOAD32 R2 R3 0              ; GLOBAL_SYMBOLS_LIST
+	CALLI R15 @sym_declare      ; Declare that global symbol
+	STORE32 R0 R3 0             ; Update global symbol list
+	LOAD32 R3 R13 8             ; GLOBAL_TOKEN->S
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $semicolon        ; Get semicolon string
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; Check if they match
+	JUMP.Z R0 @program_function ; If not a match
+
+	;; Deal with case of TYPE NAME;
+	COPY R1 R10                 ; Using GLOBALS_LIST
+	LOADUI R0 $program_string0  ; Using the GLOBAL_ prefix
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Move new GLOBALS_LIST into Place
+	MOVE R0 R3                  ; Use GLOBAL_TOKEN->PREV->S
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Move new GLOBALS_LIST into Place
+	LOADUI R0 $program_string1  ; Using the NOP postfix
+	CALLI R15 @emit             ; emit it
+	MOVE R10 R0                 ; Move new GLOBALS_LIST into Place
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP @program_iter
+
+:program_function
+	JUMP @program_iter
+
+:program_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
 
+:program_string0
+	":GLOBAL_"
+:program_string1
+	"
+NOP
+"
+
+:sym_declare
+	RET R15
+
+:emit
+	COPY R0 R1
+	RET R15
 
 ;; file_print function
 ;; Recieves pointer to string in R0 and FILE* in R1
@@ -697,13 +776,13 @@ Missing ;
 	HALT                        ; Just exit
 
 :type_name_struct
-	JUMP.NZ R1 @type_name_iter  ; If was found
+	JUMP.Z R1 @type_name_iter   ; If was found
 	CALLI R15 @create_struct    ; Otherwise create it
 	JUMP @type_name_done        ; and be done
 
 :type_name_iter
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	LOAD32 R1 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R1 R1 0              ; GLOBAL_TOKEN->S[0]
 	CMPSKIPI.E R1 42            ; if GLOBAL_TOKEN->S[0] == '*'
 	JUMP @type_name_done        ; Looks like Nope
@@ -764,7 +843,7 @@ Missing ;
 	RET R15
 
 
-;; numerate_numberfunction
+;; numerate_number function
 ;; Recieves int in R0
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns pointer to string generated
@@ -831,23 +910,28 @@ Missing ;
 	'3B9ACA00'
 
 
-
 ;; Keywords
 :union
 	"union"
 :struct
 	"struct"
+:constant
+	"CONSTANT"
 
 ;; Frequently Used strings
 ;; Generally used by require_match
 :open_curly_brace
-"{"
+	"{"
 :close_curly_brace
-"}"
+	"}"
+:open_paren
+	"("
+:close_paren
+	")"
 :semicolon
-";"
+	";"
 :newline
-"
+	"
 "
 
 ;; Global types
