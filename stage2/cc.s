@@ -171,32 +171,56 @@
 	RET R15
 
 
-;; in_set function
+;; in_set2 function
 ;; Recieves a Char in R0, FILE* in R1, char* in R2 and index in R13
 ;; Return result in R2
-:in_set
+:in_set2
 	PUSHR R3 R15                ; Protect R3 from changes
-:in_set_reset
+:in_set2_reset
 	LOADU8 R3 R2 0              ; Get char from list
-	CMPJUMPI.E R0 R3 @in_set_done ; We found a match
+	CMPJUMPI.E R0 R3 @in_set2_done ; We found a match
 	ADDUI R2 R2 1               ; Increment to next char
-	JUMP.NZ R3 @in_set_reset    ; Iterate if not NULL
+	JUMP.NZ R3 @in_set2_reset   ; Iterate if not NULL
 
 	;; Looks like not found
 	FALSE R2                    ; Return FALSE
 
-:in_set_done
+:in_set2_done
 	CMPSKIPI.E R2 0             ; Provided not FALSE
 	TRUE R2                     ; The result is true
 	POPR R3 R15                 ; Restore R3
 	RET R15
 
+
+;; in_set function
+;; Recieves a Char in R0, char* in R1
+;; Return result in R0
+:in_set
+	PUSHR R2 R15                ; Protect R3 from changes
+:in_set_reset
+	LOADU8 R2 R1 0              ; Get char from list
+	CMPJUMPI.E R0 R2 @in_set_done ; We found a match
+	ADDUI R1 R1 1               ; Increment to next char
+	JUMP.NZ R2 @in_set_reset    ; Iterate if not NULL
+
+	;; Looks like not found
+	FALSE R1                    ; Return FALSE
+
+:in_set_done
+	CMPSKIPI.E R1 0             ; Provided not FALSE
+	TRUE R2                     ; The result is true
+	MOVE R0 R2                  ; Put result in correct place
+	POPR R2 R15                 ; Restore R3
+	RET R15
+
+
+;; Common in_set strings of interest
 :keyword_chars
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
-
 :symbol_chars
 	"<=>|&!-"
-
+:digit_chars
+	"0123456789"
 
 ;; preserve_keyword function
 ;; Recieves a Char in R0, FILE* in R1 and index in R13
@@ -204,7 +228,7 @@
 ;; Returns next CHAR
 :preserve_keyword
 	LOADUI R2 $keyword_chars    ; Using keyword list of chars
-	CALLI R15 @in_set           ; Check if in list
+	CALLI R15 @in_set2          ; Check if in list
 	JUMP.Z R2 @preserve_keyword_label ; if not in set, stop iterating
 
 :preserve_keyword_reset
@@ -223,7 +247,7 @@
 ;; Returns next CHAR
 :preserve_symbol
 	LOADUI R2 $symbol_chars     ; Using symbol list of chars
-	CALLI R15 @in_set           ; Check if in list
+	CALLI R15 @in_set2          ; Check if in list
 	JUMP.NZ R2 @preserve_symbol_reset
 
 	;; Looks we didn't find anything we wanted to preserve
@@ -263,7 +287,7 @@
 
 	;; Check for keywords
 	LOADUI R2 $keyword_chars    ; Using keyword list
-	CALLI R15 @in_set           ; Check if keyword
+	CALLI R15 @in_set2          ; Check if keyword
 	JUMP.Z R2 @get_token_symbol ; if not a keyword
 	CALLI R15 @preserve_keyword ; Yep its a keyword
 	JUMP @get_token_done        ; Be done with token
@@ -271,7 +295,7 @@
 	;; Check for symbols
 :get_token_symbol
 	LOADUI R2 $symbol_chars     ; Using symbol list
-	CALLI R15 @in_set           ; Check if symbol
+	CALLI R15 @in_set2          ; Check if symbol
 	JUMP.Z R2 @get_token_char   ; If not a symbol
 	CALLI R15 @preserve_symbol  ; Yep its a symbol
 	JUMP @get_token_done        ; Be done with token
@@ -406,7 +430,16 @@
 	RET R15
 
 
-;; file_print function
+
+:parse_string
+	RET R15
+
+:declare_function
+	RET R15
+
+
+
+;; program function
 ;; Recieves struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
@@ -472,7 +505,78 @@
 	JUMP @program_iter
 
 :program_function
+	LOADUI R0 $open_paren       ; Get open paren string
+	CALLI R15 @match            ; Check if they match
+	JUMP.Z R0 @program_assign   ; If not a match
+
+	;; Deal with case of TYPE NAME(...)
+	CALLI R15 @declare_function
 	JUMP @program_iter
+
+:program_assign
+	LOADUI R0 $equal            ; Get equal string
+	CALLI R15 @match            ; Check if they match
+	JUMP.Z R0 @program_error    ; If not a match
+	COPY R1 R10                 ; Using GLOBALS_LIST
+	LOADUI R0 $program_string0  ; Using the GLOBAL_ prefix
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Move new GLOBALS_LIST into Place
+	MOVE R0 R3                  ; Use GLOBAL_TOKEN->PREV->S
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Move new GLOBALS_LIST into Place
+	LOADUI R0 $newline          ; Using the Newline postfix
+	CALLI R15 @emit             ; emit it
+	MOVE R10 R0                 ; Update GLOBALS_LIST
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	LOADUI R1 $digit_chars      ; 0-9
+	CALLI R15 @in_set           ; Figure out if in set
+	JUMP.Z R0 @program_assign_string ; If not in sets
+
+	;; Looks like we have an int
+	COPY R1 R10                 ; Using GLOBALS_LIST
+	LOADUI R0 $percent          ; Using percent prefix
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put GLOBALS_LIST into Place
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put GLOBALS_LIST into Place
+	LOADUI R0 $newline          ; Using newline postfix
+	CALLI R15 @emit             ; emit it
+	MOVE R10 R0                 ; Update GLOBALS_LIST
+	JUMP @program_assign_done   ; Move on
+
+:program_assign_string
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.E R0 34            ; If GLOBAL_TOKEN->S[0] == '"'
+	JUMP @program_error         ; If not we hit an error
+
+	;; Looks like we have a string
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @parse_string     ; Parse it into useful form
+	COPY R1 R10                 ; GLOBALS_LIST
+	CALLI R15 @emit             ; emit it
+	MOVE R10 R0                 ; Update GLOBALS_LIST
+
+:program_assign_done
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $program_string4  ; Potential error message
+	LOADUI R1 $semicolon        ; Checking for ;
+	CALLI R15 @require_match    ; Catch those errors
+	JUMP @program_iter
+
+:program_error
+	LOADUI R0 $program_string2  ; message part 1
+	FALSE R1                    ; Show to user
+	CALLI R15 @file_print       ; write
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @file_print       ; write
+	LOADUI R0 $program_string3  ; message part 2
+	CALLI R15 @file_print       ; write
+	CALLI R15 @line_error       ; Provide a meaningful error message
+	HALT
 
 :program_done
 	POPR R3 R15                 ; Restore R3
@@ -487,7 +591,15 @@
 	"
 NOP
 "
-
+:program_string2
+	"Recieved "
+:program_string3
+	" in program
+"
+:program_string4
+"ERROR in Program
+Missing ;
+"
 
 ;; sym_declare function
 ;; Recieves char* in R0, struct type* in R1, struct token_list* in R2
@@ -794,7 +906,7 @@ Missing ;
 	FALSE R1                    ; We will want to be writing the error message for the Human
 	LOADUI R0 $type_name_string0 ; The first string
 	CALLI R15 @file_print       ; Display it
-	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @file_print       ; Display it
 	LOADUI R0 $newline          ; Terminating linefeed
 	CALLI R15 @file_print       ; Display it
@@ -956,6 +1068,10 @@ Missing ;
 	")"
 :semicolon
 	";"
+:equal
+	"="
+:percent
+	"%"
 :newline
 	"
 "
