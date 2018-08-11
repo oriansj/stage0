@@ -488,12 +488,25 @@
 NOP
 "
 
+
+;; sym_declare function
+;; Recieves char* in R0, struct type* in R1, struct token_list* in R2
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns struct token_list* in R0
 :sym_declare
+	PUSHR R3 R15                ; Protect R3
+	COPY R3 R14                 ; Get A
+	ADDUI R14 R14 20            ; CALLOC struct token_list
+	STORE32 R2 R3 0             ; A->NEXT = LIST
+	STORE32 R0 R3 8             ; A->S = S
+	STORE32 R1 R3 12            ; A->TYPE = T
+	MOVE R0 R3                  ; Prepare for Return
+	POPR R3 R15                 ; Restore R3
 	RET R15
 
 
 ;; emit function
-;; Recieves struct char* in R0, struct token_list* in R1
+;; Recieves char* in R0, struct token_list* in R1
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns struct token_list* in R0
 :emit
@@ -575,7 +588,8 @@ NOP
 :lookup_type
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
-	LOADUI R2 $global_types     ; I =  global_types
+	LOADUI R2 $global_types     ; Get pointer to current global types
+	LOAD32 R2 R2 0              ;I =  global_types
 	MOVE R1 R0                  ; Put S in correct place
 :lookup_type_iter
 	LOAD32 R0 R2 24             ; Get I->NAME
@@ -635,7 +649,7 @@ NOP
 	LOADUI R1 $open_curly_brace ; OPEN CURLY BRACE
 	CALLI R15 @require_match    ; Ensure we have that curly brace
 :build_union_iter
-	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	LOADUI R1 125               ; numerical value of }
 	CMPJUMPI.E R0 R1 @build_union_done ; No more looping required
@@ -688,7 +702,7 @@ Missing ;
 	ADDUI R14 R14 28            ; CALLOC struct type
 	COPY R4 R14                 ; SET I
 	ADDUI R14 R14 28            ; CALLOC struct type
-	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	STORE32 R0 R3 24            ; HEAD->NAME = GLOBAL_TOKEN->S
 	STORE32 R0 R4 24            ; I->NAME = GLOBAL_TOKEN->S
 	STORE32 R4 R3 12            ; HEAD->INDIRECT = I
@@ -706,12 +720,12 @@ Missing ;
 	CALLI R15 @require_match    ; Ensure we have that curly brace
 	FALSE R6                    ; LAST = NULL
 :create_struct_iter
-	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	LOADUI R1 125               ; Numerical value of }
 	CMPJUMPI.E R0 R1 @create_struct_done ; Stop looping if match
 	LOADUI R1 $union            ; Pointer to string UNION
-	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if they Match
 	SWAP R0 R6                  ; Put LAST in place
 	MOVE R1 R5                  ; Put OFFSET in place
@@ -766,10 +780,11 @@ Missing ;
 :type_name
 	PUSHR R1 R15                ; Protect R1
 	LOADUI R0 $struct           ; String for struct for comparison
-	LOAD32 R1 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if they match
 	CMPSKIPI.E R0 0             ; If STRUCTURE
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	SWAP R0 R1                  ; Put GLOBAL_TOKEN->S in the right place
 	CALLI R15 @lookup_type      ; RET = lookup_type(GLOBAL_TOKEN->S)
 	CMPSKIP.E R0 R1             ; If RET == NULL and !STRUCTURE
@@ -779,7 +794,7 @@ Missing ;
 	FALSE R1                    ; We will want to be writing the error message for the Human
 	LOADUI R0 $type_name_string0 ; The first string
 	CALLI R15 @file_print       ; Display it
-	LOAD32 R1 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @file_print       ; Display it
 	LOADUI R0 $newline          ; Terminating linefeed
 	CALLI R15 @file_print       ; Display it
@@ -787,7 +802,7 @@ Missing ;
 	HALT                        ; Just exit
 
 :type_name_struct
-	JUMP.Z R1 @type_name_iter   ; If was found
+	JUMP.NZ R0 @type_name_iter  ; If was found
 	CALLI R15 @create_struct    ; Otherwise create it
 	JUMP @type_name_done        ; and be done
 
@@ -836,7 +851,7 @@ Missing ;
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R2 R15                ; Protect R2
 	MOVE R2 R0                  ; Get MESSAGE out of the way
-	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if GLOBAL_TOKEN->S == REQUIRED
 	JUMP.NZ R0 @require_match_done ; Looks like it was a match
 
@@ -973,7 +988,7 @@ Missing ;
 	"int"
 
 :type_char
-	&type_char_double_indirect  ; NEXT
+	&type_file                  ; NEXT
 	'00 00 00 01'               ; SIZE
 	NOP                         ; OFFSET
 	&type_char_indirect         ; INDIRECT
@@ -984,7 +999,7 @@ Missing ;
 	"char"
 
 :type_char_indirect
-	&type_char_double_indirect  ;  NEXT
+	&type_file                  ; NEXT
 	'00 00 00 04'               ; SIZE
 	NOP                         ; OFFSET
 	&type_char_double_indirect  ; INDIRECT
