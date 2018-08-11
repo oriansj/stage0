@@ -434,7 +434,7 @@
 
 
 ;; recursive_output function
-;;  Recieves token_list in R0 and FILE* in R1
+;; Recieves token_list in R0 and FILE* in R1
 ;; Returns nothing and alters nothing
 :recursive_output
 	JUMP.Z R0 @recursive_output_abort ; Abort if NULL
@@ -448,5 +448,390 @@
 	POPR R2 R15                 ; Restore R0
 :recursive_output_abort
 	RET R15
+
+
+;; match function
+;; Recieves a CHAR* in R0, CHAR* in R1
+;; Returns Bool in R0 indicating if strings match
+:match
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	MOVE R2 R0                  ; Put First string in place
+	MOVE R3 R1                  ; Put Second string in place
+	LOADUI R4 0                 ; Set initial index of 0
+:match_cmpbyte
+	LOADXU8 R0 R2 R4            ; Get a byte of our first string
+	LOADXU8 R1 R3 R4            ; Get a byte of our second string
+	ADDUI R4 R4 1               ; Prep for next loop
+	CMPSKIP.E R1 R0             ; Compare the bytes
+	FALSE R1                    ; Set FALSE
+	JUMP.NZ R1 @match_cmpbyte   ; Loop if bytes are equal
+;; Done
+	CMPSKIPI.NE R0 0            ; If ended loop with everything matching
+	TRUE R1                     ; Set as TRUE
+	MOVE R0 R1                  ; Prepare for return
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; lookup_type function
+;; Recieves a CHAR* in R0
+;; Returns struct type* in R0 or NULL if no match
+:lookup_type
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADUI R2 $global_types     ; I =  global_types
+	MOVE R1 R0                  ; Put S in correct place
+:lookup_type_iter
+	LOAD32 R0 R2 24             ; Get I->NAME
+	CALLI R15 @match            ; Check if I->NAME == S
+	JUMP.NZ R0 @lookup_type_done ; If match found be done
+	LOAD32 R2 R2 0              ; I = I->NEXT
+	JUMP.NZ R2 @lookup_type_iter ; Otherwise iterate until I == NULL
+:lookup_type_done
+	MOVE R0 R2                  ; Our answer (I or NULL)
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
+;; build_member function
+;; Recieves a struct type* in R0, int in R1 and int in R2
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Modifies R2 to current member_size
+;; Returns struct type* in R0
+:build_member
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	PUSHR R5 R15                ; Protect R5
+	MOVE R4 R0                  ; Protect LAST
+	CALLI R15 @type_name        ; Get MEMBER_TYPE
+	COPY R3 R14                 ; SET I
+	ADDUI R14 R14 28            ; CALLOC struct type
+	LOAD32 R5 R13 8             ; GLOBAL_TOKEN->S
+	STORE32 R5 R3 24            ; I->NAME = GLOBAL_TOKEN->S
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	STORE32 R4 R3 16            ; I->MEMBERS = LAST
+	LOAD32 R2 R0 4              ; MEMBER_SIZE = MEMBER_TYPE->SIZE
+	STORE32 R2 R3 4             ; I->SIZE = MEMBER_SIZE
+	STORE32 R0 R3 20            ; I->TYPE = MEMBER_TYPE
+	STORE32 R1 R3 8             ; I->OFFSET = OFFSET
+	MOVE R0 R3                  ; RETURN I in R0
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	RET R15
+
+
+;; build_union function
+;; Recieves a struct type* in R0, int in R1 and int in R2
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Modifies R2 to current member_size
+;; Returns struct type* in R0
+:build_union
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	PUSHR R5 R15                ; Protect R5
+	MOVE R4 R0                  ; Protect LAST
+	MOVE R3 R1                  ; Protect OFFSET
+	FALSE R5                    ; SIZE = 0
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $build_union_string0 ; ERROR MESSAGE
+	LOADUI R1 $open_curly_brace ; OPEN CURLY BRACE
+	CALLI R15 @require_match    ; Ensure we have that curly brace
+:build_union_iter
+	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	LOADUI R1 125               ; numerical value of }
+	CMPJUMPI.E R0 R1 @build_union_done ; No more looping required
+	MOVE R0 R4                  ; We are passing last to be overwritten
+	MOVE R1 R3                  ; We are also passing OFFSET
+	CALLI R15 @build_member     ; To build_member to get new LAST and new member_size
+	CMPSKIP.LE R2 R5            ; If MEMBER_SIZE > SIZE
+	COPY R5 R2                  ; SIZE = MEMMER_SIZE
+	MOVE R4 R0                  ; Protect LAST
+	MOVE R3 R1                  ; Protect OFFSET
+	LOADUI R0 $build_union_string1 ; ERROR MESSAGE
+	LOADUI R1 $semicolon        ; SEMICOLON
+	CALLI R15 @require_match    ; Ensure we have that curly brace
+	JUMP @build_union_iter      ; Loop until we get that closing curly brace
+:build_union_done
+	MOVE R2 R5                  ; Setting MEMBER_SIZE = SIZE
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	MOVE R1 R3                  ; Restore OFFSET
+	MOVE R0 R4                  ; Restore LAST as we are turning that
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	RET R15
+
+:build_union_string0
+"ERROR in build_union
+Missing {
+"
+:build_union_string1
+"ERROR in build_union
+Missing ;
+"
+
+
+;; create_struct function
+;; Recieves Nothing
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns Nothing
+:create_struct
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	PUSHR R5 R15                ; Protect R5
+	PUSHR R6 R15                ; Protect R6
+	FALSE R5                    ; OFFSET = 0
+	FALSE R2                    ; MEMBER_SIZE = 0
+	COPY R3 R14                 ; SET HEAD
+	ADDUI R14 R14 28            ; CALLOC struct type
+	COPY R4 R14                 ; SET I
+	ADDUI R14 R14 28            ; CALLOC struct type
+	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	STORE32 R0 R3 24            ; HEAD->NAME = GLOBAL_TOKEN->S
+	STORE32 R0 R4 24            ; I->NAME = GLOBAL_TOKEN->S
+	STORE32 R4 R3 12            ; HEAD->INDIRECT = I
+	STORE32 R3 R4 12            ; I->INDIRECT - HEAD
+	LOADUI R0 $global_types     ; Get Address of GLOBAL_TYPES
+	LOAD32 R0 R0 0              ; Current pointer to GLOBAL_TYPES
+	STORE R0 R3 0               ; HEAD->NEXT = GLOBAL_TYPES
+	LOADUI R0 $global_types     ; Get Address of GLOBAL_TYPES
+	STORE R3 R0 0               ; GLOBAL_TYPES = HEAD
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 4                 ; Standard Pointer SIZE
+	STORE32 R0 R4 4             ; I->SIZE = 4
+	LOADUI R0 $create_struct_string0 ; ERROR MESSAGE
+	LOADUI R1 $open_curly_brace ; OPEN CURLY BRACE
+	CALLI R15 @require_match    ; Ensure we have that curly brace
+	FALSE R6                    ; LAST = NULL
+:create_struct_iter
+	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	LOADUI R1 125               ; Numerical value of }
+	CMPJUMPI.E R0 R1 @create_struct_done ; Stop looping if match
+	LOADUI R1 $union            ; Pointer to string UNION
+	LOAD32 R0 R13 24            ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; Check if they Match
+	SWAP R0 R6                  ; Put LAST in place
+	MOVE R1 R5                  ; Put OFFSET in place
+	JUMP.NZ R6 @create_struct_union ; Deal with union case
+
+	;; Deal with standard member case
+	CALLI R15 @build_member     ; Sets new LAST and MEMBER_SIZE
+	JUMP @create_struct_iter2   ; reset for loop
+
+:create_struct_union
+	CALLI R15 @build_union
+
+:create_struct_iter2
+	ADD R5 R1 R2                ; OFFSET = OFFSET + MEMBER_SIZE
+	SWAP R0 R6                  ; Put LAST in place
+	LOADUI R0 $create_struct_string1 ; ERROR MESSAGE
+	LOADUI R1 $semicolon        ; SEMICOLON
+	CALLI R15 @require_match    ; Ensure we have that semicolon
+	JUMP @create_struct_iter    ; Keep Looping
+
+:create_struct_done
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $create_struct_string1 ; ERROR MESSAGE
+	LOADUI R1 $semicolon        ; SEMICOLON
+	CALLI R15 @require_match    ; Ensure we have that semicolon
+	STORE32 R5 R3 4             ; HEAD->SIZE = OFFSET
+	STORE32 R6 R3 16            ; HEAD->MEMBERS = LAST
+	STORE32 R6 R4 16            ; I->MEMBERS = LAST
+	POPR R6 R15                 ; Restore R6
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:create_struct_string0
+"ERROR in create_struct
+Missing {
+"
+:create_struct_string1
+"ERROR in create_struct
+Missing ;
+"
+
+
+;; type_name function
+;; Recieves Nothing
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns struct type* in R0
+:type_name
+	PUSHR R1 R15                ; Protect R1
+	LOADUI R0 $struct           ; String for struct for comparison
+	LOAD32 R1 R13 24            ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; Check if they match
+	CMPSKIPI.E R0 0             ; If STRUCTURE
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	SWAP R0 R1                  ; Put GLOBAL_TOKEN->S in the right place
+	CALLI R15 @lookup_type      ; RET = lookup_type(GLOBAL_TOKEN->S)
+	CMPSKIP.E R0 R1             ; If RET == NULL and !STRUCTURE
+	JUMP @type_name_struct      ; Guess not
+
+	;; Exit with useful error message
+	FALSE R1                    ; We will want to be writing the error message for the Human
+	LOADUI R0 $type_name_string0 ; The first string
+	CALLI R15 @file_print       ; Display it
+	LOAD32 R1 R13 24            ; GLOBAL_TOKEN->S
+	CALLI R15 @file_print       ; Display it
+	LOADUI R0 $newline          ; Terminating linefeed
+	CALLI R15 @file_print       ; Display it
+	CALLI R15 @line_error       ; Give useful debug info
+	HALT                        ; Just exit
+
+:type_name_struct
+	JUMP.NZ R1 @type_name_iter  ; If was found
+	CALLI R15 @create_struct    ; Otherwise create it
+	JUMP @type_name_done        ; and be done
+
+:type_name_iter
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R1 R13 24            ; GLOBAL_TOKEN->S
+	LOADU8 R1 R1 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.E R1 42            ; if GLOBAL_TOKEN->S[0] == '*'
+	JUMP @type_name_done        ; Looks like Nope
+	LOAD32 R0 R0 12             ; RET = RET->INDIRECT
+	JUMP @type_name_iter        ; Keep looping
+
+:type_name_done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:require_match
+	RET R15
+
+:line_error
+	RET R15
+
+:type_name_string0
+"Unknown type "
+
+;; Keywords
+:union
+	"union"
+:struct
+	"struct"
+
+;; Frequently Used strings
+;; Generally used by require_match
+:open_curly_brace
+"{"
+:close_curly_brace
+"}"
+:semicolon
+";"
+:newline
+"
+"
+
+;; Global types
+;; NEXT (0), SIZE (4), OFFSET (8), INDIRECT (12), MEMBERS (16), TYPE (20), NAME (24)
+:global_types
+	&type_void
+
+:type_void
+	&type_int                   ; NEXT
+	'00 00 00 04'               ; SIZE
+	NOP                         ; OFFSET
+	&type_void                  ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_void                  ; TYPE
+	&type_void_name             ; NAME
+:type_void_name
+	"void"
+
+:type_int
+	&type_char                  ; NEXT
+	'00 00 00 04'               ; SIZE
+	NOP                         ; OFFSET
+	&type_int                   ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_int                   ; TYPE
+	&type_int_name              ; NAME
+:type_int_name
+	"int"
+
+:type_char
+	&type_char_double_indirect  ; NEXT
+	'00 00 00 01'               ; SIZE
+	NOP                         ; OFFSET
+	&type_char_indirect         ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_char                  ; TYPE
+	&type_char_name             ; NAME
+:type_char_name
+	"char"
+
+:type_char_indirect
+	&type_char_double_indirect  ;  NEXT
+	'00 00 00 04'               ; SIZE
+	NOP                         ; OFFSET
+	&type_char_double_indirect  ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_char_indirect         ; TYPE
+	&type_char_indirect_name    ; NAME
+:type_char_indirect_name
+	"char*"
+
+:type_char_double_indirect
+	&type_file                  ; NEXT
+	'00 00 00 04'               ; SIZE
+	NOP                         ; OFFSET
+	&type_char_double_indirect  ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_char_indirect         ; TYPE
+	&type_char_double_indirect_name ; NAME
+:type_char_double_indirect_name
+	"char**"
+
+:type_file
+	&type_function              ; NEXT
+	'00 00 00 04'               ; SIZE
+	NOP                         ; OFFSET
+	&type_file                  ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_file                  ; TYPE
+	&type_file_name             ; NAME
+:type_file_name
+	"FILE"
+
+:type_function
+	&type_unsigned              ; NEXT
+	'00 00 00 04'               ; SIZE
+	NOP                         ; OFFSET
+	&type_function              ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_function              ; TYPE
+	&type_function_name         ; NAME
+:type_function_name
+	"FUNCTION"
+
+:type_unsigned
+	NOP                         ; NEXT (NULL)
+	'00 00 00 04'               ; SIZE
+	NOP                         ; OFFSET
+	&type_unsigned              ; INDIRECT
+	NOP                         ; MEMBERS
+	&type_unsigned              ; TYPE
+	&type_unsigned_name         ; NAME
+:type_unsigned_name
+	"unsigned"
 
 :STACK
