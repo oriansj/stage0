@@ -430,9 +430,158 @@
 	RET R15
 
 
-
+;; parse_string function
+;; Recieves char* string in R0
+;; R14 is HEAP Pointer
+;; Returns char* in R0
 :parse_string
+	PUSHR R1 R15                ; Protect R1
+	COPY R1 R0                  ; Make a copy of STRING
+	CALLI R15 @weird            ; Check if string is weird
+	SWAP R0 R1
+	JUMP.Z R1 @parse_string_regular ; Deal with regular strings
+
+	;; Looks like we have a weirdo
+	CALLI R15 @collect_weird_string ; Create our weird string
+	JUMP @parse_string_done     ; Simply return what was created
+:parse_string_regular
+	CALLI R15 @collect_regular_string
+:parse_string_done
+	POPR R1 R15                 ; Restore R1
 	RET R15
+
+
+
+:weird
+	FALSE R0
+	RET R15
+
+
+:collect_weird_string
+	RET R15
+
+;; hex function
+;; Recieves Char in R0
+;; Return Int in R0
+:hex
+	SUBUI R0 R0 48              ; First shift
+	CMPSKIPI.GE R0 10           ; If 0-9
+	RET R15                     ; Be done
+
+	;; Deal with A-F
+	ANDI R0 R0 0xDF             ; Unset high bit
+	SUBUI R0 R0 7               ; Shift them down
+	CMPSKIPI.GE R0 10           ; if between 9 and A
+	JUMP @hex_error             ; Throw an error
+	CMPSKIPI.L R0 16            ; if > F
+	JUMP @hex_error             ; Throw an error
+	RET R15
+
+:hex_error
+	LOADUI R0 $hex_error_message ; Our message
+	FALSE R1                    ; For human
+	CALLI R15 @file_print       ; write it
+	CALLI R15 @line_error       ; More info
+	HALT
+
+:hex_error_message
+	"Tried to print non-hex number
+"
+
+;; escape_lookup function
+;; Recieves char* in R1
+;; Returns char in R0
+:escape_lookup
+	PUSHR R2 R15                ; Protect R2
+	FALSE R2                    ; Our flag for done
+	LOADU8 R0 R1 1              ; c[1]
+	CMPSKIPI.NE R0 120          ; if \x??
+	JUMP @escape_lookup_hex
+
+	;; Deal with \? escapes
+	CMPSKIPI.NE R0 110          ; If \n
+	LOADUI R2 10                ; return \n
+
+	CMPSKIPI.NE R0 116          ; If \t
+	LOADUI R2 9                 ; return \t
+
+	CMPSKIPI.NE R0 92           ; If \\
+	LOADUI R2 92                ; return \\
+
+	CMPSKIPI.NE R0 39           ; If \'
+	LOADUI R2 39                ; return \'
+
+	CMPSKIPI.NE R0 34           ; If \"
+	LOADUI R2 34                ; return \"
+
+	CMPSKIPI.NE R0 114          ; If \r
+	LOADUI R2 13                ; return \r
+
+	JUMP.Z R2 @escape_lookup_error ; Looks like we got something weird
+	JUMP @escape_lookup_done    ; Otherwise just use our R2
+
+:escape_lookup_hex
+	LOADU8 R0 R1 2              ; c[2]
+	CALLI R15 @hex              ; Get first char
+	SL0I R0 4                   ; Shift our first nybble
+	MOVE R2 R0                  ; Protect our top nybble
+	LOADU8 R0 R1 3              ; c[3]
+	CALLI R15 @hex              ; Get second char
+	ADD R2 R2 R0                ; \x?? => ? << 4 + ?
+:escape_lookup_done
+	MOVE R0 R2                  ; R2 has our answer
+	POPR R2 R15                 ; Restore R2
+	RET R15
+
+:escape_lookup_error
+	HALT
+
+
+
+;; collect_regular_string function
+;; Recieves char* in R0
+;; R14 is HEAP Pointer
+;; Returns char* in R0
+:collect_regular_string
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	COPY R2 R14                 ; MESSAGE
+	MOVE R1 R0                  ; Put STRING in the right place
+:collect_regular_string_iter
+	LOADU8 R0 R1 0              ; STRING[0]
+	JUMP.Z R0 @collect_regular_string_done ; End at NULL
+	CMPSKIPI.NE R0 92           ; if STRING[0] == '\\'
+	JUMP @collect_regular_string_escape ; deal with escapes
+
+	;; Deal with vannilla chars
+	STORE8 R0 R2 0              ; MESSAGE[0] = STRING[0]
+	ADDUI R2 R2 1               ; MESSAGE = MESSAGE + 1
+	ADDUI R1 R1 1               ; STRING = STRING + 1
+	JUMP @collect_regular_string_iter ; Loop
+
+:collect_regular_string_escape
+	CALLI R15 @escape_lookup    ; Get what weird char we need
+	STORE8 R0 R2 0              ; MESSAGE[0] = escape_lookup(string)
+	ADDUI R2 R2 1               ; MESSAGE = MESSAGE + 1
+	LOADU8 R0 R1 1              ; STRING[1]
+	CMPSKIPI.NE R0 120          ; if \x??
+	ADDUI R1 R1 2               ; STRING = STRING + 2
+	ADDUI R1 R1 2               ; STRING = STRING + 2
+	JUMP @collect_regular_string_iter ; Loop
+
+:collect_regular_string_done
+	LOADUI R0 34                ; Using "
+	STORE8 R0 R2 0              ; MESSAGE[0] = '"'
+	LOADUI R0 10                ; Using '\n'
+	STORE8 R0 R2 1              ; MESSAGE[1] = "\n"
+	ADDUI R2 R2 3               ; Add extra NULL padding
+	SWAP R2 R14                 ; Update HEAP
+	MOVE R0 R2                  ; Put MESSAGE in the right Spot
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 
 :declare_function
 	RET R15
@@ -1027,6 +1176,9 @@ Missing ;
 
 :numerate_number_done
 	LOADUI R0 10                ; Using LINEFEED
+	STOREX8 R0 R1 R6            ; write
+	ADDUI R6 R6 1               ; Increment by 1
+	FALSE R0                    ; NULL Terminate
 	STOREX8 R0 R1 R6            ; write
 	MOVE R0 R1                  ; Return pointer to our string
 	;; Cleanup
