@@ -215,12 +215,18 @@
 
 
 ;; Common in_set strings of interest
+:nice_chars
+	"	
+ !#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 :keyword_chars
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 :symbol_chars
 	"<=>|&!-"
 :digit_chars
 	"0123456789"
+:whitespace_chars
+	" 	
+"
 
 ;; preserve_keyword function
 ;; Recieves a Char in R0, FILE* in R1 and index in R13
@@ -451,9 +457,55 @@
 	RET R15
 
 
-
+;; weird function
+;; Recieves char* in R0
+;; Returns BOOL in R0
 :weird
-	FALSE R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	FALSE R2                    ; Assume FALSE
+	ADDUI R3 R0 1               ; STRING = STRING + 1
+:weird_iter
+	JUMP.NZ R2 @weird_done      ; Stop if TRUE
+	LOADU8 R4 R3 0              ; C = STRING[0]
+	JUMP.Z R4 @weird_done       ; Be done at NULL Termination
+	CMPSKIPI.E R4 92            ; If not '\\'
+	JUMP @weird_post_escape     ; Looks like no escape analysis
+
+	;; Deal with the mess
+	COPY R0 R3                  ; Using STRING
+	CALLI R15 @escape_lookup    ; Get our CHAR
+	MOVE R4 R0                  ; C = ESCAPE_LOOKUP(STRING)
+	LOADU8 R0 R3 1              ; STRING[1]
+	CMPSKIPI.NE R0 120          ; if 'x' == STRING[1]
+	ADDUI R3 R3 2               ; STRING = STRING + 2
+	ADDUI R3 R3 1               ; STRING = STRING + 1
+
+:weird_post_escape
+	LOADUI R1 $nice_chars       ; using list of nice CHARS
+	COPY R0 R4                  ; using copy of C
+	CALLI R15 @in_set           ; Use in_set
+	NOT R0 R0                   ; Reverse bool
+	CMPSKIPI.E R0 0             ; IF TRUE
+	TRUE R2                     ; Return TRUE
+	ADDUI R3 R3 1               ; STRING = STRING + 1
+	LOADUI R1 $whitespace_chars ; Check Whitespace Chars
+	COPY R0 R4                  ; Using copy of C
+	CALLI R15 @in_set           ; Use in_set
+	JUMP.Z R0 @weird_iter       ; If False simply loop
+	LOADU8 R0 R3 0              ; STRING[1]
+	CMPSKIPI.NE R0 58           ; If ':' == STRING[1]
+	TRUE R2                     ; Flip flag
+	JUMP @weird_iter            ; Keep trying to find an answer
+
+:weird_done
+	MOVE R0 R2                  ; Whatever is in R2 is the answer
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
 
 
@@ -489,10 +541,12 @@
 "
 
 ;; escape_lookup function
-;; Recieves char* in R1
+;; Recieves char* in R0
 ;; Returns char in R0
 :escape_lookup
+	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
+	MOVE R1 R0                  ; Put C in the right spot
 	FALSE R2                    ; Our flag for done
 	LOADU8 R0 R1 1              ; c[1]
 	CMPSKIPI.NE R0 120          ; if \x??
@@ -531,6 +585,7 @@
 :escape_lookup_done
 	MOVE R0 R2                  ; R2 has our answer
 	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
 
 :escape_lookup_error
@@ -560,6 +615,7 @@
 	JUMP @collect_regular_string_iter ; Loop
 
 :collect_regular_string_escape
+	COPY R0 R1                  ; Prepare for call
 	CALLI R15 @escape_lookup    ; Get what weird char we need
 	STORE8 R0 R2 0              ; MESSAGE[0] = escape_lookup(string)
 	ADDUI R2 R2 1               ; MESSAGE = MESSAGE + 1
