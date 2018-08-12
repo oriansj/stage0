@@ -213,15 +213,17 @@
 	POPR R2 R15                 ; Restore R3
 	RET R15
 
-
 ;; Common in_set strings of interest
+;; As Raw strings (") is forbidden and ' has some restrictions
 :nice_chars
 	"	
- !#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
+ !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 :keyword_chars
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
 :symbol_chars
 	"<=>|&!-"
+:hex_chars
+	"0123456789ABCDEF"
 :digit_chars
 	"0123456789"
 :whitespace_chars
@@ -458,6 +460,7 @@
 
 
 ;; weird function
+;; Analyze string to determine if it's output would be weird for mescc-tools
 ;; Recieves char* in R0
 ;; Returns BOOL in R0
 :weird
@@ -509,8 +512,63 @@
 	RET R15
 
 
+;; collect_weird_string function
+;; Converts weird string into a form mescc-tools can handle cleanly
+;; Recieves char* in R0
+;; R14 is HEAP Pointer and $hex_chars as the table
+;; Returns char* in R0
 :collect_weird_string
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	LOADUI R4 $hex_chars        ; Pointer to TABLE
+	COPY R3 R14                 ; Get HOLD
+	MOVE R2 R0                  ; Put STRING in Place
+	LOADUI R0 39                ; Prefix with '
+	PUSH8 R0 R3                 ; HOLD[0] = '\'' && HOLD = HOLD + 1
+:collect_weird_string_iter
+	ADDUI R2 R2 1               ; STRING = STRING + 1
+	LOADUI R0 32                ; Insert ' '
+	PUSH8 R0 R3                 ; HOLD[0] = ' ' && HOLD = HOLD + 1
+	COPY R0 R2                  ; copy STRING
+	CALLI R15 @escape_lookup    ; Get char value
+	ANDI R1 R0 0x0F             ; Save Bottom out of the way
+	SR0I R0 4                   ; Isolate Top
+	LOADXU8 R0 R4 R0            ; Using Table
+	LOADXU8 R1 R4 R1            ; Using Table
+	PUSH8 R0 R3                 ; HOLD[0] = TABLE[(TEMP >> 4)] && HOLD = HOLD + 1
+	PUSH8 R1 R3                 ; HOLD[0] = TABLE[(TEMP & 15)] && HOLD = HOLD + 1
+	LOADU8 R0 R2 0              ; STRING[0]
+	JUMP.Z R0 @collect_weird_string_done ; Stop if NULL
+	CMPSKIPI.E R0 92            ; IF STRING[0] != '\\'
+	JUMP @collect_weird_string_iter ; Just loop
+	LOADU8 R0 R2 1              ; STRING[1]
+	CMPSKIPI.NE R0 120          ; If STRING[1] == 'x'
+	ADDUI R2 R2 2               ; STRING = STRING + 2
+	ADDUI R2 R2 1               ; STRING = STRING + 1
+	JUMP @collect_weird_string_iter
+
+:collect_weird_string_done
+	LOADUI R0 32                ; Insert ' '
+	PUSH8 R0 R3                 ; HOLD[0] = ' ' && HOLD = HOLD + 1
+	LOADUI R0 48                ; Insert '0'
+	PUSH8 R0 R3                 ; HOLD[0] = '0' && HOLD = HOLD + 1
+	LOADUI R0 48                ; Insert '0'
+	PUSH8 R0 R3                 ; HOLD[0] = '0' && HOLD = HOLD + 1
+	LOADUI R0 39                ; Insert '\''
+	PUSH8 R0 R3                 ; HOLD[0] = '\'' && HOLD = HOLD + 1
+	LOADUI R0 10                ; Insert '\n'
+	PUSH8 R0 R3                 ; HOLD[0] = '\n' && HOLD = HOLD + 1
+	ADDUI R3 R3 1               ; NULL Terminate
+	SWAP R3 R14                 ; CALLOC HOLD
+	MOVE R0 R3                  ; Return HOLD
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
+
 
 ;; hex function
 ;; Recieves Char in R0
@@ -540,6 +598,7 @@
 	"Tried to print non-hex number
 "
 
+
 ;; escape_lookup function
 ;; Recieves char* in R0
 ;; Returns char in R0
@@ -548,6 +607,10 @@
 	PUSHR R2 R15                ; Protect R2
 	MOVE R1 R0                  ; Put C in the right spot
 	FALSE R2                    ; Our flag for done
+	LOADU8 R0 R1 0              ; c[0]
+	CMPSKIPI.E R0 92            ; If C[0] != '\\'
+	JUMP @escape_lookup_none    ; Deal with none case
+
 	LOADU8 R0 R1 1              ; c[1]
 	CMPSKIPI.NE R0 120          ; if \x??
 	JUMP @escape_lookup_hex
@@ -574,6 +637,10 @@
 	JUMP.Z R2 @escape_lookup_error ; Looks like we got something weird
 	JUMP @escape_lookup_done    ; Otherwise just use our R2
 
+:escape_lookup_none
+	MOVE R2 R0                  ; We just return the char at C[0]
+	JUMP @escape_lookup_done    ; Be done
+
 :escape_lookup_hex
 	LOADU8 R0 R1 2              ; c[2]
 	CALLI R15 @hex              ; Get first char
@@ -582,6 +649,7 @@
 	LOADU8 R0 R1 3              ; c[3]
 	CALLI R15 @hex              ; Get second char
 	ADD R2 R2 R0                ; \x?? => ? << 4 + ?
+
 :escape_lookup_done
 	MOVE R0 R2                  ; R2 has our answer
 	POPR R2 R15                 ; Restore R2
@@ -589,11 +657,23 @@
 	RET R15
 
 :escape_lookup_error
+	MOVE R2 R0                  ; Protect Char that failed
+	LOADUI R0 $escape_lookup_string0 ; Load message
+	FALSE R1                    ; We want the User to see
+	CALLI R15 @file_print       ; Write it
+	MOVE R0 R2                  ; Our CHAR
+	FPUTC                       ; Write it
+	LOADUI R0 10                ; '\n'
+	FPUTC                       ; Write it
+	CALLI R15 @line_error       ; Provide some debug information
 	HALT
 
+:escape_lookup_string0
+	"Recieved invalid escape \\"
 
 
 ;; collect_regular_string function
+;; Converts C string into a RAW string for mescc-tools
 ;; Recieves char* in R0
 ;; R14 is HEAP Pointer
 ;; Returns char* in R0
@@ -640,8 +720,18 @@
 
 
 :declare_function
+	
+	
+	
+	
+	
+	
 	RET R15
-
+	
+	
+	
+	
+	
 
 
 ;; program function
@@ -806,6 +896,7 @@ NOP
 Missing ;
 "
 
+
 ;; sym_declare function
 ;; Recieves char* in R0, struct type* in R1, struct token_list* in R2
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -835,6 +926,7 @@ Missing ;
 	MOVE R0 R2                  ; Put T in proper spot for return
 	POPR R2 R15                 ; Restore R2
 	RET R15
+
 
 ;; file_print function
 ;; Recieves pointer to string in R0 and FILE* in R1
@@ -1160,6 +1252,7 @@ Missing ;
 :line_error_string0
 	"In file: TTY1 On line: "
 
+
 ;; require_match function
 ;; Recieves char* in R0 and char* in R1
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -1264,6 +1357,7 @@ Missing ;
 :constant
 	"CONSTANT"
 
+
 ;; Frequently Used strings
 ;; Generally used by require_match
 :open_curly_brace
@@ -1283,6 +1377,7 @@ Missing ;
 :newline
 	"
 "
+
 
 ;; Global types
 ;; NEXT (0), SIZE (4), OFFSET (8), INDIRECT (12), MEMBERS (16), TYPE (20), NAME (24)
