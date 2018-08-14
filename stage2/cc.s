@@ -38,11 +38,12 @@
 	FOPEN_READ
 
 :main
-	LOADUI R1 0x1100            ; Pass Tape_01 for reading
+	LOADUI R0 0x1100            ; Pass Tape_01 for reading
 	LOADR32 R14 @HEAP           ; Setup Initial HEAP
 	LOADUI R15 $STACK           ; Setup Initial STACK
 	CALLI R15 @read_all_tokens  ; Read all Tokens in Tape_01
 	CALLI R15 @reverse_list     ; Fix Token Order
+;	CALLI R15 @debug_list       ; Lets try to debug token errors
 	MOVE R13 R0                 ; Set global_token for future reading
 	FALSE R12                   ; Set struct token_list* out to NULL
 	FALSE R11                   ; Set struct token_list* list_strings to NULL
@@ -68,8 +69,9 @@
 ;; Symbol lists
 :global_constant_list
 	NOP
-
 :global_symbol_list
+	NOP
+:global_function_list
 	NOP
 
 ;; Pointer to initial HEAP ADDRESS
@@ -166,6 +168,8 @@
 	JUMP.NZ R0 @fixup_label_reset ; Loop until we hit a NULL
 
 	;; clean up
+	ADDUI R2 R2 1               ; increment I
+	LOADUI R0 32                ; Put 32 in R0
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
 	RET R15
@@ -415,14 +419,16 @@
 
 
 ;; read_all_tokens function
-;; Recieves a Char in R0, FILE* in R1
+;; Recieves a FILE* in R0
 ;; sets line_num in R11 and TOKEN in R10
 ;; Overwrites R2
-;; Returns next CHAR
+;; Returns struct token_list* in R0
 :read_all_tokens
+	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R10 R15               ; Protect R10
 	PUSHR R11 R15               ; Protect R11
+	MOVE R1 R0                  ; Set R1 as FILE*
 	FGETC                       ; Read our first CHAR
 	LOADUI R11 1                ; Start line_num at 1
 	FALSE R10                   ; First token is NULL
@@ -435,6 +441,7 @@
 	POPR R11 R15                ; Restore R11
 	POPR R10 R15                ; Restore R10
 	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
 	RET R15
 
 
@@ -718,20 +725,348 @@
 	RET R15
 
 
+	
+	
+	
+;; recursive_statement function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:recursive_statement
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R2 R9 4              ; FRAME = FUNCTION->LOCALS
+:recursive_statement_iter
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	LOADUI R0 $close_curly_brace ; '}'
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "}"
+	JUMP.NZ R0 @recursive_statement_cleanup
 
-:declare_function
-	
-	
-	
-	
-	
-	
+	;; Lets collect those statements
+	CALLI R15 @statement        ; Collect next statement
+	JUMP @recursive_statement_iter ; Iterate
+
+:recursive_statement_cleanup
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+:recursive_statement_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
 	
 	
 	
 	
+
+
+;; statement function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:statement
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R2 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.E R0 123           ; If GLOBAL_TOKEN->S[0] != '{'
+	JUMP @statement_label       ; Try next match
+
+	;; Deal with { statements }
+	CALLI R15 @recursive_statement
+	JUMP @statement_done        ; All done
+
+:statement_label
+	CMPSKIPI.E R0 58            ; If GLOBAL_TOKEN->S[0] != ':'
+	JUMP @statement_collect_local ; Try next match
+
+	;; Deal with :label
+	LOAD32 R0 R13 8             ; Using GLOBAL_TOKEN->S
+	COPY R1 R12                 ; Using OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOADUI R0 $statement_string0 ; Using label string
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP @statement_done
+
+:statement_collect_local
+	JUMP @statement_process_if
 	
+	
+	
+	
+:statement_process_if
+	JUMP @statement_process_do
+	
+	
+	
+	
+:statement_process_do
+	JUMP @statement_process_while
+	
+	
+	
+	
+:statement_process_while
+	JUMP @statement_process_for
+	
+	
+	
+	
+:statement_process_for
+	JUMP @statement_process_asm
+	
+	
+	
+	
+:statement_process_asm
+	JUMP @statement_goto
+	
+	
+	
+	
+:statement_goto
+	JUMP @statement_return_result
+	
+	
+	
+	
+:statement_return_result
+	JUMP @statement_break
+	
+	
+	
+	
+:statement_break
+	JUMP @statement_continue
+
+
+:statement_continue
+	JUMP @statement_expression
+
+:statement_expression
+	HALT
+	CALLI R15 @line_error
+	HALT
+
+:statement_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:statement_string0
+	"	#C goto label
+"
+	
+	
+
+
+;; collect_arguments function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:collect_arguments
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+:collect_arguments_iter
+	LOADUI R0 $close_paren      ; Using ")"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == ")"
+	JUMP.NZ R0 @collect_arguments_done ; Be done
+
+	;; Collect the arguments
+	CALLI R15 @type_name        ; Get what type we are working with
+	MOVE R1 R0                  ; Put TYPE where it will be used
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.NE R0 41           ; IF GLOBAL_TOKEN->S[0] == ')'
+	JUMP @collect_arguments_iter3 ; foo(int,char,void) doesn't need anything done
+
+	;; Check for foo(int a,...)
+	CMPSKIPI.NE R0 41           ; IF GLOBAL_TOKEN->S[0] == ','
+	JUMP @collect_arguments_iter3 ; Looks like final case
+
+	;; Deal with foo(int a, ...)
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOAD32 R2 R9 16             ; FUNC->ARGUMENTS
+	CALLI R15 @sym_declare      ; Get A
+	MOVE R2 R0                  ; Get A out of the way
+
+	;; Find special case for argument address
+	LOAD32 R1 R9 8              ; FUNC->S
+	LOADUI R0 $main_string      ; Using "main"
+	CALLI R15 @match            ; IF FUNC->S == "main"
+	JUMP.Z R0 @collect_arguments_func
+
+	;; Deal with special case of main
+	LOAD32 R1 R2 8              ; A->S
+	LOADUI R0 $argc_string      ; "argc"
+	CALLI R15 @match            ; IF A->S == "argc"
+	JUMP.Z R0 @collect_arguments_argv ; If not try argv
+
+	LOADUI R0 4                 ; Prepare for Store
+	STORE32 R0 R2 16            ; argc => A->DEPTH = 4
+	JUMP @collect_arguments_iter2
+
+:collect_arguments_argv
+	;; argv => A->DEPTH = 8
+	LOADUI R0 $argv_string      ; "argv"
+	CALLI R15 @match            ; IF A->S == "argv"
+	JUMP.Z R0 @collect_arguments_iter2
+
+	LOADUI R0 8                 ; Prepare for Store
+	STORE32 R0 R2 16            ; argc => A->DEPTH = 8
+	JUMP @collect_arguments_iter2
+
+:collect_arguments_func
+	LOAD32 R0 R9 16             ; FUNC->ARGS
+	CMPSKIPI.NE R0 0            ; IF NULL == FUNC->ARGS
+	LOAD32 R0 R0 16             ; FUNC->ARGS->DEPTH
+	SUBI R0 R0 4                ; FUNC->ARGS->DEPTH - 4 or NULL - 4 (-4)
+	STORE32 R0 R2 16            ; A->DEPTH = VALUE
+
+:collect_arguments_iter2
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	STORE32 R2 R9 16            ; FUNC->ARGUMENTS = A
+
+:collect_arguments_iter3
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.NE R0 44           ; IF GLOBAL_TOKEN->S[0] == ','
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP @collect_arguments_iter ; Keep looping
+
+:collect_arguments_done
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+	
+	
+	
+	
+
+;; declare_function function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	and struct token_list* global_list in R10
+;; SETS R9 to struct token_list* FUNC
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:declare_function
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	FALSE R0                    ; Using Zero
+	STORER32 R0 @current_count  ; CURRENT_COUNT = 0
+	LOAD32 R0 R13 4             ; GLOBAL_TOKEN->PREV
+	LOAD32 R0 R0 8              ; GLOBAL_TOKEN->PREV->S
+	FALSE R1                    ; Passing NULL
+	LOADUI R2 $global_function_list ; where the global function list is located
+	LOAD32 R2 R2 0              ; Loaded
+	CALLI R15 @sym_declare      ; declare FUNC
+	STORE32 R0 R2 0             ; GLOBAL_FUNCTION_LIST = FUNC
+	MOVE R9 R0                  ; SETS FUNC
+	CALLI R15 @collect_arguments ; Collect function arguments
+	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R2 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.NE R0 59           ; IF GLOBAL_TOKEN->S[0] == ';'
+	JUMP @declare_function_prototype ; Don't waste time
+
+	;; Looks like it is an actual function definition
+	LOADUI R0 $declare_function_string0 ; Using first string
+	COPY R1 R12                 ; And OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOAD32 R0 R9 8              ; Using FUNC->S
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOADUI R0 $declare_function_string1 ; Using second string
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOAD32 R0 R9 8              ; Using FUNC->S
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+
+	;; Check if main function
+	MOVE R1 R2                  ; Using GLOBAL_TOKEN->S
+	LOADUI R0 $main_string      ; Using "main"
+	CALLI R15 @match            ; check if they match
+	JUMP.Z R0 @declare_function_nonmain ; Skip work if they don't
+
+	;; Deal with main function
+	LOADUI R0 $declare_function_string2 ; Using first string
+	COPY R1 R12                 ; And OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+
+:declare_function_nonmain
+	FALSE R1                    ; Cleaning up before call
+	CALLI R15 @statement        ; Collect the statement
+
+	;; Prevent Duplicate Returns
+	LOAD32 R1 R12 8             ; OUT->S
+	LOADUI R0 $declare_function_string3 ; Our final string
+	CALLI R15 @match            ; Check for Match
+	JUMP.NZ R0 @declare_function_done ; Clean up
+
+	;; Deal with adding the return
+	LOADUI R0 $declare_function_string3 ; Our final string
+	COPY R1 R12                 ; Using OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+
+:declare_function_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:declare_function_prototype
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP @declare_function_done ; Clean up
+
+:declare_function_string0
+	"# Defining function "
+:declare_function_string1
+	":FUNCTION_"
+:declare_function_string2
+	"COPY_esp_to_ebp	# Deal with special case
+"
+:declare_function_string3
+	"RETURN
+"
+
+:current_count
+	NOP
 
 
 ;; program function
@@ -740,7 +1075,7 @@
 ;;	struct token_list* string_list in R11
 ;;	and struct token_list* global_list in R10
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
-;; Returns the token_list modified
+;; Returns the token_lists modified
 :program
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
@@ -778,6 +1113,7 @@
 	LOAD32 R2 R3 0              ; GLOBAL_SYMBOLS_LIST
 	CALLI R15 @sym_declare      ; Declare that global symbol
 	STORE32 R0 R3 0             ; Update global symbol list
+
 	LOAD32 R3 R13 8             ; GLOBAL_TOKEN->S
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	LOADUI R0 $semicolon        ; Get semicolon string
@@ -1356,7 +1692,12 @@ Missing ;
 	"struct"
 :constant
 	"CONSTANT"
-
+:main_string
+	"main"
+:argc_string
+	"argc"
+:argv_string
+	"argv"
 
 ;; Frequently Used strings
 ;; Generally used by require_match
@@ -1471,5 +1812,101 @@ Missing ;
 	&type_unsigned_name         ; NAME
 :type_unsigned_name
 	"unsigned"
+
+
+;; debug_list function
+;; Recieves struct token_list* in R0
+;; Prints contents of list and HALTS
+;; Does not return
+:debug_list
+	MOVE R9 R0                  ; Protect the list Pointer
+	FALSE R1                    ; Write to TTY
+
+:debug_list_iter
+	;; Header
+	LOADUI R0 $debug_list_string0 ; Using our first string
+	CALLI R15 @file_print       ; Print it
+	COPY R0 R9                  ; Use address of pointer
+	CALLI R15 @numerate_number  ; Convert it into a string
+	CALLI R15 @file_print       ; Print it
+
+	;; NEXT
+	LOADUI R0 $debug_list_string1 ; Using our second string
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R9 0              ; Use address of pointer
+	CALLI R15 @numerate_number  ; Convert it into a string
+	CALLI R15 @file_print       ; Print it
+
+	;; PREV
+	LOADUI R0 $debug_list_string2 ; Using our third string
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R9 4              ; Use address of pointer
+	CALLI R15 @numerate_number  ; Convert it into a string
+	CALLI R15 @file_print       ; Print it
+
+	;; S
+	LOADUI R0 $debug_list_string3 ; Using our fourth string
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R9 8              ; Use address of pointer
+	CALLI R15 @numerate_number  ; Convert it into a string
+	CALLI R15 @file_print       ; Print it
+
+	;; S Contents
+	LOADUI R0 $debug_list_string4 ; Using our Prefix string
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R9 8              ; Use address of pointer
+	CMPSKIPI.NE R0 0            ; If NULL Pointer
+	LOADUI R0 $debug_list_string_null ; Give meaningful message instead
+	CALLI R15 @file_print       ; Print it
+
+	;; TYPE
+	LOADUI R0 $debug_list_string5 ; Using our fifth string
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R9 12             ; Use address of pointer
+	CALLI R15 @numerate_number  ; Convert it into a string
+	CALLI R15 @file_print       ; Print it
+
+	;; PREV
+	LOADUI R0 $debug_list_string6 ; Using our sixth string
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R9 16             ; Use address of pointer
+	CALLI R15 @numerate_number  ; Convert it into a string
+	CALLI R15 @file_print       ; Print it
+
+	;; Add some space
+	LOADUI R0 10                ; Using NEWLINE
+	FPUTC
+	FPUTC
+
+	;; Iterate if next not NULL
+	LOAD32 R9 R9 0              ; TOKEN = TOKEN->NEXT
+	JUMP.NZ R9 @debug_list_iter
+
+	;; Looks lke we are done, wrap it up
+	HALT
+
+
+:debug_list_string0
+"Token_list node at address: "
+:debug_list_string1
+	"NEXT address: "
+:debug_list_string2
+	"PREV address: "
+
+:debug_list_string3
+	"S address: "
+
+:debug_list_string4
+	"The contents of S are: "
+
+:debug_list_string5
+	"
+TYPE address: "
+
+:debug_list_string6
+	"ARGUMENTS address: "
+
+:debug_list_string_null
+	">::<NULL>::<"
 
 :STACK
