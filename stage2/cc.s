@@ -740,8 +740,9 @@
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	LOAD32 R2 R9 4              ; FRAME = FUNCTION->LOCALS
+	LOAD32 R3 R9 4              ; FRAME = FUNCTION->LOCALS
 :recursive_statement_iter
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	LOADUI R0 $close_curly_brace ; '}'
@@ -754,16 +755,37 @@
 
 :recursive_statement_cleanup
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R1 R12 8             ; OUT->S
+	LOADUI R0 $recursive_statement_string0 ; "RETURN\n"
+	CALLI R15 @match            ; IF OUT->S == "RETURN\n"
+	JUMP.NZ R0 @recursive_statement_done ; Save some work
+
+	;; Lets pop them all off
+	LOAD32 R2 R9 4              ; FUNC->LOCALS
+:recursive_statement_pop
+	CMPJUMPI.E R2 R3 @recursive_statement_done
+	LOADUI R0 $recursive_statement_string1 ; Our POP string
+	COPY R1 R12                 ; Using OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+	LOAD32 R2 R2 0              ; I = I->NEXT
+	JUMP.NZ R2 @recursive_statement_pop ; Keep looping
 
 :recursive_statement_done
+	STORE32 R2 R9 4             ; FUNC->LOCALS = FRAME
+	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
+:recursive_statement_string0
+	"RETURN
+"
+:recursive_statement_string1
+	"POP_ebx	# _recursive_statement_locals
+"
+
 
 
 ;; statement function
@@ -803,11 +825,21 @@
 	JUMP @statement_done
 
 :statement_collect_local
-	JUMP @statement_process_if
-	
-	
-	
-	
+	LOADUI R0 $struct           ; Using "struct"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "struct"
+	JUMP.NZ R0 @statement_collect_local_0
+
+	;; Otherwise check if it is a primitive
+	LOADUI R0 $prim_types       ; Using the Primitive types list
+	SWAP R0 R1                  ; Put in correct order
+	CALLI R15 @lookup_type      ; Check if a primitive type
+	JUMP.Z R0 @statement_process_if ; If not try the next one
+
+:statement_collect_local_0
+	CALLI R15 @collect_local    ; Collect the local
+	JUMP @statement_done        ; And move on
+
 :statement_process_if
 	JUMP @statement_process_do
 	
@@ -871,8 +903,134 @@
 :statement_string0
 	"	#C goto label
 "
+
+
 	
 	
+	
+:expression
+	RET R15
+	
+	
+	
+	
+	
+	
+
+
+;; collect_local function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:collect_local
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	CALLI R15 @type_name        ; Get it's type
+	MOVE R1 R0                  ; Prepare for call
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOAD32 R2 R9 4              ; FUNC->LOCALS
+	CALLI R15 @sym_declare      ; SET A
+	MOVE R2 R0                  ; Protect A
+
+	;; Figure out depth
+	LOADUI R0 $main_string      ; Using "main"
+	LOAD32 R1 R9 8              ; FUNC->S
+	CALLI R15 @match            ; IF FUNC->S == "main"
+	JUMP.Z R0 @collect_local_0  ; Try next
+	LOAD32 R0 R9 4              ; FUNC->LOCALS
+	JUMP.NZ R0 @collect_local_0 ; Try next
+
+	LOADI R0 -4                 ; The default depth for main
+	STORE32 R0 R2 16            ; A->DEPTH = -4
+	JUMP @collect_local_output  ; Deal with header
+
+:collect_local_0
+	LOAD32 R0 R9 16             ; FUNC->ARGS
+	JUMP.NZ R0 @collect_local_1 ; Try Next
+	LOAD32 R0 R9 4              ; FUNC->LOCALS
+	JUMP.NZ R0 @collect_local_1 ; Try Next
+
+	LOADI R0 -8                 ; The default depth for foo()
+	STORE32 R0 R2 16            ; A->DEPTH = -4
+	JUMP @collect_local_output  ; Deal with header
+
+:collect_local_1
+	LOAD32 R0 R9 4              ; FUNC->LOCALS
+	JUMP.NZ R0 @collect_local_2 ; Try Next
+
+	LOAD32 R0 R9 16             ; FUNC->ARGS
+	LOAD32 R0 R0 16             ; FUNC->ARGS->DEPTH
+	SUBI R0 R0 8                ; DEPTH = FUNC->ARGS->DEPTH - 8
+	STORE32 R0 R2 16            ; A->DEPTH = DEPTH
+	JUMP @collect_local_output  ; Deal with header
+
+:collect_local_2
+	LOAD32 R0 R9 4              ; FUNC->LOCALS
+	LOAD32 R0 R0 16             ; FUNC->LOCALS->DEPTH
+	SUBI R0 R0 4                ; DEPTH = FUNC->LOCALS->DEPTH - 4
+	STORE32 R0 R2 16            ; A->DEPTH = DEPTH
+
+:collect_local_output
+	STORE32 R2 R9 4             ; FUNC->LOCALS = A
+
+	;; Output header
+	LOADUI R0 $collect_local_string0 ; Starting with the comment
+	COPY R1 R12                 ; Put OUT in the correct place
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOAD32 R0 R2 8              ; A->S
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	;; Deal with possible assignment
+	LOADUI R0 $equal            ; Using "="
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
+	JUMP.Z R0 @collect_local_nonassign
+
+	;; Deal with assignment of the local
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @expression       ; Update OUT with the evaluation of the Expression
+
+:collect_local_nonassign
+	LOADUI R0 $collect_local_string1 ; Our error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Make sure GLOBAL_TOKEN->S == ";"
+
+	;; Final Footer
+	LOADUI R0 $collect_local_string2 ; Add our PUSH statement
+	COPY R1 R12                 ; Using OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the proper place
+	LOAD32 R0 R2 8              ; A->S
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the proper place
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:collect_local_string0
+	"# Defining local "
+:collect_local_string1
+	"ERROR in collect_local
+Missing ;
+"
+:collect_local_string2
+	"PUSH_eax	#"
 
 
 ;; collect_arguments function
@@ -962,10 +1120,7 @@
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
 
 ;; declare_function function
 ;; Recieves struct token_list* global_token in R13,
@@ -1328,13 +1483,12 @@ Missing ;
 
 
 ;; lookup_type function
-;; Recieves a CHAR* in R0
+;; Recieves a CHAR* in R0 and struct type* in R1
 ;; Returns struct type* in R0 or NULL if no match
 :lookup_type
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
-	LOADUI R2 $global_types     ; Get pointer to current global types
-	LOAD32 R2 R2 0              ;I =  global_types
+	MOVE R2 R1                  ; Put START in correct place
 	MOVE R1 R0                  ; Put S in correct place
 :lookup_type_iter
 	LOAD32 R0 R2 24             ; Get I->NAME
@@ -1524,14 +1678,18 @@ Missing ;
 ;; Returns struct type* in R0
 :type_name
 	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
 	LOADUI R0 $struct           ; String for struct for comparison
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if they match
 	CMPSKIPI.E R0 0             ; If STRUCTURE
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
-	SWAP R0 R1                  ; Put GLOBAL_TOKEN->S in the right place
+	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
+	LOADUI R1 $global_types     ; Check using the GLOBAL TYPES LIST
+	LOAD32 R1 R1 0              ; Need to load address of first node
+	SWAP R0 R2                  ; Put GLOBAL_TOKEN->S in the right place
 	CALLI R15 @lookup_type      ; RET = lookup_type(GLOBAL_TOKEN->S)
+	MOVE R1 R2                  ; Put STRUCTURE in the right place
 	CMPSKIP.E R0 R1             ; If RET == NULL and !STRUCTURE
 	JUMP @type_name_struct      ; Guess not
 
@@ -1561,6 +1719,7 @@ Missing ;
 	JUMP @type_name_iter        ; Keep looping
 
 :type_name_done
+	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
 	RET R15
 
@@ -1725,6 +1884,7 @@ Missing ;
 :global_types
 	&type_void
 
+:prim_types
 :type_void
 	&type_int                   ; NEXT
 	'00 00 00 04'               ; SIZE
