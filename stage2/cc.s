@@ -728,6 +728,78 @@
 	
 	
 	
+	
+:expression
+	RET R15
+	
+	
+	
+	
+
+
+;; process_asm function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:process_asm
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	;; First required match
+	LOADUI R0 $process_asm_string0 ; Using our First error message
+	LOADUI R1 $open_paren       ; Using "("
+	CALLI R15 @require_match    ; Make sure of our required match
+
+:process_asm_iter
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.E R0 34            ; IF GLOBAL_TOKEN->S[0] == '"'
+	JUMP @process_asm_done      ; Otherwise be done
+
+	;; Add block of assembly
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	ADDUI R0 R0 1               ; GLOBAL_TOKEN->S + 1
+	COPY R1 R12                 ; Using OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put OUT in the right place
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP @process_asm_iter
+
+:process_asm_done
+	LOADUI R0 $process_asm_string1 ; Using our First error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Make sure of our required match
+
+	LOADUI R0 $process_asm_string2 ; Using our First error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Make sure of our required match
+
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:process_asm_string0
+	"ERROR in process_asm
+MISSING (
+"
+:process_asm_string1
+	"ERROR in process_asm
+MISSING )
+"
+:process_asm_string2
+	"ERROR in process_asm
+MISSING ;
+"
+
+
 ;; recursive_statement function
 ;; Recieves struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
@@ -787,7 +859,6 @@
 "
 
 
-
 ;; statement function
 ;; Recieves struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
@@ -822,7 +893,7 @@
 	CALLI R15 @emit             ; emit it
 	MOVE R12 R0                 ; Update OUT
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	JUMP @statement_done
+	JUMP @statement_done        ; Move on to next thing
 
 :statement_collect_local
 	LOADUI R0 $struct           ; Using "struct"
@@ -841,58 +912,95 @@
 	JUMP @statement_done        ; And move on
 
 :statement_process_if
-	JUMP @statement_process_do
+	LOADUI R0 $if_string        ; Using "if"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "if"
+	JUMP.Z R0 @statement_process_do
+	
 	
 	
 	
 	
 :statement_process_do
-	JUMP @statement_process_while
+	LOADUI R0 $do_string        ; Using "do"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "do"
+	JUMP.Z R0 @statement_process_while
+	
 	
 	
 	
 	
 :statement_process_while
-	JUMP @statement_process_for
+	LOADUI R0 $while_string     ; Using "while"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "while"
+	JUMP.Z R0 @statement_process_for
+	
 	
 	
 	
 	
 :statement_process_for
-	JUMP @statement_process_asm
+	LOADUI R0 $for_string       ; Using "for"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "for"
+	JUMP.Z R0 @statement_process_asm
+	
 	
 	
 	
 	
 :statement_process_asm
-	JUMP @statement_goto
-	
-	
-	
-	
+	LOADUI R0 $asm_string       ; Using "asm"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "asm"
+	JUMP.Z R0 @statement_goto
+	CALLI R15 @process_asm      ; Collect that ASM statement
+	JUMP @statement_done        ; Move on to next thing
+
 :statement_goto
-	JUMP @statement_return_result
+	LOADUI R0 $goto_string      ; Using "goto"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "goto"
+	JUMP.Z R0 @statement_return_result
+	
 	
 	
 	
 	
 :statement_return_result
-	JUMP @statement_break
+	LOADUI R0 $return_string    ; Using "return"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "return"
+	JUMP.Z R0 @statement_break
 	
 	
 	
 	
 :statement_break
-	JUMP @statement_continue
-
-
+	LOADUI R0 $break_string     ; Using "break"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "break"
+	JUMP.Z R0 @statement_continue
+	
+	
+	
+	
 :statement_continue
-	JUMP @statement_expression
-
+	LOADUI R0 $continue_string  ; Using "continue"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "continue"
+	JUMP.Z R0 @statement_expression
+	
+	
+	
+	
 :statement_expression
-	HALT
-	CALLI R15 @line_error
-	HALT
+	CALLI R15 @expression       ; Do expression evaluation
+	LOADUI R0 $statement_string2 ; Load our error message
+	LOADUI R1 $semicolon        ; use ";"
+	CALLI R15 @require_match    ; Make sure GLOBAL_TOKEN-> == ";"
 
 :statement_done
 	POPR R2 R15                 ; Restore R2
@@ -903,19 +1011,12 @@
 :statement_string0
 	"	#C goto label
 "
-
-
-	
-	
-	
-:expression
-	RET R15
-	
-	
-	
-	
-	
-	
+:statement_string1
+	"JUMP %"
+:statement_string2
+	"ERROR in statement
+MISSING ;
+"
 
 
 ;; collect_local function
@@ -1857,6 +1958,25 @@ Missing ;
 	"argc"
 :argv_string
 	"argv"
+:if_string
+	"if"
+:do_string
+	"do"
+:while_string
+	"while"
+:for_string
+	"for"
+:asm_string
+	"asm"
+:goto_string
+	"goto"
+:return_string
+	"return"
+:break_string
+	"break"
+:continue_string
+	"continue"
+
 
 ;; Frequently Used strings
 ;; Generally used by require_match
