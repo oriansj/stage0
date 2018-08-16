@@ -736,6 +736,72 @@
 	
 	
 
+	
+	
+	
+	
+	
+:process_if
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:process_do
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:process_while
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:process_for
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:return_result
+	RET R15
+	
+	
+	
+
+	
+	
+	
+	
+:process_break
+	RET R15
+	
+	
+	
+	
+
 
 ;; process_asm function
 ;; Recieves struct token_list* global_token in R13,
@@ -916,41 +982,33 @@ MISSING ;
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "if"
 	JUMP.Z R0 @statement_process_do
-	
-	
-	
-	
-	
+	CALLI R15 @process_if       ; Collect that if statement
+	JUMP @statement_done        ; Move on to next thing
+
 :statement_process_do
 	LOADUI R0 $do_string        ; Using "do"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "do"
 	JUMP.Z R0 @statement_process_while
-	
-	
-	
-	
-	
+	CALLI R15 @process_do       ; Collect that do statement
+	JUMP @statement_done        ; Move on to next thing
+
 :statement_process_while
 	LOADUI R0 $while_string     ; Using "while"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "while"
 	JUMP.Z R0 @statement_process_for
-	
-	
-	
-	
-	
+	CALLI R15 @process_while    ; Collect that while statement
+	JUMP @statement_done        ; Move on to next thing
+
 :statement_process_for
 	LOADUI R0 $for_string       ; Using "for"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "for"
 	JUMP.Z R0 @statement_process_asm
-	
-	
-	
-	
-	
+	CALLI R15 @process_for      ; Collect that FOR statement
+	JUMP @statement_done        ; Move on to next thing
+
 :statement_process_asm
 	LOADUI R0 $asm_string       ; Using "asm"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
@@ -964,38 +1022,67 @@ MISSING ;
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "goto"
 	JUMP.Z R0 @statement_return_result
-	
-	
-	
-	
-	
+
+	;; Deal with goto label:
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $statement_string1 ; Using our JUMP string
+	COPY R1 R12                 ; Using OUT
+	CALLI R15 @emit             ; emit it
+
+	MOVE R1 R0                  ; Put OUT in the correct place
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @emit             ; emit it
+
+	MOVE R1 R0                  ; Put out in the correct place
+	LOADUI R0 $newline          ; "\n"
+	CALLI R15 @emit             ; emit it
+
+	MOVE R12 R0                 ; Update OUT
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	LOADUI R0 $statement_string2 ; Using our error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Make sure of our required match
+	JUMP @statement_done        ; Move on
+
 :statement_return_result
 	LOADUI R0 $return_string    ; Using "return"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "return"
 	JUMP.Z R0 @statement_break
-	
-	
-	
-	
+
+	;; Deal with return statements in functions
+	CALLI R15 @return_result    ; Do all of the work
+	JUMP @statement_done        ; Move on to next
+
 :statement_break
 	LOADUI R0 $break_string     ; Using "break"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "break"
 	JUMP.Z R0 @statement_continue
-	
-	
-	
-	
+
+	;; Let break function deal with updating out
+	CALLI R15 @process_break    ; Do all the work
+	JUMP @statement_done        ; Move on to next
+
 :statement_continue
 	LOADUI R0 $continue_string  ; Using "continue"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "continue"
 	JUMP.Z R0 @statement_expression
-	
-	
-	
-	
+
+	;; Simple Continue compatibility
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	COPY R1 R12                 ; Using OUT
+	LOADUI R0 $statement_string3 ; Using our continue comment string
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+
+	LOADUI R0 $statement_string2 ; Using our error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Make sure of our required match
+	JUMP @statement_done        ; Move on
+
 :statement_expression
 	CALLI R15 @expression       ; Do expression evaluation
 	LOADUI R0 $statement_string2 ; Load our error message
@@ -1016,6 +1103,10 @@ MISSING ;
 :statement_string2
 	"ERROR in statement
 MISSING ;
+"
+:statement_string3
+	"
+#continue statement
 "
 
 
