@@ -224,6 +224,8 @@
  !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~"
 :keyword_chars
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+:variable_chars
+	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
 :symbol_chars
 	"<=>|&!-"
 :hex_chars
@@ -724,12 +726,11 @@
 	POPR R1 R15                 ; Restore R1
 	RET R15
 
-
 	
 	
 	
 	
-:expression
+:unary_expr_sizeof
 	RET R15
 	
 	
@@ -737,6 +738,306 @@
 	
 
 	
+	
+	
+	
+:primary_expr_failure
+	HALT
+	
+	
+	
+	
+
+	
+	
+	
+	
+:common_recursion
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:postfix_expr_stub
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:postfix_expr
+	CALLI R15 @primary_expr     ; Walk up the tree
+	CALLI R15 @postfix_expr_stub ; Deal with nodes on this level
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:additive_expr_stub
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:additive_expr
+	CALLI R15 @postfix_expr     ; Walk up the tree
+	CALLI R15 @additive_expr_stub ; Deal with nodes at this level
+	RET R15
+	
+	
+	
+	
+
+	
+	
+	
+	
+:relational_expr_stub
+	RET R15
+	
+	
+	
+	
+
+;; relational_expr function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:relational_expr
+	CALLI R15 @additive_expr    ; Walk up the tree
+	CALLI R15 @relational_expr_stub ; Deal with nodes at this level
+	RET R15
+
+
+	
+	
+	
+	
+:bitwise_expr_stub
+	RET R15
+	
+	
+	
+	
+
+
+;; bitwise_expr function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:bitwise_expr
+	CALLI R15 @relational_expr  ; Walk up the tree
+	CALLI R15 @bitwise_expr_stub ; Deal with nodes at this level
+	RET R15
+
+
+;; primary_expr function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:primary_expr
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOADUI R0 $sizeof_string    ; Load "sizeof"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "sizeof"
+	JUMP.Z R0 @primary_expr_negate ; Guess not
+
+	;; Deal with sizeof expression
+	CALLI R15 @unary_expr_sizeof ; Do real work
+	JUMP @primary_expr_done     ; Wrap up
+
+:primary_expr_negate
+	LOADU8 R0 R1 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.E R0 45            ; IF GLOBAL_TOKEN->S[0] == '-'
+	JUMP @primary_expr_bang     ; If not try '!'
+
+	;; Deal with -a and -4 expressions TODO
+	
+	
+	
+	
+	JUMP @primary_expr_done     ; Wrap up
+
+:primary_expr_bang
+	CMPSKIPI.E R0 33            ; IF GLOBAL_TOKEN->S[0] == "!"
+	JUMP @primary_expr_nested   ; If not try '('
+
+	;; deal with !a expressions TODO
+	
+	
+	
+	
+	JUMP @primary_expr_done     ; Wrap up
+
+:primary_expr_nested
+	CMPSKIPI.E R0 40            ; IF GLOBAL_TOKEN->S[0] == '('
+	JUMP @primary_expr_ch       ; If not try 'char'
+
+	;; Deal with ( expr ) TODO
+	
+	
+	
+	
+	JUMP @primary_expr_done     ; Wrap up
+
+:primary_expr_ch
+	CMPSKIPI.E R0 39            ; IF GLOBAL_TOKEN->S[0] == '\''
+	JUMP @primary_expr_st       ; If not try "string"
+
+	;; Deal with 'char' TODO
+	
+	
+	
+	
+	JUMP @primary_expr_done     ; Wrap up
+
+:primary_expr_st
+	CMPSKIPI.E R0 34            ; IF GLOBAL_TOKEN->S[0] == '"'
+	JUMP @primary_expr_variable ; If not try variables
+
+	;; deal with "string" TODO
+	
+	
+	
+	
+	JUMP @primary_expr_done     ; Wrap up
+
+:primary_expr_variable
+	LOADUI R1 $variable_chars   ; Using a-z+A-Z+_
+	CALLI R15 @in_set           ; IF GLOBAL_TOKEN->S[0] in a-z+A-Z+_
+	JUMP.Z R0 @primary_expr_number
+
+	;; Deal with foo TODO
+	
+	
+	
+	
+	JUMP @primary_expr_done     ; Wrap up
+
+:primary_expr_number
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	LOADUI R1 $digit_chars      ; Using 0-9
+	CALLI R15 @in_set           ; IF GLOBAL_TOKEN->S[0] in 0-9
+	JUMP.Z R0 @primary_expr_failure ; Fail HARD
+
+	;; Deal with 5 TODO
+	
+	
+	
+	
+
+:primary_expr_done
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+	
+	
+	
+	
+
+
+;; expression function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:expression
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	CALLI R15 @bitwise_expr     ; Check for more primitives first
+	LOADUI R0 $equal            ; Using "="
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
+	JUMP.Z R0 @expression_done  ; Be done
+
+	;; Determine store type
+	LOADUI R3 $expression_string1 ; Assuming the default of STORE CHAR
+
+	;; First possible reason for INT
+	LOADUI R0 $close_bracket    ; Using "]"
+	LOAD32 R1 R13 4             ; GLOBAL_TOKEN->PREV
+	LOAD32 R1 R1 8              ; GLOBAL_TOKEN->PREV->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->PREV-> == "]"
+	CMPSKIPI.NE R0 0            ; IF FALSE
+	LOADUI R3 $expression_string0 ; STORE INTEGER
+
+	;; Second possible reason for INTeger
+	LOADUI R0 $type_char_indirect_name ; Using "char*"
+	LOAD32 R1 R8 24             ; CURRENT_TARGET->NAME
+	CALLI R15 @match            ; IF CURRENT_TARGET->NAME == "char*"
+	CMPSKIPI.NE R0 0            ; IF FALSE
+	LOADUI R3 $expression_string0 ; STORE INTEGER
+
+	;; Recurse to evaluate expression being stored
+	COPY R0 R12                 ; Using OUT
+	COPY R1 R9                  ; Using FUNC
+	LOADUI R2 $expression       ; Using expression
+	CALLI R15 @common_recursion ; Perform common recursion
+
+	;; Put our string and clean up
+	MOVE R0 R3                  ; Using our STORED string
+	COPY R1 R12                 ; Using OUT
+	CALLI R15 @emit             ; emit it
+	MOVE R12 R0                 ; Update OUT
+
+	FALSE R8                    ; CURRENT_TARGET = NULL
+
+:expression_done
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:expression_string0
+	"STORE_INTEGER
+"
+:expression_string1
+	"STORE_CHAR
+"
+
 	
 	
 	
@@ -2067,6 +2368,8 @@ Missing ;
 	"break"
 :continue_string
 	"continue"
+:sizeof_string
+	"sizeof"
 
 
 ;; Frequently Used strings
@@ -2079,6 +2382,10 @@ Missing ;
 	"("
 :close_paren
 	")"
+:open_bracket
+	"["
+:close_bracket
+	"]"
 :semicolon
 	";"
 :equal
