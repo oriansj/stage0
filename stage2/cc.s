@@ -1414,16 +1414,59 @@ MOVEZBL
 	RET R15
 
 
-	
-	
-	
-	
+;; relational_expr_stub function
+;; recieves nothing
+;; returns nothing
+;; Updates struct token_list*
 :bitwise_expr_stub
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	;; Fixed pieces
+	LOADUI R0 $relational_expr  ; Set First argument
+	LOADUI R3 $bitwise_expr_stub
+
+	;; The & bit
+	LOADUI R1 $bitwise_expr_stub_string0 ; Our first operation
+	LOADUI R2 $bitwise_and      ; Using "&"
+	CALLI R15 @general_recursion
+
+	;; The && bit
+	LOADUI R1 $bitwise_expr_stub_string0 ; Our first operation
+	LOADUI R2 $logical_and      ; Using "&&"
+	CALLI R15 @general_recursion
+
+	;; The | bit
+	LOADUI R1 $bitwise_expr_stub_string1 ; Our second operation
+	LOADUI R2 $bitwise_or       ; Using "|"
+	CALLI R15 @general_recursion
+
+	;; The || bit
+	LOADUI R1 $bitwise_expr_stub_string1 ; Our second operation
+	LOADUI R2 $logical_or       ; Using "||"
+	CALLI R15 @general_recursion
+
+	;; The ^ bit
+	LOADUI R1 $bitwise_expr_stub_string2 ; Our second operation
+	LOADUI R2 $bitwise_xor       ; Using "^"
+	CALLI R15 @general_recursion
+
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
+:bitwise_expr_stub_string0
+	"AND_eax_ebx
+"
+:bitwise_expr_stub_string1
+	"OR_eax_ebx
+"
+:bitwise_expr_stub_string2
+	"XOR_ebx_eax_into_eax
+"
 
 
 ;; bitwise_expr function
@@ -3080,6 +3123,16 @@ Missing ;
 	"=="
 :not_equal_string
 	"!="
+:bitwise_and
+	"&"
+:logical_and
+	"&&"
+:bitwise_or
+	"|"
+:logical_or
+	"||"
+:bitwise_xor
+	"^"
 
 
 ;; Frequently Used strings
