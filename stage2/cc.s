@@ -738,9 +738,9 @@
 	
 
 
-	;; constant_load function
-	;; Recieves struct token_list* a in R0
-	;; Returns nothing
+;; constant_load function
+;; Recieves struct token_list* a in R0
+;; Returns nothing
 :constant_load
 	PUSHR R0 R15                ; Protect R0
 	LOADUI R0 $constant_load_string0 ; Our header
@@ -823,27 +823,78 @@
 	"LOAD_INTEGER
 "
 
-	
-	
-	
-	
-:function_load
-	RET R15
-	
-	
-	
-	
 
-	
-	
-	
-	
-:global_load
+;; function_load function
+;; Recieves struct token_list* a in R0
+;; Returns nothing
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+:function_load
+	PUSHR R1 R15                ; Protect R1
+	LOAD32 R0 R0 8              ; A->S
+	PUSHR R0 R15                ; Protect A->S
+	LOADUI R0 $open_paren       ; Using "("
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; If GLOBAL_TOKEN->S == "("
+	JUMP.Z R0 @function_load_regular ; If not do the simple thing
+
+	;; Deal iwth function call
+	POPR R0 R15                 ; Restore A->S
+	FALSE R1                    ; FALSE
+	CALLI R15 @function_call    ; Do the function call
+	JUMP @function_load_done    ; Clean up
+
+:function_load_regular
+	LOADUI R0 $function_load_string0 ; Using our header string
+	CALLI R15 @emit_out         ; emit it
+	POPR R0 R15                 ; Restore A->S
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+:function_load_done
+	POPR R1 R15                 ; Restore R1
 	RET R15
-	
-	
-	
-	
+
+:function_load_string0
+	"LOAD_IMMEDIATE_eax &FUNCTION_"
+
+
+;; global_load function
+;; Recieves struct token_list* a in R0
+;;	and struct token_list* current_target in R8
+;; Returns nothing
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+:global_load
+	PUSHR R0 R15                ; Protect A
+	LOAD32 R8 R0 12             ; CURRENT_TARGET = A->TYPE
+	LOADUI R0 $global_load_string0 ; Our header string
+	CALLI R15 @emit_out         ; emit it
+	POPR R0 R15                 ; Restore A
+	LOAD32 R0 R0 8              ; A->S
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+	PUSHR R1 R15                ; Protect R1
+	LOADUI R0 $equal            ; Using "="
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
+	JUMP.NZ R0 @global_load_done ; Skip the following
+
+	;; Deal with non-assignment
+	LOADUI R0 $global_load_string1 ; Our footer string
+	CALLI R15 @emit_out         ; emit it
+
+:global_load_done
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:global_load_string0
+	"LOAD_IMMEDIATE_eax &GLOBAL_"
+:global_load_string1
+	"LOAD_INTEGER
+"
+
 
 ;; primary_expr_failure function
 ;; Fails hard and fast
@@ -1026,11 +1077,8 @@
 	CALLI R15 @sym_lookup       ; Lookup S in GLOBAL_FUNCTION_LIST
 	JUMP.Z R0 @primary_expr_variable_global ; try Globals
 
-	;; Deal with function TODO
-	
-	
-	
-	
+	;; Deal with function
+	CALLI R15 @function_load    ; Dothe work
 	JUMP @primary_expr_variable_done ; Moving on
 
 :primary_expr_variable_global
@@ -1440,15 +1488,49 @@ MOVE_ebx_to_eax
 	
 	
 
-	
-	
-	
-	
+;; return_result function
+;; Recieves nothing
+;; Returns nothing
+;;	and struct token_list* FUNC in R9
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 :return_result
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.E R0 59            ; IF GLOBAL_TOKEN->S[0] == ';'
+	CALLI R15 @expression       ; Evaluate expression
+
+	LOADUI R0 $return_result_string0 ; Using or error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Require a match to ";"
+
+	LOADUI R0 $return_result_string1 ; Our pop command
+	LOAD32 R1 R9 4              ; FUNCTION->LOCALS
+:return_result_iter
+	JUMP.Z R1 @return_result_done ; Be done when we hit NULL
+	CALLI R15 @emit_out         ; Put the string every iteration
+	LOAD32 R1 R1 0              ; I = I->NEXT
+	JUMP @return_result_iter    ; Keep looping
+
+:return_result_done
+	LOADUI R0 $return_result_string2 ; Our footer
+	CALLI R15 @emit_out         ; emit it
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
+
+:return_result_string0
+	"ERROR in return_result
+MISSING ;
+"
+:return_result_string1
+	"POP_ebx	# _return_result_locals
+"
+:return_result_string2
+	"RETURN
+"
 
 	
 	
@@ -1978,10 +2060,9 @@ Missing ;
 	LOAD32 R0 R13 4             ; GLOBAL_TOKEN->PREV
 	LOAD32 R0 R0 8              ; GLOBAL_TOKEN->PREV->S
 	FALSE R1                    ; Passing NULL
-	LOADUI R2 $global_function_list ; where the global function list is located
-	LOAD32 R2 R2 0              ; Loaded
+	LOADR32 R2 @global_function_list ; where the global function list is located
 	CALLI R15 @sym_declare      ; declare FUNC
-	STORE32 R0 R2 0             ; GLOBAL_FUNCTION_LIST = FUNC
+	STORER32 R0 @global_function_list ; GLOBAL_FUNCTION_LIST = FUNC
 	MOVE R9 R0                  ; SETS FUNC
 	CALLI R15 @collect_arguments ; Collect function arguments
 	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
@@ -2062,6 +2143,8 @@ Missing ;
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	and struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns the token_lists modified
 :program
@@ -2077,17 +2160,16 @@ Missing ;
 	JUMP.Z R0 @program_type     ; Looks like not
 
 	;; Deal with CONSTANT case
-	LOADUI R3 $global_constant_list ; Where we store our global constant
-	LOAD32 R2 R3 0              ; Get contents of global constants
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	FALSE R1                    ; Set NULL
-	LOAD32 R0 R13 0             ; GLOBAL_TOKEN->NEXT
-	LOAD32 R0 R0 8              ; GLOBAL_TOKEN->NEXT->S
+	LOADR32 R2 @global_constant_list ; GLOBAL_CONSTANTS_LIST
 	CALLI R15 @sym_declare      ; Declare the global constant
-	STORE32 R0 R3 0             ; Update global constant
-	LOAD32 R2 R13 0             ; GLOBAL_TOKEN->NEXT
-	LOAD32 R2 R2 0              ; GLOBAL_TOKEN->NEXT->NEXT
-	STORE32 R0 R2 16            ; GLOBAL_CONSTANT_LIST->ARGUMENTS = GLOBAL_TOKEN->NEXT->NEXT
-	LOAD32 R13 R2 0             ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT->NEXT->NEXT
+	STORER32 R0 @global_constant_list ; Update global constant
+
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	STORE32 R13 R0 16           ; GLOBAL_CONSTANT_LIST->ARGUMENTS = GLOBAL_TOKEN
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	JUMP @program_iter          ; Loop again
 
 :program_type
@@ -2384,13 +2466,13 @@ Missing ;
 	LOADXU8 R0 R2 R4            ; Get a byte of our first string
 	LOADXU8 R1 R3 R4            ; Get a byte of our second string
 	ADDUI R4 R4 1               ; Prep for next loop
-	CMPSKIP.E R1 R0             ; Compare the bytes
-	FALSE R1                    ; Set FALSE
+	CMPSKIP.NE R1 R0            ; Compare the bytes
 	JUMP.NZ R1 @match_cmpbyte   ; Loop if bytes are equal
 ;; Done
-	CMPSKIPI.NE R0 0            ; If ended loop with everything matching
-	TRUE R1                     ; Set as TRUE
-	MOVE R0 R1                  ; Prepare for return
+	FALSE R2                    ; Default answer
+	CMPSKIP.NE R0 R1            ; If ended loop with everything matching
+	TRUE R2                     ; Set as TRUE
+	MOVE R0 R2                  ; Prepare for return
 	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
