@@ -737,12 +737,98 @@
 	
 	
 
+
+	;; constant_load function
+	;; Recieves struct token_list* a in R0
+	;; Returns nothing
+:constant_load
+	PUSHR R0 R15                ; Protect R0
+	LOADUI R0 $constant_load_string0 ; Our header
+	CALLI R15 @emit_out         ; emit it
+	POPR R0 R15                 ; Restore R0
+	LOAD32 R0 R0 16             ; A->ARGUMENTS
+	LOAD32 R0 R0 8              ; A->ARGUMENTS->S
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+	RET R15
+
+:constant_load_string0
+	"LOAD_IMMEDIATE_eax %"
+
+
+;; variable_load function
+;; Recieves struct token_list* a in R0
+;;	and struct token_list* current_target in R8
+;; Returns Nothing
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+:variable_load
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	MOVE R2 R0                  ; Protect A
+
+	;; Check if function call
+	LOADUI R0 $type_function_name ; Using "FUNCTION"
+	LOAD32 R1 R2 12             ; A->TYPE
+	LOAD32 R1 R1 24             ; A->TYPE->NAME
+	CALLI R15 @match            ; IF "FUNCTION" ==  A->TYPE->NAME
+	JUMP.Z R0 @variable_load_regular ; Nope
+
+	LOADUI R0 $open_paren       ; Using "("
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF "(" == GLOBAL_TOKEN->S
+	JUMP.Z R0 @variable_load_regular ; Nope
+
+	;; Deal with function call
+	CALLI R15 @function_call    ; DO IT
+	JUMP @variable_load_done    ; Be done
+
+:variable_load_regular
+	LOAD32 R8 R2 12             ; CURRENT_TARGET = A->TYPE
+	LOADUI R0 $variable_load_string0 ; Our prefix
+	CALLI R15 @emit_out         ; emit it
+
+	LOAD32 R0 R2 16             ; A->DEPTH
+	CALLI R15 @numerate_number  ; Convert to string
+	CALLI R15 @emit_out         ; emit it
+
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+	;; check for special case 1
+	LOADUI R0 $equal            ; Using "="
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
+	JUMP.NZ R0 @variable_load_done ; Be done
+
+	;; check for special case 2
+	LOADUI R0 $type_char_double_indirect_name ; Using "char**"
+	LOAD32 R1 R2 12             ; A->TYPE
+	LOAD32 R1 R1 24             ; A->TYPE->NAME
+	CALLI R15 @match            ; IF A->TYPE->NAME == "char**"
+	JUMP.NZ R0 @variable_load_done ; Be done
+
+	;; deal with the general case
+	LOADUI R0 $variable_load_string1 ; Our postfix
+	CALLI R15 @emit_out         ; emit it
+
+:variable_load_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:variable_load_string0
+	"LOAD_BASE_ADDRESS_eax %"
+:variable_load_string1
+	"LOAD_INTEGER
+"
+
 	
 	
 	
 	
-:primary_expr_failure
-	HALT
+:function_load
+	RET R15
 	
 	
 	
@@ -752,12 +838,277 @@
 	
 	
 	
-:common_recursion
+:global_load
 	RET R15
 	
 	
 	
 	
+
+;; primary_expr_failure function
+;; Fails hard and fast
+;; Recieves nothing
+;; HALTs and will trash registers
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+:primary_expr_failure
+	LOADUI R0 $primary_expr_failure_string0 ; Our first string
+	FALSE R1                    ; Display to User
+	CALLI R15 @file_print       ; Print it
+
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @file_print       ; Print it
+
+	LOADUI R0 $primary_expr_failure_string1 ; Our last string
+	CALLI R15 @file_print       ; Print it
+
+	CALLI R15 @line_error       ; Make it a line error message too
+	HALT
+
+:primary_expr_failure_string0
+	"Recieved "
+:primary_expr_failure_string1
+	" in primary_expr
+"
+
+
+;; primary_expr_string function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:primary_expr_string
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADR32 R0 @current_count   ; Using CURRENT_COUNT
+	ADDUI R1 R0 1               ; CURRENT_COUNT = CURRENT_COUNT + 1
+	STORER32 R1 @current_count  ; Update CURRENT_COUNT
+	CALLI R15 @numerate_number  ; Convert to string
+	MOVE R2 R0                  ; Put string in safe place
+	LOADUI R0 $primary_expr_string_string0 ; Our string prefix
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	COPY R1 R2                  ; NUMBER_STRING
+	CALLI R15 @uniqueID_out     ; Make it unique
+
+	;; The target
+	LOADUI R0 $primary_expr_string_string1
+	COPY R1 R11                 ; Using STRINGS_LIST
+	CALLI R15 @emit             ; emit it
+	MOVE R1 R0                  ; Put STRINGS_LIST in correct place
+	LOAD32 R0 R9 8              ; Using FUNCTION->S
+	CALLI R15 @uniqueID         ; Make it unique
+	MOVE R11 R0                 ; Update STRINGS_LIST
+
+	;; Parse the string
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @parse_string     ; Parse it
+	COPY R1 R11                 ; Using STRINGS_LIST
+	CALLI R15 @emit             ; emit it
+	MOVE R11 R0                 ; Update STRINGS_LIST
+
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:primary_expr_string_string0
+	"LOAD_IMMEDIATE_eax &STRING_"
+:primary_expr_string_string1
+	":STRING_"
+
+
+;; primary_expr_char function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:primary_expr_char
+	PUSHR R0 R15                ; Protect R0
+	LOADUI R0 $primary_expr_char_string0 ; Using our header string
+	CALLI R15 @emit_out         ; emit it
+
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	ADDUI R0 R0 1               ; GLOBAL_TOKEN->S + 1
+	CALLI R15 @escape_lookup    ; escape_lookup value
+	CALLI R15 @numerate_number  ; Make it a string
+	CALLI R15 @emit_out         ; emit it
+
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:primary_expr_char_string0
+	"LOAD_IMMEDIATE_eax %"
+
+
+;; primary_expr_number function
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:primary_expr_number
+	LOADUI R0 $primary_expr_number_string0 ; Our header
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	RET R15
+
+:primary_expr_number_string0
+	"LOAD_IMMEDIATE_eax %"
+
+
+;; primary_expr_variable function
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:primary_expr_variable
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOAD32 R2 R13 8             ; S = GLOBAL_TOKEN->S
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	COPY R0 R2                  ; Using S
+	LOADR32 R1 @global_constant_list
+	CALLI R15 @sym_lookup       ; Lookup S in CONSTANTS
+	JUMP.Z R0 @primary_expr_variable_locals ; try Locals
+
+	;; Deal with Constants
+	CALLI R15 @constant_load    ; A is in R0 already
+	JUMP @primary_expr_variable_done ; Moving on
+
+:primary_expr_variable_locals
+	COPY R0 R2                  ; Using S
+	LOAD32 R1 R9 4              ; Using FUNCTION->LOCALS
+	CALLI R15 @sym_lookup       ; Lookup S in Locals
+	JUMP.Z R0 @primary_expr_variable_arguments ; try arguments
+
+	;; Deal with Locals
+	CALLI R15 @variable_load    ; A is in R0 already
+	JUMP @primary_expr_variable_done ; Moving on
+
+:primary_expr_variable_arguments
+	COPY R0 R2                  ; Using S
+	LOAD32 R1 R9 16             ; Using FUNCTION->ARGUMENTS
+	CALLI R15 @sym_lookup       ; Lookup S in arguments
+	JUMP.Z R0 @primary_expr_variable_function ; try Functions
+
+	;; Deal with argument
+	CALLI R15 @variable_load    ; A is in R0 already
+	JUMP @primary_expr_variable_done ; Moving on
+
+:primary_expr_variable_function
+	COPY R0 R2                  ; Using S
+	LOADR32 R1 @global_function_list ; Get current GLOBAL_FUNCTION_LIST
+	CALLI R15 @sym_lookup       ; Lookup S in GLOBAL_FUNCTION_LIST
+	JUMP.Z R0 @primary_expr_variable_global ; try Globals
+
+	;; Deal with function TODO
+	
+	
+	
+	
+	JUMP @primary_expr_variable_done ; Moving on
+
+:primary_expr_variable_global
+	COPY R0 R2                  ; Using S
+	LOADR32 R1 @global_symbol_list ; Get current GLOBAL_SYMBOL_LIST
+	CALLI R15 @sym_lookup       ; Lookup S in GLOBAL_SYMBOL_LIST
+	JUMP.Z R0 @primary_expr_variable_failure ; Looks like it isn't anything we know
+
+	;; Deal with a global
+	CALLI R15 @global_load
+
+:primary_expr_variable_done
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:primary_expr_variable_failure
+	MOVE R0 R2                  ; Using S
+	FALSE R1                    ; We want the user to see
+	CALLI R15 @file_print       ; Print it
+
+	LOADUI R0 $primary_expr_variable_string0 ; Body
+	CALLI R15 @file_print       ; Print it
+	CALLI R15 @line_error       ; Provide useful error info
+	HALT
+
+:primary_expr_variable_string0
+	" is not a defined symbol
+"
+
+
+
+;; promote_type function
+;; Recieves struct type* in R0 and struct type* in R1
+;; Returns first match struct type* in R0
+:promote_type
+	RET R15
+
+
+;; common_recursion function
+;; Recieves FUNCTION* in R0
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:common_recursion
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	MOVE R2 R0                  ; Protect F
+	COPY R1 R8                  ; LAST_TYPE = CURRENT_TARGET
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	LOADUI R0 $common_recursion_string0 ; Header string
+	CALLI R15 @emit_out         ; Our header
+
+	CALL R2 R15                 ; CALL F()
+
+	COPY R0 R8                  ; Using CURRENT_TARGET
+	CALLI R15 @promote_type     ; Promote type
+	MOVE R8 R0                  ; update CURRENT_TARGET
+
+	LOADUI R0 $common_recursion_string1 ; Footer string
+	CALLI R15 @emit_out         ; Our footer
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:common_recursion_string0
+	"PUSH_eax	#_common_recursion
+"
+:common_recursion_string1
+	"POP_ebx	# _common_recursion
+"
+
 
 	
 	
@@ -886,90 +1237,99 @@
 	CMPSKIPI.E R0 45            ; IF GLOBAL_TOKEN->S[0] == '-'
 	JUMP @primary_expr_bang     ; If not try '!'
 
-	;; Deal with -a and -4 expressions TODO
-	
-	
-	
-	
+	;; Deal with -a and -4 expressions
+	LOADUI R0 $primary_expr_str0 ; Load HEADER
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $primary_expr     ; Using PRIMARY_EXPR
+	CALLI R15 @common_recursion ; Recurse
+	LOADUI R0 $primary_expr_str1 ; add footer
+	CALLI R15 @emit_out         ; emit it
+
 	JUMP @primary_expr_done     ; Wrap up
 
 :primary_expr_bang
 	CMPSKIPI.E R0 33            ; IF GLOBAL_TOKEN->S[0] == "!"
 	JUMP @primary_expr_nested   ; If not try '('
 
-	;; deal with !a expressions TODO
-	
-	
-	
-	
+	;; deal with !a expressions
+	LOADUI R0 $primary_expr_str2 ; Load HEADER
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $postfix_expr     ; Using POSTFIX_EXPR
+	CALLI R15 @common_recursion ; Recurse
+	LOADUI R0 $primary_expr_str3 ; add footer
+	CALLI R15 @emit_out         ; emit it
+
 	JUMP @primary_expr_done     ; Wrap up
 
 :primary_expr_nested
 	CMPSKIPI.E R0 40            ; IF GLOBAL_TOKEN->S[0] == '('
 	JUMP @primary_expr_ch       ; If not try 'char'
 
-	;; Deal with ( expr ) TODO
-	
-	
-	
-	
+	;; Deal with ( expr )
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @expression       ; Recurse
+
+	LOADUI R0 $primary_expr_str4 ; Using error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Make sure we have closing match
+
 	JUMP @primary_expr_done     ; Wrap up
 
 :primary_expr_ch
 	CMPSKIPI.E R0 39            ; IF GLOBAL_TOKEN->S[0] == '\''
 	JUMP @primary_expr_st       ; If not try "string"
 
-	;; Deal with 'char' TODO
-	
-	
-	
-	
+	;; Deal with 'char'
+	CALLI R15 @primary_expr_char ; Collect char
 	JUMP @primary_expr_done     ; Wrap up
 
 :primary_expr_st
 	CMPSKIPI.E R0 34            ; IF GLOBAL_TOKEN->S[0] == '"'
-	JUMP @primary_expr_variable ; If not try variables
+	JUMP @primary_expr_var      ; If not try variables
 
-	;; deal with "string" TODO
-	
-	
-	
-	
+	;; deal with "string"
+	CALLI R15 @primary_expr_string ; Collect string
 	JUMP @primary_expr_done     ; Wrap up
 
-:primary_expr_variable
+:primary_expr_var
 	LOADUI R1 $variable_chars   ; Using a-z+A-Z+_
 	CALLI R15 @in_set           ; IF GLOBAL_TOKEN->S[0] in a-z+A-Z+_
-	JUMP.Z R0 @primary_expr_number
+	JUMP.Z R0 @primary_expr_num
 
 	;; Deal with foo TODO
-	
-	
-	
-	
+	CALLI R15 @primary_expr_variable ; deal with names
 	JUMP @primary_expr_done     ; Wrap up
 
-:primary_expr_number
+:primary_expr_num
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	LOADUI R1 $digit_chars      ; Using 0-9
 	CALLI R15 @in_set           ; IF GLOBAL_TOKEN->S[0] in 0-9
 	JUMP.Z R0 @primary_expr_failure ; Fail HARD
 
-	;; Deal with 5 TODO
-	
-	
-	
-	
+	;; Deal with 5
+	CALLI R15 @primary_expr_number ; deal with number
 
 :primary_expr_done
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
+:primary_expr_str0
+	"LOAD_IMMEDIATE_eax %0
+"
+:primary_expr_str1
+	"SUBTRACT_eax_from_ebx_into_ebx
+MOVE_ebx_to_eax
+"
+:primary_expr_str2
+	"LOAD_IMMEDIATE_eax %1
+"
+:primary_expr_str3
+	"XOR_ebx_eax_into_eax
+"
+:primary_expr_str4
+	"Error in Primary expression\nDidn't get )\n"
 
 
 ;; expression function
@@ -1018,9 +1378,7 @@
 
 	;; Put our string and clean up
 	MOVE R0 R3                  ; Using our STORED string
-	COPY R1 R12                 ; Using OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
 
 	FALSE R8                    ; CURRENT_TARGET = NULL
 
@@ -1131,12 +1489,11 @@
 	;; Add block of assembly
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	ADDUI R0 R0 1               ; GLOBAL_TOKEN->S + 1
-	COPY R1 R12                 ; Using OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the right place
+	CALLI R15 @emit_out         ; emit it
+
 	LOADUI R0 $newline          ; Using "\n"
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
+
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	JUMP @process_asm_iter
 
@@ -1204,9 +1561,8 @@ MISSING ;
 :recursive_statement_pop
 	CMPJUMPI.E R2 R3 @recursive_statement_done
 	LOADUI R0 $recursive_statement_string1 ; Our POP string
-	COPY R1 R12                 ; Using OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+
+	CALLI R15 @emit_out         ; emit it
 	LOAD32 R2 R2 0              ; I = I->NEXT
 	JUMP.NZ R2 @recursive_statement_pop ; Keep looping
 
@@ -1253,12 +1609,10 @@ MISSING ;
 
 	;; Deal with :label
 	LOAD32 R0 R13 8             ; Using GLOBAL_TOKEN->S
-	COPY R1 R12                 ; Using OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOADUI R0 $statement_string0 ; Using label string
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	JUMP @statement_done        ; Move on to next thing
 
@@ -1327,18 +1681,14 @@ MISSING ;
 	;; Deal with goto label:
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	LOADUI R0 $statement_string1 ; Using our JUMP string
-	COPY R1 R12                 ; Using OUT
-	CALLI R15 @emit             ; emit it
+	CALLI R15 @emit_out         ; emit it
 
-	MOVE R1 R0                  ; Put OUT in the correct place
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
-	CALLI R15 @emit             ; emit it
+	CALLI R15 @emit_out         ; emit it
 
-	MOVE R1 R0                  ; Put out in the correct place
 	LOADUI R0 $newline          ; "\n"
-	CALLI R15 @emit             ; emit it
+	CALLI R15 @emit_out         ; emit it
 
-	MOVE R12 R0                 ; Update OUT
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 
 	LOADUI R0 $statement_string2 ; Using our error message
@@ -1374,10 +1724,9 @@ MISSING ;
 
 	;; Simple Continue compatibility
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	COPY R1 R12                 ; Using OUT
+
 	LOADUI R0 $statement_string3 ; Using our continue comment string
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
 
 	LOADUI R0 $statement_string2 ; Using our error message
 	LOADUI R1 $semicolon        ; Using ";"
@@ -1449,7 +1798,7 @@ MISSING ;
 	JUMP.NZ R0 @collect_local_1 ; Try Next
 
 	LOADI R0 -8                 ; The default depth for foo()
-	STORE32 R0 R2 16            ; A->DEPTH = -4
+	STORE32 R0 R2 16            ; A->DEPTH = -8
 	JUMP @collect_local_output  ; Deal with header
 
 :collect_local_1
@@ -1473,15 +1822,14 @@ MISSING ;
 
 	;; Output header
 	LOADUI R0 $collect_local_string0 ; Starting with the comment
-	COPY R1 R12                 ; Put OUT in the correct place
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOAD32 R0 R2 8              ; A->S
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOADUI R0 $newline          ; Using "\n"
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
+
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 
 	;; Deal with possible assignment
@@ -1501,15 +1849,13 @@ MISSING ;
 
 	;; Final Footer
 	LOADUI R0 $collect_local_string2 ; Add our PUSH statement
-	COPY R1 R12                 ; Using OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the proper place
+	CALLI R15 @emit_out         ; emit it
+
 	LOAD32 R0 R2 8              ; A->S
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the proper place
+	CALLI R15 @emit_out         ; emit it
+
 	LOADUI R0 $newline          ; Using "\n"
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
 
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
@@ -1591,7 +1937,7 @@ Missing ;
 
 :collect_arguments_func
 	LOAD32 R0 R9 16             ; FUNC->ARGS
-	CMPSKIPI.NE R0 0            ; IF NULL == FUNC->ARGS
+	CMPSKIPI.E R0 0             ; IF NULL == FUNC->ARGS
 	LOAD32 R0 R0 16             ; FUNC->ARGS->DEPTH
 	SUBI R0 R0 4                ; FUNC->ARGS->DEPTH - 4 or NULL - 4 (-4)
 	STORE32 R0 R2 16            ; A->DEPTH = VALUE
@@ -1645,24 +1991,22 @@ Missing ;
 
 	;; Looks like it is an actual function definition
 	LOADUI R0 $declare_function_string0 ; Using first string
-	COPY R1 R12                 ; And OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOAD32 R0 R9 8              ; Using FUNC->S
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOADUI R0 $newline          ; Using "\n"
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOADUI R0 $declare_function_string1 ; Using second string
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOAD32 R0 R9 8              ; Using FUNC->S
-	CALLI R15 @emit             ; emit it
-	MOVE R1 R0                  ; Put OUT in the correct place
+	CALLI R15 @emit_out         ; emit it
+
 	LOADUI R0 $newline          ; Using "\n"
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
 
 	;; Check if main function
 	MOVE R1 R2                  ; Using GLOBAL_TOKEN->S
@@ -1672,9 +2016,7 @@ Missing ;
 
 	;; Deal with main function
 	LOADUI R0 $declare_function_string2 ; Using first string
-	COPY R1 R12                 ; And OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
 
 :declare_function_nonmain
 	FALSE R1                    ; Cleaning up before call
@@ -1688,9 +2030,7 @@ Missing ;
 
 	;; Deal with adding the return
 	LOADUI R0 $declare_function_string3 ; Our final string
-	COPY R1 R12                 ; Using OUT
-	CALLI R15 @emit             ; emit it
-	MOVE R12 R0                 ; Update OUT
+	CALLI R15 @emit_out         ; emit it
 
 :declare_function_done
 	POPR R2 R15                 ; Restore R2
@@ -1897,6 +2237,37 @@ Missing ;
 	RET R15
 
 
+;; sym_lookup function
+;; Recieves char* in R0 and struct token_list in R1
+;; Returns struct token_list* or NULL in R0
+:sym_lookup
+	PUSHR R2 R15                ; Protect R2
+	MOVE R2 R1                  ; Protect I
+	MOVE R1 R0                  ; Put S in proper place
+:sym_lookup_iter
+	JUMP.Z R2 @sym_lookup_done  ; Stop if NULL
+	LOAD32 R0 R2 8              ; I->S
+	CALLI R15 @match            ; if I->S == S
+	JUMP.NZ R0 @sym_lookup_done ; Stop if match
+	LOAD32 R2 R2 0              ; I = I->NEXT
+	JUMP @sym_lookup_iter       ; Keep looping
+
+:sym_lookup_done
+	MOVE R0 R2                  ; Using R2 as our result
+	POPR R2 R15                 ; Restore R2
+	RET R15
+
+	
+	
+	
+	
+:function_call
+	RET R15
+	
+	
+	
+	
+
 ;; emit function
 ;; Recieves char* in R0, struct token_list* in R1
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -1909,6 +2280,58 @@ Missing ;
 	STORE32 R0 R2 8             ; T->S = S
 	MOVE R0 R2                  ; Put T in proper spot for return
 	POPR R2 R15                 ; Restore R2
+	RET R15
+
+
+;; emit_out function
+;; Recieves char* in R0
+;;	struct token_list* out in R12,
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns struct token_list* in R0
+:emit_out
+	STORE32 R12 R14 0           ; T->NEXT = OUT
+	ADDUI R12 R14 20            ; Get T
+	SWAP R12 R14                ; CALLOC struct token_list
+	STORE32 R0 R12 8            ; T->S = S
+	RET R15
+
+
+;; uniqueID function
+;; Recieves char* in R0, struct token_list* in R1 and char* in R2
+;; Calls emit repeatedly
+;; Returns struct token_list* in R0
+:uniqueID
+	CALLI R15 @emit             ; emit S
+
+	MOVE R1 R0                  ; Put L in the correct place
+	LOADUI R0 $underline        ; Using "_"
+	CALLI R15 @emit             ; emit it
+
+	MOVE R1 R0                  ; Put L in the correct place
+	COPY R0 R2                  ; Put NUM in the correct place
+	CALLI R15 @emit             ; emit NUM
+
+	MOVE R1 R0                  ; Put L in the correct place
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit             ; emit it
+	RET R15
+
+
+;; uniqueID_out function
+;; Recieves char* in R0, char* in R1
+;; Calls emit_out repeatedly
+;; Returns nothing
+:uniqueID_out
+	CALLI R15 @emit_out         ; emit S
+
+	LOADUI R0 $underline        ; Using "_"
+	CALLI R15 @emit_out         ; emit it
+
+	COPY R0 R2                  ; Put NUM in the correct place
+	CALLI R15 @emit_out         ; emit NUM
+
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
 	RET R15
 
 
@@ -2312,9 +2735,6 @@ Missing ;
 	JUMP @numerate_number_0     ; Otherwise keep looping
 
 :numerate_number_done
-	LOADUI R0 10                ; Using LINEFEED
-	STOREX8 R0 R1 R6            ; write
-	ADDUI R6 R6 1               ; Increment by 1
 	FALSE R0                    ; NULL Terminate
 	STOREX8 R0 R1 R6            ; write
 	MOVE R0 R1                  ; Return pointer to our string
@@ -2395,7 +2815,8 @@ Missing ;
 :newline
 	"
 "
-
+:underline
+	"_"
 
 ;; Global types
 ;; NEXT (0), SIZE (4), OFFSET (8), INDIRECT (12), MEMBERS (16), TYPE (20), NAME (24)
