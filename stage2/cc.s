@@ -1158,6 +1158,40 @@
 "
 
 
+;; general_recursion function
+;; Recieves FUNCTION F in R0, char* s in R1, char* name in R2
+;; and FUNCTION ITERATE in R3
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns nothing
+:general_recursion
+	PUSHR R1 R15                ; Protect S
+	PUSHR R0 R15                ; Protect F
+	COPY R0 R2                  ; Using NAME
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == NAME
+	JUMP.Z R0 @general_recursion_done
+
+	;; deal with case of match
+	POPR R0 R15                 ; Restore F
+	CALLI R15 @common_recursion ; Recurse
+
+	POPR R1 R15                 ; Restore S
+	COPY R0 R1                  ; Put S in correct place
+	CALLI R15 @emit_out         ; emit it
+
+	CALL R3 R15                 ; CALL ITERATE()
+	RET R15                     ; Don't double pop
+
+:general_recursion_done
+	POPR R0 R15                 ; Restore F
+	POPR R1 R15                 ; Restore S
+	RET R15
+
 	
 	
 	
@@ -1182,40 +1216,188 @@
 	
 	
 
-	
-	
-	
-	
+;; additive_expr_stub function
+;; recieves nothing
+;; returns nothing
+;; Updates struct token_list*
 :additive_expr_stub
-	RET R15
-	
-	
-	
-	
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	;; Fixed pieces
+	LOADUI R0 $postfix_expr     ; Set First argument
+	LOADUI R3 $additive_expr_stub
 
-	
-	
-	
-	
+	;; The + bit
+	LOADUI R1 $additive_expr_stub_string0 ; Our first operation
+	LOADUI R2 $plus_string      ; Using "+"
+	CALLI R15 @general_recursion
+
+	;; The - bit
+	LOADUI R1 $additive_expr_stub_string1 ; Our second operation
+	LOADUI R2 $minus_string     ; Using "-"
+	CALLI R15 @general_recursion
+
+	;; The * bit
+	LOADUI R1 $additive_expr_stub_string2 ; Our third operation
+	LOADUI R2 $multiply_string  ; Using "*"
+	CALLI R15 @general_recursion
+
+	;; The / bit
+	LOADUI R1 $additive_expr_stub_string3 ; Our fourth operation
+	LOADUI R2 $divide_string    ; Using "/"
+	CALLI R15 @general_recursion
+
+	;; The % bit
+	LOADUI R1 $additive_expr_stub_string4 ; Our fifth operation
+	LOADUI R2 $modulus_string   ; Using "%"
+	CALLI R15 @general_recursion
+
+	;; The << bit
+	LOADUI R1 $additive_expr_stub_string5 ; Our sixth operation
+	LOADUI R2 $left_shift_string ; Using "<<"
+	CALLI R15 @general_recursion
+
+	;; The >> bit
+	LOADUI R1 $additive_expr_stub_string6 ; Our final operation
+	LOADUI R2 $right_shift_string ; Using ">>"
+	CALLI R15 @general_recursion
+
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:additive_expr_stub_string0
+	"ADD_ebx_to_eax
+"
+:additive_expr_stub_string1
+	"SUBTRACT_eax_from_ebx_into_ebx
+MOVE_ebx_to_eax
+"
+:additive_expr_stub_string2
+	"MULTIPLY_eax_by_ebx_into_eax
+"
+:additive_expr_stub_string3
+	"XCHG_eax_ebx
+LOAD_IMMEDIATE_edx %0
+DIVIDE_eax_by_ebx_into_eax
+"
+:additive_expr_stub_string4
+	"XCHG_eax_ebx
+LOAD_IMMEDIATE_edx %0
+MODULUS_eax_from_ebx_into_ebx
+MOVE_edx_to_eax
+"
+:additive_expr_stub_string5
+	"COPY_eax_to_ecx
+COPY_ebx_to_eax
+SAL_eax_cl
+"
+:additive_expr_stub_string6
+	"COPY_eax_to_ecx
+COPY_ebx_to_eax
+SAR_eax_cl
+"
+
+
+;; additive_expr function
+;; Recieves struct token_list* global_token in R13,
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
 :additive_expr
 	CALLI R15 @postfix_expr     ; Walk up the tree
 	CALLI R15 @additive_expr_stub ; Deal with nodes at this level
 	RET R15
-	
-	
-	
-	
 
-	
-	
-	
-	
+
+;; relational_expr_stub function
+;; recieves nothing
+;; returns nothing
+;; Updates struct token_list*
 :relational_expr_stub
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	;; Fixed pieces
+	LOADUI R0 $additive_expr     ; Set First argument
+	LOADUI R3 $relational_expr_stub
+
+	;; The < bit
+	LOADUI R1 $relational_expr_stub_string0 ; Our first operation
+	LOADUI R2 $less_than_string ; Using "<"
+	CALLI R15 @general_recursion
+
+	;; The <= bit
+	LOADUI R1 $relational_expr_stub_string1 ; Our second operation
+	LOADUI R2 $less_than_equal_string ; Using "<="
+	CALLI R15 @general_recursion
+
+	;; The >= bit
+	LOADUI R1 $relational_expr_stub_string2 ; Our third operation
+	LOADUI R2 $greater_than_equal_string ; Using ">="
+	CALLI R15 @general_recursion
+
+	;; The > bit
+	LOADUI R1 $relational_expr_stub_string3 ; Our fourth operation
+	LOADUI R2 $greater_than_string ; Using ">"
+	CALLI R15 @general_recursion
+
+	;; The == bit
+	LOADUI R1 $relational_expr_stub_string4 ; Our fifth operation
+	LOADUI R2 $equal_to_string  ; Using "=="
+	CALLI R15 @general_recursion
+
+	;; The != bit
+	LOADUI R1 $relational_expr_stub_string5 ; Our final operation
+	LOADUI R2 $not_equal_string ; Using "!="
+	CALLI R15 @general_recursion
+
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
+:relational_expr_stub_string0
+	"CMP
+SETL
+MOVEZBL
+"
+:relational_expr_stub_string1
+	"CMP
+SETLE
+MOVEZBL
+"
+:relational_expr_stub_string2
+	"CMP
+SETGE
+MOVEZBL
+"
+:relational_expr_stub_string3
+	"CMP
+SETG
+MOVEZBL
+"
+:relational_expr_stub_string4
+	"CMP
+SETE
+MOVEZBL
+"
+:relational_expr_stub_string5
+	"CMP
+SETNE
+MOVEZBL
+"
+
 
 ;; relational_expr function
 ;; Recieves struct token_list* global_token in R13,
@@ -2872,6 +3054,32 @@ Missing ;
 	"continue"
 :sizeof_string
 	"sizeof"
+:plus_string
+	"+"
+:minus_string
+	"-"
+:multiply_string
+	"*"
+:divide_string
+	"/"
+:modulus_string
+	"%"
+:left_shift_string
+	"<<"
+:right_shift_string
+	">>"
+:less_than_string
+	"<"
+:less_than_equal_string
+	"<="
+:greater_than_equal_string
+	">="
+:greater_than_string
+	">"
+:equal_to_string
+	"=="
+:not_equal_string
+	"!="
 
 
 ;; Frequently Used strings
