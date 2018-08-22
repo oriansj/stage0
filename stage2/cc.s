@@ -1602,7 +1602,9 @@ MOVE_ebx_to_eax
 	"XOR_ebx_eax_into_eax
 "
 :primary_expr_str4
-	"Error in Primary expression\nDidn't get )\n"
+	"Error in Primary expression
+Didn't get )
+"
 
 
 ;; expression function
@@ -1644,9 +1646,7 @@ MOVE_ebx_to_eax
 	LOADUI R3 $expression_string0 ; STORE INTEGER
 
 	;; Recurse to evaluate expression being stored
-	COPY R0 R12                 ; Using OUT
-	COPY R1 R9                  ; Using FUNC
-	LOADUI R2 $expression       ; Using expression
+	LOADUI R0 $expression       ; Using expression
 	CALLI R15 @common_recursion ; Perform common recursion
 
 	;; Put our string and clean up
@@ -1669,49 +1669,468 @@ MOVE_ebx_to_eax
 	"STORE_CHAR
 "
 
-	
-	
-	
-	
+;; process_if function
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
 :process_if
-	RET R15
-	
-	
-	
-	
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADR32 R0 @current_count   ; Using CURRENT_COUNT
+	ADDUI R1 R0 1               ; CURRENT_COUNT = CURRENT_COUNT + 1
+	STORER32 R1 @current_count  ; Update CURRENT_COUNT
+	CALLI R15 @numerate_number  ; Convert CURRENT_COUNT to string
+	MOVE R2 R0                  ; Protect our string
 
-	
-	
-	
-	
-:process_do
-	RET R15
-	
-	
-	
-	
+	LOADUI R0 $process_if_string0 ; using first string
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	COPY R1 R2                  ; Using our current count string
+	CALLI R15 @uniqueID_out     ; Add unique identifier
 
-	
-	
-	
-	
-:process_while
-	RET R15
-	
-	
-	
-	
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $process_if_string1 ; Our first error message
+	LOADUI R1 $open_paren       ; Using "("
+	CALLI R15 @require_match    ; Make sure we have what we need
+	CALLI R15 @expression       ; Recurse to get our boolean expression
 
-	
-	
-	
-	
+	LOADUI R0 $process_if_string2 ; Our test and jump
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	COPY R1 R2                  ; Using our current count string
+	CALLI R15 @uniqueID_out     ; Add unique identifier
+
+	LOADUI R0 $process_if_string3 ; Our second error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Make sure we have what we need
+	CALLI R15 @statement        ; Collect our if statement
+
+	LOADUI R0 $process_if_string4 ; Our jump over else
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	COPY R1 R2                  ; Using our current count string
+	CALLI R15 @uniqueID_out     ; Add unique identifier
+	LOADUI R0 $process_if_string5 ; Our else label
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; Add unique identifier
+
+	LOADUI R0 $else_string      ; Using "else"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "else"
+	JUMP.Z R0 @process_if_else  ; Looks like no else
+
+	;; Deal with else
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN =  GLOBAL_TOKEN->NEXT
+	CALLI R15 @statement        ; Grab else statement
+
+:process_if_else
+	LOADUI R0 $process_if_string6 ; Our jump over else
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	COPY R1 R2                  ; Using our current count string
+	CALLI R15 @uniqueID_out     ; Add unique identifier
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+:process_if_string0
+	"# IF_"
+:process_if_string1
+	"ERROR in process_if
+MISSING (
+"
+:process_if_string2
+	"TEST
+JUMP_EQ %ELSE_"
+:process_if_string3
+	"ERROR in process_if
+MISSING )
+"
+:process_if_string4
+	"JUMP %_END_IF_"
+:process_if_string5
+	":ELSE_"
+:process_if_string6
+	":_END_IF_"
+
+
+;; save_break_frame microfunction
+;; Overwrites R0 and R1
+;; Saves break frame on stack
+;; Returns to caller
+:save_break_frame
+	POPR R1 R15                 ; Save return address
+	LOADR32 R0 @break_frame     ; Obtain BREAK_FRAME
+	PUSHR R0 R15                ; Protect BREAK_FRAME
+	LOADR32 R0 @break_target_head ; obtain HEAD
+	PUSHR R0 R15                ; Protect HEAD
+	LOADR32 R0 @break_target_func ; obtain FUNC
+	PUSHR R0 R15                ; Protect FUNC
+	LOADR32 R3 @break_target_num ; obtain NUM
+	PUSHR R0 R15                ; Protect NUM
+	PUSHR R1 R15                ; Set where we are returning to
+	RET R15
+
+
+;; restore_break_frame microfunction
+;; Overwrites R0 and R1
+;; Restores break frame from stack
+;; Returns to caller
+:restore_break_frame
+	POPR R1 R15                 ; Save return address
+	POPR R0 R15                 ; obtain NUM
+	STORER32 R3 @break_target_num ; Restore NUM
+	POPR R0 R15                 ; obtain FUNC
+	STORER32 R4 @break_target_func ; Restore FUNC
+	POPR R0 R15                 ; obtain HEAD
+	STORER32 R5 @break_target_head ; Restore HEAD
+	POPR R0 R15                 ; obtain BREAK_FRAME
+	STORER32 R5 @break_frame    ; Restore BREAK_FRAME
+	PUSHR R1 R15                ; Set where we are returning to
+	RET R15
+
+
+;; set_break_frame microfunction
+;; Recieves char* num in R0, char* head in R1
+;; Overwrites R0
+;; Sets break frame using
+;; R9 holding FUNC
+;; Returns to calling function
+:set_break_frame
+	STORER32 R1 @break_target_head ; update BREAK_TARGET_HEAD
+	STORER32 R0 @break_target_num ; Update BREAK_TARGET_NUM
+	LOAD32 R0 R9 4              ; Using FUNCTION->LOCALS
+	STORER32 R0 @break_frame    ; update BREAK_FRAME
+	LOAD32 R0 R9 8              ; Using FUNCTION->S
+	STORER32 R0 @break_target_func ; update BREAK_TARGET_FUNC
+	RET R15
+
+
+;; process_for function
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
 :process_for
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R0 R15                ; Protect R0
+	CALLI R15 @save_break_frame ; Save break frame
+
+	LOADR32 R0 @current_count   ; Using CURRENT_COUNT
+	ADDUI R1 R0 1               ; CURRENT_COUNT = CURRENT_COUNT + 1
+	STORER32 R1 @current_count  ; Update CURRENT_COUNT
+	CALLI R15 @numerate_number  ; Convert to string
+	COPY R2 R0                  ; Protect NUMBER_STRING
+
+	LOADUI R1 $process_for_string0 ; Get new HEAD
+	CALLI R15 @set_break_frame  ; Set the break frame values
+
+	LOADUI R0 $process_for_string1 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	LOADUI R0 $process_for_string2 ; Our first error message
+	LOADUI R1 $open_paren       ; Using "("
+	CALLI R15 @require_match    ; Verify match
+	LOADUI R0 $semicolon        ; Using ";"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S -- ";"
+	CMPSKIPI.NE R0 0            ; If GLOBAL_TOKEN->S != ";"
+	CALLI R15 @expression       ; Skip that step
+
+	LOADUI R0 $process_for_string3 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	LOADUI R0 $process_for_string4 ; Our second error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Verify match
+	CALLI R15 @expression       ; TEST logic required
+
+	LOADUI R0 $process_for_string5 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+	LOADUI R0 $process_for_string6 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+	LOADUI R0 $process_for_string7 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	LOADUI R0 $process_for_string8 ; Our third error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Verify match
+	CALLI R15 @expression       ; Iterator logic
+
+	LOADUI R0 $process_for_string9 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+	LOADUI R0 $process_for_string10 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	LOADUI R0 $process_for_string11 ; Our final error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Verify match
+	CALLI R15 @statement        ; Main body
+
+	LOADUI R0 $process_for_string12 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+	LOADUI R0 $process_for_string13 ; Our comment header
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	CALLI R15 @restore_break_frame ; Restore break frame
+	POPR R0 R15                 ; Restore R0
+	POPR R1 R15                 ; Restore R1
+	POPR R2 R15                 ; Restore R2
 	RET R15
-	
-	
-	
-	
+
+:process_for_string0
+	"FOR_END_"
+:process_for_string1
+	"# FOR_initialization_"
+:process_for_string2
+	"ERROR in process_for
+MISSING (
+"
+:process_for_string3
+	":FOR_"
+:process_for_string4
+	"ERROR in process_for
+MISSING ;1
+"
+:process_for_string5
+	"TEST
+JUMP_EQ %FOR_END_"
+:process_for_string6
+	"JUMP %FOR_THEN_"
+:process_for_string7
+	":FOR_ITER_"
+:process_for_string8
+	"ERROR in process_for
+MISSING ;2
+"
+:process_for_string9
+	"JUMP %FOR_"
+:process_for_string10
+	":FOR_THEN_"
+:process_for_string11
+	"ERROR in process_for
+MISSING )
+"
+:process_for_string12
+	"JUMP %FOR_ITER_"
+:process_for_string13
+	":FOR_END_"
+
+
+;; process_do function
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:process_do
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R0 R15                ; Protect R0
+	CALLI R15 @save_break_frame ; Save break frame
+
+	LOADR32 R0 @current_count   ; Using CURRENT_COUNT
+	ADDUI R1 R0 1               ; CURRENT_COUNT = CURRENT_COUNT + 1
+	STORER32 R1 @current_count  ; Update CURRENT_COUNT
+	CALLI R15 @numerate_number  ; Convert to string
+	COPY R2 R0                  ; Protect NUMBER_STRING
+
+	LOADUI R1 $process_do_string0 ; Using our desired head
+	CALLI R15 @set_break_frame  ; Set the break frame values
+
+	LOADUI R0 $process_do_string1 ; Our label
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @statement        ; Collect our Do statement
+
+	LOADUI R0 $process_do_string2 ; our first error message
+	LOADUI R1 $while_string     ; Using "while"
+	CALLI R15 @require_match    ; Check for match
+	LOADUI R0 $process_do_string3 ; our second error message
+	LOADUI R1 $open_paren       ; Using "("
+	CALLI R15 @require_match    ; Check for match
+	CALLI R15 @expression       ; Our logical expression
+	LOADUI R0 $process_do_string4 ; our third error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Check for match
+	LOADUI R0 $process_do_string5 ; our final error message
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Check for match
+
+	LOADUI R0 $process_do_string6 ; Our test string
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Put NUMBER_STRING in right place
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+	LOADUI R0 $process_do_string7 ; Our end label string
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	CALLI R15 @restore_break_frame ; Restore break frame
+	POPR R0 R15                 ; Restore R0
+	POPR R1 R15                 ; Restore R1
+	POPR R2 R15                 ; Restore R2
+	RET R15
+
+:process_do_string0
+	"DO_END_"
+:process_do_string1
+	":DO_"
+:process_do_string2
+	"ERROR in process_do
+MISSING while
+"
+:process_do_string3
+	"ERROR in process_do
+MISSING (
+"
+:process_do_string4
+	"ERROR in process_do
+MISSING )
+"
+:process_do_string5
+	"ERROR in process_do
+MISSING ;
+"
+:process_do_string6
+	"TEST
+JUMP_NE %DO_"
+:process_do_string7
+	":DO_END_"
+
+
+;; process_while function
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:process_while
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R0 R15                ; Protect R0
+	CALLI R15 @save_break_frame ; Save break frame
+
+	LOADR32 R0 @current_count   ; Using CURRENT_COUNT
+	ADDUI R1 R0 1               ; CURRENT_COUNT = CURRENT_COUNT + 1
+	STORER32 R1 @current_count  ; Update CURRENT_COUNT
+	CALLI R15 @numerate_number  ; Convert to string
+	COPY R2 R0                  ; Protect NUMBER_STRING
+
+	LOADUI R1 $process_while_string0 ; Set HEAD
+	CALLI R15 @set_break_frame  ; Set the break frame values
+
+	LOADUI R0 $process_while_string1 ; Our head label
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $process_while_string2 ; Our first error message
+	LOADUI R1 $open_paren       ; Using "("
+	CALLI R15 @require_match    ; Check for match
+	CALLI R15 @expression       ; Collect test expression
+
+	LOADUI R0 $process_while_string3 ; Our test and jump
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+	LOADUI R0 $process_while_string4 ; Our trailing comment
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	LOADUI R0 $process_while_string5 ; Our first error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Check for match
+	CALLI R15 @statement        ; Collect our loop statement
+
+	LOADUI R0 $process_while_string6 ; Our test and jump
+	CALLI R15 @emit_out         ; emit it
+	COPY R1 R2                  ; Using NUMBER_STRING
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+	LOADUI R0 $process_while_string7 ; Our trailing comment
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R9 8              ; FUNCTION->S
+	CALLI R15 @uniqueID_out     ; emit it
+
+	CALLI R15 @restore_break_frame ; Restore break frame
+	POPR R0 R15                 ; Restore R0
+	POPR R1 R15                 ; Restore R1
+	POPR R2 R15                 ; Restore R2
+	RET R15
+
+:process_while_string0
+	"END_WHILE_"
+:process_while_string1
+	":WHILE_"
+:process_while_string2
+	"ERROR in process_while
+MISSING (
+"
+:process_while_string3
+	"TEST
+JUMP_EQ %END_WHILE_"
+:process_while_string4
+	"# THEN_while_"
+:process_while_string5
+	"ERROR in process_while
+MISSING )
+"
+:process_while_string6
+	"JUMP %WHILE_"
+:process_while_string7
+	":END_WHILE_"
+
 
 ;; return_result function
 ;; Recieves nothing
@@ -1764,9 +2183,14 @@ MISSING ;
 :process_break
 	RET R15
 	
-	
-	
-	
+:break_frame
+	NOP
+:break_target_head
+	NOP
+:break_target_func
+	NOP
+:break_target_num
+	NOP
 
 
 ;; process_asm function
@@ -2634,7 +3058,7 @@ Missing ;
 	LOADUI R0 $underline        ; Using "_"
 	CALLI R15 @emit_out         ; emit it
 
-	COPY R0 R2                  ; Put NUM in the correct place
+	COPY R0 R1                  ; Put NUM in the correct place
 	CALLI R15 @emit_out         ; emit NUM
 
 	LOADUI R0 $newline          ; Using "\n"
@@ -3079,6 +3503,8 @@ Missing ;
 	"argv"
 :if_string
 	"if"
+:else_string
+	"else"
 :do_string
 	"do"
 :while_string
