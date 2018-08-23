@@ -726,16 +726,48 @@
 	POPR R1 R15                 ; Restore R1
 	RET R15
 
-	
-	
-	
-	
+
+;; unary_expr_sizeof function
+;; Recieves nothing
+;; Returns nothing
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 :unary_expr_sizeof
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $unary_expr_sizeof_string0 ; Our first error message
+	LOADUI R1 $open_paren       ; Using "("
+	CALLI R15 @require_match    ; Ensure a match
+	CALLI R15 @type_name        ; Get type_name
+	MOVE R2 R0                  ; Protect A
+	LOADUI R0 $unary_expr_sizeof_string1 ; Our final error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Ensure a match
+
+	LOADUI R0 $unary_expr_sizeof_string2 ; Our header
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R2 4              ; A->SIZE
+	CALLI R15 @numerate_number  ; Convert to string
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
+:unary_expr_sizeof_string0
+	"ERROR in unary_expr
+Missing (
+"
+:unary_expr_sizeof_string1
+	"ERROR in unary_expr
+Missing )
+"
+:unary_expr_sizeof_string2
+	"LOAD_IMMEDIATE_eax %"
 
 
 ;; constant_load function
@@ -1196,7 +1228,7 @@
 	
 	
 	
-:postfix_expr_stub
+:postfix_expr_arrow
 	RET R15
 	
 	
@@ -1207,14 +1239,65 @@
 	
 	
 	
-:postfix_expr
-	CALLI R15 @primary_expr     ; Walk up the tree
-	CALLI R15 @postfix_expr_stub ; Deal with nodes on this level
+:postfix_expr_array
 	RET R15
 	
 	
 	
 	
+
+
+;; postfix_expr_stub function
+;; Recieves nothing
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:postfix_expr_stub
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+
+	LOADUI R0 $open_bracket     ; Using "["
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "["
+	JUMP.Z R0 @postfix_expr_stub_next
+
+	;; Deal with "[" case
+	CALLI R15 @postfix_expr_array ; process
+	CALLI R15 @postfix_expr_stub ; recurse
+
+:postfix_expr_stub_next
+	LOADUI R0 $arrow_string     ; Using "->"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "->"
+	JUMP.Z R0 @postfix_expr_stub_done ; clean up
+
+	;; Deal with "->" case
+	CALLI R15 @postfix_expr_arrow ; Process
+	CALLI R15 @postfix_expr_stub ; recurse
+
+:postfix_expr_stub_done
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+	RET R15
+
+
+;; postfix_expr function
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
+:postfix_expr
+	CALLI R15 @primary_expr     ; Walk up the tree
+	CALLI R15 @postfix_expr_stub ; Deal with nodes on this level
+	RET R15
+
 
 ;; additive_expr_stub function
 ;; recieves nothing
@@ -3559,6 +3642,8 @@ Missing ;
 	"||"
 :bitwise_xor
 	"^"
+:arrow_string
+	"->"
 
 
 ;; Frequently Used strings
