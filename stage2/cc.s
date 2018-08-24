@@ -812,6 +812,9 @@ Missing )
 	JUMP.Z R0 @variable_load_regular ; Nope
 
 	;; Deal with function call
+	LOAD32 R0 R2 16             ; A->DEPTH
+	CALLI R15 @numerate_number  ; Convert to string
+	TRUE R1                     ; Passing TRUE
 	CALLI R15 @function_call    ; DO IT
 	JUMP @variable_load_done    ; Be done
 
@@ -3071,16 +3074,165 @@ Missing ;
 	POPR R2 R15                 ; Restore R2
 	RET R15
 
-	
-	
-	
-	
+
+;; function_call function
+;; Recieves CHAR* S in R0 and INT BOOL in R1
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	and struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
 :function_call
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	MOVE R2 R0                  ; Protect S
+	MOVE R3 R1                  ; Protect BOOL
+
+	LOADUI R0 $function_call_string0 ; Our first error message
+	LOADUI R1 $open_paren       ; Using "("
+	CALLI R15 @require_match    ; Make sure of a match
+
+	FALSE R4                    ; PASSED = 0
+	LOADUI R0 $function_call_string1 ; Our first header
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $function_call_string2 ; Our second header
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $function_call_string3 ; Our third header
+	CALLI R15 @emit_out         ; emit it
+
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.NE R0 41           ; IF GLOBAL_TOKEN->S[0] != ')'
+	JUMP @function_call_collect_done ; looks like function()
+
+	;; Collect arguments
+	CALLI R15 @expression       ; Deal with first argument
+	LOADUI R0 $function_call_string4 ; Push it onto stack
+	CALLI R15 @emit_out         ; emit it
+	ADDUI R4 R4 1               ; PASSED = 1
+
+:function_call_collect_iter
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	CMPSKIPI.E R0 44            ; IF GLOBAL_TOKEN->S[0] != ','
+	JUMP @function_call_collect_done ; looks like we are done collecting arguments
+
+	;; Collect another argument
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @expression       ; Deal with Nth argument
+	LOADUI R0 $function_call_string5 ; Push it onto stack
+	CALLI R15 @emit_out         ; emit it
+	ADDUI R4 R4 1               ; PASSED = PASSED + 1
+	JUMP @function_call_collect_iter ; Keep looping
+
+:function_call_collect_done
+	LOADUI R0 $function_call_string6 ; Our second error message
+	LOADUI R1 $close_paren      ; Using ")"
+	CALLI R15 @require_match    ; Make sure of a match
+
+	JUMP.Z R3 @function_call_call_false ; if BOOL != TRUE
+
+	;; Deal with TRUE == BOOL
+	LOADUI R0 $function_call_string7 ; Our first prefix
+	CALLI R15 @emit_out         ; emit it
+	MOVE R0 R2                  ; Using S
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $function_call_string8 ; Our first postfix
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $function_call_string9 ; Our second postfix
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $function_call_string10 ; Our last postfix
+	CALLI R15 @emit_out         ; emit it
+	JUMP @function_call_call_done ; Move on
+
+:function_call_call_false
+	;; Deal with FALSE == BOOL
+	LOADUI R0 $function_call_string11 ; Our first prefix
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $function_call_string12 ; Our last prefix
+	CALLI R15 @emit_out         ; emit it
+	MOVE R0 R2                  ; Using S
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+:function_call_call_done
+	LOADUI R0 $function_call_string13 ; Our POP
+
+:function_call_pop_iter
+	JUMP.Z R4 @function_call_pop_done ; Skip POP if out of args on Stack
+	CALLI R15 @emit_out         ; emit our POP
+	SUBI R4 R4 1                ; PASSED = PASSED - 1
+	JUMP @function_call_pop_iter ; Loop
+
+:function_call_pop_done
+	LOADUI R0 $function_call_string14 ; Our first postfix
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $function_call_string15 ; Our final postfix
+	CALLI R15 @emit_out         ; emit it
+
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
+:function_call_string0
+	"ERROR in process_expression_list
+No ( was found
+"
+:function_call_string1
+	"PUSH_edi	# Prevent overwriting in recursion
+"
+:function_call_string2
+	"PUSH_ebp	# Protect the old base pointer
+"
+:function_call_string3
+	"COPY_esp_to_edi	# Copy new base pointer
+"
+:function_call_string4
+	"PUSH_eax	#_process_expression1
+"
+:function_call_string5
+	"PUSH_eax	#_process_expression2
+"
+:function_call_string6
+	"ERROR in process_expression_list
+No ) was found
+"
+:function_call_string7
+	"LOAD_BASE_ADDRESS_eax %"
+:function_call_string8
+	"
+LOAD_INTEGER
+"
+:function_call_string9
+	"COPY_edi_to_ebp
+"
+:function_call_string10
+	"CALL_eax
+"
+:function_call_string11
+	"COPY_edi_to_ebp
+"
+:function_call_string12
+	"CALL_IMMEDIATE %FUNCTION_"
+:function_call_string13
+	"POP_ebx	# _process_expression_locals
+"
+:function_call_string14
+	"POP_ebp	# Restore old base pointer
+"
+:function_call_string15
+	"POP_edi	# Prevent overwrite
+"
+
 
 ;; emit function
 ;; Recieves char* in R0, struct token_list* in R1
