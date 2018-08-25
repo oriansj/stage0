@@ -555,19 +555,20 @@
 	LOADU8 R0 R2 0              ; STRING[0]
 	JUMP.Z R0 @collect_weird_string_done ; Stop if NULL
 	CMPSKIPI.E R0 92            ; IF STRING[0] != '\\'
-	JUMP @collect_weird_string_iter ; Just loop
+	JUMP @collect_weird_string_check ; Deal with iteration
 	LOADU8 R0 R2 1              ; STRING[1]
 	CMPSKIPI.NE R0 120          ; If STRING[1] == 'x'
 	ADDUI R2 R2 2               ; STRING = STRING + 2
 	ADDUI R2 R2 1               ; STRING = STRING + 1
-	JUMP @collect_weird_string_iter
+:collect_weird_string_check
+	LOADU8 R0 R2 1              ; STRING[1]
+	JUMP.NZ R0 @collect_weird_string_iter
 
 :collect_weird_string_done
 	LOADUI R0 32                ; Insert ' '
 	PUSH8 R0 R3                 ; HOLD[0] = ' ' && HOLD = HOLD + 1
 	LOADUI R0 48                ; Insert '0'
 	PUSH8 R0 R3                 ; HOLD[0] = '0' && HOLD = HOLD + 1
-	LOADUI R0 48                ; Insert '0'
 	PUSH8 R0 R3                 ; HOLD[0] = '0' && HOLD = HOLD + 1
 	LOADUI R0 39                ; Insert '\''
 	PUSH8 R0 R3                 ; HOLD[0] = '\'' && HOLD = HOLD + 1
