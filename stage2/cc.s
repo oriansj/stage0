@@ -1164,6 +1164,7 @@ Missing )
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns the token_lists modified
 :common_recursion
+	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	MOVE R2 R0                  ; Protect F
@@ -1183,6 +1184,7 @@ Missing )
 	CALLI R15 @emit_out         ; Our footer
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
 
 :common_recursion_string0
@@ -1204,6 +1206,7 @@ Missing )
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns nothing
 :general_recursion
+	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect S
 	PUSHR R0 R15                ; Protect F
 	COPY R0 R2                  ; Using NAME
@@ -1220,12 +1223,41 @@ Missing )
 	CALLI R15 @emit_out         ; emit it
 
 	CALL R3 R15                 ; CALL ITERATE()
+	POPR R0 R15                 ; Restore R0
 	RET R15                     ; Don't double pop
 
 :general_recursion_done
 	POPR R0 R15                 ; Restore F
 	POPR R1 R15                 ; Restore S
+	POPR R0 R15                 ; Restore R0
 	RET R15
+
+
+;; ceil_log2 function
+;; Recieves INT A in R0
+;; Returns LOG2(A) in R0
+:ceil_log2
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	FALSE R2                    ; RESULT = 0
+
+	SUBI R1 R0 1                ; A - 1
+	AND R1 R1 R0                ; A & (A - 1)
+	CMPSKIPI.NE R1 0            ; IF (A & (A - 1)) == 0
+	LOADI R2 -1                 ; RESULT = -1
+
+:ceil_log2_iter
+	JUMP.Z R0 @ceil_log2_done   ; IF A > 0
+	ADDI R2 R2 1                ; RESULT = RESULT + 1
+	SARI R0 1                   ; A = A >> 1
+	JUMP @ceil_log2_iter        ; Loop
+
+:ceil_log2_done
+	MOVE R0 R2                  ; Use RESULT
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
 
 	
 	
@@ -1238,16 +1270,83 @@ Missing )
 	
 	
 
-	
-	
-	
-	
+
+;; postfix_expr_array function
+;; Recieves nothing
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
 :postfix_expr_array
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	COPY R2 R8                  ; ARRAY = CURRENT_TARGET
+	LOADUI R0 $expression       ; Using EXPRESSION
+	CALLI R15 @common_recursion ; Recurse
+	MOVE R8 R2                  ; CURRENT_TARGET = ARRAY
+	LOADUI R2 $postfix_expr_array_string0 ; ASSIGN = load integer
+
+	LOADUI R0 $type_char_indirect_name ; Using "char*"
+	LOAD32 R1 R8 24             ; CURRENT_TARGET->NAME
+	CALLI R15 @match            ; IF CURRENT_TARGET->NAME == "char*"
+	CMPSKIPI.E R0 0             ; deal with Byte
+	LOADUI R2 $postfix_expr_array_string1 ; ASSIGN = load byte
+	JUMP.NZ R0 @postfix_expr_array_byte ; Skip if Byte
+
+	;; Deal with larger than byte
+	LOADUI R0 $postfix_expr_array_string2 ; Our shift
+	CALLI R15 @emit_out         ; emit it
+	LOAD32 R0 R8 12             ; CURRENT_TARGET->INDIRECT
+	LOAD32 R0 R0 4              ; CURRENT_TARGET->INDIRECT->SIZE
+	CALLI R15 @ceil_log2        ; LOG2(CURRENT_TARGET->INDIRECT->SIZE)
+	CALLI R15 @numerate_number  ; Convert to string
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+:postfix_expr_array_byte
+	LOADUI R0 $postfix_expr_array_string3 ; Add the offset
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $postfix_expr_array_string4 ; Our final error message
+	LOADUI R1 $close_bracket    ; Using "]"
+	CALLI R15 @require_match    ; Ensure match
+
+	LOADUI R0 $equal            ; Using "="
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
+	CMPSKIPI.E R0 0             ; If match
+	LOADUI R2 $postfix_expr_array_string5 ; empty string
+
+	MOVE R0 R2                  ; What ever string survived
+	CALLI R15 @emit_out         ; emit it
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
+
 	RET R15
-	
-	
-	
-	
+
+:postfix_expr_array_string0
+	"LOAD_INTEGER
+"
+:postfix_expr_array_string1
+	"LOAD_BYTE
+"
+:postfix_expr_array_string2
+	"SAL_eax_Immediate8 !"
+:postfix_expr_array_string3
+	"ADD_ebx_to_eax
+"
+:postfix_expr_array_string4
+	"ERROR in postfix_expr
+Missing ]
+"
+:postfix_expr_array_string5
+	""
 
 
 ;; postfix_expr_stub function
@@ -2238,6 +2337,7 @@ MISSING )
 
 	LOADUI R0 $return_result_string1 ; Our pop command
 	LOAD32 R1 R9 4              ; FUNCTION->LOCALS
+
 :return_result_iter
 	JUMP.Z R1 @return_result_done ; Be done when we hit NULL
 	CALLI R15 @emit_out         ; Put the string every iteration
@@ -2262,13 +2362,74 @@ MISSING ;
 	"RETURN
 "
 
-	
-	
-	
-	
+
+;; process_break function
+;; Recieves nothing
+;;	and struct token_list* FUNC in R9
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
 :process_break
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	LOADR32 R0 @break_target_head ; BREAK_TARGET_HEAD
+	JUMP.NZ R0 @process_break_NON_NULL
+
+	;; Deal with NULL == BREAK_TARGET_HEAD
+	LOADUI R0 $process_break_string0 ; Our first error message
+	FALSE R1                    ; Write for User
+	CALLI R15 @file_print       ; write it
+	CALLI R15 @line_error       ; Give useful info
+	HALT
+
+:process_break_NON_NULL
+	LOADR32 R2 @break_frame     ; BREAK_FRAME
+	LOAD32 R1 R9 4              ; I = FUNCTION->LOCALS
+	LOADUI R0 $process_break_string1 ; Our pop string
+
+:process_break_iter
+	CMPJUMPI.E R1 R2 @process_break_done ; IF I == BREAK_FRAME
+	JUMP.Z R1 @process_break_done ; IF NULL == I break
+	CALLI R15 @emit_out         ; emit pop
+	LOAD32 R1 R1 0              ; I = I->NEXT
+	JUMP @process_break_iter    ; Loop
+
+:process_break_done
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $process_break_string2 ; Our jump string
+	CALLI R15 @emit_out         ; emit it
+	LOADR32 R0 @break_target_head ; Our HEAD string
+	CALLI R15 @emit_out         ; emit it
+	LOADR32 R0 @break_target_func ; Our FUNC string
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $underline        ; Using "_"
+	CALLI R15 @emit_out         ; emit it
+	LOADR32 R0 @break_target_num ; Our NUM string
+	CALLI R15 @emit_out         ; emit it
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @emit_out         ; emit it
+
+	LOADUI R0 $process_break_string3 ; Our final error string
+	LOADUI R1 $semicolon        ; Using ";"
+	CALLI R15 @require_match    ; Make sure we get that match
+
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
-	
+
+:process_break_string0
+	"Not inside of a loop or case statement"
+:process_break_string1
+	"POP_ebx	# break_cleanup_locals
+"
+:process_break_string2
+	"JUMP %"
+:process_break_string3
+	"ERROR in break statement
+Missing ;
+"
+
 :break_frame
 	NOP
 :break_target_head
@@ -2825,7 +2986,7 @@ Missing ;
 	CALLI R15 @emit_out         ; emit it
 
 	;; Check if main function
-	MOVE R1 R2                  ; Using GLOBAL_TOKEN->S
+	LOAD32 R1 R9 8              ; FUNCTION->S
 	LOADUI R0 $main_string      ; Using "main"
 	CALLI R15 @match            ; check if they match
 	JUMP.Z R0 @declare_function_nonmain ; Skip work if they don't
