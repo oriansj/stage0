@@ -182,10 +182,12 @@
 	PUSHR R3 R15                ; Protect R3 from changes
 :in_set2_reset
 	LOADU8 R3 R2 0              ; Get char from list
+	JUMP.Z R3 @in_set2_fail     ; Stop when 0 == s[0]
 	CMPJUMPI.E R0 R3 @in_set2_done ; We found a match
 	ADDUI R2 R2 1               ; Increment to next char
 	JUMP.NZ R3 @in_set2_reset   ; Iterate if not NULL
 
+:in_set2_fail
 	;; Looks like not found
 	FALSE R2                    ; Return FALSE
 
@@ -203,10 +205,12 @@
 	PUSHR R2 R15                ; Protect R3 from changes
 :in_set_reset
 	LOADU8 R2 R1 0              ; Get char from list
+	JUMP.Z R2 @in_set_fail      ; Stop when 0 == s[0]
 	CMPJUMPI.E R0 R2 @in_set_done ; We found a match
 	ADDUI R1 R1 1               ; Increment to next char
 	JUMP.NZ R2 @in_set_reset    ; Iterate if not NULL
 
+:in_set_fail
 	;; Looks like not found
 	FALSE R1                    ; Return FALSE
 
@@ -499,9 +503,9 @@
 	LOADUI R1 $nice_chars       ; using list of nice CHARS
 	COPY R0 R4                  ; using copy of C
 	CALLI R15 @in_set           ; Use in_set
-	NOT R0 R0                   ; Reverse bool
-	CMPSKIPI.E R0 0             ; IF TRUE
+	CMPSKIPI.NE R0 0            ; IF TRUE
 	TRUE R2                     ; Return TRUE
+
 	ADDUI R3 R3 1               ; STRING = STRING + 1
 	LOADUI R1 $whitespace_chars ; Check Whitespace Chars
 	COPY R0 R4                  ; Using copy of C
@@ -1959,7 +1963,7 @@ MISSING )
 	PUSHR R0 R15                ; Protect HEAD
 	LOADR32 R0 @break_target_func ; obtain FUNC
 	PUSHR R0 R15                ; Protect FUNC
-	LOADR32 R3 @break_target_num ; obtain NUM
+	LOADR32 R0 @break_target_num ; obtain NUM
 	PUSHR R0 R15                ; Protect NUM
 	PUSHR R1 R15                ; Set where we are returning to
 	RET R15
@@ -2536,16 +2540,15 @@ MISSING ;
 
 	;; Lets pop them all off
 	LOAD32 R2 R9 4              ; FUNC->LOCALS
+	LOADUI R0 $recursive_statement_string1 ; Our POP string
 :recursive_statement_pop
 	CMPJUMPI.E R2 R3 @recursive_statement_done
-	LOADUI R0 $recursive_statement_string1 ; Our POP string
-
 	CALLI R15 @emit_out         ; emit it
 	LOAD32 R2 R2 0              ; I = I->NEXT
 	JUMP.NZ R2 @recursive_statement_pop ; Keep looping
 
 :recursive_statement_done
-	STORE32 R2 R9 4             ; FUNC->LOCALS = FRAME
+	STORE32 R3 R9 4             ; FUNC->LOCALS = FRAME
 	POPR R3 R15                 ; Restore R3
 	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
@@ -3204,14 +3207,11 @@ Missing ;
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns struct token_list* in R0
 :sym_declare
-	PUSHR R3 R15                ; Protect R3
-	COPY R3 R14                 ; Get A
-	ADDUI R14 R14 20            ; CALLOC struct token_list
-	STORE32 R2 R3 0             ; A->NEXT = LIST
-	STORE32 R0 R3 8             ; A->S = S
-	STORE32 R1 R3 12            ; A->TYPE = T
-	MOVE R0 R3                  ; Prepare for Return
-	POPR R3 R15                 ; Restore R3
+	STORE32 R2 R14 0            ; A->NEXT = LIST
+	STORE32 R0 R14 8            ; A->S = S
+	STORE32 R1 R14 12           ; A->TYPE = T
+	ADDUI R0 R14 20             ; CALLOC struct token_list
+	SWAP R0 R14                 ; Prepare for Return
 	RET R15
 
 
@@ -4155,22 +4155,27 @@ Missing ;
 :debug_list_string0
 "Token_list node at address: "
 :debug_list_string1
-	"NEXT address: "
+	"
+NEXT address: "
 :debug_list_string2
-	"PREV address: "
+	"
+PREV address: "
 
 :debug_list_string3
-	"S address: "
+	"
+S address: "
 
 :debug_list_string4
-	"The contents of S are: "
+	"
+The contents of S are: "
 
 :debug_list_string5
 	"
 TYPE address: "
 
 :debug_list_string6
-	"ARGUMENTS address: "
+	"
+ARGUMENTS address: "
 
 :debug_list_string_null
 	">::<NULL>::<"
