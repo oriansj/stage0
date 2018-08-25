@@ -138,7 +138,7 @@
 	FALSE R3                    ; ESCAPE is FALSE
 :consume_word_reset
 	JUMP.NZ R3 @consume_word_iter1
-	CMPSKIPI.NE R0 47           ; If \
+	CMPSKIPI.NE R0 92           ; If \
 	TRUE R3                     ; Looks like we are in an escape
 	JUMP @consume_word_iter2
 :consume_word_iter1
