@@ -85,6 +85,7 @@
 "
 :header_string2
 	"
+:ELF_data
 # Program global variables
 "
 

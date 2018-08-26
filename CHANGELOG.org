@@ -16,6 +16,16 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+Add debug label
+
+** Removed
+
+* 0.2.0 - 2018-08-26
+** Added
 Added an x86 C compiler capable of Building M2-Planet from source
 Added M2-Planet v1.0 as a single file
 Added M1-Macro Generated from 40537c0200ad28cd5090bc0776251d5983ef56e3 in mescc-tools
