@@ -3709,23 +3709,57 @@ LOAD_INTEGER
 	PUSHR R3 R15                ; Protect R3
 	PUSHR R4 R15                ; Protect R4
 	PUSHR R5 R15                ; Protect R5
+	PUSHR R6 R15                ; Protect R6
+	MOVE R6 R1                  ; Protect OFFSET
 	MOVE R4 R0                  ; Protect LAST
 	CALLI R15 @type_name        ; Get MEMBER_TYPE
-	COPY R3 R14                 ; SET I
-	ADDUI R14 R14 28            ; CALLOC struct type
-	LOAD32 R5 R13 8             ; GLOBAL_TOKEN->S
-	STORE32 R5 R3 24            ; I->NAME = GLOBAL_TOKEN->S
+	MOVE R5 R0                  ; Protect MEMBER_TYPE
+	ADDUI R3 R14 28             ; CALLOC struct type
+	SWAP R3 R14                 ; SET I
+
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	STORE32 R0 R3 24            ; I->NAME = GLOBAL_TOKEN->S
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	STORE32 R4 R3 16            ; I->MEMBERS = LAST
-	LOAD32 R2 R0 4              ; MEMBER_SIZE = MEMBER_TYPE->SIZE
-	STORE32 R2 R3 4             ; I->SIZE = MEMBER_SIZE
-	STORE32 R0 R3 20            ; I->TYPE = MEMBER_TYPE
-	STORE32 R1 R3 8             ; I->OFFSET = OFFSET
+
+	LOADUI R0 $open_bracket     ; Using "["
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "["
+	JUMP.Z R0 @build_member_single
+
+	;; Deal with type name [ number ] ;
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @numerate_string  ; Convert string to int NUMBER
+	LOAD32 R1 R5 20             ; MEMBER_TYPE->TYPE
+	LOAD32 R1 R1 4              ; MEMBER_TYPE->TYPE->SIZE
+	MULU R0 R0 R1               ; MEMBER_TYPE->TYPE->SIZE * NUMBER
+	STORE32 R0 R3 4             ; I->SIZE = MEMBER_TYPE->TYPE->SIZE * NUMBER
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	LOADUI R0 $build_member_string0 ; Our error message
+	LOADUI R1 $close_bracket    ; Using "]"
+	CALLI R15 @require_match    ; Make sure it is right
+	JUMP @build_member_done     ; Skip over single steps
+
+:build_member_single
+	LOAD32 R0 R5 4              ; MEMBER_TYPE->SIZE
+	STORE32 R0 R3 4             ; I->SIZE = MEMBER_TYPE->SIZE
+
+:build_member_done
+	LOAD32 R2 R3 4              ; MEMBER_SIZE = I->SIZE
+	STORE32 R5 R3 20            ; I->TYPE = MEMBER_TYPE
+	STORE32 R6 R3 8             ; I->OFFSET = OFFSET
+	MOVE R1 R6                  ; Restore OFFSET
 	MOVE R0 R3                  ; RETURN I in R0
+	POPR R6 R15                 ; Restore R6
 	POPR R5 R15                 ; Restore R5
 	POPR R4 R15                 ; Restore R4
 	POPR R3 R15                 ; Restore R3
 	RET R15
+
+:build_member_string0
+	"Struct only supports [num] form
+"
 
 
 ;; build_union function
@@ -4035,6 +4069,83 @@ Missing ;
 	'3B9ACA00'
 
 
+;; numerate_string function
+;; Recieves pointer To string in R0
+;; Returns number in R0 equal to value of string
+;; Or Zero in the event of invalid string
+:numerate_string
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+
+	;; Initialize
+	MOVE R1 R0                  ; Get Text pointer out of the way
+	FALSE R2                    ; Set Negative flag to false
+	FALSE R3                    ; Set current count to Zero
+	LOAD8 R0 R1 1               ; Get second byte
+	CMPSKIPI.NE R0 120          ; If the second byte is x
+	JUMP @numerate_string_hex   ; treat string like hex
+
+	;; Deal with Decimal input
+	LOADUI R4 10                ; Multiply by 10
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.NE R0 45           ; If - toggle flag
+	TRUE R2                     ; So that we know to negate
+	CMPSKIPI.E R2 0             ; If toggled
+	ADDUI R1 R1 1               ; Move to next
+:numerate_string_dec
+	LOAD8 R0 R1 0               ; Get a byte
+
+	CMPSKIPI.NE R0 0            ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	MUL R3 R3 R4                ; Shift counter by 10
+	SUBI R0 R0 48               ; Convert ascii to number
+	CMPSKIPI.GE R0 0            ; If less than a number
+	JUMP @numerate_string_done  ; Terminate NOW
+	CMPSKIPI.L R0 10            ; If more than a number
+	JUMP @numerate_string_done  ; Terminate NOW
+	ADDU R3 R3 R0               ; Don't add to the count
+
+	ADDUI R1 R1 1               ; Move onto next byte
+	JUMP @numerate_string_dec
+
+	;; Deal with Hex input
+:numerate_string_hex
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.E R0 48            ; All hex strings start with 0x
+	JUMP @numerate_string_done  ; Be done if not a match
+	ADDUI R1 R1 2               ; Move to after leading 0x
+:numerate_string_hex_0
+	LOAD8 R0 R1 0               ; Get a byte
+	CMPSKIPI.NE R0 0            ; If NULL
+	JUMP @numerate_string_done  ; Be done
+
+	SL0I R3 4                   ; Shift counter by 16
+	SUBI R0 R0 48               ; Convert ascii number to number
+	CMPSKIPI.L R0 10            ; If A-F
+	SUBI R0 R0 7                ; Shove into Range
+	CMPSKIPI.L R0 16            ; If a-f
+	SUBI R0 R0 32               ; Shove into Range
+	ADDU R3 R3 R0               ; Add to the count
+
+	ADDUI R1 R1 1               ; Get next Hex
+	JUMP @numerate_string_hex_0
+
+;; Clean up
+:numerate_string_done
+	CMPSKIPI.E R2 0             ; If Negate flag has been set
+	NEG R3 R3                   ; Make the number negative
+	MOVE R0 R3                  ; Put number in R0
+
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+
 ;; Keywords
 :union
 	"union"
@@ -4192,7 +4303,7 @@ Missing ;
 	NOP                         ; OFFSET
 	&type_char_double_indirect  ; INDIRECT
 	NOP                         ; MEMBERS
-	&type_char_indirect         ; TYPE
+	&type_char                  ; TYPE
 	&type_char_double_indirect_name ; NAME
 :type_char_double_indirect_name
 	"char**"
