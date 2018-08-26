@@ -1151,11 +1151,50 @@ Missing )
 "
 
 
-
 ;; promote_type function
 ;; Recieves struct type* in R0 and struct type* in R1
 ;; Returns first match struct type* in R0
 :promote_type
+	JUMP.Z R1 @promote_type_abort0 ; If B is NULL just abort
+	PUSHR R1 R15                ; Protect R1
+	SWAP R0 R1                  ; Give A a try
+	JUMP.Z R1 @promote_type_abort1 ; A is NULL just short abort
+
+	;; Looks like we have a bunch of work to do
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	PUSHR R4 R15                ; Protect R4
+	PUSHR R5 R15                ; Protect R5
+	MOVE R5 R1                  ; Put A in the right spot
+	MOVE R4 R0                  ; Put B in the right spot
+	LOADR32 R3 @global_types    ; I = GLOBAL_TYPES
+
+:promote_type_iter
+	LOAD32 R1 R3 24             ; I->NAME
+	LOAD32 R0 R5 24             ; A->NAME
+	CMPJUMPI.E R0 R1 @promote_type_done ; break
+	LOAD32 R0 R4 24             ; B->NAME
+	CMPJUMPI.E R0 R1 @promote_type_done ; break
+
+	LOAD32 R1 R3 12             ; I->INDIRECT
+	LOAD32 R1 R1 24             ; I->INDIRECT->NAME
+	LOAD32 R0 R5 24             ; A->NAME
+	CMPJUMPI.E R0 R1 @promote_type_done ; break
+	LOAD32 R0 R4 24             ; B->NAME
+	CMPJUMPI.E R0 R1 @promote_type_done ; break
+
+	LOAD32 R3 R3 0              ; I = I->NEXT
+	JUMP.NZ R3 @promote_type_iter ; Loop if not NULL
+
+:promote_type_done
+	MOVE R0 R3                  ; Return I
+	POPR R5 R15                 ; Restore R5
+	POPR R4 R15                 ; Restore R4
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+:promote_type_abort1
+	POPR R1 R15                 ; Restore R1
+:promote_type_abort0
 	RET R15
 
 
@@ -1264,16 +1303,79 @@ Missing )
 	RET R15
 
 
-	
-	
-	
-	
+;; postfix_expr_arrow function
+;; Recieves nothing
+;;	struct token_list* out in R12,
+;;	struct token_list* string_list in R11
+;;	struct token_list* global_list in R10
+;;	and struct token_list* FUNC in R9
+;;	and struct token_list* current_target in R8
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+;; Returns the token_lists modified
 :postfix_expr_arrow
+	PUSHR R0 R15                ; Protect R0
+	PUSHR R1 R15                ; Protect R1
+	LOADUI R0 $postfix_expr_arrow_string0 ; Our header string
+	CALLI R15 @emit_out         ; Emit it
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	COPY R0 R8                  ; Passing CURRENT_TARGET
+	LOAD32 R1 R13 8             ; Using GLOBAL_TOKEN->S
+	CALLI R15 @lookup_member    ; Look it up
+	LOAD32 R8 R0 20             ; CURRENT_TARGET = I->TYPE
+	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	LOAD32 R1 R0 8              ; I->OFFSET
+	JUMP.Z R1 @postfix_expr_arrow_offset ; If no offset needed skip the work
+
+	;; Deal with non-zero offsets
+	LOADUI R0 $postfix_expr_arrow_string1 ; Our first prefix
+	CALLI R15 @emit_out         ; Emit it
+	LOADUI R0 $postfix_expr_arrow_string2 ; Our second prefix
+	CALLI R15 @emit_out         ; Emit it
+
+	MOVE R0 R1                  ; Put I->OFFSET in the right place
+	CALLI R15 @numerate_number  ; Convert to string
+	CALLI R15 @emit_out         ; Emit it
+
+	LOADUI R0 $postfix_expr_arrow_string3 ; Our postfix
+	CALLI R15 @emit_out         ; Emit it
+
+:postfix_expr_arrow_offset
+	LOADUI R0 $equal            ; Using "="
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
+	JUMP.NZ R0 @postfix_expr_arrow_done
+
+	LOADUI R0 $type_char_double_indirect_name ; Using "char**"
+	LOAD32 R1 R8 24             ; CURRENT_TARGET->NAME
+	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
+	JUMP.NZ R0 @postfix_expr_arrow_done
+
+	;; Deal with special case
+	LOADUI R0 $postfix_expr_arrow_string4 ; Our final string
+	CALLI R15 @emit_out         ; Emit it
+
+:postfix_expr_arrow_done
+	POPR R1 R15                 ; Restore R1
+	POPR R0 R15                 ; Restore R0
 	RET R15
-	
-	
-	
-	
+
+:postfix_expr_arrow_string0
+	"# looking up offset
+"
+:postfix_expr_arrow_string1
+	"# -> offset calculation
+"
+:postfix_expr_arrow_string2
+	"LOAD_IMMEDIATE_ebx %"
+:postfix_expr_arrow_string3
+	"
+ADD_ebx_to_eax
+"
+:postfix_expr_arrow_string4
+	"LOAD_INTEGER
+"
 
 
 ;; postfix_expr_array function
@@ -2424,7 +2526,8 @@ MISSING ;
 	RET R15
 
 :process_break_string0
-	"Not inside of a loop or case statement"
+	"Not inside of a loop or case statement
+"
 :process_break_string1
 	"POP_ebx	# break_cleanup_locals
 "
@@ -3547,6 +3650,54 @@ LOAD_INTEGER
 	RET R15
 
 
+;; lookup_member function
+;; Recieves struct type* parent in R0 and char* name in R1
+;; R13 Holds pointer to global_token, R14 is HEAP Pointer
+	;; Returns struct type* of member in R0 or aborts with error
+:lookup_member
+	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
+	PUSHR R3 R15                ; Protect R3
+	LOAD32 R3 R0 24             ; PARENT->NAME for error
+	MOVE R2 R0                  ; I = PARENT
+:lookup_member_iter
+	LOAD32 R2 R2 16             ; I = I->MEMBERS
+	JUMP.Z R2 @lookup_member_error ; We failed hard
+	LOAD32 R0 R2 24             ; I->NAME
+	CALLI R15 @match            ; IF I->NAME == NAME
+	JUMP.Z R0 @lookup_member_iter ; Loop again
+
+:lookup_member_done
+	MOVE R0 R2                  ; Put I in the correct place
+	POPR R3 R15                 ; Restore R3
+	POPR R2 R15                 ; Restore R2
+	POPR R1 R15                 ; Restore R1
+	RET R15
+
+:lookup_member_error
+	FALSE R1                    ; Write to TTY
+	LOADUI R0 $lookup_member_string0 ; Our header string
+	CALLI R15 @file_print       ; Print it
+	MOVE R0 R3                  ; Using PARENT->NAME
+	CALLI R15 @file_print       ; Print it
+	LOADUI R0 $arrow_string     ; Using "->"
+	CALLI R15 @file_print       ; Print it
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @file_print       ; Print it
+	LOADUI R0 $lookup_member_string1 ; Our footer string
+	CALLI R15 @file_print       ; Print it
+	CALLI R15 @line_error       ; Give line info
+	LOADUI R0 $newline          ; Our final addition
+	CALLI R15 @file_print       ; Print it
+	HALT
+
+:lookup_member_string0
+	"ERROR in lookup_member "
+:lookup_member_string1
+	" does not exist
+"
+
+
 ;; build_member function
 ;; Recieves a struct type* in R0, int in R1 and int in R2
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -3650,11 +3801,9 @@ Missing ;
 	STORE32 R0 R4 24            ; I->NAME = GLOBAL_TOKEN->S
 	STORE32 R4 R3 12            ; HEAD->INDIRECT = I
 	STORE32 R3 R4 12            ; I->INDIRECT - HEAD
-	LOADUI R0 $global_types     ; Get Address of GLOBAL_TYPES
-	LOAD32 R0 R0 0              ; Current pointer to GLOBAL_TYPES
+	LOADR32 R0 @global_types    ; Get Address of GLOBAL_TYPES
 	STORE R0 R3 0               ; HEAD->NEXT = GLOBAL_TYPES
-	LOADUI R0 $global_types     ; Get Address of GLOBAL_TYPES
-	STORE R3 R0 0               ; GLOBAL_TYPES = HEAD
+	STORER32 R3 @global_types   ; GLOBAL_TYPES = HEAD
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	LOADUI R0 4                 ; Standard Pointer SIZE
 	STORE32 R0 R4 4             ; I->SIZE = 4
@@ -3729,8 +3878,7 @@ Missing ;
 	CMPSKIPI.E R0 0             ; If STRUCTURE
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
-	LOADUI R1 $global_types     ; Check using the GLOBAL TYPES LIST
-	LOAD32 R1 R1 0              ; Need to load address of first node
+	LOADR32 R1 @global_types    ; Check using the GLOBAL TYPES LIST
 	SWAP R0 R2                  ; Put GLOBAL_TOKEN->S in the right place
 	CALLI R15 @lookup_type      ; RET = lookup_type(GLOBAL_TOKEN->S)
 	MOVE R1 R2                  ; Put STRUCTURE in the right place
