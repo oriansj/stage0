@@ -38,7 +38,7 @@ vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.
 	gcc -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
 
 # Build the roms
-ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp forth
+ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp cc_x86 forth
 
 stage0_monitor: hex stage0/stage0_monitor.hex0 | roms
 	./bin/hex < stage0/stage0_monitor.hex0 > roms/stage0_monitor
@@ -72,6 +72,12 @@ lisp: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/lisp.s | roms
 	./bin/vm --rom roms/M0 --tape_01 lisp_TEMP --tape_02 lisp_TEMP2 --memory 256K
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 lisp_TEMP2 --tape_02 roms/lisp --memory 48K
 	rm lisp_TEMP lisp_TEMP2
+
+cc_x86: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_x86.s | roms
+	cat High_level_prototypes/defs stage2/cc_x86.s > cc_TEMP
+	./bin/vm --rom roms/M0 --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 256K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 48K
+	rm cc_TEMP cc_TEMP2
 
 forth: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/forth.s | roms
 	cat High_level_prototypes/defs stage2/forth.s > forth_TEMP
