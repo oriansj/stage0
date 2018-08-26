@@ -21,6 +21,7 @@
 
 ** Fixed
 Add debug label
+Correct sha256sum that wasn't updated by change
 
 ** Removed
 
