@@ -2079,13 +2079,13 @@ MISSING )
 :restore_break_frame
 	POPR R1 R15                 ; Save return address
 	POPR R0 R15                 ; obtain NUM
-	STORER32 R3 @break_target_num ; Restore NUM
+	STORER32 R0 @break_target_num ; Restore NUM
 	POPR R0 R15                 ; obtain FUNC
-	STORER32 R4 @break_target_func ; Restore FUNC
+	STORER32 R0 @break_target_func ; Restore FUNC
 	POPR R0 R15                 ; obtain HEAD
-	STORER32 R5 @break_target_head ; Restore HEAD
+	STORER32 R0 @break_target_head ; Restore HEAD
 	POPR R0 R15                 ; obtain BREAK_FRAME
-	STORER32 R5 @break_frame    ; Restore BREAK_FRAME
+	STORER32 R0 @break_frame    ; Restore BREAK_FRAME
 	PUSHR R1 R15                ; Set where we are returning to
 	RET R15
 
@@ -2356,7 +2356,7 @@ JUMP_NE %DO_"
 	COPY R2 R0                  ; Protect NUMBER_STRING
 
 	LOADUI R1 $process_while_string0 ; Set HEAD
-	CALLI R15 @set_break_frame  ; Set the break frame values
+	CALLI R15 @set_break_frame ; Set the break frame values
 
 	LOADUI R0 $process_while_string1 ; Our head label
 	CALLI R15 @emit_out         ; emit it
@@ -2487,6 +2487,8 @@ MISSING ;
 	FALSE R1                    ; Write for User
 	CALLI R15 @file_print       ; write it
 	CALLI R15 @line_error       ; Give useful info
+	LOADUI R0 $newline          ; Using "\n"
+	CALLI R15 @file_print       ; Print it
 	HALT
 
 :process_break_NON_NULL
