@@ -5,7 +5,7 @@
 ## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
-## stage0 is free software: you an redistribute it and/or modify
+## stage0 is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
@@ -160,7 +160,7 @@ void file_print(char* s, FILE* f)
 ## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
-## stage0 is free software: you an redistribute it and/or modify
+## stage0 is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
 ## (at your option) any later version.
@@ -236,7 +236,7 @@ void free(void* l)
 /* Copyright (C) 2016 Jeremiah Orians
  * This file is part of stage0.
  *
- * stage0 is free software: you an redistribute it and/or modify
+ * stage0 is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
