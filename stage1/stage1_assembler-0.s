@@ -16,7 +16,6 @@
 
 :start
 	LOADUI R11 1                ; Our toggle
-	;; R14 is storing our condition code
 	;; R15 is storing our nybble
 
 	;; Prep TAPE_01
