@@ -1,3 +1,5 @@
+-*- mode: org; -*-
+* Copyright header
 ## Copyright (C) 2016 Jeremiah Orians
 ## This file is part of stage0.
 ##
@@ -17,6 +19,12 @@
 The master repository for this work is located at:
 https://savannah.nongnu.org/projects/stage0/
 
+* If you wish to contribute:
+pull requests can be made at https://github.com/oriansj/stage0
+or patches/diffs can be sent via email to Jeremiah (at) pdp10 [dot] guru
+or join us on freenode's #bootstrappable
+
+* Goal
 This is a set of manually created hex programs in a Cthulhu Path to madness fashion.
 Which only have the goal of creating a bootstrapping path to a C compiler capable of
 Compiling GCC, with only the explicit requirement of a single 1 KByte binary or less.
@@ -24,10 +32,12 @@ Compiling GCC, with only the explicit requirement of a single 1 KByte binary or 
 Additionally, all code must be able to be understood by 70% of the population of programmers.
 If the code can not be understood by that volume, it needs to be altered until it satifies the above requirement.
 
+* Also found within
 This repo contains a few of my false start pieces that may be of interest to people who
 want to independently create the root binary, I welcome all bug fixes and code that aids
 in the above stated goal.
 
+* FYI
 I'll be adding more code and documentation as I build pieces.
 ALL code in this REPO is under the GPLv3 or Later.
 
@@ -35,3 +45,130 @@ In order to build stage0 and all the pieces, one only needs to run make all.
 Each individual piece can be built by simply running make $piece with $piece being replaced by the actual part you want to make.
 
 The only pieces that have any external dependencies are the Web IDE (Python3+CherryPy), libvm (GCC) and vm (GCC+GNU getopt)
+
+* Future
+** Software
+
+** Hardware
+
+* Need to know information
+** stage0
+The stage0 is the ultimate lowest level of bootstrap that is useful for systems
+without firmware, operating systems nor any other provided software functionality
+Those with such capabilities can skip this stage as it requires human input
+
+*** Hex0_monitor
+The Hex0_monitor provides dual functionality:
+1) It assembles hex0 programs manually typed in
+2) It writes the characters, providing minimal text input functionality.
+
+The first is essential for creating of the root binaries.
+The second is essential for creating source files before you have an editor.
+The distinction is important because only the Hex0 assembler in stage1 is built
+by the Hex0_monitor and from that point onwards it is used as a minimal text
+editor until a more advanced text editor can be bootstrapped.
+
+** stage1
+The stage1 is dependent on the availablity of text source files and atleast a
+hex0 monitor or assembler. The steps in this stage can be fully automated should
+one trust their automation or performed manually on any hardware they trust.
+
+Regardless of which method selected, the resulting binaries MUST be identical.
+
+*** Hex0
+The Hex0 assembler or stage1_assembler-0 is the head node of the stage1 bootstrap.
+Its functionality is reduced compared to the stage0 monitor simply because it
+only performs half of the required functions; that of generating binaries from
+hex0 source files.
+
+It most important features of note are:
+; line comments and
+# line comments
+As careful notes are essential for this stage
+
+*** Hex1
+The Hex1 assembler or stage1_assembler-1 is the next logical extension of the
+Hex0 assembler, single character labels and relative displacement using a prefix.
+In this case labels start with : thus the label a must be written :a and the
+prefix for relative offsets is @ thus the pointer must be written @a
+Further because of the mescc-tools standardization of syntax @label indicates a
+16bit relative displacement.
+
+Alternate architectures porting this need not limit themselves to 16bit
+displacements should they so choose, rather they must provide atleast 1 size
+of displacement or if they so desire, they may skip and write their Hex2
+assembler in Hex0 but as it is a much larger program, I recommend against it.
+
+*** Hex2
+The Hex2 assembler or stage1_assembler-2 or hex2_linker is as complex of a hex
+language that is both meaningful and worth the effort
+
+Hex2's important advances over Hex1 are as follows:
+Support for long labels (Minimal 42 chars, ideally unlimited)
+Support for Absolute addressing ($label for 16bit absolute addresses)
+Support for Alternate pointer sizes (%label for 32bit relative and &label for
+32bit absolute addresses)
+
+Optionally support for !label (8bit relative addressing) and ?label
+(Architecture specific size/properties) and/or @label1>label2 %label1>label2
+displacements may be implemented should the specific architecture require it
+for human readable hex2 source files (such as ELF headers)
+
+*** M0
+M0 or M0-macro or M1-macro is the minimal string replacement program with string
+processing functionality required to convert an Assembly like syntax into Hex2
+programs that can be compiled. Its rules are merely an extension of Hex2 with
+the goal of reducing the amount of hex that one would need to write.
+
+The 3 essential pieces are:
+1) DEFINE STRING1 HEX_CHARACTERS (No extra whitespace nor \t or \n inside
+definition)
+2) "Raw strings" allow every character except " as there is no support for
+string escapes, including NULL; which are converted to Hex chars for Hex2
+To convert back to the chars inside of the "quotes" with the addition of a
+trailing NULL character or the number desired (Must be atleast 1, no upper
+bound) and restrictions such as padding to word boundries are accetpable.
+3) 'Raw char strings' will passing anything inside of them (except ' which
+termininates the string).
+
+Thus by combining :label, @label, DEFINE SYSCALL 0F05, Raw strings and chars;
+one has created a rather flexiable and powerful Assembler capable of building
+far more ambitious pieces in "Macro Assembly"
+
+** stage2
+The stage2 is dependent on the availabilty of text sources files and atleast a
+functional macro assembler and can be used to build operating systems or other
+"Bootstrap" functionality that might be required to enable functional binaries;
+such as programs that set execute bits or generate dwarf stubs.
+
+*** FORTH
+Because a great many people stated FORTH would be an ideal bootstrapping language
+the time and effort was put forth by Caleb and Jeremiah to provide a framework
+for those people to contribute immediately; thus the FORTH was born.
+
+Several efforts were taken to make the FORTH more standard but ultimately it was
+determined, Assembly was preferable as the underlaying architecture wasn't total
+garbage.
+
+It now sits waiting for any FORTH programmer who wishes to prove FORTH is a real
+bootstrapping language.
+
+*** Lisp
+The next recommendation in bootstrapping was Lisp, so efforts were taken to
+design the most minimal Lisp with all of the functionality described in the
+original Lisp papers. The task was completed relatively quickly compared to the
+FORTH and even had enhancements such as a compacting garbage collector.
+
+Ultimately it was found, the lisp that many rave about isn't entirely compatable
+with modern lisps or schemes; thus was shelved for any Lisper who wishes to pick
+it up.
+
+*** C
+After being told for months there is no way to write a proper C compiler in
+assembly and months of research without any human written C compilers in
+assembly found. To prove the point Jeremiah decided the First C compiler on the
+bootstrap would actually be a cross-compiler for x86, such that everyone would
+be able to verify it did exactly what it was supposed to and see it self-host
+its C version.
+
+** stage3
