@@ -777,6 +777,7 @@ struct token_list* read_all_tokens(FILE* a, struct token_list* current, char* fi
 	return token;
 }
 /* Copyright (C) 2016 Jeremiah Orians
+ * Copyright (C) 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  * This file is part of stage0.
  *
  * stage0 is free software: you can redistribute it and/or modify
@@ -858,12 +859,15 @@ int escape_lookup(char* c)
 		int t2 = hexify(c[3], FALSE);
 		return t1 + t2;
 	}
-	else if(c[1] == 'n') return 10;
 	else if(c[1] == 't') return 9;
-	else if(c[1] == '\\') return 92;
-	else if(c[1] == '\'') return 39;
-	else if(c[1] == '"') return 34;
+	else if(c[1] == 'n') return 10;
+	else if(c[1] == 'v') return 11;
+	else if(c[1] == 'f') return 12;
 	else if(c[1] == 'r') return 13;
+	else if(c[1] == 'e') return 27;
+	else if(c[1] == '"') return 34;
+	else if(c[1] == '\'') return 39;
+	else if(c[1] == '\\') return 92;
 
 	file_print("Unknown escape recieved: ", stderr);
 	file_print(c, stderr);
@@ -1204,6 +1208,7 @@ struct type* type_name()
 	return ret;
 }
 /* Copyright (C) 2016 Jeremiah Orians
+ * Copyright (C) 2018 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
  * This file is part of stage0.
  *
  * stage0 is free software: you can redistribute it and/or modify
@@ -1298,18 +1303,18 @@ struct token_list* sym_lookup(char *s, struct token_list* symbol_list)
 
 void line_error()
 {
-	file_print("In file: ", stderr);
 	file_print(global_token->filename, stderr);
-	file_print(" On line: ", stderr);
+	file_print(":", stderr);
 	file_print(numerate_number(global_token->linenumber), stderr);
+	file_print(":", stderr);
 }
 
 void require_match(char* message, char* required)
 {
 	if(!match(global_token->s, required))
 	{
-		file_print(message, stderr);
 		line_error();
+		file_print(message, stderr);
 		exit(EXIT_FAILURE);
 	}
 	global_token = global_token->next;
@@ -1423,10 +1428,10 @@ void global_load(struct token_list* a)
 
 void primary_expr_failure()
 {
+	line_error();
 	file_print("Recieved ", stderr);
 	file_print(global_token->s, stderr);
 	file_print(" in primary_expr\n", stderr);
-	line_error();
 	exit(EXIT_FAILURE);
 }
 
@@ -1501,9 +1506,9 @@ void primary_expr_variable()
 		return;
 	}
 
+	line_error();
 	file_print(s ,stderr);
 	file_print(" is not a defined symbol\n", stderr);
-	line_error();
 	exit(EXIT_FAILURE);
 }
 
@@ -2061,8 +2066,8 @@ void process_break()
 {
 	if(NULL == break_target_head)
 	{
-		file_print("Not inside of a loop or case statement", stderr);
 		line_error();
+		file_print("Not inside of a loop or case statement", stderr);
 		exit(EXIT_FAILURE);
 	}
 	struct token_list* i = function->locals;
@@ -2337,10 +2342,10 @@ new_type:
 			}
 			else
 			{
+				line_error();
 				file_print("Recieved ", stderr);
 				file_print(global_token->s, stderr);
 				file_print(" in program\n", stderr);
-				line_error();
 				exit(EXIT_FAILURE);
 			}
 
@@ -2349,10 +2354,10 @@ new_type:
 		}
 		else
 		{
+			line_error();
 			file_print("Recieved ", stderr);
 			file_print(global_token->s, stderr);
 			file_print(" in program\n", stderr);
-			line_error();
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -2417,7 +2422,7 @@ int main(int argc, char** argv)
 			{
 				file_print("Unable to open for reading file: ", stderr);
 				file_print(name, stderr);
-				file_print("\x0A Aborting to avoid problems\x0A", stderr);
+				file_print("\n Aborting to avoid problems\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 			global_token = read_all_tokens(in, global_token, name);
@@ -2430,7 +2435,7 @@ int main(int argc, char** argv)
 			{
 				file_print("Unable to open for writing file: ", stderr);
 				file_print(argv[i + 1], stderr);
-				file_print("\x0A Aborting to avoid problems\x0A", stderr);
+				file_print("\n Aborting to avoid problems\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 			i = i + 2;
@@ -2442,17 +2447,17 @@ int main(int argc, char** argv)
 		}
 		else if(match(argv[i], "-h") || match(argv[i], "--help"))
 		{
-			file_print(" -f input file\x0A -o output file\x0A --help for this message\x0A --version for file version\x0A", stdout);
+			file_print(" -f input file\n -o output file\n --help for this message\n --version for file version\n", stdout);
 			exit(EXIT_SUCCESS);
 		}
 		else if(match(argv[i], "-V") || match(argv[i], "--version"))
 		{
-			file_print("Basic test version 0.0.0.1a\x0A", stderr);
+			file_print("M2-Planet v1.0.0\n", stderr);
 			exit(EXIT_SUCCESS);
 		}
 		else
 		{
-			file_print("UNKNOWN ARGUMENT\x0A", stdout);
+			file_print("UNKNOWN ARGUMENT\n", stdout);
 			exit(EXIT_FAILURE);
 		}
 	}

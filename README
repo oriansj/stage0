@@ -21,8 +21,10 @@ https://savannah.nongnu.org/projects/stage0/
 
 * If you wish to contribute:
 pull requests can be made at https://github.com/oriansj/stage0
+and https://gitlab.com/janneke/stage0
 or patches/diffs can be sent via email to Jeremiah (at) pdp10 [dot] guru
 or join us on freenode's #bootstrappable
+or update the wiki at https://bootstrapping.miraheze.org/wiki/Stage0
 
 * Goal
 This is a set of manually created hex programs in a Cthulhu Path to madness fashion.
