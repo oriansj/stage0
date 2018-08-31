@@ -62,8 +62,6 @@
 	CALLI R15 @file_print       ; Write string
 	MOVE R0 R11                 ; using Contents of strings_list
 	CALLI R15 @recursive_output ; Recursively write
-	LOADUI R0 $header_string4   ; Using our fourth header string
-	CALLI R15 @file_print       ; Write string
 	HALT                        ; We have completed compiling our input
 
 ;; Symbol lists
@@ -92,11 +90,6 @@
 :header_string3
 	"
 # Program strings
-"
-
-:header_string4
-	"
-:ELF_end
 "
 
 

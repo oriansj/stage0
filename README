@@ -136,7 +136,7 @@ one has created a rather flexiable and powerful Assembler capable of building
 far more ambitious pieces in "Macro Assembly"
 
 ** stage2
-The stage2 is dependent on the availabilty of text sources files and atleast a
+The stage2 is dependent on the availabilty of text source files and atleast a
 functional macro assembler and can be used to build operating systems or other
 "Bootstrap" functionality that might be required to enable functional binaries;
 such as programs that set execute bits or generate dwarf stubs.
@@ -172,3 +172,42 @@ be able to verify it did exactly what it was supposed to and see it self-host
 its C version.
 
 ** stage3
+The stage3 is dependent on the availabilty of text source files and atleast a
+functional M2-Planet level C compiler, FORTH and a Minimal Garbage collecting
+Lisp and can be used to build more advanced tools that can be used in
+bootstrapping whole operating systems with modern tool stacks.
+
+*** inital_library
+A library collection of very useful FORTH functionality designed to make the
+lives of any FORTH programmer easier.
+
+It now sits waiting for any FORTH programmer who wishes to build upon it
+
+*** ascension
+A library collection of useful Lisp functionality designed to make the lives
+of any Lisp programmer easier.
+
+As it depends on archaic Lisp dialect; it will likely need to be replaced should
+the Lisp be properly fixed.
+
+*** blood-elf_x86
+The x86 program for a dwarf stub generator used in mescc-tools bootstrapping
+Specifically mescc-tools-seed generation, which can be used to build M2-Planet
+and thus complete the circle
+
+*** get_machine_x86
+The trivial x86 program that allows one to skip tests or scripts that will not
+run on that specific platform or run alternate commands depending upon the
+architecture.
+
+*** hex2_linker_x86
+The program that allows one to build the hex2 programs for any hardware platform
+on x86 and thus verify software builds for hardware one does not even have.
+
+*** M1-macro_x86
+The program that allows one to build the M1 program for any hardware platform
+on x86 and thus verify software builds for hardware one does not even have.
+
+*** M2-Planet_x86
+The x86 port of the M2-Planet C compiler v1.0 used as one of the paths in
+bootstrapping M2-Planet on x86 hardware.
