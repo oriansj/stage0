@@ -18,10 +18,12 @@
 ** Added
 
 ** Changed
+Reduced stack usage thanks to akkartik
 
 ** Fixed
 Add debug label
 Correct sha256sum that wasn't updated by change
+Fixed checksums that were wrong in previous commit
 
 ** Removed
 
