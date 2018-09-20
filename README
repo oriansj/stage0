@@ -50,8 +50,10 @@ The only pieces that have any external dependencies are the Web IDE (Python3+Che
 
 * Future
 ** Software
+Add more ports to more hardware platforms
 
 ** Hardware
+Implement the Knight processor in FPGA and then convert into TTL
 
 * Need to know information
 ** stage0

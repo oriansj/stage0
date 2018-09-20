@@ -22,8 +22,8 @@
 ;; Each being the length of a register [32bits]
 ;;
 
-;; STACK space: End of program -> 1MB (0x100000)
-;; HEAP space: 1MB -> End of Memory (2MB (0x200000))
+;; STACK space: End of program -> 512KB (0x80000) [Could be reduced]
+;; HEAP space: 512KB -> End of Memory
 
 ;; R15 is the STACK pointer
 ;; R14 is the HEAP pointer
@@ -74,7 +74,7 @@
 
 ;; Pointer to initial HEAP ADDRESS
 :HEAP
-	'00180000'
+	'00080000'
 
 ;; Output strings
 :header_string1
