@@ -62,10 +62,7 @@ int main(int argc, char *argv[])
 	do
 	{
 		c = getchar();
-		if (c == '#')
-		{
-			purge_line_comments();
-		}
+		if ((c == '#') || (c == ';')) purge_line_comments();
 		else if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
 		{
 			if(!toggle)
@@ -75,9 +72,9 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-				sum = (sum * 16) + hex(c);
+				sum = (sum << 4) + hex(c);
 				toggle = false;
-				putc(sum, stdout);
+				fputc(sum, stdout);
 			}
 		}
 	}while(c != EOF);

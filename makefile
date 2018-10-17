@@ -26,16 +26,16 @@ development: vm libvm.so asm dis ALL-ROMS
 
 # VM Builds
 vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c | bin
-	gcc vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
+	$(CC) -DVM32=true vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
 
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
-	gcc -ggdb -DVM32=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c | bin
-	gcc vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm-production
+	$(CC) -DVM32=true vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm-production
 
 vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c | bin
-	gcc -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
+	$(CC) -DVM32=true -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
 
 # Build the roms
 ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp cc_x86 forth
@@ -87,23 +87,23 @@ forth: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/forth.s | roms
 
 # Primitive development tools, not required but it was handy
 asm: High_level_prototypes/asm.c | bin
-	gcc -ggdb High_level_prototypes/asm.c -o bin/asm
+	$(CC) -ggdb High_level_prototypes/asm.c -o bin/asm
 
 dis: High_level_prototypes/disasm.c | bin
-	gcc -ggdb High_level_prototypes/disasm.c -o bin/dis
+	$(CC) -ggdb High_level_prototypes/disasm.c -o bin/dis
 
 hex: Linux\ Bootstrap/hex.c | bin
-	gcc Linux\ Bootstrap/hex.c -o bin/hex
+	$(CC) Linux\ Bootstrap/hex.c -o bin/hex
 
 xeh: Linux\ Bootstrap/xeh.c | bin
-	gcc Linux\ Bootstrap/xeh.c -o bin/xeh
+	$(CC) Linux\ Bootstrap/xeh.c -o bin/xeh
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	gcc -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
 
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	gcc -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
+	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
 
 # Tests
 Generate-rom-test: ALL-ROMS
@@ -147,10 +147,14 @@ prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c |
 # Clean up after ourselves
 .PHONY: clean
 clean:
-	rm -rf bin/ roms/ prototypes/ *.so
+	rm -f libvm.so libvm-production.so bin/vm bin/vm-production
+
+.PHONY: clean-hard
+clean-hard: clean
+	rm -rf bin/ roms/ prototypes/
 
 .PHONY: clean-hardest
-clean-hard:
+clean-hardest:
 	git reset --hard
 	git clean -fd
 	rm -rf bin/ roms/ prototypes/
