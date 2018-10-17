@@ -84,6 +84,7 @@
 :header_string2
 	"
 :ELF_data
+
 # Program global variables
 "
 
@@ -835,13 +836,6 @@ Missing )
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
 	JUMP.NZ R0 @variable_load_done ; Be done
 
-	;; check for special case 2
-	LOADUI R0 $type_char_double_indirect_name ; Using "char**"
-	LOAD32 R1 R2 12             ; A->TYPE
-	LOAD32 R1 R1 24             ; A->TYPE->NAME
-	CALLI R15 @match            ; IF A->TYPE->NAME == "char**"
-	JUMP.NZ R0 @variable_load_done ; Be done
-
 	;; deal with the general case
 	LOADUI R0 $variable_load_string1 ; Our postfix
 	CALLI R15 @emit_out         ; emit it
@@ -1309,6 +1303,7 @@ Missing )
 :postfix_expr_arrow
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
+	PUSHR R2 R15                ; Protect R2
 	LOADUI R0 $postfix_expr_arrow_string0 ; Our header string
 	CALLI R15 @emit_out         ; Emit it
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
@@ -1316,6 +1311,7 @@ Missing )
 	COPY R0 R8                  ; Passing CURRENT_TARGET
 	LOAD32 R1 R13 8             ; Using GLOBAL_TOKEN->S
 	CALLI R15 @lookup_member    ; Look it up
+	LOAD32 R2 R0 4              ; Protect I->SIZE
 	LOAD32 R8 R0 20             ; CURRENT_TARGET = I->TYPE
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 
@@ -1341,16 +1337,15 @@ Missing )
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
 	JUMP.NZ R0 @postfix_expr_arrow_done
 
-	LOADUI R0 $type_char_double_indirect_name ; Using "char**"
-	LOAD32 R1 R8 24             ; CURRENT_TARGET->NAME
-	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
-	JUMP.NZ R0 @postfix_expr_arrow_done
+	LOADUI R0 4                 ; Compare against 4
+	CMPJUMPI.L R0 R2 @postfix_expr_arrow_done
 
 	;; Deal with special case
 	LOADUI R0 $postfix_expr_arrow_string4 ; Our final string
 	CALLI R15 @emit_out         ; Emit it
 
 :postfix_expr_arrow_done
+	POPR R2 R15                 ; Restore R2
 	POPR R1 R15                 ; Restore R1
 	POPR R0 R15                 ; Restore R0
 	RET R15
@@ -2868,8 +2863,8 @@ MISSING ;
 	LOAD32 R0 R9 4              ; FUNC->LOCALS
 	JUMP.NZ R0 @collect_local_0 ; Try next
 
-	LOADI R0 -4                 ; The default depth for main
-	STORE32 R0 R2 16            ; A->DEPTH = -4
+	LOADI R0 -20                ; The default depth for main
+	STORE32 R0 R2 16            ; A->DEPTH = -20
 	JUMP @collect_local_output  ; Deal with header
 
 :collect_local_0
@@ -2990,32 +2985,6 @@ Missing ;
 	CALLI R15 @sym_declare      ; Get A
 	MOVE R2 R0                  ; Get A out of the way
 
-	;; Find special case for argument address
-	LOAD32 R1 R9 8              ; FUNC->S
-	LOADUI R0 $main_string      ; Using "main"
-	CALLI R15 @match            ; IF FUNC->S == "main"
-	JUMP.Z R0 @collect_arguments_func
-
-	;; Deal with special case of main
-	LOAD32 R1 R2 8              ; A->S
-	LOADUI R0 $argc_string      ; "argc"
-	CALLI R15 @match            ; IF A->S == "argc"
-	JUMP.Z R0 @collect_arguments_argv ; If not try argv
-
-	LOADUI R0 4                 ; Prepare for Store
-	STORE32 R0 R2 16            ; argc => A->DEPTH = 4
-	JUMP @collect_arguments_iter2
-
-:collect_arguments_argv
-	;; argv => A->DEPTH = 8
-	LOADUI R0 $argv_string      ; "argv"
-	CALLI R15 @match            ; IF A->S == "argv"
-	JUMP.Z R0 @collect_arguments_iter2
-
-	LOADUI R0 8                 ; Prepare for Store
-	STORE32 R0 R2 16            ; argc => A->DEPTH = 8
-	JUMP @collect_arguments_iter2
-
 :collect_arguments_func
 	LOAD32 R0 R9 16             ; FUNC->ARGS
 	CMPSKIPI.E R0 0             ; IF NULL == FUNC->ARGS
@@ -3088,28 +3057,18 @@ Missing ;
 	LOADUI R0 $newline          ; Using "\n"
 	CALLI R15 @emit_out         ; emit it
 
-	;; Check if main function
-	LOAD32 R1 R9 8              ; FUNCTION->S
-	LOADUI R0 $main_string      ; Using "main"
-	CALLI R15 @match            ; check if they match
-	JUMP.Z R0 @declare_function_nonmain ; Skip work if they don't
-
-	;; Deal with main function
-	LOADUI R0 $declare_function_string2 ; Using first string
-	CALLI R15 @emit_out         ; emit it
-
 :declare_function_nonmain
 	FALSE R1                    ; Cleaning up before call
 	CALLI R15 @statement        ; Collect the statement
 
 	;; Prevent Duplicate Returns
 	LOAD32 R1 R12 8             ; OUT->S
-	LOADUI R0 $declare_function_string3 ; Our final string
+	LOADUI R0 $declare_function_string2 ; Our final string
 	CALLI R15 @match            ; Check for Match
 	JUMP.NZ R0 @declare_function_done ; Clean up
 
 	;; Deal with adding the return
-	LOADUI R0 $declare_function_string3 ; Our final string
+	LOADUI R0 $declare_function_string2 ; Our final string
 	CALLI R15 @emit_out         ; emit it
 
 :declare_function_done
@@ -3127,9 +3086,6 @@ Missing ;
 :declare_function_string1
 	":FUNCTION_"
 :declare_function_string2
-	"COPY_esp_to_ebp	# Deal with special case
-"
-:declare_function_string3
 	"RETURN
 "
 
@@ -4297,7 +4253,7 @@ Missing ;
 	NOP                         ; OFFSET
 	&type_char_double_indirect  ; INDIRECT
 	NOP                         ; MEMBERS
-	&type_char                  ; TYPE
+	&type_char_indirect         ; TYPE
 	&type_char_double_indirect_name ; NAME
 :type_char_double_indirect_name
 	"char**"
