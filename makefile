@@ -26,16 +26,16 @@ development: vm libvm.so asm dis ALL-ROMS
 
 # VM Builds
 vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c | bin
-	$(CC) -DVM32=true vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
+	$(CC) -DVM32=true vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
 
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
-	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c | bin
-	$(CC) -DVM32=true vm.h vm.c vm_instructions.c vm_decode.c -o bin/vm-production
+	$(CC) -DVM32=true vm.c vm_instructions.c vm_decode.c -o bin/vm-production
 
 vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c | bin
-	$(CC) -DVM32=true -ggdb -Dtty_lib=true -DTRACE=true vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
+	$(CC) -DVM32=true -ggdb -Dtty_lib=true -DTRACE=true vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c -o bin/vm
 
 # Build the roms
 ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp cc_x86 forth
@@ -100,10 +100,10 @@ xeh: Linux\ Bootstrap/xeh.c | bin
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c tty.c
 
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c vm.h
+	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c
 
 # Tests
 Generate-rom-test: ALL-ROMS
