@@ -22,6 +22,7 @@ Added support for envp in cc_x86.s
 Reduced stack usage thanks to akkartik
 Changed argv, argc behavior in cc_x86.s
 updated stage3/M2-Planet_x86.c to commit 56db0fcad4b3362d14d20e69a17e45d751c264a5
+updated stage3/get_machine.c to new form for M2-Planet
 
 ** Fixed
 Add debug label
