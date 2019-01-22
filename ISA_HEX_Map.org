@@ -406,10 +406,10 @@ The Opcodes will be preserved should we wish in the future to be binary compatab
 | 0D 00 FF Fx | Reserved |
 
 **** Function return group
-| Hex         | Name            | Comment                                       |
-|-------------+-----------------+-----------------------------------------------|
-| 0D 01 00 0a | JSR_COROUTINE a | PC = a                                        |
-| 0D 01 00 1a | RET a           | PC = MEM[a]; a = a - (register size in bytes) |
+| Hex         | Name            | Comment                                                   |
+|-------------+-----------------+-----------------------------------------------------------|
+| 0D 01 00 0a | JSR_COROUTINE a | PC = a                                                    |
+| 0D 01 00 1a | RET a           | a = a - (register size in bytes); PC = MEM[a]; MEM[a] = 0 |
 
 **** Reserved block 1
 | Hex         | Name     |

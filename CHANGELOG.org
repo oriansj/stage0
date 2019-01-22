@@ -28,6 +28,7 @@ updated stage3/get_machine.c to new form for M2-Planet
 Add debug label
 Correct sha256sum that wasn't updated by change
 Fixed checksums that were wrong in previous commit
+Fixed description of RET to clarify order of operations
 
 ** Removed
 
