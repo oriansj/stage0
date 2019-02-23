@@ -306,11 +306,11 @@ The Opcodes will be preserved should we wish in the future to be binary compatab
 
 *** 09 nn nn ab :: 2OP Integer group
 **** Numeric group
-| Hex         | Name     | Comment              |
-|-------------+----------+----------------------|
-| 09 00 00 ab | NEG a b  | a = (b > 0) ? -b : b |
-| 09 00 01 ab | ABS a b  | a = \vert b \vert    |
-| 09 00 02 ab | NABS a b | a = - \vert b \vert  |
+| Hex         | Name     | Comment             |
+|-------------+----------+---------------------|
+| 09 00 00 ab | NEG a b  | a = -b              |
+| 09 00 01 ab | ABS a b  | a = \vert b \vert   |
+| 09 00 02 ab | NABS a b | a = - \vert b \vert |
 
 **** Movement group
 | Hex         | Name     | Comment      |
