@@ -23,7 +23,7 @@ static struct lilith* Globalvm;
 void unpack_byte(uint8_t a, char* c);
 
 /* Load program tape into Memory */
-void load_program(struct lilith* vm, char* name)
+size_t load_program(struct lilith* vm, char* name)
 {
 	FILE* program;
 	program = fopen(name, "r");
@@ -37,6 +37,7 @@ void load_program(struct lilith* vm, char* name)
 	fread(vm->memory, 1, end, program);
 
 	fclose(program);
+	return end;
 }
 
 void execute_vm(struct lilith* vm)

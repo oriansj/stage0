@@ -30,6 +30,8 @@ vm.set_memory.argtype = (ctypes.c_uint, ctypes.c_ubyte)
 vm.get_register.argtype = ctypes.c_uint
 vm.get_register.restype = ctypes.c_uint
 
+POSIX_MODE = False
+
 def Reset_lilith():
 	global Memory_Size
 	if 0 <= Memory_Size < 1024:
@@ -52,7 +54,11 @@ def Reset_lilith():
 	global Watchpoints
 	Watchpoints = {0}
 	global ROM_Name
-	vm.load_lilith(ctypes.create_string_buffer(ROM_Name.encode('ascii')))
+	size = vm.load_lilith(ctypes.create_string_buffer(ROM_Name.encode('ascii')))
+	print ("Size of loaded ROM image: " + str(size) + " bytes\n")
+
+	if(POSIX_MODE):
+		Set_Register(15, size)
 
 def Step_lilith():
 	global Current_IP
@@ -216,7 +222,7 @@ def main(argv):
 	global Debug_Point
 	help_string = 'Knight.py --ROM=$NAME [--DEBUG=$NUMBER] [--WINDOW=$NUMBER] [--MEMORY=$SIZE]\n'
 	try:
-		opts, args = getopt.getopt(argv,"R:D:W:M:",["ROM=","DEBUG=","WINDOW=", "MEMORY="])
+		opts, args = getopt.getopt(argv,"R:D:W:M:P:",["ROM=","DEBUG=","WINDOW=", "MEMORY=", "POSIX-MODE"])
 	except getopt.GetoptError:
 		print (help_string)
 		sys.exit(2)
@@ -241,6 +247,9 @@ def main(argv):
 				Memory_Size = (int(arg[:-1]) * 1024 * 1024)
 			elif arg.endswith('G'):
 				Memory_Size = (int(arg[:-1]) * 1024 * 1024 * 1024)
+		elif opt in ("-P", "--POSIX-MODE"):
+			global POSIX_MODE
+			POSIX_MODE = True
 
 	subprocess.call("./bin/dis " + ROM_Name + " >| z_disassembled", shell=True)
 	Reset_lilith()
