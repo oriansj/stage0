@@ -52,8 +52,9 @@ void execute_vm(struct lilith* vm)
 	return;
 }
 
-void initialize_lilith(unsigned int size)
+void initialize_lilith(unsigned int size, unsigned int posix)
 {
+	POSIX_MODE = posix;
 	tape_01_name = "tape_01";
 	tape_02_name = "tape_02";
 	struct lilith* vm;

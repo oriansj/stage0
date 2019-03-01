@@ -305,3 +305,6 @@ void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* messa
 /* Allow tape names to be effectively changed */
 char* tape_01_name;
 char* tape_02_name;
+
+/* Enable POSIX Mode */
+bool POSIX_MODE;

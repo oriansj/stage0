@@ -29,6 +29,7 @@ struct arguments
 };
 
 int IP;
+char* image;
 
 int string_length(char* s)
 {
@@ -64,6 +65,12 @@ void write_int(int value, FILE* output)
 
 void clone_file(FILE* in, FILE* out)
 {
+	if(NULL == in)
+	{
+		fprintf(stderr, "Was unable to open input binary: %s\naborting hard\n", image);
+		exit(EXIT_FAILURE);
+	}
+
 	int c;
 	for(c = fgetc(in); EOF != c; c = fgetc(in))
 	{
@@ -95,9 +102,10 @@ int main(int argc, char **argv)
 	struct arguments* head = NULL;
 	struct arguments* i;
 
-	clone_file(fopen(argv[1], "r"), stdout);
+	image = argv[1];
+	clone_file(fopen(image, "r"), stdout);
 
-	int option_index = 2;
+	int option_index = 1;
 	while(option_index < argc)
 	{
 		i = calloc(1, sizeof(struct arguments));

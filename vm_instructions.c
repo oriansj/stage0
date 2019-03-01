@@ -16,7 +16,9 @@
  */
 
 #include "vm.h"
+#include <unistd.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 FILE* tape_01;
 FILE* tape_02;
 
@@ -117,80 +119,140 @@ unsigned_vm_register shift_register(unsigned_vm_register source, unsigned_vm_reg
 	return tmp;
 }
 
+char* string_copy(struct lilith* vm, signed_vm_register address)
+{
+	int i = 0;
+	char* r = calloc(4096, sizeof(char));
+	int c = vm->memory[address];
+	while(0 != c)
+	{
+		r[i] = c;
+		i = i + 1;
+		c = vm->memory[address + i];
+	}
+
+	return r;
+}
+
 void vm_FOPEN_READ(struct lilith* vm)
 {
 	struct stat sb;
 
-	if(0x00001100 == vm->reg[0])
+	if(POSIX_MODE)
 	{
-		if(-1 == stat(tape_01_name, &sb))
+		char* s = string_copy(vm, vm->reg[0]);
+		if(-1 == stat(s, &sb))
 		{
-			fprintf(stderr, "File named %s does not exist\n", tape_01_name);
+			fprintf(stderr, "File named %s does not exist\n", s);
 			exit(EXIT_FAILURE);
 		}
-		tape_01 = fopen(tape_01_name, "r");
+		vm->reg[0] = open(s, 0);
+		free(s);
 	}
-
-	if (0x00001101 == vm->reg[0])
+	else
 	{
-			if(-1 == stat(tape_02_name, &sb))
+		if(0x00001100 == vm->reg[0])
 		{
-			fprintf(stderr, "File named %s does not exist\n", tape_02_name);
-			exit(EXIT_FAILURE);
+			if(-1 == stat(tape_01_name, &sb))
+			{
+				fprintf(stderr, "File named %s does not exist\n", tape_01_name);
+				exit(EXIT_FAILURE);
+			}
+			tape_01 = fopen(tape_01_name, "r");
 		}
-		tape_02 = fopen(tape_02_name, "r");
+
+		if (0x00001101 == vm->reg[0])
+		{
+			if(-1 == stat(tape_02_name, &sb))
+			{
+				fprintf(stderr, "File named %s does not exist\n", tape_02_name);
+				exit(EXIT_FAILURE);
+			}
+			tape_02 = fopen(tape_02_name, "r");
+		}
 	}
 }
 
 void vm_FOPEN_WRITE(struct lilith* vm)
 {
-	if(0x00001100 == vm->reg[0])
+	if(POSIX_MODE)
 	{
-		tape_01 = fopen(tape_01_name, "w");
+		char* s = string_copy(vm, vm->reg[0]);
+		/* 577 is O_WRONLY|O_CREAT|O_TRUNC, 384 is 600 in octal */
+		vm->reg[0] = open(s, 577, 384);
+		free(s);
 	}
-
-	if (0x00001101 == vm->reg[0])
+	else
 	{
-		tape_02 = fopen(tape_02_name, "w");
+		if(0x00001100 == vm->reg[0])
+		{
+			tape_01 = fopen(tape_01_name, "w");
+		}
+
+		if (0x00001101 == vm->reg[0])
+		{
+			tape_02 = fopen(tape_02_name, "w");
+		}
 	}
 }
 
 void vm_FCLOSE(struct lilith* vm)
 {
-	if(0x00001100 == vm->reg[0])
+	if(POSIX_MODE)
 	{
-		fclose(tape_01);
+		close(vm->reg[0]);
 	}
-
-	if (0x00001101 == vm->reg[0])
+	else
 	{
-		fclose(tape_02);
+		if(0x00001100 == vm->reg[0])
+		{
+			fclose(tape_01);
+		}
+
+		if (0x00001101 == vm->reg[0])
+		{
+			fclose(tape_02);
+		}
 	}
 }
 
 void vm_FSEEK(struct lilith* vm)
 {
-	if(0x00001100 == vm->reg[0])
+	if(POSIX_MODE)
 	{
-		fseek(tape_01, vm->reg[1], SEEK_CUR);
+		lseek(vm->reg[0], vm->reg[1], SEEK_CUR);
 	}
-
-	if (0x00001101 == vm->reg[0])
+	else
 	{
-		fseek(tape_02, vm->reg[1], SEEK_CUR);
+		if(0x00001100 == vm->reg[0])
+		{
+			fseek(tape_01, vm->reg[1], SEEK_CUR);
+		}
+
+		if (0x00001101 == vm->reg[0])
+		{
+			fseek(tape_02, vm->reg[1], SEEK_CUR);
+		}
 	}
 }
 
 void vm_REWIND(struct lilith* vm)
 {
-	if(0x00001100 == vm->reg[0])
+	if(POSIX_MODE)
 	{
-		rewind(tape_01);
+		lseek(vm->reg[0], 0, SEEK_SET);
 	}
-
-	if (0x00001101 == vm->reg[0])
+	else
 	{
-		rewind(tape_02);
+		if(0x00001100 == vm->reg[0])
+		{
+			rewind(tape_01);
+		}
+
+		if (0x00001101 == vm->reg[0])
+		{
+			rewind(tape_02);
+		}
 	}
 }
 
@@ -198,24 +260,32 @@ void vm_FGETC(struct lilith* vm)
 {
 	signed_vm_register byte = -1;
 
-	if (0x00000000 == vm->reg[1])
+	if(POSIX_MODE)
 	{
-		#ifdef tty_lib
-		byte = tty_getchar();
-		#endif
-		#ifndef tty_lib
-		byte = fgetc(stdin);
-		#endif
+		read(vm->reg[1], &byte, 1);
+		if(EOF != byte) byte = byte & 0xFF;
 	}
-
-	if(0x00001100 == vm->reg[1])
+	else
 	{
-		byte = fgetc(tape_01);
-	}
+		if (0x00000000 == vm->reg[1])
+		{
+			#ifdef tty_lib
+			byte = tty_getchar();
+			#endif
+			#ifndef tty_lib
+			byte = fgetc(stdin);
+			#endif
+		}
 
-	if (0x00001101 == vm->reg[1])
-	{
-		byte = fgetc(tape_02);
+		if(0x00001100 == vm->reg[1])
+		{
+			byte = fgetc(tape_01);
+		}
+
+		if (0x00001101 == vm->reg[1])
+		{
+			byte = fgetc(tape_02);
+		}
 	}
 
 	vm->reg[0] = byte;
@@ -223,24 +293,31 @@ void vm_FGETC(struct lilith* vm)
 
 void vm_FPUTC(struct lilith* vm)
 {
-	signed_vm_register byte = vm->reg[0];
+	signed_vm_register byte = vm->reg[0] & 0xFF;
 
-	if (0x00000000 == vm->reg[1])
+	if(POSIX_MODE)
 	{
-		fputc(byte, stdout);
-		#ifdef tty_lib
-		fflush(stdout);
-		#endif
+		write(vm->reg[1], &byte, 1);
 	}
-
-	if(0x00001100 == vm->reg[1])
+	else
 	{
-		fputc(byte, tape_01);
-	}
+		if (0x00000000 == vm->reg[1])
+		{
+			fputc(byte, stdout);
+			#ifdef tty_lib
+			fflush(stdout);
+			#endif
+		}
 
-	if (0x00001101 == vm->reg[1])
-	{
-		fputc(byte, tape_02);
+		if(0x00001100 == vm->reg[1])
+		{
+			fputc(byte, tape_01);
+		}
+
+		if (0x00001101 == vm->reg[1])
+		{
+			fputc(byte, tape_02);
+		}
 	}
 }
 

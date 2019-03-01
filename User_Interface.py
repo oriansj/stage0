@@ -21,7 +21,7 @@ import sys, getopt
 
 vm = ctypes.CDLL('./libvm.so')
 
-vm.initialize_lilith.argtype = ctypes.c_uint
+vm.initialize_lilith.argtype = (ctypes.c_uint, ctypes.c_uint)
 vm.get_memory.argtype = ctypes.c_uint
 vm.get_memory.restype = ctypes.c_char_p
 vm.step_lilith.restype = ctypes.c_uint
@@ -48,7 +48,7 @@ def Reset_lilith():
 		chunks = Memory_Size / (1024 * 1024 * 1024)
 
 	print("Current Memory Size is: " + str(chunks) + unit)
-	vm.initialize_lilith(Memory_Size)
+	vm.initialize_lilith(Memory_Size, POSIX_MODE)
 	global Current_IP
 	Current_IP = 0
 	global Watchpoints

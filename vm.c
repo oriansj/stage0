@@ -19,7 +19,7 @@
 #include <getopt.h>
 
 /* Load program tape into Memory */
-void load_program(struct lilith* vm, char* rom_name)
+size_t load_program(struct lilith* vm, char* rom_name)
 {
 	FILE* program;
 	program = fopen(rom_name, "r");
@@ -40,6 +40,7 @@ void load_program(struct lilith* vm, char* rom_name)
 	fread(vm->memory, 1, end, program);
 
 	fclose(program);
+	return end;
 }
 
 void execute_vm(struct lilith* vm)
@@ -60,6 +61,7 @@ void execute_vm(struct lilith* vm)
 /* Standard C main program */
 int main(int argc, char **argv)
 {
+	POSIX_MODE = false;
 	int c;
 	int Memory_Size = (16 * 1024);
 
@@ -73,11 +75,12 @@ int main(int argc, char **argv)
 		{"tape_01", required_argument, 0, '1'},
 		{"tape_02", required_argument, 0, '2'},
 		{"memory", required_argument, 0, 'm'},
+		{"POSIX-MODE", no_argument, 0, 'P'},
 		{"help", no_argument, 0, 'h'},
 		{0, 0, 0, 0}
 	};
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "r:h:1:2:m", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "r:h:1:2:m:P", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -122,6 +125,11 @@ int main(int argc, char **argv)
 				}
 				break;
 			}
+			case 'P':
+			{
+				POSIX_MODE = true;
+				break;
+			}
 			default:
 			{
 				exit(EXIT_FAILURE);
@@ -137,8 +145,10 @@ int main(int argc, char **argv)
 
 	/* Perform all the essential stages in order */
 	struct lilith* vm;
+	size_t image;
 	vm = create_vm(Memory_Size);
-	load_program(vm, rom_name);
+	image = load_program(vm, rom_name);
+	if(POSIX_MODE) vm->reg[15] = image;
 	execute_vm(vm);
 	destroy_vm(vm);
 
