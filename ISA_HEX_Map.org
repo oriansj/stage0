@@ -453,13 +453,28 @@ DO NOT USE.
 42 hh hh hh is the HALCODE callID, invalid HALCODE SHOULD NOT BE USED.
 
 *** HALCODE Reserved for Operating Systems
-The following block contains both instructions that are reserved for Operating systems and for internal use by Operating systems
+The following block contains both instructions that are reserved for Operating
+systems and for internal use by Operating systems. When initialized by the
+Operating system, the HALCODEs are tagged with a priviledge mode, if the binary
+is not also tagged with permissions for that mode, an illegal instruction trap
+occurs when the HALCODE is decoded.
 
-| Hex         | Name     |
-|-------------+----------|
-| 42 00 xx xx | Reserved |
-| ...         | Reserved |
-| 42 0F xx xx | Reserved |
+The default reserved Block: 42000000-420FFFFF; however all HALCODEs can be remapped,
+replaced and repurposed by the Operating system after initialization and you should
+refer to your system documentation from your Operating system provider to know what
+mappings have been exposed for use.
+
+**** Example posix mapping
+| Hex         | Name   | Comment                                                                    |
+|-------------+--------+----------------------------------------------------------------------------|
+| 42 00 00 02 | FOPEN  | open(char* FILENAME, int FLAGS, int MODE) using R0, R1 and R2 respectively |
+| 42 00 00 03 | FCLOSE | close(int FD) using R0                                                     |
+| 42 00 00 08 | FSEEK  | seek(int FD, off_t OFFSET, int WHENCE) using R0, R1 and R2 respectively    |
+| 42 00 00 3C | EXIT   | exit(int ERROR_CODE) using R0                                              |
+| 42 00 00 5A | CHMOD  | chmod(char* PATHNAME, int MODE) using R0 and R1 respectively               |
+|-------------+--------+----------------------------------------------------------------------------|
+| 42 10 01 00 | FGETC  | read 1 byte into register 0 from device who's ID is in register 1          |
+| 42 10 02 00 | FPUTC  | write 1 byte from register 0 to device who's ID is in register 1           |
 
 *** Tape console HALCODE
 This HALCODE is used for interacting with any tape console attached to the system.
@@ -538,7 +553,6 @@ The following 3 devices must exist with the following exact IDs
 | 42 12 00 00 | Reserved |
 | ...         | Reserved |
 | 42 FF FF FF | Reserved |
-
 
 ** Reserved Block 1
 At this time these instructions only produce a warning; but could do anything.

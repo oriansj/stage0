@@ -94,6 +94,9 @@ struct Instruction
 };
 
 /* Prototypes for functions in vm_instructions.c*/
+void vm_EXIT(struct lilith* vm, uint64_t performance_counter);
+void vm_CHMOD(struct lilith* vm);
+void vm_FOPEN(struct lilith* vm);
 void vm_FOPEN_READ(struct lilith* vm);
 void vm_FOPEN_WRITE(struct lilith* vm);
 void vm_FCLOSE(struct lilith* vm);

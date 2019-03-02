@@ -232,101 +232,193 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 	char Name[20] = "ILLEGAL_HALCODE";
 	#endif
 
-	switch(c->HAL_CODE)
+	if(POSIX_MODE)
 	{
-		case 0x100000: /* fopen_read */
+		switch(c->HAL_CODE)
 		{
-			#ifdef DEBUG
-			strncpy(Name, "FOPEN_READ", 19);
-			#elif TRACE
-			record_trace("FOPEN_READ");
-			#endif
+			case 0x000002: /* fopen */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FOPEN", 19);
+				#elif TRACE
+				record_trace("FOPEN");
+				#endif
 
-			vm_FOPEN_READ(vm);
-			break;
-		}
-		case 0x100001: /* fopen_write */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "FOPEN_WRITE", 19);
-			#elif TRACE
-			record_trace("FOPEN_WRITE");
-			#endif
+				vm_FOPEN(vm);
+				break;
+			}
+			case 0x000003: /* fclose */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FCLOSE", 19);
+				#elif TRACE
+				record_trace("FCLOSE");
+				#endif
 
-			vm_FOPEN_WRITE(vm);
-			break;
-		}
-		case 0x100002: /* fclose */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "FCLOSE", 19);
-			#elif TRACE
-			record_trace("FCLOSE");
-			#endif
+				vm_FCLOSE(vm);
+				break;
+			}
+			case 0x000008: /* fseek */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FSEEK", 19);
+				#elif TRACE
+				record_trace("FSEEK");
+				#endif
 
-			vm_FCLOSE(vm);
-			break;
-		}
-		case 0x100003: /* rewind */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "REWIND", 19);
-			#elif TRACE
-			record_trace("REWIND");
-			#endif
+				vm_FSEEK(vm);
+				break;
+			}
+			case 0x00003C: /* EXIT */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "EXIT", 19);
+				#elif TRACE
+				record_trace("EXIT");
+				#endif
 
-			vm_REWIND(vm);
-			break;
-		}
-		case 0x100004: /* fseek */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "FSEEK", 19);
-			#elif TRACE
-			record_trace("FSEEK");
-			#endif
+				vm_EXIT(vm, performance_counter);
+				break;
+			}
+			case 0x00005A: /* EXIT */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "CHMOD", 19);
+				#elif TRACE
+				record_trace("CHMOD");
+				#endif
 
-			vm_FSEEK(vm);
-			break;
-		}
-		case 0x100100: /* fgetc */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "FGETC", 19);
-			#elif TRACE
-			record_trace("FGETC");
-			#endif
+				vm_CHMOD(vm);
+				break;
+			}
+			case 0x100100: /* fgetc */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FGETC", 19);
+				#elif TRACE
+				record_trace("FGETC");
+				#endif
 
-			vm_FGETC(vm);
-			break;
-		}
-		case 0x100200: /* fputc */
-		{
-			#ifdef DEBUG
-			strncpy(Name, "FPUTC", 19);
-			#elif TRACE
-			record_trace("FPUTC");
-			#endif
+				vm_FGETC(vm);
+				break;
+			}
+			case 0x100200: /* fputc */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FPUTC", 19);
+				#elif TRACE
+				record_trace("FPUTC");
+				#endif
 
-			vm_FPUTC(vm);
-			break;
+				vm_FPUTC(vm);
+				break;
+			}
+			default:
+			{
+				fprintf(stderr, "Invalid HALCODE\nComputer Program has Halted\n");
+				illegal_instruction(vm, c);
+				break;
+			}
 		}
-		case 0x110000: /* HAL_MEM */
+	}
+	else
+	{
+		switch(c->HAL_CODE)
 		{
-			#ifdef DEBUG
-			strncpy(Name, "HAL_MEM", 19);
-			#elif TRACE
-			record_trace("HAL_MEM");
-			#endif
+			case 0x100000: /* fopen_read */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FOPEN_READ", 19);
+				#elif TRACE
+				record_trace("FOPEN_READ");
+				#endif
 
-			vm_HAL_MEM(vm);
-			break;
-		}
-		default:
-		{
-			fprintf(stderr, "Invalid HALCODE\nComputer Program has Halted\n");
-			illegal_instruction(vm, c);
-			break;
+				vm_FOPEN_READ(vm);
+				break;
+			}
+			case 0x100001: /* fopen_write */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FOPEN_WRITE", 19);
+				#elif TRACE
+				record_trace("FOPEN_WRITE");
+				#endif
+
+				vm_FOPEN_WRITE(vm);
+				break;
+			}
+			case 0x100002: /* fclose */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FCLOSE", 19);
+				#elif TRACE
+				record_trace("FCLOSE");
+				#endif
+
+				vm_FCLOSE(vm);
+				break;
+			}
+			case 0x100003: /* rewind */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "REWIND", 19);
+				#elif TRACE
+				record_trace("REWIND");
+				#endif
+
+				vm_REWIND(vm);
+				break;
+			}
+			case 0x100004: /* fseek */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FSEEK", 19);
+				#elif TRACE
+				record_trace("FSEEK");
+				#endif
+
+				vm_FSEEK(vm);
+				break;
+			}
+			case 0x100100: /* fgetc */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FGETC", 19);
+				#elif TRACE
+				record_trace("FGETC");
+				#endif
+
+				vm_FGETC(vm);
+				break;
+			}
+			case 0x100200: /* fputc */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FPUTC", 19);
+				#elif TRACE
+				record_trace("FPUTC");
+				#endif
+
+				vm_FPUTC(vm);
+				break;
+			}
+			case 0x110000: /* HAL_MEM */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "HAL_MEM", 19);
+				#elif TRACE
+				record_trace("HAL_MEM");
+				#endif
+
+				vm_HAL_MEM(vm);
+				break;
+			}
+			default:
+			{
+				fprintf(stderr, "Invalid HALCODE\nComputer Program has Halted\n");
+				illegal_instruction(vm, c);
+				break;
+			}
 		}
 	}
 

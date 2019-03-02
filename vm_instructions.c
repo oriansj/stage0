@@ -134,6 +134,40 @@ char* string_copy(struct lilith* vm, signed_vm_register address)
 	return r;
 }
 
+void vm_EXIT(struct lilith* vm, uint64_t performance_counter)
+{
+	vm->halted = true;
+	fprintf(stderr, "Computer Program has Halted\nAfter Executing %lu instructions\n", performance_counter);
+
+	#ifdef TRACE
+	record_trace("HALT");
+	print_traces();
+	#endif
+
+	exit(vm->reg[0]);
+}
+
+void vm_CHMOD(struct lilith* vm)
+{
+	char* s = string_copy(vm, vm->reg[0]);
+	chmod(s, vm->reg[1]);
+	free(s);
+}
+
+void vm_FOPEN(struct lilith* vm)
+{
+	struct stat sb;
+
+	char* s = string_copy(vm, vm->reg[0]);
+	if(-1 == stat(s, &sb))
+	{
+		fprintf(stderr, "File named %s does not exist\n", s);
+		exit(EXIT_FAILURE);
+	}
+	vm->reg[0] = open(s, vm->reg[1], vm->reg[2]);
+	free(s);
+}
+
 void vm_FOPEN_READ(struct lilith* vm)
 {
 	struct stat sb;
