@@ -887,16 +887,30 @@ This is a very rare and special group as each entry consumes a piece of the prec
 
 ** Exotic behavior
 *** Illegal instructions
-To ensure consistent behavior, all undefined opcodes are to be treated like illegal instructions and for hardware/operating system combinations that lack an illegal instruction handler, the result is that of HALT.
-Should an illegal instruction handler be implemented, the implementor should if possible emulate the instruction via software and jump to instruction that follows.
+To ensure consistent behavior, all undefined opcodes are to be treated like illegal
+instructions and for hardware/operating system combinations that lack an illegal
+instruction handler, the result is that of HALT.
+
+Should an illegal instruction handler be implemented, the implementor should if
+possible emulate the instruction via software and jump to instruction that follows.
 
 *** Illegal encoding
-Assemblers should throw an exception in the event that a register is compared to itself.
-As such code is likely wrong and such sequences are reserved for future opcode harvesting in the event of opcode starvation.
+Assemblers should throw an exception in the event that a register is compared to
+itself. As such code is likely wrong and such sequences are reserved for future
+opcode harvesting in the event of opcode starvation.
 
 *** compare and skip instructions
-All compare and skip instructions lookup the first byte following themselves to determine the number of bytes to skip to allow the correct behavior to occur with shorter and longer instruction formats.
+All compare and skip instructions lookup the first byte following themselves to
+determine the number of bytes to skip to allow the correct behavior to occur with
+shorter and longer instruction formats.
+This will result in a page fault if the next byte is in the next page and the
+instruction will have to be restarted
 
 *** HALCODE
-On systems that support an IOMMU and Kernel mode, all HALCODES can be modified or replaced by the kernel. Those listed in this document are those that must be supported on bootup.
-Systems supporting more HALCODES than those listed in this document must implement HALCODE 0x42FFFFFF which must provide a DEVICE LIST and HALCODE 0x42000000 which must provide a HALCODE LIST
+On systems that support an IOMMU and Kernel mode, all HALCODES can be modified or
+replaced by the kernel. Those listed in this document are those that must be
+supported on bootup.
+
+Systems supporting more HALCODES than those listed in this document must implement
+HALCODE 0x42FFFFFF which must provide a DEVICE LIST and HALCODE 0x42000000 which
+must provide a HALCODE LIST

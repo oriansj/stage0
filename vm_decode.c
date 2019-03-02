@@ -280,7 +280,7 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 				vm_EXIT(vm, performance_counter);
 				break;
 			}
-			case 0x00005A: /* EXIT */
+			case 0x00005A: /* CHMOD */
 			{
 				#ifdef DEBUG
 				strncpy(Name, "CHMOD", 19);

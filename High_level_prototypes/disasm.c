@@ -123,6 +123,14 @@ void string_values(struct Instruction *c, bool first)
 	}
 }
 
+void print_address(struct Instruction* c)
+{
+	read_instruction(c);
+	address = address + 4;
+	fprintf(stdout,"%08X\t", address);
+	fprintf(stdout, "%s\t # M2 Large const\n", c->operation);
+}
+
 void decode_Integer_4OP(struct Instruction* c)
 {
 	/* Parse Raw Data */
@@ -1342,8 +1350,8 @@ void decode_0OPI(struct Instruction* c)
 		}
 	}
 
-	fprintf(stdout, "%s %d\t", Name, c->raw_Immediate);
-	fprintf(stdout, "# %s\n", c->operation);
+	fprintf(stdout, "%s %d\t# %s\n", Name, c->raw_Immediate, c->operation);
+	if(4 == c->raw_Immediate) print_address(c);
 }
 
 void decode_HALCODE(struct Instruction* c)
@@ -1356,6 +1364,31 @@ void decode_HALCODE(struct Instruction* c)
 	/* Convert to Human readable form */
 	switch(c->HAL_CODE)
 	{
+		case 0x000002: /* fopen */
+		{
+			strncpy(Name, "FOPEN", 19);
+			break;
+		}
+		case 0x000003: /* fclose */
+		{
+			strncpy(Name, "FCLOSE", 19);
+			break;
+		}
+		case 0x000008: /* fseek */
+		{
+			strncpy(Name, "FSEEK", 19);
+			break;
+		}
+		case 0x00003C: /* EXIT */
+		{
+			strncpy(Name, "EXIT", 19);
+			break;
+		}
+		case 0x00005A: /* CHMOD */
+		{
+			strncpy(Name, "CHMOD", 19);
+			break;
+		}
 		case 0x100000: /* FOPEN_READ */
 		{
 			strncpy(Name, "FOPEN_READ", 19);

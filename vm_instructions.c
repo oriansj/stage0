@@ -156,14 +156,7 @@ void vm_CHMOD(struct lilith* vm)
 
 void vm_FOPEN(struct lilith* vm)
 {
-	struct stat sb;
-
 	char* s = string_copy(vm, vm->reg[0]);
-	if(-1 == stat(s, &sb))
-	{
-		fprintf(stderr, "File named %s does not exist\n", s);
-		exit(EXIT_FAILURE);
-	}
 	vm->reg[0] = open(s, vm->reg[1], vm->reg[2]);
 	free(s);
 }
