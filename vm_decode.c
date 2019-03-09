@@ -280,6 +280,17 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 				vm_EXIT(vm, performance_counter);
 				break;
 			}
+			case 0x00003F: /* UNAME */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "UNAME", 19);
+				#elif TRACE
+				record_trace("UNAME");
+				#endif
+
+				vm_UNAME(vm);
+				break;
+			}
 			case 0x00005A: /* CHMOD */
 			{
 				#ifdef DEBUG

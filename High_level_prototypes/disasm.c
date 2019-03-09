@@ -1384,6 +1384,11 @@ void decode_HALCODE(struct Instruction* c)
 			strncpy(Name, "EXIT", 19);
 			break;
 		}
+		case 0x00003F: /* UNAME */
+		{
+			strncpy(Name, "UNAME", 19);
+			break;
+		}
 		case 0x00005A: /* CHMOD */
 		{
 			strncpy(Name, "CHMOD", 19);

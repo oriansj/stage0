@@ -17,6 +17,8 @@
 * Current
 ** Added
 Added support for envp in cc_x86.s
+Added support for --POSIX-MODE to allow cross-platform testing to be easier
+Expanded the disassembler's support of HALCODE to include POSIX instructions
 
 ** Changed
 Reduced stack usage thanks to akkartik

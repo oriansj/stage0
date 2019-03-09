@@ -55,6 +55,16 @@ void writeout_bytes(struct lilith* vm, unsigned_vm_register pointer, unsigned_vm
 	}
 }
 
+void writeout_string(struct lilith* vm, char* s, unsigned_vm_register pointer)
+{
+	while(0 != s[0])
+	{
+		vm->memory[pointer] = s[0];
+		pointer = pointer + 1;
+		s = s + 1;
+	}
+}
+
 /* Allow the use of native data format for Register operations */
 unsigned_vm_register readin_bytes(struct lilith* vm, unsigned_vm_register pointer, bool Signed, int count)
 {
@@ -152,6 +162,15 @@ void vm_CHMOD(struct lilith* vm)
 	char* s = string_copy(vm, vm->reg[0]);
 	chmod(s, vm->reg[1]);
 	free(s);
+}
+
+void vm_UNAME(struct lilith* vm)
+{
+	writeout_string(vm, "sysname", vm->reg[0]);
+	writeout_string(vm, "nodename", vm->reg[0] + 65);
+	writeout_string(vm, "release", vm->reg[0] + 130);
+	writeout_string(vm, "version", vm->reg[0] + 195);
+	writeout_string(vm, arch_name, vm->reg[0] + 260);
 }
 
 void vm_FOPEN(struct lilith* vm)
