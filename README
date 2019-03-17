@@ -36,7 +36,7 @@ If the code can not be understood by that volume, it needs to be altered until i
 
 * Also found within
 This repo contains a few of my false start pieces that may be of interest to people who
-want to independently create the root binary, I welcome all bug fixes and code that aids
+want to independently create the root binary. I welcome all bug fixes and code that aids
 in the above stated goal.
 
 * FYI
@@ -50,16 +50,16 @@ The only pieces that have any external dependencies are the Web IDE (Python3+Che
 
 * Future
 ** Software
-Add more ports to more hardware platforms
+Add more ports to more hardware platforms.
 
 ** Hardware
-Implement the Knight processor in FPGA and then convert into TTL
+Implement the Knight processor in FPGA and then convert into TTL.
 
 * Need to know information
 ** stage0
 The stage0 is the ultimate lowest level of bootstrap that is useful for systems
 without firmware, operating systems nor any other provided software functionality
-Those with such capabilities can skip this stage as it requires human input
+Those with such capabilities can skip this stage as it requires human input.
 
 *** Hex0_monitor
 The Hex0_monitor provides dual functionality:
@@ -88,7 +88,7 @@ hex0 source files.
 It most important features of note are:
 ; line comments and
 # line comments
-As careful notes are essential for this stage
+As careful notes are essential for this stage.
 
 *** Hex1
 The Hex1 assembler or stage1_assembler-1 is the next logical extension of the
@@ -105,7 +105,7 @@ assembler in Hex0 but as it is a much larger program, I recommend against it.
 
 *** Hex2
 The Hex2 assembler or stage1_assembler-2 or hex2_linker is as complex of a hex
-language that is both meaningful and worth the effort
+language that is both meaningful and worth the effort.
 
 Hex2's important advances over Hex1 are as follows:
 Support for long labels (Minimal 42 chars, ideally unlimited)
@@ -116,7 +116,7 @@ Support for Alternate pointer sizes (%label for 32bit relative and &label for
 Optionally support for !label (8bit relative addressing) and ?label
 (Architecture specific size/properties) and/or @label1>label2 %label1>label2
 displacements may be implemented should the specific architecture require it
-for human readable hex2 source files (such as ELF headers)
+for human readable hex2 source files (such as ELF headers).
 
 *** M0
 M0 or M0-macro or M1-macro is the minimal string replacement program with string
@@ -137,7 +137,7 @@ termininates the string).
 
 Thus by combining :label, @label, DEFINE SYSCALL 0F05, Raw strings and chars;
 one has created a rather flexiable and powerful Assembler capable of building
-far more ambitious pieces in "Macro Assembly"
+far more ambitious pieces in "Macro Assembly".
 
 ** stage2
 The stage2 is dependent on the availabilty of text source files and atleast a
@@ -185,7 +185,7 @@ bootstrapping whole operating systems with modern tool stacks.
 A library collection of very useful FORTH functionality designed to make the
 lives of any FORTH programmer easier.
 
-It now sits waiting for any FORTH programmer who wishes to build upon it
+It now sits waiting for any FORTH programmer who wishes to build upon it.
 
 *** ascension
 A library collection of useful Lisp functionality designed to make the lives
@@ -195,9 +195,9 @@ As it depends on archaic Lisp dialect; it will likely need to be replaced should
 the Lisp be properly fixed.
 
 *** blood-elf_x86
-The x86 program for a dwarf stub generator used in mescc-tools bootstrapping
+The x86 program for a dwarf stub generator used in mescc-tools bootstrapping.
 Specifically mescc-tools-seed generation, which can be used to build M2-Planet
-and thus complete the circle
+and thus complete the circle.
 
 *** get_machine_x86
 The trivial x86 program that allows one to skip tests or scripts that will not
