@@ -29,7 +29,7 @@ or update the wiki at https://bootstrapping.miraheze.org/wiki/Stage0
 * Goal
 This is a set of manually created hex programs in a Cthulhu Path to madness fashion.
 Which only have the goal of creating a bootstrapping path to a C compiler capable of
-Compiling GCC, with only the explicit requirement of a single 1 KByte binary or less.
+compiling GCC, with only the explicit requirement of a single 1 KByte binary or less.
 
 Additionally, all code must be able to be understood by 70% of the population of programmers.
 If the code can not be understood by that volume, it needs to be altered until it satifies the above requirement.
@@ -73,7 +73,7 @@ by the Hex0_monitor and from that point onwards it is used as a minimal text
 editor until a more advanced text editor can be bootstrapped.
 
 ** stage1
-The stage1 is dependent on the availablity of text source files and atleast a
+The stage1 is dependent on the availability of text source files and at least a
 hex0 monitor or assembler. The steps in this stage can be fully automated should
 one trust their automation or performed manually on any hardware they trust.
 
@@ -98,7 +98,7 @@ prefix for relative offsets is @ thus the pointer must be written @a
 Further because of the mescc-tools standardization of syntax @label indicates a
 16bit relative displacement.
 
-Alternate architectures porting this need not limit themselves to 16bit
+Alternative architectures porting this need not limit themselves to 16bit
 displacements should they so choose, rather they must provide atleast 1 size
 of displacement or if they so desire, they may skip and write their Hex2
 assembler in Hex0 but as it is a much larger program, I recommend against it.
@@ -110,7 +110,7 @@ language that is both meaningful and worth the effort.
 Hex2's important advances over Hex1 are as follows:
 Support for long labels (Minimal 42 chars, ideally unlimited)
 Support for Absolute addressing ($label for 16bit absolute addresses)
-Support for Alternate pointer sizes (%label for 32bit relative and &label for
+Support for Alternative pointer sizes (%label for 32bit relative and &label for
 32bit absolute addresses)
 
 Optionally support for !label (8bit relative addressing) and ?label
@@ -136,11 +136,11 @@ bound) and restrictions such as padding to word boundries are accetpable.
 termininates the string).
 
 Thus by combining :label, @label, DEFINE SYSCALL 0F05, Raw strings and chars;
-one has created a rather flexiable and powerful Assembler capable of building
+one has created a rather flexible and powerful Assembler capable of building
 far more ambitious pieces in "Macro Assembly".
 
 ** stage2
-The stage2 is dependent on the availabilty of text source files and atleast a
+The stage2 is dependent on the availability of text source files and at least a
 functional macro assembler and can be used to build operating systems or other
 "Bootstrap" functionality that might be required to enable functional binaries;
 such as programs that set execute bits or generate dwarf stubs.
@@ -163,7 +163,7 @@ design the most minimal Lisp with all of the functionality described in the
 original Lisp papers. The task was completed relatively quickly compared to the
 FORTH and even had enhancements such as a compacting garbage collector.
 
-Ultimately it was found, the lisp that many rave about isn't entirely compatable
+Ultimately it was found, the lisp that many rave about isn't entirely compatible
 with modern lisps or schemes; thus was shelved for any Lisper who wishes to pick
 it up.
 
@@ -176,7 +176,7 @@ be able to verify it did exactly what it was supposed to and see it self-host
 its C version.
 
 ** stage3
-The stage3 is dependent on the availabilty of text source files and atleast a
+The stage3 is dependent on the availability of text source files and at least a
 functional M2-Planet level C compiler, FORTH and a Minimal Garbage collecting
 Lisp and can be used to build more advanced tools that can be used in
 bootstrapping whole operating systems with modern tool stacks.
@@ -201,7 +201,7 @@ and thus complete the circle.
 
 *** get_machine_x86
 The trivial x86 program that allows one to skip tests or scripts that will not
-run on that specific platform or run alternate commands depending upon the
+run on that specific platform or run alternative commands depending upon the
 architecture.
 
 *** hex2_linker_x86
