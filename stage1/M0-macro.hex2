@@ -42,8 +42,10 @@ FFFFFFFF	# HALT ; We are Done
 # ;; Prep TAPE_01
 E0002D201100	# LOADUI R0 0x1100
 42100000	# FOPEN_READ
+
 0D00002D	# FALSE R13 ; Head is NULL
 09000510	# MOVE R1 R0 ; Read Tape_01
+
 :Tokenize_Line_0
 42100100	# FGETC ; Get a Char
 
@@ -52,7 +54,7 @@ E000A0300023	# CMPSKIPI.NE R0 35
 3C00 @Purge_Line_Comment	# JUMP @Purge_Line_Comment
 
 # ;; Deal with Line comments starting with ;
-E000A030003b	# CMPSKIPI.NE R0 59
+E000A030003B	# CMPSKIPI.NE R0 59
 3C00 @Purge_Line_Comment	# JUMP @Purge_Line_Comment
 
 # ;; Deal with Tab
@@ -60,7 +62,7 @@ E000A0300009	# CMPSKIPI.NE R0 9
 3C00 @Tokenize_Line_0	# JUMP @Tokenize_Line_0 ; Throw away byte and try again
 
 # ;; Deal with New line
-E000A030000a	# CMPSKIPI.NE R0 10
+E000A030000A	# CMPSKIPI.NE R0 10
 3C00 @Tokenize_Line_0	# JUMP @Tokenize_Line_0 ; Throw away byte and try again
 
 # ;; Deal with space characters
@@ -163,10 +165,13 @@ E10023020004	# STORE32 R0 R2 4 ; Set node type
 E100210E0000	# STORE8 R0 R14 0 ; Store the Byte
 42100100	# FGETC ; Get next Byte
 E1000FEE0001	# ADDUI R14 R14 1 ; Prep for next loop
+
 E000A0300009	# CMPSKIPI.NE R0 9 ; If char is Tab
 3C00 @Store_Atom_Done	# JUMP @Store_Atom_Done ; Be done
+
 E000A030000a	# CMPSKIPI.NE R0 10 ; If char is LF
 3C00 @Store_Atom_Done	# JUMP @Store_Atom_Done ; Be done
+
 E000A0300020	# CMPSKIPI.NE R0 32 ; If char is Space
 3C00 @Store_Atom_Done	# JUMP @Store_Atom_Done ; Be done
 
@@ -260,6 +265,7 @@ E0002CA2 @Identify_Macros_0	# JUMP.NZ R2 @Identify_Macros_0 ; Loop if i not NULL
 444546494E450000	# "DEFINE" ;; Line_Macro Function
 
 
+# ;; Line_Macro Function
 # ;; Recieves a node pointer in R0
 # ;; Causes macros to be applied
 # ;; Returns to whatever called it
@@ -339,7 +345,7 @@ E1002310000c	# STORE32 R1 R0 12 ; Set expression to Text + 1
 3C00 @Process_String_Done	# JUMP @Process_String_Done ; And move on
 
 :Process_String_1
-# ;; Deal with \"
+# ;; Deal with (")
 E0002D0F @Hexify_String	# CALLI R15 @Hexify_String
 
 :Process_String_Done
@@ -468,8 +474,10 @@ E1000F110001	# ADDUI R1 R1 1 ; Move to next
 
 :numerate_string_dec
 E10014010000	# LOAD8 R0 R1 0 ; Get a byte
+
 E000A0300000	# CMPSKIPI.NE R0 0 ; If NULL
 3C00 @numerate_string_done	# JUMP @numerate_string_done ; Be done
+
 05006334	# MUL R3 R3 R4 ; Shift counter by 10
 E10010000030	# SUBI R0 R0 48 ; Convert ascii to number
 E000A0100000	# CMPSKIPI.GE R0 0 ; If less than a number
@@ -477,6 +485,7 @@ E000A0100000	# CMPSKIPI.GE R0 0 ; If less than a number
 E000A050000a	# CMPSKIPI.L R0 10 ; If more than a number
 3C00 @numerate_string_done	# JUMP @numerate_string_done ; Terminate NOW
 05001330	# ADDU R3 R3 R0 ; Don't add to the count
+
 E1000F110001	# ADDUI R1 R1 1 ; Move onto next byte
 3C00 @numerate_string_dec	# JUMP @numerate_string_dec
 
@@ -490,6 +499,7 @@ E1000F110002	# ADDUI R1 R1 2 ; Move to after leading 0x
 :numerate_string_hex_0
 E10014010000	# LOAD8 R0 R1 0 ; Get a byte
 E0002C90 @numerate_string_done	# JUMP.Z R0 @numerate_string_done ; If NULL Be done
+
 E0002D530004	# SL0I R3 4 ; Shift counter by 16
 E10010000030	# SUBI R0 R0 48 ; Convert ascii number to number
 E000A050000a	# CMPSKIPI.L R0 10 ; If A-F
@@ -497,6 +507,7 @@ E10010000007	# SUBI R0 R0 7 ; Shove into Range
 E000A0500010	# CMPSKIPI.L R0 16 ; If a-f
 E10010000020	# SUBI R0 R0 32 ; Shove into Range
 05001330	# ADDU R3 R3 R0 ; Add to the count
+
 E1000F110001	# ADDUI R1 R1 1 ; Get next Hex
 3C00 @numerate_string_hex_0	# JUMP @numerate_string_hex_0
 
@@ -554,6 +565,7 @@ E0002D211101	# LOADUI R1 0x1101 ; Write to Tape_02
 E10018200000	# LOAD32 R2 R0 0 ; Load Node->Next
 E10018300004	# LOAD32 R3 R0 4 ; Load Node type
 E1001800000c	# LOAD32 R0 R0 12 ; Load Expression pointer
+
 E10010330001	# SUBI R3 R3 1 ; Check for Macros
 E0002C93 @Print_Hex_1	# JUMP.Z R3 @Print_Hex_1 ; Don't print Macros
 E0002D0F @Print_Line	# CALLI R15 @Print_Line ; Print the Expression
@@ -591,6 +603,7 @@ E1000F330001	# ADDUI R3 R3 1 ; Increment for next loop
 E0002D20000a	# LOADUI R0 10 ; Put in Newline char
 42100200	# FPUTC ; Write it out
 0D01001F	# RET R15
+
 
 # ;; Where we are putting the start of our stack
 :stack

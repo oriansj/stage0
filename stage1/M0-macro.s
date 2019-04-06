@@ -88,6 +88,7 @@
 
 	;; Everything else is an atom store it
 	CALLI R15 @Store_Atom
+
 :Tokenize_Line_1
 	STORE32 R13 R2 0            ; Set p->next to head
 	MOVE R13 R2                 ; Set head to p
@@ -107,6 +108,7 @@
 	COPY R0 R13                 ; Using R0 as head
 	FALSE R1                    ; Using R1 as root
 	                            ; Using R2 as next
+
 :reverse_list_0
 	JUMP.Z R0 @reverse_list_done ; Stop if NULL == head
 	LOAD R2 R0 0                ; next = head->next
@@ -114,6 +116,7 @@
 	MOVE R1 R0                  ; root = head
 	MOVE R0 R2                  ; head = next
 	JUMP @reverse_list_0        ; Keep looping
+
 :reverse_list_done
 	;; Clean up
 	MOVE R13 R1                 ; Set token_list to root
@@ -192,10 +195,12 @@
 	PUSHR R2 R15
 	PUSHR R3 R15
 	PUSHR R4 R15
+
 	;; Setup registers
 	MOVE R2 R0                  ; Put R0 in a safe place
 	MOVE R3 R1                  ; Put R1 in a safe place
 	FALSE R4                    ; Starting at index 0
+
 :cmpbyte
 	LOADXU8 R0 R2 R4            ; Get a byte of our first string
 	LOADXU8 R1 R3 R4            ; Get a byte of our second string
@@ -203,6 +208,7 @@
 	CMP R0 R0 R1                ; Compare the bytes
 	CMPSKIPI.E R1 0             ; Stop if byte is NULL
 	JUMP.E R0 @cmpbyte          ; Loop if bytes are equal
+
 ;; Done
 	;; Restore registers
 	POPR R4 R15
@@ -339,7 +345,7 @@
 	JUMP @Process_String_Done   ; And move on
 
 :Process_String_1
-	;; Deal with "
+	;; Deal with (")
 	CALLI R15 @Hexify_String
 
 :Process_String_Done
@@ -465,6 +471,7 @@
 	TRUE R2                     ; So that we know to negate
 	CMPSKIPI.E R2 0             ; If toggled
 	ADDUI R1 R1 1               ; Move to next
+
 :numerate_string_dec
 	LOAD8 R0 R1 0               ; Get a byte
 
@@ -488,6 +495,7 @@
 	CMPSKIPI.E R0 48            ; All hex strings start with 0x
 	JUMP @numerate_string_done  ; Be done if not a match
 	ADDUI R1 R1 2               ; Move to after leading 0x
+
 :numerate_string_hex_0
 	LOAD8 R0 R1 0               ; Get a byte
 	JUMP.Z R0 @numerate_string_done ; If NULL Be done
@@ -539,6 +547,7 @@
 	MOVE R0 R2                  ; Prepare for next loop
 	JUMP.NZ R0 @Preserve_Other_0
 	RET R15
+
 
 ;; Print_Hex Function
 ;; Print all of the expressions
