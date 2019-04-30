@@ -159,11 +159,11 @@ It is recommended to run with no less than 4MB of Memory
 
 * Step 6b Build us a Forth
 Since forth fans kept telling me Forth is easier to implement than lisp, I also implemented a Forth but it certainly took far longer to get the bugs out.
-You'll note that this forth is only 3360 bytes large (almost half the size of the lisp) but you'll also note that it is also in a much more primitive state.
+You'll note that this forth is only 4372 bytes large (almost half the size of the lisp) but you'll also note that it is also in a much more primitive state.
 
 Having done all of the above; I must say if I had to start with this forth or the hex monitor, I would always choose the forth but I wouldn't dare dream of trying to jump straight to forth from Hex.
 
-If you want to bootstrap anything, NEVER EVER EVER START WITH FORTH. Get yourself a good assembler first and you might find writing a garbage collected lisp is actually much easier.
+If you want to bootstrap anything, NEVER EVER EVER START WITH FORTH. Get yourself a good assembler first and you might find writing a garbage collected lisp or a C compiler is actually much easier.
 
 We first need to create our prepared tape:
 cat High_level_prototypes/defs stage2/forth.s > temp
@@ -179,3 +179,23 @@ roms/forth should with the sha256sum of f4bbf9e9c4828170d0c153ac265382dc705643f9
 Our forth will first attempt to evaluate any code in tape_01 and then evaluate any code that the user types in
 (Otherwise there is no way for a forth fan to have a chance against the lisp in terms of being able to bootstrap something cool)
 Tuning needs to be done to run with any less than 4MB of Memory
+
+* Step 6c Build us a C compiler
+Since I got tired of people saying you can't write a C compiler in assembly, I did exactly that and as you can see it was completed relatively quickly.
+You'll note that the C compiler is 16370 bytes large, making it larger than the Lisp and FORTH put together but not much harder to implement than the lisp.
+
+Having done all of the above; I must say one needs a really solid assembler and a minimal disassembler to effectively bootstrap a C compiler (alteast until you get the point that the tokenizer is working).
+
+We first need to create our prepared tape:
+cat High_level_prototypes/defs stage2/cc_x86.s > cc_TEMP
+Then we use our M0 Line macro assembler to convert our assembly into hex2 format:
+./bin/vm --rom roms/M0 --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 256K
+
+Then we need to assemble that hex into our desired program:
+./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 48K
+
+roms/cc_x86 should with the sha256sum of 12bb96de936fff18b27c2382ddcee2db6afb6a94b9f4c6e9e9b3d1d0d0d3b0ed
+
+Our C compiler will read any code in tape_01 and output the compiled output to tape_02.
+The compiled output is macro assembly (allowing for easy inspection) which then must go through the appropriate macro assembler and hex2 steps to become a working binary.
+Should you wish to port the C compiler to a different target, one need only update the strings and a few minor places in the code; looking at M2-Planet's multi-arch support will cover all of those questions quickly.
