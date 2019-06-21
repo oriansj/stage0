@@ -39,8 +39,8 @@ void storePointer()
 	int c = fgetc(source_file);
 	int target = table[c];
 	uint8_t first, second;
-	first = (target - ip + 4)/256;
-	second = (target - ip + 4)%256;
+	first = (target - ip)/256;
+	second = (target - ip)%256;
 	printf("%c%c", first, second );
 }
 
