@@ -1,0 +1,858 @@
+### Copyright (C) 2019 Jeremiah Orians
+### This file is part of stage0.
+###
+### stage0 is free software: you can redistribute it and/or modify
+### it under the terms of the GNU General Public License as published by
+### the Free Software Foundation, either version 3 of the License, or
+### (at your option) any later version.
+###
+### stage0 is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU General Public License for more details.
+###
+### You should have received a copy of the GNU General Public License
+### along with stage0. If not, see <http://www.gnu.org/licenses/>.
+
+	;; Register usage:
+	;; RAX, RSI, RDI => Temps
+	;; R12 => MALLOC
+	;; R13 => HEAD
+	;; R14 => Output_file
+	;; R15 => Input_file
+
+	;; Struct format: (size 32)
+	;; NEXT => 0
+	;; TYPE => 8
+	;; TEXT => 16
+	;; EXPRESSION => 24
+
+	;; Types
+	;; None => 0
+	;; MACRO => 1
+	;; STRING => 2
+
+; Where the ELF Header is going to hit
+; Simply jump to _start
+; Our main function
+:_start
+	58                      # POP_RAX                     ;·Get·the·number·of·arguments
+	5F                      # POP_RDI                     ;·Get·the·program·name
+	5F                      # POP_RDI                     ;·Get·the·actual·input name
+	BE 00000000             # LOADI32_RSI %0              ;·prepare·read_only
+	48C7C0 02000000         # LOADI32_RAX %2              ;·the·syscall·number·for·open()
+	0F05                    # SYSCALL                     ; Now open that damn file
+	4989C7                  # COPY_RAX_to_R15             ; Preserve the file pointer we were given
+
+	5F                      # POP_RDI                     ;·Get·the·actual·output name
+	BE 41020000             # LOADI32_RSI %577            ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	BA 80010000             # LOADI32_RDX %384            ; Prepare file as RW for owner only (600 in octal)
+	48C7C0 02000000         # LOADI32_RAX %2              ;·the·syscall·number·for·open()
+	0F05                    # SYSCALL                     ; Now open that damn file
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; Check for missing output
+	0F8F %_start_out        # JG32 %_start_out            ; Have real input
+	48C7C0 01000000         # LOADI32_RAX %1              ; Use stdout
+
+:_start_out
+	4989C6                  # COPY_RAX_to_R14             ; Preserve the file pointer we were given
+
+	48C7C0 0C000000         # LOADI32_RAX %0xC            ; the Syscall # for SYS_BRK
+	BF 00000000             # LOADI32_RDI %0              ; Get current brk
+	0F05                    # SYSCALL                     ; Let the kernel do the work
+	4989C4                  # COPY_RAX_to_R12             ; Set our malloc pointer
+
+	E8 %Tokenize_Line       # CALLI32 %Tokenize_Line      ; Get all lines
+	4C89E8                  # COPY_R13_to_RAX             ; prepare for Reverse_List
+	E8 %Reverse_List        # CALLI32 %Reverse_List       ; Correct order
+	4989C5                  # COPY_RAX_to_R13             ; Update HEAD
+	E8 %Identify_Macros     # CALLI32 %Identify_Macros    ; Find the DEFINEs
+	E8 %Line_Macro          # CALLI32 %Line_Macro         ; Apply the DEFINEs
+	E8 %Process_String      # CALLI32 %Process_String     ; Handle strings
+	E8 %Eval_Immediates     # CALLI32 %Eval_Immediates    ; Handle Numbers
+	E8 %Preserve_Other      # CALLI32 %Preserve_Other     ; Collect the remaining
+	E8 %Print_Hex           # CALLI32 %Print_Hex          ; Output our results
+
+:Done
+	; program completed Successfully
+	BF 00000000             # LOADI32_RDI %0              ; All is well
+	48C7C0 3C000000         # LOADI32_RAX %0x3C           ; put the exit syscall number in eax
+	0F05                    # SYSCALL                     ; Call it a good day
+
+
+;; Tokenize_Line Function
+;; Using input file R15 and Head R13
+;; Creates a linked list of structs
+;; Uses RBX for in_set strings, RCX for Int C and RDX for Struct Token* p
+:Tokenize_Line
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+:restart
+	E8 %fgetc               # CALLI32 %fgetc              ; Read a char
+	4883F8 FC               # CMP_RAX_Immediate8 !-4      ; Check for EOF
+	0F84 %done              # JE32 %done                  ; File is collected
+
+	480FB6C0                # ZERO_EXTEND_AL              ; We have to zero extend it to use it
+	4889C1                  # COPY_RAX_to_RCX             ; Protect C
+
+	BB &comments            # LOADI32_RBX &comments       ; Get pointer to "#;"
+	E8 %In_Set              # CALLI32 %In_Set             ; Check for comments
+	4883F8 01               # CMP_RAX_Immediate8 !1       ; If comments
+	0F84 %Purge_LineComment # JE32 %Purge_LineComment     ; try again
+
+	4889C8                  # COPY_RCX_to_RAX             ; put C in place for check
+	BB &terminators         # LOADI32_RBX &terminators    ; Get pointer to "\n\t "
+	E8 %In_Set              # CALLI32 %In_Set             ; Check for terminators
+	4883F8 01               # CMP_RAX_Immediate8 !1       ; If terminator
+	0F84 %restart           # JE32 %restart               ; try again
+
+	48C7C0 20000000         # LOADI32_RAX %32             ; Malloc the struct P
+	E8 %malloc              # CALLI32 %malloc             ; Get pointer to P
+	4889C2                  # COPY_RAX_to_RDX             ; Protect P
+	4C892A                  # STORE64_R13_into_Address_RDX ; P->NEXT = HEAD
+	4989D5                  # COPY_RDX_to_R13             ; HEAD = P
+
+	4889C8                  # COPY_RCX_to_RAX             ; put C in place for check
+	BB &string_char         # LOADI32_RBX &string_char    ; Get pointer to "\"'"
+	E8 %In_Set              # CALLI32 %In_Set             ; Check for string chars
+	4883F8 01               # CMP_RAX_Immediate8 !1       ; If string char
+	0F84 %Store_String      # JE32 %Store_String          ; Get string
+
+	E8 %Store_Atom          # CALLI32 %Store_Atom         ; Get whole token
+	E9 %restart             # JMP32 %restart
+
+:done
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; fgetc function
+;; Recieves FILE* in R15
+;; Returns -4 (EOF) or char in RAX
+:fgetc
+	48C7C0 FCFFFFFF         # LOADI32_RAX %-4             ; Put EOF in rax
+	50                      # PUSH_RAX                    ; Assume bad (If nothing read, value will remain EOF)
+	488D3424                # LEA_RSI                     ; Get stack address
+	4C89FF                  # COPY_R15_to_RDI             ; Where are we reading from
+	48C7C0 00000000         # LOADI32_RAX %0              ; the syscall number for read
+	52                      # PUSH_RDX                    ; Protect RDX
+	BA 01000000             # LOADI32_RDX %1              ; set the size of chars we want
+	4153                    # PUSH_R11                    ; Protect r11
+	0F05                    # SYSCALL                     ; call the Kernel
+	415B                    # POP_R11                     ; Restore r11
+	5A                      # POP_RDX                     ; Restore RDX
+	58                      # POP_RAX                     ; Get either char or EOF
+	C3                      # RET
+
+
+;; Malloc isn't actually required if the program being built fits in the initial memory
+;; However, it doesn't take much to add it.
+;; Requires R12 to be initialized and RAX to have the number of desired bytes
+:malloc
+	4C89E7                  # COPY_R12_to_RDI             ; Using the current pointer
+	4801C7                  # ADD_RAX_to_RDI              ; Request the number of desired bytes
+	48C7C0 0C000000         # LOADI32_RAX %0xC            ; the Syscall # for SYS_BRK
+	51                      # PUSH_RCX                    ; Protect rcx
+	4153                    # PUSH_R11                    ; Protect r11
+	0F05                    # SYSCALL                     ; call the Kernel
+	415B                    # POP_R11                     ; Restore r11
+	59                      # POP_RCX                     ; Restore rcx
+	4C89E0                  # COPY_R12_to_RAX             ; Return pointer
+	4989FC                  # COPY_RDI_to_R12             ; Update pointer
+	C3                      # RET
+
+
+;; Purge_LineComment function
+;; Reads chars until LF and jumps to restart
+:Purge_LineComment
+	E8 %fgetc               # CALLI32 %fgetc              ; Get a char
+	480FB6C0                # ZERO_EXTEND_AL              ; Zero extend
+	4883F8 0A               # CMP_RAX_Immediate8 !10      ; While not LF
+	0F85 %Purge_LineComment # JNE32 %Purge_LineComment    ; Keep reading
+	E9 %restart             # JMP32 %restart
+
+
+;; Store_String Function
+;; Recieves C in RCX, HEAD in RDX and Input file in R14
+;; Uses RBX for terminator, RCX for C and RDX for string
+:Store_String
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+
+	48C7C0 02000000         # LOADI32_RAX %2              ; Using TYPE STRING
+	488942 08               # STORE64_RAX_into_Address_RDX_Immediate8 !8 ; HEAD->TYPE = STRING
+	48C7C0 00010000         # LOADI32_RAX %256            ; Malloc the string
+	E8 %malloc              # CALLI32 %malloc             ; Get pointer to P
+	488942 10               # STORE64_RAX_into_Address_RDX_Immediate8 !16 ; HEAD->TEXT = STRING
+	4889CB                  # COPY_RCX_to_RBX             ; Protect terminator
+	4889C2                  # COPY_RAX_to_RDX             ; Protect string pointer
+:Store_String_Loop
+	880A                    # STORE8_CL_into_Address_RDX  ; write byte
+	E8 %fgetc               # CALLI32 %fgetc              ; read next char
+	480FB6C0                # ZERO_EXTEND_AL              ; Zero extend it
+	4889C1                  # COPY_RAX_to_RCX             ; Update C
+	4883C2 01               # ADDI8_to_RDX !1             ; STRING = STRING + 1
+	4839D9                  # CMP_RBX_to_RCX              ; See if we hit terminator
+	0F85 %Store_String_Loop # JNE32 %Store_String_Loop    ; Otherwise keep looping
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	4889D0                  # COPY_RDX_to_RAX             ; return HEAD
+	E9 %restart             # JMP32 %restart
+
+
+;; Store_Atom Function
+;; Recieves C in RCX, HEAD in RDX and Input file in R15
+;; Uses RBX for in_set strings, RCX for C and RDX for string
+:Store_Atom
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+
+	48C7C0 00010000         # LOADI32_RAX %256            ; Malloc the string
+	E8 %malloc              # CALLI32 %malloc             ; Get pointer to P
+	488942 10               # STORE64_RAX_into_Address_RDX_Immediate8 !16 ; HEAD->TEXT = STRING
+	BB &terminators         # LOADI32_RBX &terminators    ; Get pointer to "\n\t "
+	4889C2                  # COPY_RAX_to_RDX             ; Protect string pointer
+:Store_Atom_loop
+	880A                    # STORE8_CL_into_Address_RDX  ; write byte
+	E8 %fgetc               # CALLI32 %fgetc              ; read next char
+	480FB6C0                # ZERO_EXTEND_AL              ; Zero extend it
+	4889C1                  # COPY_RAX_to_RCX             ; Update C
+	4883C2 01               # ADDI8_to_RDX !1             ; STRING = STRING + 1
+	E8 %In_Set              # CALLI32 %In_Set             ; Check for terminators
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; Check for "\n\t "
+	0F84 %Store_Atom_loop   # JE32 %Store_Atom_loop       ; Loop otherwise
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	4889D0                  # COPY_RDX_to_RAX             ; return HEAD
+	C3                      # RET
+
+
+;; In_Set function
+;; Recieves Char C in RAX and CHAR* in RBX
+;; Returns 1 if true, zero if false in RAX
+:In_Set
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+:In_Set_loop
+	8A0B                    # LOAD8_CL_from_Address_RBX   ; Read char
+	480FB6C9                # ZERO_EXTEND_CL              ; Zero extend it
+
+	4839C8                  # CMP_RCX_to_RAX              ; See if they match
+	0F84 %In_Set_True       # JE32 %In_Set_True           ; return true
+
+	4883F9 00               # CMP_RCX_Immediate8 !0       ; Check for NULL
+	0F84 %In_Set_False      # JE32 %In_Set_False          ; return false
+
+	4883C3 01               # ADDI8_to_RBX !1             ; s = s + 1
+	E9 %In_Set_loop         # JMP32 %In_Set_loop          ; Keep looping
+
+:In_Set_True
+	48C7C0 01000000         # LOADI32_RAX %1              ; Set True
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+:In_Set_False
+	48C7C0 00000000         # LOADI32_RAX %0              ; Set FALSE
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+;; Char sets
+:terminators
+	0A092000                # "\n\t \0"
+
+:comments
+	233B00                  # "#;\0"
+
+:string_char
+	222700                  # "\"'\0"
+
+
+;; Reverse_List function
+;; Recieves List in RAX
+;; Returns the list reversed in RAX
+:Reverse_List
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	4889C3                  # COPY_RAX_to_RBX             ; Set HEAD
+	48C7C0 00000000         # LOADI32_RAX %0              ; ROOT = NULL
+:Reverse_List_Loop
+	4883FB 00                # CMP_RBX_Immediate8 !0       ; WHILE HEAD != NULL
+	0F84 %Reverse_List_Done  # JE32 %Reverse_List_Done     ; Stop otherwise
+
+	488B0B                  # LOAD64_into_RCX_from_Address_RBX ; NEXT = HEAD->NEXT
+	488903                  # STORE64_RAX_into_Address_RBX ; HEAD->NEXT = ROOT
+	4889D8                  # COPY_RBX_to_RAX             ; ROOT = HEAD
+	4889CB                  # COPY_RCX_to_RBX             ; HEAD = NEXT
+	E9 %Reverse_List_Loop   # JMP32 %Reverse_List_Loop    ; Keep Going
+
+:Reverse_List_Done
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; Identify_Macros function
+;; Recieves List in RAX
+;; Updates the list in place; does not modify registers
+;; Uses RBX for DEFINE, RCX for I
+:Identify_Macros
+	50                      # PUSH_RAX                    ; Protect RAX
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+	BB &DEFINE_str          # LOADI32_RBX &DEFINE_str     ; Setup define string
+	4889C1                  # COPY_RAX_to_RCX             ; I = HEAD
+:Identify_Macros_Loop
+	488B41 10               # LOAD64_into_RAX_from_Address_RCX_Immediate8 !16 ; I->TEXT
+	E8 %match               # CALLI32 %match              ; IF "DEFINE" == I->TEXT
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; Check if match
+	0F85 %Identify_Macros_Next # JNE32 %Identify_Macros_Next ; Skip the work
+
+	;; Deal with MACRO
+	48C7C0 01000000         # LOADI32_RAX %1              ; Using MACRO
+	488941 08               # STORE64_RAX_into_Address_RCX_Immediate8 !8 ; I->TYPE = MACRO
+
+	488B01                  # LOAD64_into_RAX_from_Address_RCX ; I->NEXT
+	488B40 10               # LOAD64_into_RAX_from_Address_RAX_Immediate8 !16 ; I->NEXT->TEXT
+	488941 10               # STORE64_RAX_into_Address_RCX_Immediate8 !16 ; I->TEXT = I->NEXT->TEXT
+
+	488B01                  # LOAD64_into_RAX_from_Address_RCX ; I->NEXT
+	488B00                  # LOAD64_into_RAX_from_Address_RAX ; I->NEXT->NEXT
+	488B40 10               # LOAD64_into_RAX_from_Address_RAX_Immediate8 !16 ; I->NEXT->NEXT->TEXT
+	488941 18               # STORE64_RAX_into_Address_RCX_Immediate8 !24 ; I->EXPRESSION = I->NEXT->NEXT->TEXT
+
+	488B01                  # LOAD64_into_RAX_from_Address_RCX ; I->NEXT
+	488B00                  # LOAD64_into_RAX_from_Address_RAX ; I->NEXT->NEXT
+	488B00                  # LOAD64_into_RAX_from_Address_RAX ; I->NEXT->NEXT->NEXT
+	488901                  # STORE64_RAX_into_Address_RCX ; I->NEXT = I->NEXT->NEXT->NEXT
+
+:Identify_Macros_Next
+	488B09                  # LOAD64_into_RCX_from_Address_RCX ; I = I->NEXT
+	4883F9 00               # CMP_RCX_Immediate8 !0       ; Check for NULL
+	0F85 %Identify_Macros_Loop # JNE32 %Identify_Macros_Loop ; Keep looping otherwise
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	58                      # POP_RAX                     ; Restore RAX
+	C3                      # RET
+
+:DEFINE_str
+	444546494E4500          # "DEFINE"
+
+
+;; match function
+;; Recieves CHAR* in RAX and CHAR* in RBX
+;; Returns 0 (TRUE) or 1 (FALSE) in RAX
+:match
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+	4889C1                  # COPY_RAX_to_RCX             ; S1 in place
+	4889DA                  # COPY_RBX_to_RDX             ; S2 in place
+:match_Loop
+	8A01                    # LOAD8_AL_from_Address_RCX   ; S1[0]
+	480FB6C0                # ZERO_EXTEND_AL              ; Make it useful
+	8A1A                    # LOAD8_BL_from_Address_RDX   ; S2[0]
+	480FB6DB                # ZERO_EXTEND_BL              ; Make it useful
+	4839D8                  # CMP_RBX_to_RAX              ; See if they match
+	0F85 %match_False       # JNE32 %match_False          ; If not
+
+	4883C1 01               # ADDI8_to_RCX !1             ; S1 = S1 + 1
+	4883C2 01               # ADDI8_to_RDX !1             ; S2 = S2 + 1
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; If reached end of string
+	0F84 %match_Done        # JE32 %match_Done            ; Perfect match
+	E9 %match_Loop          # JMP32 %match_Loop           ; Otherwise keep looping
+
+:match_False
+	48C7C0 01000000         # LOADI32_RAX %1              ; Return false
+:match_Done
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; Line_Macro function
+;; Recieves List in RAX
+;; Updates the list in place; does not modify registers
+;; Uses RAX for I, RBX for I->TEXT, RCX for I->EXPRESSION
+:Line_Macro
+	50                      # PUSH_RAX                    ; Protect RAX
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+:Line_Macro_Loop
+	488B58 08               # LOAD64_into_RBX_from_Address_RAX_Immediate8 !8 ; I->TYPE
+	4883FB 01               # CMP_RBX_Immediate8 !1       ; IF MACRO == I->TYPE
+	0F85 %Line_Macro_Next   # JNE32 %Line_Macro_Next      ; Otherwise move on
+
+	;; Is a macro apply
+	488B58 10               # LOAD64_into_RBX_from_Address_RAX_Immediate8 !16 ; I->TEXT
+	488B48 18               # LOAD64_into_RCX_from_Address_RAX_Immediate8 !24 ; I->EXPRESSION
+	488B00                  # LOAD64_into_RAX_from_Address_RAX ; I->NEXT
+	E8 %Set_Expression      # CALLI32 %Set_Expression     ; Apply it
+	E9 %Line_Macro_Loop     # JMP32 %Line_Macro_Loop      ; Move on to next
+
+:Line_Macro_Next
+	488B00                  # LOAD64_into_RAX_from_Address_RAX ; I->NEXT
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; Check for NULL
+	0F85 %Line_Macro_Loop   # JNE32 %Line_Macro_Loop      ; Keep going
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	58                      # POP_RAX                     ; Restore RAX
+	C3                      # RET
+
+
+;; Set_Expression function
+;; Recieves List in RAX, CHAR* in RBX and CHAR* in RCX
+;; Updates the list in place; does not modify registers
+;; Uses RBX for C, RCX for EXP and RDX for I
+:Set_Expression
+	50                      # PUSH_RAX                    ; Protect RAX
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+	4889C2                  # COPY_RAX_to_RDX             ; Set I
+:Set_Expression_Loop
+	488B42 08               # LOAD64_into_RAX_from_Address_RDX_Immediate8 !8 ; I->TYPE
+	4883F8 01               # CMP_RAX_Immediate8 !1       ; IF MACRO == I->TYPE
+	0F84 %Set_Expression_Next # JE32 %Set_Expression_Next   ; Ignore and move on
+
+	488B42 10               # LOAD64_into_RAX_from_Address_RDX_Immediate8 !16 ; I->TEXT
+	E8 %match               # CALLI32 %match              ; Check for match
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; If match
+	0F85 %Set_Expression_Next # JNE32 %Set_Expression_Next  ; Otherwise next
+
+	;; We have a non-macro match
+	48894A 18               # STORE64_RCX_into_Address_RDX_Immediate8 !24 ; I->EXPRESSION = EXP
+
+:Set_Expression_Next
+	488B12                  # LOAD64_into_RDX_from_Address_RDX ; I = I->NEXT
+	4883FA 00               # CMP_RDX_Immediate8 !0       ; IF NULL == I
+	0F85 %Set_Expression_Loop # JNE32 %Set_Expression_Loop  ; Otherwise keep looping
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	58                      # POP_RAX                     ; Restore RAX
+	C3                      # RET
+
+
+;; Process_String function
+;; Recieves List in RAX
+;; Update the list in place; does not modify registers
+;; Uses RBX for I->TEXT, RCX for I and RDX for S
+:Process_String
+	50                      # PUSH_RAX                    ; Protect RAX
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+	4889C1                  # COPY_RAX_to_RCX             ; I = HEAD
+:Process_String_loop
+	488B41 08               # LOAD64_into_RAX_from_Address_RCX_Immediate8 !8 ; I->TYPE
+	4883F8 02               # CMP_RAX_Immediate8 !2       ; IF STRING == I->TYPE
+	0F85 %Process_String_Next # JNE32 %Process_String_Next  ; Skip to next
+
+	488B59 10               # LOAD64_into_RBX_from_Address_RCX_Immediate8 !16 ; I->TEXT
+	8A03                    # LOAD8_AL_from_Address_RBX   ; I->TEXT[0]
+	480FB6C0                # ZERO_EXTEND_AL              ; make it useful
+	4883F8 27               # CMP_RAX_Immediate8 !39      ; IF '\'' == I->TEXT[0]
+	0F85 %Process_String_Raw # JNE32 %Process_String_Raw   ; Deal with "\""
+
+	;; Deal with '\''
+	4883C3 01               # ADDI8_to_RBX !1             ; I->TEXT + 1
+	488959 18               # STORE64_RBX_into_Address_RCX_Immediate8 !24 ; I->EXPRESSION = I->TEXT + 1
+	E9 %Process_String_Next # JMP32 %Process_String_Next  ; Move on to next
+
+:Process_String_Raw
+	4889D8                  # COPY_RBX_to_RAX             ; Get length of I->TEXT
+	E8 %string_length       # CALLI32 %string_length      ; Do it
+	48C1E8 02               # SHIFT_RIGHT_RAX_Immediate8 !2 ; LENGTH = LENGTH >> 2
+	4883C0 01               # ADDI8_to_RAX !1             ; LENGTH = LENGTH + 1
+	48C1E0 03               # SHIFT_LEFT_RAX_Immediate8 !3 ; LENGTH = LENGTH << 3
+	E8 %malloc              # CALLI32 %malloc             ; Get string
+	4889DA                  # COPY_RBX_to_RDX             ; S = I->TEXT
+	4883C2 01               # ADDI8_to_RDX !1             ; S = S + 1
+	488941 18               # STORE64_RAX_into_Address_RCX_Immediate8 !24 ; I->EXPRESSION = hexify
+	4889C3                  # COPY_RAX_to_RBX             ; Put hexify buffer in rbx
+
+:Process_String_Raw_Loop
+	8A02                    # LOAD8_AL_from_Address_RDX   ; Read 1 chars
+	480FB6C0                # ZERO_EXTEND_AL              ; Make it useful
+	4883C2 01               # ADDI8_to_RDX !1             ; S = S + 1
+	3C 00                   # CMP_AL_Immediate8 !0        ; Check for NULL
+	9C                      # PUSH_FLAGS                  ; Protect condition
+	E8 %hex8                # CALLI32 %hex8               ; write them all
+	9D                      # POP_FLAGS                   ; restore condition
+	0F85 %Process_String_Raw_Loop # JNE32 %Process_String_Raw_Loop ; Keep looping
+
+:Process_String_Next
+	488B09                  # LOAD64_into_RCX_from_Address_RCX ; I = I->NEXT
+	4883F9 00               # CMP_RCX_Immediate8 !0       ; IF NULL == I
+	0F85 %Process_String_loop # JNE32 %Process_String_loop  ; Otherwise keep looping
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	58                      # POP_RAX                     ; Restore RAX
+	C3                      # RET
+
+
+;; string_length function
+;; Recieves CHAR* in RAX
+;; Returns INT in RAX
+;; Uses RAX for CH, RBX for S and RCX for INDEX
+:string_length
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	4889C3                  # COPY_RAX_to_RBX             ; Set S
+	B9 00000000             # LOADI32_RCX %0              ; INDEX = 0
+:string_length_loop
+	8A040B                  # LOAD8_AL_from_Address_RBX_Index_RCX ; S[0]
+	480FB6C0                # ZERO_EXTEND_AL              ; make it useful
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; IF NULL == S[0]
+	0F84 %string_length_done # JE32 %string_length_done    ; Stop
+
+	4883C1 01               # ADDI8_to_RCX !1             ; INDEX = INDEX + 1
+	E9 %string_length_loop  # JMP32 %string_length_loop   ; Keep going
+
+:string_length_done
+	4889C8                  # COPY_RCX_to_RAX             ; RETURN INDEX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; Eval_Immediates function
+;; Recieves List in RAX
+;; Updates the list in place; does not modify registers
+;; Uses RBX for I->TEXT[0], RCX for I->TEXT[1] and RDX for I
+:Eval_Immediates
+	50                      # PUSH_RAX                    ; Protect RAX
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+	4889C2                  # COPY_RAX_to_RDX             ; I = HEAD
+:Eval_Immediates_Loop
+	;; Check for MACRO
+	488B42 08               # LOAD64_into_RAX_from_Address_RDX_Immediate8 !8 ; I->TYPE
+	4883F8 01               # CMP_RAX_Immediate8 !1       ; IF MACRO == I-TYPE
+	0F84 %Eval_Immediates_Next # JE32 %Eval_Immediates_Next  ; Skip to next
+
+	;; Check for NULL EXPRESSION
+	488B42 18               # LOAD64_into_RAX_from_Address_RDX_Immediate8 !24 ; I->EXPRESSION
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; IF NULL == I->EXPRESSION
+	0F85 %Eval_Immediates_Next # JNE32 %Eval_Immediates_Next ; Skip to next
+
+	;; Check if number
+	488B42 10               # LOAD64_into_RAX_from_Address_RDX_Immediate8 !16 ; I->TEXT
+	8A18                    # LOAD8_BL_from_Address_RAX   ; I->TEXT[0]
+	480FB6DB                # ZERO_EXTEND_BL              ; Extend to use
+	4883C0 01               # ADDI8_to_RAX !1             ; I->TEXT + 1
+	8A08                    # LOAD8_CL_from_Address_RAX   ; I->TEXT[1]
+	480FB6C9                # ZERO_EXTEND_CL              ; Extend to use
+	E8 %numerate_string     # CALLI32 %numerate_string    ; Convert string to INT
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; IF 0 == numerate_number(I->TEXT + 1)
+	0F85 %Eval_Immediates_value # JNE32 %Eval_Immediates_value ; Has a value
+
+	;; Last chance for Immediate
+	4883F9 30               # CMP_RCX_Immediate8 !48      ; If '0' == I->TEXT[1]
+	0F85 %Eval_Immediates_Next # JNE32 %Eval_Immediates_Next ; Skip to next
+
+:Eval_Immediates_value
+	E8 %express_number      # CALLI32 %express_number     ; Convert value to hex string
+	488942 18               # STORE64_RAX_into_Address_RDX_Immediate8 !24 ; I->EXPRESSION = express_number(value, I-TEXT[0])
+
+:Eval_Immediates_Next
+	488B12                  # LOAD64_into_RDX_from_Address_RDX ; I = I->NEXT
+	4883FA 00               # CMP_RDX_Immediate8 !0       ; IF NULL == I
+	0F85 %Eval_Immediates_Loop # JNE32 %Eval_Immediates_Loop ; Otherwise keep looping
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	58                      # POP_RAX                     ; Restore RAX
+	C3                      # RET
+
+
+;; numerate_string function
+;; Recieves CHAR* in RAX
+;; Returns value of CHAR* in RAX
+;; Only supports negative decimals and Uppercase Hex (eg 5, -3 and 0xCC)
+;; Uses RAX for VALUE, RBX for S, RCX for CH and RSI for NEGATIVE?
+:numerate_string
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+	56                      # PUSH_RSI                    ; Protect RSI
+	4889C3                  # COPY_RAX_to_RBX             ; put S in correct place
+	48C7C0 00000000         # LOADI32_RAX %0              ; Initialize to Zero
+:numerate_string_loop
+	8A4B 01                 # LOAD8_CL_from_Address_RBX_Immediate8 !1 ; S[1]
+	480FB6C9                # ZERO_EXTEND_CL              ; make it useful
+	4883F9 78               # CMP_RCX_Immediate8 !120     ; IF 'x' == S[1]
+	0F84 %numerate_hex      # JE32 %numerate_hex          ; Deal with hex input
+
+	;; Assume decimal input
+	BE 00000000             # LOADI32_RSI %0              ; Assume no negation
+	8A0B                    # LOAD8_CL_from_Address_RBX   ; S[0]
+	480FB6C9                # ZERO_EXTEND_CL              ; make it useful
+	4883F9 2D               # CMP_RCX_Immediate8 !45      ; IF '-' == S[0]
+	0F85 %numerate_decimal  # JNE32 %numerate_decimal     ; Skip negation
+
+	BE 01000000             # LOADI32_RSI %1              ; Set FLAG
+	4883C3 01               # ADDI8_to_RBX !1             ; S = S + 1
+
+:numerate_decimal
+	8A0B                    # LOAD8_CL_from_Address_RBX   ; S[0]
+	480FB6C9                # ZERO_EXTEND_CL              ; make it useful
+	4883F9 00               # CMP_RCX_Immediate8 !0       ; IF NULL == S[0]
+	0F84 %numerate_decimal_done # JE32 %numerate_decimal_done ; We are done
+
+	486BC0 0A               # IMUL_RAX_Immediate8 !10     ; VALUE = VALUE * 10
+	4883E9 30               # SUBI8_RCX !48               ; CH = CH - '0'
+	4883F9 09               # CMP_RCX_Immediate8 !9       ; Check for illegal
+	0F8F %numerate_string_fail # JG32 %numerate_string_fail  ; If CH > '9'
+	4883F9 00               # CMP_RCX_Immediate8 !0       ; Check for illegal
+	0F8C %numerate_string_fail # JL32 %numerate_string_fail  ; IF CH < 0
+	4801C8                  # ADD_RCX_to_RAX              ; VALUE = VALUE + CH
+	4883C3 01               # ADDI8_to_RBX !1             ; S = S + 1
+	E9 %numerate_decimal    # JMP32 %numerate_decimal     ; Keep looping
+
+:numerate_decimal_done
+	4883FE 01               # CMP_RSI_Immediate8 !1       ; Check if need to negate
+	0F85 %numerate_string_done # JNE32 %numerate_string_done ; Nope
+
+	486BC0 FF               # IMUL_RAX_Immediate8 !-1     ; VALUE = VALUE * -1
+	E9 %numerate_string_done # JMP32 %numerate_string_done ; Done
+
+:numerate_hex
+	4883C3 02               # ADDI8_to_RBX !2             ; S = S + 2
+:numerate_hex_loop
+	8A0B                    # LOAD8_CL_from_Address_RBX   ; S[0]
+	480FB6C9                # ZERO_EXTEND_CL              ; make it useful
+	4883F9 00               # CMP_RCX_Immediate8 !0       ; IF NULL == S[0]
+	0F84 %numerate_string_done # JE32 %numerate_string_done  ; We are done
+
+	48C1E0 04               # SHIFT_LEFT_RAX_Immediate8 !4 ; VALUE = VALUE << 4
+	4883E9 30               # SUBI8_RCX !48               ; CH = CH - '0'
+	4883F9 0A               # CMP_RCX_Immediate8 !10      ; IF 10 >= CH
+	0F8C %numerate_hex_digit # JL32 %numerate_hex_digit    ; NO
+	4883E9 07               # SUBI8_RCX !7                ; Push A-F into range
+:numerate_hex_digit
+	4883F9 0F               # CMP_RCX_Immediate8 !15      ; Check for illegal
+	0F8F %numerate_string_fail # JG32 %numerate_string_fail  ; If CH > 'F'
+	4883F9 00               # CMP_RCX_Immediate8 !0       ; Check for illegal
+	0F8C %numerate_string_fail # JL32 %numerate_string_fail  ; IF CH < 0
+	4801C8                  # ADD_RCX_to_RAX              ; VALUE = VALUE + CH
+	4883C3 01               # ADDI8_to_RBX !1             ; S = S + 1
+	E9 %numerate_hex_loop   # JMP32 %numerate_hex_loop    ; Keep looping
+
+:numerate_string_fail
+	48C7C0 00000000         # LOADI32_RAX %0              ; return ZERO
+
+:numerate_string_done
+	5E                      # POP_RSI                     ; Restore RSI
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; express_number function
+;; Recieves INT in RAX and CHAR in RBX
+;; Allocates a string and expresses the value in hex
+;; Returns string in RAX
+;; Uses RAX for VALUE, RBX for S and RCX for CH
+:express_number
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+	4889D9                  # COPY_RBX_to_RCX             ; Put CH in right place
+	4889C3                  # COPY_RAX_to_RBX             ; Protect VALUE
+	4883F9 25               # CMP_RCX_Immediate8 !37      ; IF '%' == CH
+	0F85 %express_number2   # JNE32 %express_number2      ; Otherwise try @
+
+	48C7C0 09000000         # LOADI32_RAX %9              ; We need 3bytes
+	E8 %malloc              # CALLI32 %malloc             ; Get S pointer
+	4893                    # SWAP_RAX_RBX                ; Put S and VALUE in place
+	53                      # PUSH_RBX                    ; Protect S
+	E8 %hex32l              # CALLI32 %hex32l             ; Store 32bits
+	E9 %express_number_done # JMP32 %express_number_done  ; done
+
+:express_number2
+	4883F9 40               # CMP_RCX_Immediate8 !64      ; IF '@' == CH
+	0F85 %express_number1   # JNE32 %express_number1      ; Othrewise try !
+
+	48C7C0 05000000         # LOADI32_RAX %5              ; We need 3bytes
+	E8 %malloc              # CALLI32 %malloc             ; Get S pointer
+	4893                    # SWAP_RAX_RBX                ; Put S and VALUE in place
+	53                      # PUSH_RBX                    ; Protect S
+	E8 %hex16l              # CALLI32 %hex16l             ; Store 16bits
+	E9 %express_number_done # JMP32 %express_number_done  ; done
+
+:express_number1
+	48C7C0 03000000         # LOADI32_RAX %3              ; We need 3bytes
+	E8 %malloc              # CALLI32 %malloc             ; Get S pointer
+	4893                    # SWAP_RAX_RBX                ; Put S and VALUE in place
+	53                      # PUSH_RBX                    ; Protect S
+	E8 %hex8                # CALLI32 %hex8               ; Store 8bit
+
+:express_number_done
+	58                      # POP_RAX                     ; Restore S
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; HEX to ascii routine
+;; Recieves INT in RAX and CHAR* in RBX
+;; Stores ascii of INT in CHAR*
+;; Returns only modifying RAX
+:hex64l
+	50                      # PUSH_RAX                    ; Protect top 32
+	E8 %hex32l              # CALLI32 %hex32l             ; Store it
+	58                      # POP_RAX                     ; do top 32
+	48C1E8 20               # SHIFT_RIGHT_RAX_Immediate8 !32 ; do bottom 32 first
+:hex32l
+	50                      # PUSH_RAX                    ; Protect top 16
+	E8 %hex16l              # CALLI32 %hex16l             ; Store it
+	58                      # POP_RAX                     ; do top 16
+	48C1E8 10               # SHIFT_RIGHT_RAX_Immediate8 !16 ; do bottom 16 first
+:hex16l
+	50                      # PUSH_RAX                    ; Protect top byte
+	E8 %hex8                # CALLI32 %hex8               ; Store it
+	58                      # POP_RAX                     ; do high byte
+	48C1E8 08               # SHIFT_RIGHT_RAX_Immediate8 !8 ; do bottom byte first
+:hex8
+	50                      # PUSH_RAX                    ; Protect bottom nibble
+	48C1E8 04               # SHIFT_RIGHT_RAX_Immediate8 !4 ; do high nibble first
+	E8 %hex4                # CALLI32 %hex4               ; Store it
+	58                      # POP_RAX                     ; do low nibble
+:hex4
+	4883E0 0F               # AND_RAX_Immediate8 !0xF     ; isolate nibble
+	04 30                   # ADDI8_to_AL !48             ; convert to ascii
+	3C 39                   # CMP_AL_Immediate8 !57       ; valid digit?
+	76 !hex1                # JBE8 !hex1                  ; yes
+	04 07                   # ADDI8_to_AL !7              ; use alpha range
+:hex1
+	8803                    # STORE8_AL_into_Address_RBX  ; store result
+	4883C3 01               # ADDI8_to_RBX !1             ; next position
+	C3                      # RET
+
+
+;; Preserve_Other function
+;; Recieves List in RAX
+;; Updates the list in place; does not modify registers
+;; Uses RAX for I, RBX for I->TEXT
+:Preserve_Other
+	50                      # PUSH_RAX                    ; Protect RAX
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	52                      # PUSH_RDX                    ; Protect RDX
+:Preserve_Other_Loop
+	488B58 18               # LOAD64_into_RBX_from_Address_RAX_Immediate8 !24 ; I->EXPRESSION
+	4883FB 00               # CMP_RBX_Immediate8 !0       ; IF NULL == I->EXPRESSION
+	0F85 %Preserve_Other_Next # JNE32 %Preserve_Other_Next  ; Otherwise next
+
+	;; Needs preserving
+	488B58 10               # LOAD64_into_RBX_from_Address_RAX_Immediate8 !16 ; I->TEXT
+	488958 18               # STORE64_RBX_into_Address_RAX_Immediate8 !24 ; I->EXPRESSION = I->TEXT
+
+:Preserve_Other_Next
+	488B00                  # LOAD64_into_RAX_from_Address_RAX ; I = I->NEXT
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; IF NULL == I
+	0F85 %Preserve_Other_Loop # JNE32 %Preserve_Other_Loop  ; Otherwise keep looping
+
+	5A                      # POP_RDX                     ; Restore RDX
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	58                      # POP_RAX                     ; Restore RAX
+	C3                      # RET
+
+
+;; Print_Hex function
+;; Recieves list in RAX
+;; walks the list and prints the I->EXPRESSION for all nodes followed by newline
+;; Uses RBX for I
+:Print_Hex
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	4C89EB                  # COPY_R13_to_RBX             ; I = Head
+:Print_Hex_Loop
+	488B43 08               # LOAD64_into_RAX_from_Address_RBX_Immediate8 !8 ; I->TYPE
+	4883F8 01               # CMP_RAX_Immediate8 !1       ; IF MACRO == I->TYPE
+	0F84 %Print_Hex_Next    # JE32 %Print_Hex_Next        ; Skip
+
+	488B43 18               # LOAD64_into_RAX_from_Address_RBX_Immediate8 !24 ; Using EXPRESSION
+	E8 %File_Print          # CALLI32 %File_Print         ; Print it
+	48C7C0 0A000000         # LOADI32_RAX %10             ; NEWLINE
+	E8 %fputc               # CALLI32 %fputc              ; Append it
+
+:Print_Hex_Next
+	488B1B                  # LOAD64_into_RBX_from_Address_RBX ; Iterate to next Token
+	4883FB 00               # CMP_RBX_Immediate8 !0       ; Check for NULL
+	0F85 %Print_Hex_Loop    # JNE32 %Print_Hex_Loop       ; Otherwise keep looping
+
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; File_Print function
+;; Recieves CHAR* in RAX
+;; calls fputc for every non-null char
+:File_Print
+	53                      # PUSH_RBX                    ; Protect RBX
+	51                      # PUSH_RCX                    ; Protect RCX
+	4889C3                  # COPY_RAX_to_RBX             ; Protect S
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; Protect against nulls
+	0F84 %File_Print_Done   # JE32 %File_Print_Done       ; Simply don't try to print them
+:File_Print_Loop
+	8A03                    # LOAD8_AL_from_Address_RBX   ; Read byte
+	480FB6C0                # ZERO_EXTEND_AL              ; zero extend
+	4883F8 00               # CMP_RAX_Immediate8 !0       ; Check for NULL
+	0F84 %File_Print_Done   # JE32 %File_Print_Done       ; Stop at NULL
+
+	E8 %fputc               # CALLI32 %fputc              ; write it
+	4883C3 01               # ADDI8_to_RBX !1             ; S = S + 1
+	E9 %File_Print_Loop     # JMP32 %File_Print_Loop      ; Keep going
+
+:File_Print_Done
+	59                      # POP_RCX                     ; Restore RCX
+	5B                      # POP_RBX                     ; Restore RBX
+	C3                      # RET
+
+
+;; fputc function
+;; recieves CHAR in RAX and FILE* in R14
+;; writes char and returns
+:fputc
+	50                      # PUSH_RAX                    ; We are writing rax
+	488D3424                # LEA_RSI                     ; Get stack address
+	4C89F7                  # COPY_R14_to_RDI             ; Write to target file
+	48C7C0 01000000         # LOADI32_RAX %1              ; the syscall number for write
+	52                      # PUSH_RDX                    ; Protect RDX
+	BA 01000000             # LOADI32_RDX %1              ; set the size of chars we want
+	4153                    # PUSH_R11                    ; Protect HEAD
+	0F05                    # SYSCALL                     ; call the Kernel
+	415B                    # POP_R11                     ; Restore HEAD
+	5A                      # POP_RDX                     ; Restore RDX
+	58                      # POP_RAX                     ; Restore stack
+	C3                      # RET
+
+:ELF_end

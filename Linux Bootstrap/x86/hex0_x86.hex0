@@ -1,0 +1,231 @@
+## Copyright (C) 2019 Jeremiah Orians
+## This file is part of stage0.
+##
+## stage0 is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## stage0 is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+
+## ELF Header
+#:ELF_base
+7F 45 4C 46                     # e_ident[EI_MAG0-3] ELF's magic number
+
+01                              # e_ident[EI_CLASS] Indicating 32 bit
+01                              # e_ident[EI_DATA] Indicating little endianness
+01                              # e_ident[EI_VERSION] Indicating original elf
+
+00                              # e_ident[EI_OSABI] Set at 0 because none cares
+00                              # e_ident[EI_ABIVERSION] See above
+
+00 00 00 00 00 00 00            # e_ident[EI_PAD]
+
+02 00                           # e_type Indicating Executable
+03 00                           # e_machine Indicating x86
+01 00 00 00                     # e_version Indicating original elf
+
+54 80 04 08                     # e_entry Address of the entry point
+34 00 00 00                     # e_phoff Address of program header table
+00 00 00 00                     # e_shoff Address of section header table
+
+00 00 00 00                     # e_flags
+
+34 00                           # e_ehsize Indicating our 52 Byte header
+
+20 00                           # e_phentsize size of a program header table
+01 00                           # e_phnum number of entries in program table
+
+00 00                           # e_shentsize size of a section header table
+00 00                           # e_shnum number of entries in section table
+
+00 00                           # e_shstrndx index of the section names
+
+## Program Header
+#:ELF_program_headers
+#:ELF_program_header__text
+01 00 00 00                     # ph_type: PT-LOAD = 1
+00 00 00 00                     # ph_offset
+
+00 80 04 08                     # ph_vaddr
+00 80 04 08                     # ph_physaddr
+
+65 01 00 00                     # ph_filesz
+65 01 00 00                     # ph_memsz
+
+07 00 00 00                     # ph_flags: PF-X|PF-W|PF-R = 7
+01 00 00 00                     # ph_align
+
+#:ELF_text
+
+; Where the ELF Header is going to hit
+; Simply jump to _start
+; Our main function
+# :_start ; (0x8048054)
+	58                          # POP_EAX                     ;·Get·the·number·of·arguments
+	5B                          # POP_EBX                     ;·Get·the·program·name
+	5B                          # POP_EBX                     ;·Get·the·actual·input name
+	B9 00000000                 # LOADI32_ECX %0              ;·prepare·read_only
+	BA 00000000                 # LOADI32_EDX %0              ; Extra sure
+	B8 05000000                 # LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	CD80                        # INT_80                      ; Now open that damn file
+	A3 55810408                 # STORE32_Absolute32_eax &fin ; Preserve the file pointer we were given
+
+	5B                          # POP_EBX                     ;·Get·the·actual·output name
+	B9 41020000                 # LOADI32_ECX %577            ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	BA C0010000                 # LOADI32_EDX %448            ; Prepare file as RWX for owner only (700 in octal)
+	B8 05000000                 # LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	CD80                        # INT_80                      ; Now open that damn file
+	A3 59810408                 # STORE32_Absolute32_eax &fout ; Preserve the file pointer we were given
+
+	; Our flag for byte processing
+	BD FFFFFFFF                 # LOADI32_EBP %-1
+
+	; temp storage for the sum
+	BF 00000000
+
+#:loop ; (0x804808E)
+	; Read a byte
+	E8 9E000000                 # CALL %Read_byte
+
+	; process byte
+	E8 29000000                 # CALL %hex
+
+	; Deal with -1 values
+	83F8 00                     # CMPI8_EAX !0
+	7C F1                       # JL8 !loop
+
+	; deal with toggle
+	83FD 00                     # CMPI8_EBP !0
+	7D 09                       # JGE8 !print
+
+	; process first byte of pair
+	89C7                        # COPY_EAX_to_EDI
+	BD 00000000                 # LOADI32_EBP %0
+	EB E3                       # JMP8 !loop
+
+; process second byte of pair
+#:print ; (0x80480AB)
+	; update the sum and store in output
+	C1E7 04                     # SHLI8_EDI !4
+	01F8                        # ADD_EDI_to_EAX
+	A2 5D810408                 # STORE8_Absolute32_al &output
+
+	; flip the toggle
+	BD FFFFFFFF                 # LOADI32_EBP %-1
+
+	E8 5A000000                 # CALL %write_byte
+
+	EB CD                       # JMP8 !loop
+
+#:hex ; (0x80480C1)
+	; Purge Comment Lines (#)
+	83F8 23                     # CMPI8_EAX !35
+	74 25                       # JE8 !purge_comment
+
+	; Purge Comment Lines (;)
+	83F8 3B                     # CMPI8_EAX !59
+	74 20                       # JE8 !purge_comment
+
+	; deal all ascii less than 0
+	83F8 30                     # CMPI8_EAX !48
+	7C 37                       # JL8 !ascii_other
+
+	; deal with 0-9
+	83F8 3A                     # CMPI8_EAX !58
+	7C 26                       # JL8 !ascii_num
+
+	; deal with all ascii less than A
+	83F8 41                     # CMPI8_EAX !65
+	7C 2D                       # JL8 !ascii_other
+
+	; deal with A-F
+	83F8 47                     # CMPI8_EAX !71
+	7C 24                       # JL8 !ascii_high
+
+	;deal with all ascii less than a
+	83F8 61                     # CMPI8_EAX !97
+	7C 23                       # JL8 !ascii_other
+
+	;deal with a-f
+	83F8 67                     # CMPI8_EAX !103
+	7C 16                       # JL8 !ascii_low
+
+	; The rest that remains needs to be ignored
+	EB 1C                       # JMP8 !ascii_other
+
+#:purge_comment ; (0x80480EB)
+	; Read a byte
+	E8 41000000                 # CALL %Read_byte
+
+	; Loop if not LF
+	83F8 0A                     # CMPI8_EAX !10
+	75 F6                       # JNE8 !purge_comment
+
+	; Otherwise return -1
+	B8 FFFFFFFF                 # LOADI32_EAX %-1
+	C3                          # RET
+
+#:ascii_num ; (0x80480FB)
+	83E8 30                     # SUBI8_EAX !48
+	C3                          # RET
+
+#:ascii_low ; (0x80480FF)
+	83E8 57                     # SUBI8_EAX !87
+	C3                          # RET
+
+#:ascii_high ; (0x8048103)
+	83E8 37                     # SUBI8_EAX !55
+	C3                          # RET
+
+#:ascii_other ; (0x8048107)
+	B8 FFFFFFFF                 # LOADI32_EAX %-1
+	C3                          # RET
+
+#:Done ; (0x804810D)
+	; program completed Successfully
+	BB 00000000                 # LOADI32_EBX %0              ; All is well
+	B8 01000000                 # LOADI32_EAX %1              ; put the exit syscall number in eax
+	CD80                        # INT_80                      ; Call it a good day
+
+#:write_byte ; (0x8048119)
+	; Print our Hex
+	BA 01000000                 # LOADI32_EDX %1              ; set the size of chars we want
+	B9 5D810408                 # LOADI32_ECX &output         ; What we are writing
+	8B1D 59810408               # LOAD32_Absolute32_ebx &fout ; Where are we writing to
+	B8 04000000                 # LOADI32_EAX %4              ; the syscall number for write
+	CD80                        # INT_80                      ; call the Kernel
+	C3                          # RET
+
+#:Read_byte ; (0x8048131)
+	; Attempt to read 1 byte from STDIN
+	BA 01000000                 # LOADI32_EDX %1              ; set the size of chars we want
+	B9 61810408                 # LOADI32_ECX &input          ; Where to put it
+	8B1D 55810408               # LOAD32_Absolute32_ebx &fin  ; Where are we reading from
+	B8 03000000                 # LOADI32_EAX %3              ; the syscall number for read
+	CD80                        # INT_80                      ; call the Kernel
+
+	85C0                        # TEST                        ; check what we got
+	74 C1                       # JE8 !Done                   ; Got EOF call it done
+
+	; load byte
+	A0 61810408                 # LOAD8_Absolute32_al &input  ; load char
+	0FB6C0                      # MOVZX                       ; We have to zero extend it to use it
+	C3                          # RET
+
+#:fin ; (0x8048155)
+	00000000                    # NULL
+#:fout ; (0x8048159)
+	00000000                    # NULL
+#:output ; (0x804815D)
+	00000000                    # NULL
+#:input ; (0x8048161)
+	00000000                    # NULL
+#:ELF_end

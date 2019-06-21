@@ -1,0 +1,234 @@
+### Copyright (C) 2016 Jeremiah Orians
+### Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
+### This file is part of stage0.
+###
+### stage0 is free software: you can redistribute it and/or modify
+### it under the terms of the GNU General Public License as published by
+### the Free Software Foundation, either version 3 of the License, or
+### (at your option) any later version.
+###
+### stage0 is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU General Public License for more details.
+###
+### You should have received a copy of the GNU General Public License
+### along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+### elf64.hex2: 64 bit elf header in hex2
+### if you wish to use this header, you need to add :ELF_end to the end of your
+### M1 or hex2 files.
+
+## ELF Header
+#:ELF_base
+7F 45 4C 46        ## e_ident[EI_MAG0-3] ELF's magic number
+
+02                 ## e_ident[EI_CLASS] Indicating 64 bit
+01                 ## e_ident[EI_DATA] Indicating little endianness
+01                 ## e_ident[EI_VERSION] Indicating original elf
+
+00                 ## e_ident[EI_OSABI] Set at 0 because none cares
+00                 ## e_ident[EI_ABIVERSION] See above
+
+00 00 00 00 00 00 00 ## e_ident[EI_PAD]
+02 00              ## e_type Indicating Executable
+3E 00              ## e_machine Indicating AMD64
+01 00 00 00        ## e_version Indicating original elf
+
+78 00 60 00 00 00 00 00 ## e_entry Address of the entry point (Number of bytes this header is + Base Address)
+40 00 00 00 00 00 00 00 ## e_phoff Address of program header table
+00 00 00 00 00 00 00 00 ## e_shoff Address of section header table
+
+00 00 00 00        ## e_flags
+40 00              ## e_ehsize Indicating our 64 Byte header
+
+38 00              ## e_phentsize size of a program header table
+01 00              ## e_phnum number of entries in program table
+
+00 00              ## e_shentsize size of a section header table
+00 00              ## e_shnum number of entries in section table
+
+00 00              ## e_shstrndx index of the section names
+
+## Program Header
+#:ELF_program_headers
+01 00 00 00             ## p_type
+06 00 00 00             ## Flags
+00 00 00 00 00 00 00 00 ## p_offset
+
+00 00 60 00 00 00 00 00 ## p_vaddr
+00 00 60 00 00 00 00 00 ## p_physaddr
+
+AF 01 00 00 00 00 00 00 ## p_filesz
+AF 01 00 00 00 00 00 00 ## p_memsz
+
+01 00 00 00 00 00 00 00 ## Required alignment
+
+#:ELF_text
+
+# Where the ELF Header is going to hit
+# Simply jump to _start
+# Our main function
+#:_start
+	58                  ; POP_RAX         #·Get·the·number·of·arguments
+	5F                  ; POP_RDI         #·Get·the·program·name
+	5F                  ; POP_RDI         #·Get·the·actual·input name
+	48C7C6 00000000     ; LOADI32_RSI %0  #·prepare·read_only
+	48C7C0 02000000     ; LOADI32_RAX %2  #·the·syscall·number·for·open()
+	0F05                ; SYSCALL         # Now open that damn file
+	4989C1              ; COPY_RAX_to_R9  # Preserve the file pointer we were given
+
+	5F                  ; POP_RDI         #·Get·the·actual·output name
+	48C7C6 41020000     ; LOADI32_RSI %577 # Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	48C7C2 C0010000     ; LOADI32_RDX %448 # Prepare file as RWX for owner only (700 in octal)
+	48C7C0 02000000     ; LOADI32_RAX %2  #·the·syscall·number·for·open()
+	0F05                ; SYSCALL         # Now open that damn file
+	4989C2              ; COPY_RAX_to_R10 # Preserve the file pointer we were given
+
+	# Our flag for byte processing
+	49C7C7 FFFFFFFF     ; LOADI32_R15 %-1
+
+	# temp storage for the sum
+	49C7C6 00000000     ; LOADI32_R14 %0
+
+#:loop
+	# Read a byte
+	E8 C4000000       ; CALLI32 %read_byte
+
+	# process byte
+	E8 34000000       ; CALLI32 %hex
+
+	# deal with -1 values
+	4883F8 00           ; CMP_RAX_Immediate8 !0
+	7C F0               ; JL8 !loop
+
+	# deal with toggle
+	4983FF 00           ; CMP_R15_Immediate8 !0
+	7D 0C               ; JGE8 !print
+
+	# process first byte of pair
+	4989C6              ; MOVE_R14_RAX
+	49C7C7 00000000     ; LOADI32_R15 %0
+	EB DE               ; JMP8 !loop
+
+# process second byte of pair
+#:print
+	# update the sum and store in output
+	49C1E6 04           ; SHL_R14_Immediate8 !4
+	4C01F0              ; ADD_RAX_R14
+	880425 7C016000     ; STORE8_al_Absolute32 &output
+
+	# flip the toggle
+	49C7C7 FFFFFFFF     ; LOADI32_R15 %-1
+
+	E8 6E000000         ; CALLI32 %write_byte
+
+	EB C2               ; JMP8 !loop
+
+#:hex
+	# Purge Comment Lines (#)
+	4883F8 23           ; CMP_RAX_Immediate8 !35
+	74 2C               ; JE8 !purge_comment
+
+	# Purge Comment Lines (;)
+	4883F8 3B           ; CMP_RAX_Immediate8 !59
+	74 26               ; JE8 !purge_comment
+
+	# deal all ascii less than '0'
+	4883F8 30           ; CMP_RAX_Immediate8 !48
+	7C 42               ; JL8 !ascii_other
+
+	# deal with 0-9
+	4883F8 3A           ; CMP_RAX_Immediate8 !58
+	7C 2D               ; JL8 !ascii_num
+
+	# deal with all ascii less than 'A'
+	4883F8 41           ; CMP_RAX_Immediate8 !65
+	7C 36               ; JL8 !ascii_other
+
+	# deal with 'A'-'F'
+	4883F8 47           ; CMP_RAX_Immediate8 !71
+	7C 2B               ; JL8 !ascii_high
+
+	# deal with all ascii less than 'a'
+	4883F8 61           ; CMP_RAX_Immediate8 !97
+	7C 2A               ; JL8 !ascii_other
+
+	#deal with 'a'-'f'
+	4883F8 67           ; CMP_RAX_Immediate8 !103
+	7C 1A               ; JL8 !ascii_low
+
+	# The rest that remains needs to be ignored
+	EB 22               ; JMP8 !ascii_other
+
+#:purge_comment
+	# Read a byte
+	E8 54000000         ; CALLI32 %read_byte
+
+	# Loop if not LF
+	4883F8 0A           ; CMP_RAX_Immediate8 !10
+	75 F5               ; JNE8 !purge_comment
+
+
+	# Otherwise return -1
+	48C7C0 FFFFFFFF     ; LOADI32_RAX %-1
+	C3                  ; RETQ
+
+#:ascii_num
+	4883E8 30           ; SUB_RAX_Immediate8 !48
+	C3                  ; RETQ
+
+#:ascii_low
+	4883E8 57           ; SUB_RAX_Immediate8 !87
+	C3                  ; RETQ
+
+#:ascii_high
+	4883E8 37           ; SUB_RAX_Immediate8 !55
+	C3                  ; RETQ
+
+#:ascii_other
+	48C7C0 FFFFFFFF     ; LOADI32_RAX %-1
+	C3                  ; RETQ
+
+#:Done
+	# program completed Successfully
+	48C7C7 00000000     ; LOADI32_RDI %0  # All is well
+	48C7C0 3C000000     ; LOADI32_RAX %60 # put the exit syscall number in rax
+	0F05                ; SYSCALL         # Call it a good day
+
+#:write_byte
+	# Print our Hex
+	48C7C2 01000000     ; LOADI32_RDX %1  # set the size of chars we want
+	48C7C6 7C016000     ; LOADI32_RSI &output # What we are writing
+	4C89D7              ; COPY_R10_to_RDI # Where are we writing to
+	48C7C0 01000000     ; LOADI32_RAX %1  # the syscall number for write
+	0F05                ; SYSCALL         # call the Kernel
+	C3                  ; RET
+
+# Where we are putting our output
+#:output
+	# Reserve 4bytes of Zeros
+	00000000            ; NULL
+
+#:read_byte
+	# Attempt to read 1 byte from STDIN
+	48C7C2 01000000     ; LOADI32_RDX %1  # set the size of chars we want
+	48C7C6 AB016000     ; LOADI32_RSI &input # Where to put it
+	4C89CF              ; COPY_R9_to_RDI  # Where are we reading from
+	48C7C0 00000000     ; LOADI32_RAX %0  # the syscall number for read
+	0F05                ; SYSCALL         # call the Kernel
+
+	4885C0              ; TEST_RAX_RAX    # check what we got
+	74 B2               ; JE8 !Done       # Got EOF call it done
+
+	# load byte
+	8A0425 AB016000     ; LOAD8_al_Absolute32 &input # load char
+	480FB6C0            ; MOVZBQ_RAX_AL   # We have to zero extend it to use it
+	C3                  ; RET
+
+# Where we get our input
+#:input
+	# Reserve 4bytes of Zeros
+	00000000            ; NULL
+
+#:ELF_end

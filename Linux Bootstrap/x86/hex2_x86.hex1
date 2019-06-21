@@ -1,0 +1,636 @@
+;; Copyright (C) 2017 Jeremiah Orians
+;; This file is part of stage0.
+;;
+;; stage0 is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; stage0 is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+## ELF Header
+7F 45 4C 46                     # e_ident[EI_MAG0-3] ELF's magic number
+
+01                              # e_ident[EI_CLASS] Indicating 32 bit
+01                              # e_ident[EI_DATA] Indicating little endianness
+01                              # e_ident[EI_VERSION] Indicating original elf
+
+00                              # e_ident[EI_OSABI] Set at 0 because none cares
+00                              # e_ident[EI_ABIVERSION] See above
+
+00 00 00 00 00 00 00            # e_ident[EI_PAD]
+
+02 00                           # e_type Indicating Executable
+03 00                           # e_machine Indicating x86
+01 00 00 00                     # e_version Indicating original elf
+
+54 80 04 08                     # e_entry Address of the entry point
+34 00 00 00                     # e_phoff Address of program header table
+00 00 00 00                     # e_shoff Address of section header table
+
+00 00 00 00                     # e_flags
+
+34 00                           # e_ehsize Indicating our 52 Byte header
+
+20 00                           # e_phentsize size of a program header table
+01 00                           # e_phnum number of entries in program table
+
+00 00                           # e_shentsize size of a section header table
+00 00                           # e_shnum number of entries in section table
+
+00 00                           # e_shstrndx index of the section names
+
+## Program Header
+01 00 00 00                     # ph_type: PT-LOAD = 1
+00 00 00 00                     # ph_offset
+
+00 80 04 08                     # ph_vaddr
+00 80 04 08                     # ph_physaddr
+
+7E 05 00 00                     # ph_filesz
+7E 05 00 00                     # ph_memsz
+
+07 00 00 00                    # ph_flags: PF-X|PF-W|PF-R = 7
+01 00 00 00                    # ph_align
+
+	;; Register usage:
+	;; EAX, EDX, ECX, EBX => Temps
+	;; EDI => IP
+	;; EBP => MALLOC
+	;; ESI => HEAD
+
+	;; Struct format: (size 24)
+	;; NEXT => 0
+	;; TARGET => 8
+	;; NAME => 16
+
+; Where the ELF Header is going to hit
+; Simply jump to _start
+; Our main function
+
+#:_start
+	BB 00000000                 ; LOADI32_EBX %0              ; Get current pointer
+	E8 %x                       ; CALL32 %malloc              ; Get current HEAP
+	89C3                        ; COPY_EAX_to_EBX             ; Using current
+	89C5                        ; COPY_EAX_to_EBP             ; Setup MALLOC
+	81C3 00007D00               ; ADDI32_EBX %8192000         ; Create space for temp
+	E8 %x                       ; CALL32 %malloc              ; Give ourselves 8192000 bytes to work with
+
+	58                          ; POP_EAX                     ;·Get·the·number·of·arguments
+	5B                          ; POP_EBX                     ;·Get·the·program·name
+	5B                          ; POP_EBX                     ;·Get·the·actual·input name
+	B9 00000000                 ; LOADI32_ECX %0              ;·prepare·read_only
+	BA 00000000                 ; LOADI32_EDX %0              ; Really sure
+	B8 05000000                 ; LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	CD80                        ; INT_80                      ; Now open that damn file
+	A3 6E850408                 ; STORE32_Absolute32_eax &Input ; Preserve the file pointer we were given
+
+	5B                          ; POP_EBX                     ;·Get·the·actual·output name
+	B9 41020000                 ; LOADI32_ECX %577            ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	BA C0010000                 ; LOADI32_EDX %448            ; Prepare file as RWX for owner only (700 in octal)
+	B8 05000000                 ; LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	CD80                        ; INT_80                      ; Now open that damn file
+	83F8 00                     ; CMPI8_EAX !0                ; Check for missing output
+	0F8F %a                     ; JG32 %_start_out            ; Have real input
+	B8 01000000                 ; LOADI32_EAX %1              ; Use stdout
+
+:a #:_start_out
+	A3 72850408                 ; STORE32_Absolute32_eax &Output ; Preserve the file pointer we were given
+
+
+	E8 %I                       ; CALL32 %ClearScratch        ; Zero scratch
+	B8 FFFFFFFF                 ; LOADI32_EAX %-1             ; Our flag for byte processing
+	A3 6A850408                 ; STORE32_Absolute32_eax &Flag ; Set
+	B8 00000000                 ; LOADI32_EAX %0              ; temp storage for the sum
+	A3 66850408                 ; STORE32_Absolute32_eax &High ; Set
+	BF 00800408                 ; LOADI32_EDI %0x8048000      ; Our starting IP
+	BE 00000000                 ; LOADI32_ESI %0              ; HEAD = NULL
+	E8 %b                       ; CALL32 %First_pass          ; Process it
+
+	; rewind input file
+	8B1D 6E850408               ; LOAD32_Absolute32_ebx &Input ; Using our input file
+	B9 00000000                 ; LOADI32_ECX %0              ; Offset Zero
+	BA 00000000                 ; LOADI32_EDX %0              ; Whence Zero
+	B8 13000000                 ; LOADI32_EAX %19             ; lseek
+	56                          ; PUSH_ESI                    ; Protect HEAD
+	CD80                        ; INT_80
+	5E                          ; POP_ESI                     ; Restore HEAD
+
+	B8 FFFFFFFF                 ; LOADI32_EAX %-1             ; Our flag for byte processing
+	A3 6A850408                 ; STORE32_Absolute32_eax &Flag ; Set
+	B8 00000000                 ; LOADI32_EAX %0              ; temp storage for the sum
+	A3 66850408                 ; STORE32_Absolute32_eax &High ; Set
+	BF 00800408                 ; LOADI32_EDI %0x8048000      ; Our starting IP
+	E8 %l                       ; CALL32 %Second_pass         ; Process it
+
+	E9 %w                       ; JMP32 %Done
+
+:b #:First_pass
+	E8 %y                       ; CALL32 %Read_byte
+
+	; Deal with EOF
+	83F8 FC                     ; CMPI8_EAX !-4
+	0F84 %j                     ; JE32 %First_pass_done
+
+	; Check for :
+	83F8 3A                     ; CMPI8_EAX !0x3A
+	0F85 %c                     ; JNE32 %First_pass_0
+
+	; Deal with label
+	E9 %D                       ; JMP32 %StoreLabel
+
+:c #:First_pass_0
+	; Check for !
+	83F8 21                     ; CMPI8_EAX !0x21
+	0F84 %i                     ; JE32 %First_pass_pointer
+
+	; Check for @
+	83F8 40                     ; CMPI8_EAX !0x40
+	0F84 %i                     ; JE32 %First_pass_pointer
+
+	; Check for $
+	83F8 24                     ; CMPI8_EAX !0x24
+	0F84 %i                     ; JE32 %First_pass_pointer
+
+	; Check for %
+	83F8 25                     ; CMPI8_EAX !0x25
+	0F84 %i                     ; JE32 %First_pass_pointer
+
+	; Check for &
+	83F8 26                     ; CMPI8_EAX !0x26
+	0F84 %i                     ; JE32 %First_pass_pointer
+
+	; Deal with everything else
+	E8 %k                       ; CALL32 %hex                 ; Process our char
+
+	; Deal with EOF
+	83F8 FC                     ; CMPI8_EAX !-4
+	0F84 %j                     ; JE32 %First_pass_done
+
+	; deal with -1 values
+	83F8 00                     ; CMPI8_EAX !0
+	0F8C %b                     ; JL32 %First_pass
+
+	; deal with toggle
+	A1 6A850408                 ; LOAD32_Absolute32_eax &Flag
+	83F8 00                     ; CMPI8_EAX !0
+	0F84 %d                     ; JE32 %First_pass_1
+	83C7 01                     ; ADDI8_EDI !1                ; Increment IP
+
+:d #:First_pass_1
+	F7D0                        ; NOT_EAX
+	A3 6A850408                 ; STORE32_Absolute32_eax &Flag
+	E9 %b                       ; JMP32 %First_pass
+
+:e #:Update_Pointer
+	; Check for !
+	83F8 21                     ; CMPI8_EAX !0x21
+	0F84 %h                     ; JE32 %Update_Pointer_1
+
+	; Check for @
+	83F8 40                     ; CMPI8_EAX !0x40
+	0F84 %g                     ; JE32 %Update_Pointer_2
+
+	; Check for $
+	83F8 24                     ; CMPI8_EAX !0x24
+	0F84 %g                     ; JE32 %Update_Pointer_2
+
+	; Check for %
+	83F8 25                     ; CMPI8_EAX !0x25
+	0F84 %f                     ; JE32 %Update_Pointer_4
+
+	; Check for &
+	83F8 26                     ; CMPI8_EAX !0x26
+	0F84 %f                     ; JE32 %Update_Pointer_4
+
+	;; deal with bad input
+	E8 %R                       ; CALL32 %fail
+
+:f #:Update_Pointer_4
+	83C7 02                     ; ADDI8_EDI !2                ; Increment IP
+:g #:Update_Pointer_2
+	83C7 01                     ; ADDI8_EDI !1                ; Increment IP
+:h #:Update_Pointer_1
+	83C7 01                     ; ADDI8_EDI !1                ; Increment IP
+	C3                          ; RET
+
+:i #:First_pass_pointer
+	; Deal with Pointer to label
+	E8 %e                       ; CALL32 %Update_Pointer      ; Increment IP
+	BB 7A850408                 ; LOADI32_EBX &table          ; Using scratch
+	E8 %B                       ; CALL32 %consume_token       ; Read token
+	E8 %I                       ; CALL32 %ClearScratch        ; Throw away token
+	83F8 3E                     ; CMPI8_EAX !0x3E             ; check for '>'
+	0F85 %b                     ; JNE32 %First_pass           ; Loop again
+
+	;; Deal with %label>label case
+	BB 7A850408                 ; LOADI32_EBX &table          ; Write to scratch
+	E8 %B                       ; CALL32 %consume_token       ; get token
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	E9 %b                       ; JMP32 %First_pass           ; Loop again
+
+:j # :First_pass_done
+	C3                          ; RET
+
+:k #:hex
+	; deal with EOF
+	83F8 FC                     ; CMPI8_EAX !-4
+	0F84 %o                     ; JE32 %EOF
+	; deal with line comments starting with ;
+	83F8 23                     ; CMPI8_EAX !0x23
+	0F84 %t                     ; JE32 %ascii_comment
+	; deal with line comments starting with ;
+	83F8 3B                     ; CMPI8_EAX !0x3B
+	0F84 %t                     ; JE32 %ascii_comment
+	; deal all ascii less than 0
+	83F8 30                     ; CMPI8_EAX !0x30
+	0F8C %s                     ; JL32 %ascii_other
+	; deal with 0-9
+	83F8 3A                     ; CMPI8_EAX !0x3A
+	0F8C %p                     ; JL32 %ascii_num
+	; deal with all ascii less than A
+	83F8 41                     ; CMPI8_EAX !0x41
+	0F8C %s                     ; JL32 %ascii_other
+	; deal with A-F
+	83F8 47                     ; CMPI8_EAX !0x47
+	0F8C %r                     ; JL32 %ascii_high
+	;deal with all ascii less than a
+	83F8 61                     ; CMPI8_EAX !0x61
+	0F8C %s                     ; JL32 %ascii_other
+	;deal with a-f
+	83F8 67                     ; CMPI8_EAX !0x67
+	0F8C %q                     ; JL32 %ascii_low
+	; The rest that remains needs to be ignored
+	E9 %s                       ; JMP32 %ascii_other
+
+:l #:Second_pass
+	E8 %y                       ; CALL32 %Read_byte
+
+	; Deal with EOF
+	83F8 FC                     ; CMPI8_EAX !-4
+	0F84 %n                     ; JE32 %Second_pass_done
+
+	; Simply drop the label
+	83F8 3A                     ; CMPI8_EAX !0x3A
+	0F85 %m                     ; JNE32 %Second_pass_0
+
+	BB 7A850408                 ; LOADI32_EBX &table          ; Using scratch
+	E8 %B                       ; CALL32 %consume_token       ; Read token
+	E8 %I                       ; CALL32 %ClearScratch        ; Throw away token
+
+	E9 %l                       ; JMP32 %Second_pass
+
+:m #:Second_pass_0
+	; Deal with % pointer
+	83F8 25                     ; CMPI8_EAX !0x25
+	0F84 %M                     ; JE32 %StorePointer_rel4
+
+	; Deal with @ pointer
+	83F8 40                     ; CMPI8_EAX !0x40
+	0F84 %N                     ; JE32 %StorePointer_rel2
+
+	; Deal with ! pointer
+	83F8 21                     ; CMPI8_EAX !0x21
+	0F84 %O                     ; JE32 %StorePointer_rel1
+
+	; Deal with & pointer
+	83F8 26                     ; CMPI8_EAX !0x26
+	0F84 %P                     ; JE32 %StorePointer_abs4
+
+	; Deal with $ pointer
+	83F8 24                     ; CMPI8_EAX !0x24
+	0F84 %Q                     ; JE32 %StorePointer_abs2
+
+#:Second_pass_1
+	; Deal with everything else
+	E8 %k                       ; CALL32 %hex                 ; Process our char
+
+	; Deal with EOF
+	83F8 FC                     ; CMPI8_EAX !-4
+	0F84 %n                     ; JE32 %Second_pass_done
+
+	; deal with -1 values
+	83F8 00                     ; CMPI8_EAX !0
+	0F8C %l                     ; JL32 %Second_pass
+
+	; deal with toggle
+	8B1D 6A850408               ; LOAD32_Absolute32_ebx &Flag
+	83FB 00                     ; CMPI8_EBX !0
+	0F84 %v                     ; JE32 %print
+
+	; process first byte of pair
+	C1E0 04                     ; SHLI8_EAX !4
+	A3 66850408                 ; STORE32_Absolute32_eax &High
+	B8 00000000                 ; LOADI32_EAX %0
+	A3 6A850408                 ; STORE32_Absolute32_eax &Flag
+	E9 %l                       ; JMP32 %Second_pass
+
+:n #:Second_pass_done
+	C3                          ; RET
+
+:o #:EOF
+	C3                          ; RET
+:p #:ascii_num
+	83E8 30                     ; SUBI8_EAX !0x30
+	C3                          ; RET
+:q #:ascii_low
+	83E8 57                     ; SUBI8_EAX !0x57
+	C3                          ; RET
+:r #:ascii_high
+	83E8 37                     ; SUBI8_EAX !0x37
+	C3                          ; RET
+:s #:ascii_other
+	B8 FFFFFFFF                 ; LOADI32_EAX %-1
+	C3                          ; RET
+:t #:ascii_comment
+	E8 %y                       ; CALL32 %Read_byte
+	83F8 0D                     ; CMPI8_EAX !0x0D
+	0F84 %u                     ; JE32 %ascii_comment_cr
+	83F8 0A                     ; CMPI8_EAX !0x0A
+	0F85 %t                     ; JNE32 %ascii_comment
+:u #:ascii_comment_cr
+	B8 FFFFFFFF                 ; LOADI32_EAX %-1
+	C3                          ; RET
+
+; process second byte of pair
+:v #:print
+	; update the sum and store in output
+	0305 66850408               ; ADD32_Absolute32_eax &High
+	A2 7A850408                 ; STORE8_Absolute32_al &table
+
+	; flip the toggle
+	A1 6A850408                 ; LOAD32_Absolute32_eax &Flag
+	F7D0                        ; NOT_EAX
+	A3 6A850408                 ; STORE32_Absolute32_eax &Flag
+
+	; Print our first Hex
+	BA 01000000                 ; LOADI32_EDX %1              ; set the size of chars we want
+	E8 %A                       ; CALL32 %print_chars
+
+	83C7 01                     ; ADDI8_EDI !1                ; Increment IP
+	E9 %l                       ; JMP32 %Second_pass
+
+:w #:Done
+	; program completed Successfully
+	BB 00000000                 ; LOADI32_EBX %0              ; All is well
+	B8 01000000                 ; LOADI32_EAX %1              ; put the exit syscall number in eax
+	CD80                        ; INT_80                      ; Call it a good day
+
+
+;; Malloc isn't actually required if the program being built fits in the initial memory
+;; However, it doesn't take much to add it.
+;; Requires a value in EBX
+:x #:malloc
+	B8 2D000000                 ; LOADI32_EAX %45             ; the Syscall # for SYS_BRK
+	56                          ; PUSH_ESI                    ; Protect esi
+	57                          ; PUSH_EDI                    ; Protect edi
+	CD80                        ; INT_80                      ; call the Kernel
+	5F                          ; POP_EDI                     ; Restore edi
+	5E                          ; POP_ESI                     ; Restore esi
+	C3                          ; RET
+
+
+:y #:Read_byte
+	; Attempt to read 1 byte from STDIN
+	56                          ; PUSH_ESI                    ; Protect esi
+	57                          ; PUSH_EDI                    ; Protect edi
+	53                          ; PUSH_EBX                    ; Protect ebx
+	51                          ; PUSH_ECX                    ; Protect ecx
+
+	BA 01000000                 ; LOADI32_EDX %1              ; set the size of chars we want
+	B9 76850408                 ; LOADI32_ECX &write          ; Where to put it
+	8B1D 6E850408               ; LOAD32_Absolute32_ebx &Input ; Where are we reading from
+	B8 03000000                 ; LOADI32_EAX %3              ; the syscall number for read
+	CD80                        ; INT_80                      ; call the Kernel
+	59                          ; POP_ECX                     ; Restore ecx
+	5B                          ; POP_EBX                     ; Restore ebx
+	5F                          ; POP_EDI                     ; Restore edi
+	5E                          ; POP_ESI                     ; Restore esi
+
+	85C0                        ; TEST                        ; check what we got
+	0F84 %z                     ; JE32 %Read_byte_1           ; Got EOF call it done
+
+	; load byte
+	A0 76850408                 ; LOAD8_Absolute32_al &write  ; load char
+	0FB6C0                      ; MOVZX_al                    ; We have to zero extend it to use it
+	C3                          ; RET
+
+; Deal with EOF
+:z #:Read_byte_1
+	B8 FCFFFFFF                 ; LOADI32_EAX %-4             ; Put EOF in eax
+	C3                          ; RET
+
+:A #:print_chars
+	56                          ; PUSH_ESI                    ; Protect esi
+	57                          ; PUSH_EDI                    ; Protect edi
+	53                          ; PUSH_EBX                    ; Protect ebx
+	51                          ; PUSH_ECX                    ; Protect ecx
+
+	B9 7A850408                 ; LOADI32_ECX &table          ; What we are writing
+	8B1D 72850408               ; LOAD32_Absolute32_ebx &Output ; Write to target file
+	B8 04000000                 ; LOADI32_EAX %4              ; the syscall number for write
+	CD80                        ; INT_80                      ; call the Kernel
+
+	59                          ; POP_ECX                     ; Restore ecx
+	5B                          ; POP_EBX                     ; Restore ebx
+	5F                          ; POP_EDI                     ; Restore edi
+	5E                          ; POP_ESI                     ; Restore esi
+	C3                          ; RET
+
+;; Recieves pointer in EBX
+;; Writes out char and updates EBX
+:B #:consume_token
+	E8 %y                       ; CALL32 %Read_byte           ; Consume_token
+
+	; Check for \t
+	83F8 09                     ; CMPI8_EAX !0x09
+	0F84 %C                     ; JE32 %consume_token_done
+
+	; Check for \n
+	83F8 0A                     ; CMPI8_EAX !0x0A
+	0F84 %C                     ; JE32 %consume_token_done
+
+	; Check for ' '
+	83F8 20                     ; CMPI8_EAX !0x20
+	0F84 %C                     ; JE32 %consume_token_done
+
+	; Check for '>'
+	83F8 3E                     ; CMPI8_EAX !0x3E
+	0F84 %C                     ; JE32 %consume_token_done
+
+	;; Looks like we are still reading token
+	8803                        ; STORE8_al_into_Address_EBX  ; Store char
+	83C3 01                     ; ADDI8_EBX !1                ; Point to next spot
+	E9 %B                       ; JMP32 %consume_token        ; loop until done
+
+:C #:consume_token_done
+	B9 00000000                 ; LOADI32_ECX %0              ; Padd with nulls
+	890B                        ; STORE32_ECX_into_Address_EBX
+	83C3 04                     ; ADDI8_EBX !4
+	C3                          ; RET
+
+:D #:StoreLabel
+	89E8                        ; COPY_EBP_to_EAX             ; ENTRY
+	83C5 18                     ; ADDI8_EBP !24               ; CALLOC
+	8978 08                     ; STORE32_EDI_into_Address_EAX_Immediate8 !8 ; ENTRY->TARGET = IP
+	8930                        ; STORE32_ESI_into_Address_EAX ; ENTRY->NEXT = JUMP_TABLE
+	89C6                        ; COPY_EAX_to_ESI             ; JUMP_TABLE = ENTRY
+	896E 10                     ; STORE32_EBP_into_Address_ESI_Immediate8 !16 ; ENTRY->NAME = TOKEN
+	89EB                        ; COPY_EBP_to_EBX             ; Write Starting after struct
+	E8 %B                       ; CALL32 %consume_token       ; Collect whole string
+	89DD                        ; COPY_EBX_to_EBP             ; Update HEAP
+	E9 %b                       ; JMP32 %First_pass
+
+:E #:GetTarget
+	53                          ; PUSH_EBX                    ; protect ebx
+	51                          ; PUSH_ECX                    ; protect ecx
+	52                          ; PUSH_EDX                    ; protect edx
+	56                          ; PUSH_ESI                    ; protect JUMP_TABLE
+	B9 7A850408                 ; LOADI32_ECX &table          ; Reset scratch
+	8B56 10                     ; LOAD32_EDX_from_ESI_Immediate8 !16 ; I->NAME
+:F #:GetTarget_loop
+	8A01                        ; LOAD8_al_from_ECX           ; I->NAME[0]
+	8A1A                        ; LOAD8_bl_from_EDX           ; scratch[0]
+	0FB6DB                      ; MOVZX_bl                    ; Zero extend
+	0FB6C0                      ; MOVZX_al                    ; Zero extend
+	38D8                        ; CMP_al_bl                   ; IF TOKEN == I->NAME
+	0F85 %G                     ; JNE32 %GetTarget_miss       ; Oops
+
+	83C1 01                     ; ADDI8_ECX !1
+	83C2 01                     ; ADDI8_EDX !1
+	3C 00                       ; CMPI8_al !0
+	0F85 %F                     ; JNE32 %GetTarget_loop       ; Loop until
+	E9 %H                       ; JMP32 %GetTarget_done       ; Match
+
+	;; Miss
+:G #:GetTarget_miss
+	8B36                        ; LOAD32_ESI_from_ESI         ; I = I->NEXT
+	83FE 00                     ; CMPI8_ESI !0                ; IF NULL == I
+	0F84 %R                     ; JE32 %fail                  ; Abort hard
+
+	8B56 10                     ; LOAD32_EDX_from_ESI_Immediate8 !16 ; I->NAME
+	B9 7A850408                 ; LOADI32_ECX &table          ; Reset scratch
+	E9 %F                       ; JMP32 %GetTarget_loop
+
+:H #:GetTarget_done
+	8B46 08                     ; LOAD32_EAX_from_ESI_Immediate8 !8 ; Get address
+	5E                          ; POP_ESI                     ; Restore JUMP_TABLE
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+:I #:ClearScratch
+	50                          ; PUSH_EAX                    ; Protect against changes
+	53                          ; PUSH_EBX                    ; And overwrites
+	51                          ; PUSH_ECX                    ; While we work
+	BB 7A850408                 ; LOADI32_EBX &table          ; Where our table is
+	B8 00000000                 ; LOADI32_EAX %0              ; Using null
+
+:J #:ClearScratch_loop
+	8B0B                        ; LOAD32_ECX_from_EBX         ; Get current value
+	8803                        ; STORE8_al_into_Address_EBX  ; Because we want null
+	83C3 01                     ; ADDI8_EBX !1                ; Increment
+	83F9 00                     ; CMPI8_ECX !0                ; Check if we hit null
+	0F85 %J                     ; JNE32 %ClearScratch_loop    ; Keep looping
+
+	59                          ; POP_ECX                     ; Restore
+	5B                          ; POP_EBX                     ; Damage
+	58                          ; POP_EAX                     ; Entirely
+	C3                          ; RET
+
+:K #:StorePointer
+	E8 %e                       ; CALL32 %Update_Pointer      ; Increment IP
+	BB 7A850408                 ; LOADI32_EBX &table          ; Write to scratch
+	E8 %B                       ; CALL32 %consume_token       ; get token
+	50                          ; PUSH_EAX                    ; Protect base_sep_p
+	B8 7A850408                 ; LOADI32_EAX &table          ; Pointer to scratch
+	E8 %E                       ; CALL32 %GetTarget           ; Get address of pointer
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	89FA                        ; COPY_EDI_to_EDX             ; base = IP
+	5B                          ; POP_EBX                     ; Restore base_sep_p
+	83FB 3E                     ; CMPI8_EBX !0x3E             ; If base_sep_p == '>'
+	0F85 %L                     ; JNE32 %StorePointer_done    ; If not
+
+	;; Deal with %label>label case
+	50                          ; PUSH_EAX                    ; We need to preserve main target
+	BB 7A850408                 ; LOADI32_EBX &table          ; Write to scratch
+	E8 %B                       ; CALL32 %consume_token       ; get token
+	B8 7A850408                 ; LOADI32_EAX &table          ; Pointer to scratch
+	E8 %E                       ; CALL32 %GetTarget           ; Get address of pointer
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	89C2                        ; COPY_EAX_to_EDX             ; Use our new base
+	58                          ; POP_EAX                     ; Restore main target
+
+:L #:StorePointer_done
+	C3                          ; RET
+
+:M #:StorePointer_rel4
+	E8 %K                       ; CALL32 %StorePointer        ; Do Common
+	29D0                        ; SUB_EDX_from_EAX            ; target - ip
+	A3 7A850408                 ; STORE32_Absolute32_eax &table ; put value in output
+	BA 04000000                 ; LOADI32_EDX %4              ; set the size of chars we want
+	E8 %A                       ; CALL32 %print_chars
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	E9 %l                       ; JMP32 %Second_pass
+
+:N #:StorePointer_rel2
+	E8 %K                       ; CALL32 %StorePointer        ; Do Common
+	29D0                        ; SUB_EDX_from_EAX            ; target - ip
+	A3 7A850408                 ; STORE32_Absolute32_eax &table ; put value in output
+	BA 02000000                 ; LOADI32_EDX %2              ; set the size of chars we want
+	E8 %A                       ; CALL32 %print_chars
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	E9 %l                       ; JMP32 %Second_pass
+
+:O #:StorePointer_rel1
+	E8 %K                       ; CALL32 %StorePointer        ; Do Common
+	29D0                        ; SUB_EDX_from_EAX            ; target - ip
+	A3 7A850408                 ; STORE32_Absolute32_eax &table ; put value in output
+	BA 01000000                 ; LOADI32_EDX %1              ; set the size of chars we want
+	E8 %A                       ; CALL32 %print_chars
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	E9 %l                       ; JMP32 %Second_pass
+
+:P #:StorePointer_abs4
+	E8 %K                       ; CALL32 %StorePointer        ; Do Common
+	A3 7A850408                 ; STORE32_Absolute32_eax &table ; put value in output
+	BA 04000000                 ; LOADI32_EDX %4              ; set the size of chars we want
+	E8 %A                       ; CALL32 %print_chars
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	E9 %l                       ; JMP32 %Second_pass
+
+:Q #:StorePointer_abs2
+	E8 %K                       ; CALL32 %StorePointer        ; Do Common
+	A3 7A850408                 ; STORE32_Absolute32_eax &table ; put value in output
+	BA 02000000                 ; LOADI32_EDX %2              ; set the size of chars we want
+	E8 %A                       ; CALL32 %print_chars
+	E8 %I                       ; CALL32 %ClearScratch        ; Clean up after ourselves
+	E9 %l                       ; JMP32 %Second_pass
+
+:R #:fail
+	; Some shit went wrong
+	BB 01000000                 ; LOADI32_EBX %1              ; All is wrong
+	B8 01000000                 ; LOADI32_EAX %1              ; put the exit syscall number in eax
+	CD80                        ; INT_80                      ; Call it a good day
+
+
+#:High (0x8048566)
+	00000000                    ; NULL
+#:Flag (0x804856A)
+	00000000                    ; NULL
+#:Input (0x804856E)
+	00000000                    ; NULL
+#:Output (0x8048572)
+	00000000                    ; NULL
+#:write (0x8048576)
+	00000000                    ; NULL
+#:table (0x804857A)
+	00000000                    ; NULL
+#:ELF_end

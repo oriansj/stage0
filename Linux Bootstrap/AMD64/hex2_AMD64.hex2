@@ -1,0 +1,553 @@
+### Copyright (C) 2016 Jeremiah Orians
+### Copyright (C) 2017 Jan Nieuwenhuizen <janneke@gnu.org>
+### This file is part of stage0.
+###
+### stage0 is free software: you can redistribute it and/or modify
+### it under the terms of the GNU General Public License as published by
+### the Free Software Foundation, either version 3 of the License, or
+### (at your option) any later version.
+###
+### stage0 is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU General Public License for more details.
+###
+### You should have received a copy of the GNU General Public License
+### along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# Where the ELF Header is going to hit
+# Simply jump to _start
+# Our main function
+
+	;; Register usage:
+	;; RAX, RDX, RSI, RDI => Temps
+	;; R15 => Flag
+	;; R14 => High bits
+	;; R13 => IP
+	;; R12 => MALLOC
+	;; R11 => HEAD
+
+	;; Struct format: (size 24)
+	;; NEXT => 0
+	;; TARGET => 8
+	;; NAME => 16
+
+:_start
+	BF 00000000                 ; LOADI32_RDI %0              ; Get current pointer
+	E8 %malloc                  ; CALLI32 %malloc             ; Get current HEAP
+	4889C7                      ; COPY_RAX_to_RDI             ; Using current
+	4989C4                      ; COPY_RAX_to_R12             ; Setup MALLOC
+	4881C7 00007D00             ; ADDI32_to_RDI %8192000      ; Create space for temp
+	E8 %malloc                  ; CALLI32 %malloc             ; Give ourselves 8192000 bytes to work with
+
+	58                          ; POP_RAX                     ;·Get·the·number·of·arguments
+	5F                          ; POP_RDI                     ;·Get·the·program·name
+	5F                          ; POP_RDI                     ;·Get·the·actual·input name
+	BE 00000000                 ; LOADI32_RSI %0              ;·prepare·read_only
+	48C7C0 02000000             ; LOADI32_RAX %2              ;·the·syscall·number·for·open()
+	0F05                        ; SYSCALL                     ; Now open that damn file
+	4989C1                      ; COPY_RAX_to_R9              ; Preserve the file pointer we were given
+
+	5F                          ; POP_RDI                     ;·Get·the·actual·output name
+	BE 41020000                 ; LOADI32_RSI %577            ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	BA C0010000                 ; LOADI32_RDX %448            ; Prepare file as RWX for owner only (700 in octal)
+	48C7C0 02000000             ; LOADI32_RAX %2              ;·the·syscall·number·for·open()
+	0F05                        ; SYSCALL                     ; Now open that damn file
+	4883F8 00                   ; CMP_RAX_Immediate8 !0       ; Check for missing output
+	0F8F %_start_out            ; JG32 %_start_out            ; Have real input
+	48C7C0 01000000             ; LOADI32_RAX %1              ; Use stdout
+
+:_start_out
+	4989C2                      ; COPY_RAX_to_R10             ; Preserve the file pointer we were given
+
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Zero scratch
+	49C7C7 FFFFFFFF             ; LOADI32_R15 %-1             ; Our flag for byte processing
+	41BE 00000000               ; LOADI32_R14 %0              ; temp storage for the sum
+	41BD 00006000               ; LOADI32_R13 %0x00600000     ; Our starting IP
+	41BB 00000000               ; LOADI32_R11 %0              ; HEAD = NULL
+	E8 %First_pass              ; CALLI32 %First_pass         ; Process it
+
+	; rewind input file
+	4C89CF                      ; COPY_R9_to_RDI              ; Using our input file
+	BE 00000000                 ; LOADI32_RSI %0              ; Offset Zero
+	BA 00000000                 ; LOADI32_RDX %0              ; Whence Zero
+	48C7C0 08000000             ; LOADI32_RAX %8              ; lseek
+	4153                        ; PUSH_R11                    ; Protect HEAD
+	0F05                        ; SYSCALL
+	415B                        ; POP_R11                     ; Restore HEAD
+
+	49C7C7 FFFFFFFF             ; LOADI32_R15 %-1             ; Our flag for byte processing
+	41BE 00000000               ; LOADI32_R14 %0              ; temp storage for the sum
+	41BD 00006000               ; LOADI32_R13 %0x00600000     ; Our starting IP
+	E8 %Second_pass             ; CALLI32 %Second_pass        ; Process it
+
+	E9 %Done                    ; JMP32 %Done
+
+:First_pass
+	E8 %Read_byte               ; CALLI32 %Read_byte
+
+	; Deal with EOF
+	4883F8 FC                   ; CMP_RAX_Immediate8 !-4
+	0F84 %First_pass_done       ; JE32 %First_pass_done
+
+	; Check for :
+	4883F8 3A                   ; CMP_RAX_Immediate8 !0x3A
+	0F85 %First_pass_0          ; JNE32 %First_pass_0
+
+	; Deal with label
+	E9 %StoreLabel              ; JMP32 %StoreLabel
+
+:First_pass_0
+	; Check for !
+	4883F8 21                   ; CMP_RAX_Immediate8 !0x21
+	0F84 %First_pass_pointer    ; JE32 %First_pass_pointer
+
+	; Check for @
+	4883F8 40                   ; CMP_RAX_Immediate8 !0x40
+	0F84 %First_pass_pointer    ; JE32 %First_pass_pointer
+
+	; Check for $
+	4883F8 24                   ; CMP_RAX_Immediate8 !0x24
+	0F84 %First_pass_pointer    ; JE32 %First_pass_pointer
+
+	; Check for %
+	4883F8 25                   ; CMP_RAX_Immediate8 !0x25
+	0F84 %First_pass_pointer    ; JE32 %First_pass_pointer
+
+	; Check for &
+	4883F8 26                   ; CMP_RAX_Immediate8 !0x26
+	0F84 %First_pass_pointer    ; JE32 %First_pass_pointer
+
+	; Deal with everything else
+	E8 %hex                     ; CALLI32 %hex                ; Process our char
+
+	; Deal with EOF
+	4883F8 FC                   ; CMP_RAX_Immediate8 !-4
+	0F84 %First_pass_done       ; JE32 %First_pass_done
+
+	; deal with -1 values
+	4883F8 00                   ; CMP_RAX_Immediate8 !0
+	0F8C %First_pass            ; JL32 %First_pass
+
+	; deal with toggle
+	4983FF 00                   ; CMP_R15_Immediate8 !0
+	0F84 %First_pass_1          ; JE32 %First_pass_1
+	4983C5 01                   ; ADDI8_to_R13 !1             ; Increment IP
+
+:First_pass_1
+	49F7D7                      ; NOT_R15
+	E9 %First_pass              ; JMP32 %First_pass
+
+:Update_Pointer
+	; Check for !
+	4883F8 21                   ; CMP_RAX_Immediate8 !0x21
+	0F84 %Update_Pointer_1      ; JE32 %Update_Pointer_1
+
+	; Check for @
+	4883F8 40                   ; CMP_RAX_Immediate8 !0x40
+	0F84 %Update_Pointer_2      ; JE32 %Update_Pointer_2
+
+	; Check for $
+	4883F8 24                   ; CMP_RAX_Immediate8 !0x24
+	0F84 %Update_Pointer_2      ; JE32 %Update_Pointer_2
+
+	; Check for %
+	4883F8 25                   ; CMP_RAX_Immediate8 !0x25
+	0F84 %Update_Pointer_4      ; JE32 %Update_Pointer_4
+
+	; Check for &
+	4883F8 26                   ; CMP_RAX_Immediate8 !0x26
+	0F84 %Update_Pointer_4      ; JE32 %Update_Pointer_4
+
+	;; deal with bad input
+	E8 %fail                    ; CALLI32 %fail
+
+:Update_Pointer_4
+	4983C5 02                   ; ADDI8_to_R13 !2             ; Increment IP
+:Update_Pointer_2
+	4983C5 01                   ; ADDI8_to_R13 !1             ; Increment IP
+:Update_Pointer_1
+	4983C5 01                   ; ADDI8_to_R13 !1             ; Increment IP
+	C3                          ; RET
+
+:First_pass_pointer
+	; Deal with Pointer to label
+	E8 %Update_Pointer          ; CALLI32 %Update_Pointer     ; Increment IP
+	BB &table                   ; LOADI32_RBX &table          ; Using scratch
+	E8 %consume_token           ; CALLI32 %consume_token      ; Read token
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Throw away token
+	4883F8 3E                   ; CMP_RAX_Immediate8 !0x3E    ; check for '>'
+	0F85 %First_pass            ; JNE32 %First_pass           ; Loop again
+
+	;; Deal with %label>label case
+	BB &table                   ; LOADI32_RBX &table          ; Write to scratch
+	E8 %consume_token           ; CALLI32 %consume_token      ; get token
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	E9 %First_pass              ; JMP32 %First_pass           ; Loop again
+
+:First_pass_done
+	C3                          ; RET
+
+:hex
+	; deal with EOF
+	4883F8 FC                   ; CMP_RAX_Immediate8 !-4
+	0F84 %EOF                   ; JE32 %EOF
+	; deal with line comments starting with #
+	4883F8 23                   ; CMP_RAX_Immediate8 !0x23
+	0F84 %ascii_comment         ; JE32 %ascii_comment
+	; deal with line comments starting with ;
+	4883F8 3B                   ; CMP_RAX_Immediate8 !0x3B
+	0F84 %ascii_comment         ; JE32 %ascii_comment
+	; deal all ascii less than 0
+	4883F8 30                   ; CMP_RAX_Immediate8 !0x30
+	0F8C %ascii_other           ; JL32 %ascii_other
+	; deal with 0-9
+	4883F8 3A                   ; CMP_RAX_Immediate8 !0x3A
+	0F8C %ascii_num             ; JL32 %ascii_num
+	; deal with all ascii less than A
+	4883F8 41                   ; CMP_RAX_Immediate8 !0x41
+	0F8C %ascii_other           ; JL32 %ascii_other
+	; deal with A-F
+	4883F8 47                   ; CMP_RAX_Immediate8 !0x47
+	0F8C %ascii_high            ; JL32 %ascii_high
+	;deal with all ascii less than a
+	4883F8 61                   ; CMP_RAX_Immediate8 !0x61
+	0F8C %ascii_other           ; JL32 %ascii_other
+	;deal with a-f
+	4883F8 67                   ; CMP_RAX_Immediate8 !0x67
+	0F8C %ascii_low             ; JL32 %ascii_low
+	; The rest that remains needs to be ignored
+	E9 %ascii_other             ; JMP32 %ascii_other
+
+:Second_pass
+	E8 %Read_byte               ; CALLI32 %Read_byte
+
+	; Deal with EOF
+	4883F8 FC                   ; CMP_RAX_Immediate8 !-4
+	0F84 %Second_pass_done      ; JE32 %Second_pass_done
+
+	; Simply drop the label
+	4883F8 3A                   ; CMP_RAX_Immediate8 !0x3A
+	0F85 %Second_pass_0         ; JNE32 %Second_pass_0
+
+	BB &table                   ; LOADI32_RBX &table          ; Using scratch
+	E8 %consume_token           ; CALLI32 %consume_token      ; Read token
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Throw away token
+
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:Second_pass_0
+	; Deal with % pointer
+	4883F8 25                   ; CMP_RAX_Immediate8 !0x25
+	0F84 %StorePointer_rel4     ; JE32 %StorePointer_rel4
+
+	; Deal with @ pointer
+	4883F8 40                   ; CMP_RAX_Immediate8 !0x40
+	0F84 %StorePointer_rel2     ; JE32 %StorePointer_rel2
+
+	; Deal with ! pointer
+	4883F8 21                   ; CMP_RAX_Immediate8 !0x21
+	0F84 %StorePointer_rel1     ; JE32 %StorePointer_rel1
+
+	; Deal with & pointer
+	4883F8 26                   ; CMP_RAX_Immediate8 !0x26
+	0F84 %StorePointer_abs4     ; JE32 %StorePointer_abs4
+
+	; Deal with $ pointer
+	4883F8 24                   ; CMP_RAX_Immediate8 !0x24
+	0F84 %StorePointer_abs2     ; JE32 %StorePointer_abs2
+
+:Second_pass_1
+	; Deal with everything else
+	E8 %hex                     ; CALLI32 %hex                ; Process our char
+
+	; Deal with EOF
+	4883F8 FC                   ; CMP_RAX_Immediate8 !-4
+	0F84 %Second_pass_done      ; JE32 %Second_pass_done
+
+	; deal with -1 values
+	4883F8 00                   ; CMP_RAX_Immediate8 !0
+	0F8C %Second_pass           ; JL32 %Second_pass
+
+	; deal with toggle
+	4983FF 00                   ; CMP_R15_Immediate8 !0
+	0F84 %print                 ; JE32 %print
+
+	; process first byte of pair
+	4989C6                      ; COPY_RAX_to_R14
+	49C7C7 00000000             ; LOADI32_R15 %0
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:Second_pass_done
+	C3                          ; RET
+
+:EOF
+	C3                          ; RET
+
+:ascii_num
+	83E8 30                     ; SUBI8_RAX !0x30
+	C3                          ; RET
+:ascii_low
+	83E8 57                     ; SUBI8_RAX !0x57
+	C3                          ; RET
+:ascii_high
+	83E8 37                     ; SUBI8_RAX !0x37
+	C3                          ; RET
+:ascii_other
+	48C7C0 FFFFFFFF             ; LOADI32_RAX %-1
+	C3                          ; RET
+:ascii_comment
+	E8 %Read_byte               ; CALLI32 %Read_byte
+	4883F8 0D                   ; CMP_RAX_Immediate8 !0x0D
+	0F84 %ascii_comment_cr      ; JE32 %ascii_comment_cr
+	4883F8 0A                   ; CMP_RAX_Immediate8 !0x0A
+	0F85 %ascii_comment         ; JNE32 %ascii_comment
+:ascii_comment_cr
+	48C7C0 FFFFFFFF             ; LOADI32_RAX %-1
+	C3                          ; RET
+
+; process second byte of pair
+:print
+	; update the sum and store in output
+	49C1E6 04                   ; SHL_R14_Immediate8 !4
+	4C01F0                      ; ADD_R14_to_RAX
+	880425 &table               ; STORE8_AL_into_Absolute32 &table
+
+	; flip the toggle
+	49F7D7                      ; NOT_R15
+
+	; Print our first Hex
+	BA 01000000                 ; LOADI32_RDX %1              ; set the size of chars we want
+	E8 %print_chars             ; CALLI32 %print_chars
+
+	4983C5 01                   ; ADDI8_to_R13 !1             ; Increment IP
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:Done
+	; program completed Successfully
+	BF 00000000                 ; LOADI32_RDI %0              ; All is well
+	48C7C0 3C000000             ; LOADI32_RAX %0x3C           ; put the exit syscall number in eax
+	0F05                        ; SYSCALL                     ; Call it a good day
+
+
+;; Malloc isn't actually required if the program being built fits in the initial memory
+;; However, it doesn't take much to add it.
+;; Requires a value in RDI
+:malloc
+	48C7C0 0C000000             ; LOADI32_RAX %12             ; the Syscall # for SYS_BRK
+	4153                        ; PUSH_R11                    ; Protect r11
+	0F05                        ; SYSCALL                     ; call the Kernel
+	415B                        ; POP_R11                     ; Restore r11
+	C3                          ; RET
+
+
+:Read_byte
+	; Attempt to read 1 byte from STDIN
+	BA 01000000                 ; LOADI32_RDX %1              ; set the size of chars we want
+	BE &write                   ; LOADI32_RSI &write          ; Where to put it
+	4C89CF                      ; COPY_R9_to_RDI              ; Where are we reading from
+	48C7C0 00000000             ; LOADI32_RAX %0              ; the syscall number for read
+	4153                        ; PUSH_R11                    ; Protect r11
+	0F05                        ; SYSCALL                     ; call the Kernel
+	415B                        ; POP_R11                     ; Restore r11
+
+	4885C0                      ; TEST_RAX_RAX                ; check what we got
+	0F84 %Read_byte_1           ; JE32 %Read_byte_1           ; Got EOF call it done
+
+	; load byte
+	8A0425 &write               ; LOAD8_AL_from_Absolute32 &write ; load char
+	480FB6C0                    ; ZERO_EXTEND_AL              ; We have to zero extend it to use it
+	C3                          ; RET
+
+; Deal with EOF
+:Read_byte_1
+	48C7C0 FCFFFFFF             ; LOADI32_RAX %-4             ; Put EOF in rax
+	C3                          ; RET
+
+:print_chars
+	BE &table                   ; LOADI32_RSI &table          ; What we are writing
+	4C89D7                      ; COPY_R10_to_RDI             ; Write to target file
+	48C7C0 01000000             ; LOADI32_RAX %1              ; the syscall number for write
+	4153                        ; PUSH_R11                    ; Protect HEAD
+	0F05                        ; SYSCALL                     ; call the Kernel
+	415B                        ; POP_R11                     ; Restore HEAD
+	C3                          ; RET
+
+	;; Recieves pointer in RBX
+	;; Writes out char and updates RBX
+:consume_token
+	E8 %Read_byte               ; CALLI32 %Read_byte          ; Consume_token
+
+	; Check for \t
+	4883F8 09                   ; CMP_RAX_Immediate8 !0x09
+	0F84 %consume_token_done    ; JE32 %consume_token_done
+
+	; Check for \n
+	4883F8 0A                   ; CMP_RAX_Immediate8 !0x0A
+	0F84 %consume_token_done    ; JE32 %consume_token_done
+
+	; Check for ' '
+	4883F8 20                   ; CMP_RAX_Immediate8 !0x20
+	0F84 %consume_token_done    ; JE32 %consume_token_done
+
+	; Check for '>'
+	4883F8 3E                   ; CMP_RAX_Immediate8 !0x3E
+	0F84 %consume_token_done    ; JE32 %consume_token_done
+
+	;; Looks like we are still reading token
+	8803                        ; STORE8_al_into_Address_RBX  ; Store char
+	4883C3 01                   ; ADDI8_to_RBX !1             ; Point to next spot
+	E9 %consume_token           ; JMP32 %consume_token        ; loop until done
+
+:consume_token_done
+	B9 00000000                 ; LOADI32_RCX %0              ; Padd with nulls
+	48890B                      ; STORE32_RCX_into_Address_RBX
+	4883C3 08                   ; ADDI8_to_RBX !8
+	C3                          ; RET
+
+:StoreLabel
+	4C89E0                      ; COPY_R12_to_RAX             ; ENTRY
+	4983C4 18                   ; ADDI8_to_R12 !24            ; CALLOC
+	4C8968 08                   ; STORE32_R13_into_Address_RAX_Immediate8 !8  ; ENTRY->TARGET = IP
+	4C8918                      ; STORE32_R11_into_Address_RAX                ; ENTRY->NEXT = JUMP_TABLE
+	4989C3                      ; COPY_RAX_to_R11                             ; JUMP_TABLE = ENTRY
+	4D8963 10                   ; STORE32_R12_into_Address_R11_Immediate8 !16 ; ENTRY->NAME = TOKEN
+	4C89E3                      ; COPY_R12_to_RBX             ; Write Starting after struct
+	E8 %consume_token           ; CALLI32 %consume_token      ; Collect whole string
+	4989DC                      ; COPY_RBX_to_R12             ; Update HEAP
+	E9 %First_pass              ; JMP32 %First_pass
+
+:GetTarget
+	BF &table                   ; LOADI32_RDI &table          ; Reset scratch
+	4C89D9                      ; COPY_R11_to_RCX             ; Grab JUMP_TABLE
+	488B71 10                   ; LOAD32_into_RSI_from_Address_RCX_Immediate8 !16 ; I->NAME
+:GetTarget_loop
+	8A06                        ; LOAD8_AL_from_Address_RSI   ; I->NAME[0]
+	8A1F                        ; LOAD8_BL_from_Address_RDI   ; scratch[0]
+	480FB6DB                    ; ZERO_EXTEND_BL              ; Zero extend
+	480FB6C0                    ; ZERO_EXTEND_AL              ; Zero extend
+	38D8                        ; CMP_AL_to_BL                ; IF TOKEN == I->NAME
+	0F85 %GetTarget_miss        ; JNE32 %GetTarget_miss       ; Oops
+
+	4883C6 01                   ; ADDI8_to_RSI !1
+	4883C7 01                   ; ADDI8_to_RDI !1
+	4883F8 00                   ; CMP_RAX_Immediate8 !0
+	0F85 %GetTarget_loop        ; JNE32 %GetTarget_loop       ; Loop until
+	E9 %GetTarget_done          ; JMP32 %GetTarget_done       ; Match
+
+	;; Miss
+:GetTarget_miss
+	488B09                      ; LOAD32_into_RCX_from_Address_RCX ; I = I->NEXT
+	4883F9 00                   ; CMP_RCX_Immediate8 !0       ; IF NULL == I
+	0F84 %fail                  ; JE32 %fail                  ; Abort hard
+
+	488B71 10                   ; LOAD32_into_RSI_from_Address_RCX_Immediate8 !16 ; I->NAME
+	BF &table                   ; LOADI32_RDI &table          ; Reset scratch
+	E9 %GetTarget_loop          ; JMP32 %GetTarget_loop
+
+:GetTarget_done
+	488B41 08                   ; LOAD32_into_RAX_from_Address_RCX_Immediate8 !8 ; Get address
+	C3                          ; RET
+
+:ClearScratch
+	50                          ; PUSH_RAX                    ; Protect against changes
+	53                          ; PUSH_RBX                    ; And overwrites
+	51                          ; PUSH_RCX                    ; While we work
+	BB &table                   ; LOADI32_RBX &table          ; Where our table is
+	48C7C0 00000000             ; LOADI32_RAX %0              ; Using null
+
+:ClearScratch_loop
+	488B0B                      ; LOAD32_into_RCX_from_Address_RBX ; Get current value
+	8803                        ; STORE8_al_into_Address_RBX  ; Because we want null
+	4883C3 01                   ; ADDI8_to_RBX !1             ; Increment
+	4883F9 00                   ; CMP_RCX_Immediate8 !0       ; Check if we hit null
+	0F85 %ClearScratch_loop     ; JNE32 %ClearScratch_loop    ; Keep looping
+
+	59                          ; POP_RCX                     ; Don't Forget to
+	5B                          ; POP_RBX                     ; Restore Damage
+	58                          ; POP_RAX                     ; Entirely
+	C3                          ; RET
+
+:StorePointer
+	E8 %Update_Pointer          ; CALLI32 %Update_Pointer     ; Increment IP
+	BB &table                   ; LOADI32_RBX &table          ; Write to scratch
+	E8 %consume_token           ; CALLI32 %consume_token      ; get token
+	50                          ; PUSH_RAX                    ; Protect base_sep_p
+	48C7C0 &table               ; LOADI32_RAX &table          ; Pointer to scratch
+	E8 %GetTarget               ; CALLI32 %GetTarget          ; Get address of pointer
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	4C89EA                      ; COPY_R13_to_RDX             ; base = IP
+	5B                          ; POP_RBX                     ; Restore base_sep_p
+	4883FB 3E                   ; CMP_RBX_Immediate8 !0x3E    ; If base_sep_p == '>'
+	0F85 %StorePointer_done     ; JNE32 %StorePointer_done    ; If not
+
+	;; Deal with %label>label case
+	50                          ; PUSH_RAX                    ; We need to preserve main target
+	BB &table                   ; LOADI32_RBX &table          ; Write to scratch
+	E8 %consume_token           ; CALLI32 %consume_token      ; get token
+	48C7C0 &table               ; LOADI32_RAX &table          ; Pointer to scratch
+	E8 %GetTarget               ; CALLI32 %GetTarget          ; Get address of pointer
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	4889C2                      ; COPY_RAX_to_RDX             ; Use our new base
+	58                          ; POP_RAX                     ; Restore main target
+
+:StorePointer_done
+	C3                          ; RET
+
+:StorePointer_rel4
+	E8 %StorePointer            ; CALLI32 %StorePointer       ; Do Common
+	4829D0                      ; SUB_RDX_from_RAX            ; target - ip
+	48890425 &table             ; STORE32_from_RAX_into_ABS32 &table ; put value in output
+	BA 04000000                 ; LOADI32_RDX %4              ; set the size of chars we want
+	E8 %print_chars             ; CALLI32 %print_chars
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:StorePointer_rel2
+	E8 %StorePointer            ; CALLI32 %StorePointer       ; Do Common
+	4829D0                      ; SUB_RDX_from_RAX            ; target - ip
+	48890425 &table             ; STORE32_from_RAX_into_ABS32 &table ; put value in output
+	BA 02000000                 ; LOADI32_RDX %2              ; set the size of chars we want
+	E8 %print_chars             ; CALLI32 %print_chars
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:StorePointer_rel1
+	E8 %StorePointer            ; CALLI32 %StorePointer       ; Do Common
+	4829D0                      ; SUB_RDX_from_RAX            ; target - ip
+	48890425 &table             ; STORE32_from_RAX_into_ABS32 &table ; put value in output
+	BA 01000000                 ; LOADI32_RDX %1              ; set the size of chars we want
+	E8 %print_chars             ; CALLI32 %print_chars
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:StorePointer_abs4
+	E8 %StorePointer            ; CALLI32 %StorePointer       ; Do Common
+	48890425 &table             ; STORE32_from_RAX_into_ABS32 &table ; put value in output
+	BA 04000000                 ; LOADI32_RDX %4              ; set the size of chars we want
+	E8 %print_chars             ; CALLI32 %print_chars
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:StorePointer_abs2
+	E8 %StorePointer            ; CALLI32 %StorePointer       ; Do Common
+	48890425 &table             ; STORE32_from_RAX_into_ABS32 &table ; put value in output
+	BA 02000000                 ; LOADI32_RDX %2              ; set the size of chars we want
+	E8 %print_chars             ; CALLI32 %print_chars
+	E8 %ClearScratch            ; CALLI32 %ClearScratch       ; Clean up after ourselves
+	E9 %Second_pass             ; JMP32 %Second_pass
+
+:fail
+	; Some shit went wrong
+	BF 01000000                 ; LOADI32_RDI %1              ; All is wrong
+	48C7C0 3C000000             ; LOADI32_RAX %0x3C           ; put the exit syscall number in eax
+	0F05                        ; SYSCALL                     ; Call it a good day
+
+
+:write
+	00000000                    ; NULL
+	00000000                    ; NULL
+
+:table
+:ELF_end

@@ -1,0 +1,103 @@
+;; Copyright (C) 2019 Jeremiah Orians
+;; This file is part of mescc-tools.
+;;
+;; mescc-tools is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; mescc-tools is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with mescc-tools. If not, see <http://www.gnu.org/licenses/>.
+
+	;; Register usage:
+	;; EBP => OUTPUT
+	;; EDI => Buffer
+	;; ESI => INPUT
+
+; Where the ELF Header is going to hit
+; Simply jump to _start
+; Our main function
+
+DEFINE INT_80 CD80
+DEFINE LOADI32_EAX B8
+DEFINE LOADI32_EBX BB
+DEFINE LOADI32_ECX B9
+DEFINE LOADI32_EDX BA
+DEFINE POP_EAX 58
+DEFINE POP_EBX 5B
+DEFINE PUSH_EAX 50
+DEFINE COPY_EDI_to_ECX 89F9
+DEFINE ADDI32_EBX 81C3
+DEFINE JE8 74
+DEFINE JMP8 EB
+DEFINE CMPI32_EAX 3D
+DEFINE CMPI32_EBX 81FB
+DEFINE COPY_EBP_to_EBX 89EB
+DEFINE COPY_EAX_to_EDX 89C2
+DEFINE COPY_ESI_to_EBX 89F3
+DEFINE COPY_EAX_to_ESI 89C6
+DEFINE COPY_EDI_to_EBX 89FB
+DEFINE COPY_EAX_to_EDI 89C7
+DEFINE COPY_EAX_to_EBP 89C5
+
+:_start
+	POP_EAX                     ;·Get·the·number·of·arguments
+	POP_EBX                     ;·Get·the·program·name
+	POP_EBX                     ;·Get·the·actual·output name
+	LOADI32_ECX %577            ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	LOADI32_EDX %384            ; Prepare file as RW for owner only (600 in octal)
+	LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	INT_80                      ; Now open that file
+	COPY_EAX_to_EBP             ; Preserve the file pointer we were given
+
+	LOADI32_EAX %45             ; the Syscall # for SYS_BRK
+	LOADI32_EBX %0              ; Get current brk
+	INT_80                      ; Let the kernel do the work
+	COPY_EAX_to_EDI             ; Set our malloc pointer
+
+	LOADI32_EAX %45             ; the Syscall # for SYS_BRK
+	COPY_EDI_to_EBX             ; Using current pointer
+	ADDI32_EBX %0x100000        ; Allocate 1MB
+	INT_80                      ; Let the kernel do the work
+
+:core
+	POP_EBX                     ;·Get·the·actual·input name
+	CMPI32_EBX %0               ; Check for null string
+	JE8 !done                   ; Hit null be done
+
+	LOADI32_ECX %0              ;·prepare·read_only
+	LOADI32_EDX %0              ; prevent any interactions
+	LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	INT_80                      ; Now open that damn file
+	COPY_EAX_to_ESI             ; Protect INPUT
+:keep
+	LOADI32_EDX %0x100000       ; set the size of chars we want
+	COPY_EDI_to_ECX             ; Where to put it
+	COPY_ESI_to_EBX             ; Where are we reading from
+	LOADI32_EAX %3              ; the syscall number for read
+	INT_80                      ; call the Kernel
+	PUSH_EAX                    ; Protect the number of bytes read
+
+	COPY_EAX_to_EDX             ; Number of bytes to write
+	COPY_EDI_to_ECX             ; What we are writing
+	COPY_EBP_to_EBX             ; Write to target file
+	LOADI32_EAX %4              ; the syscall number for write
+	INT_80                      ; call the Kernel
+
+	POP_EAX                     ; Get bytes read
+	CMPI32_EAX %0x100000        ; Check if buffer was fully used
+	JE8 !keep                   ; Keep looping if was full
+	JMP8 !core                  ; Otherwise move to next file
+
+:done
+	; program completed Successfully
+	LOADI32_EBX %0              ; All is well
+	LOADI32_EAX %1              ; put the exit syscall number in eax
+	INT_80                      ; Call it a good day
+
+:ELF_end

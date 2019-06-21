@@ -1,0 +1,131 @@
+;; Copyright (C) 2019 Jeremiah Orians
+;; This file is part of mescc-tools.
+;;
+;; mescc-tools is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; mescc-tools is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with mescc-tools. If not, see <http://www.gnu.org/licenses/>.
+
+	;; Register usage:
+	;; EBP => OUTPUT
+	;; EDI => Buffer
+	;; ESI => INPUT
+
+## ELF Header
+# :ELF_base
+7F 45 4C 46                     # e_ident[EI_MAG0-3] ELF's magic number
+
+01                              # e_ident[EI_CLASS] Indicating 32 bit
+01                              # e_ident[EI_DATA] Indicating little endianness
+01                              # e_ident[EI_VERSION] Indicating original elf
+
+00                              # e_ident[EI_OSABI] Set at 0 because none cares
+00                              # e_ident[EI_ABIVERSION] See above
+
+00 00 00 00 00 00 00            # e_ident[EI_PAD]
+
+02 00                           # e_type Indicating Executable
+03 00                           # e_machine Indicating x86
+01 00 00 00                     # e_version Indicating original elf
+
+54 80 04 08                     # e_entry Address of the entry point
+34 00 00 00                     # e_phoff Address of program header table
+00 00 00 00                     # e_shoff Address of section header table
+
+00 00 00 00                     # e_flags
+
+34 00                           # e_ehsize Indicating our 52 Byte header
+
+20 00                           # e_phentsize size of a program header table
+01 00                           # e_phnum number of entries in program table
+
+00 00                           # e_shentsize size of a section header table
+00 00                           # e_shnum number of entries in section table
+
+00 00                           # e_shstrndx index of the section names
+
+## Program Header
+# :ELF_program_headers
+# :ELF_program_header__text
+01 00 00 00                     # ph_type: PT-LOAD = 1
+00 00 00 00                     # ph_offset
+
+00 80 04 08                     # ph_vaddr
+00 80 04 08                     # ph_physaddr
+
+D7 00 00 00                     # ph_filesz
+D7 00 00 00                     # ph_memsz
+
+07 00 00 00                     # ph_flags: PF-X|PF-W|PF-R = 7
+01 00 00 00                     # ph_align
+
+# :ELF_text
+
+
+; Where the ELF Header is going to hit
+; Simply jump to _start
+; Our main function
+# :_start
+	58                          ; POP_EAX                     ;·Get·the·number·of·arguments
+	5B                          ; POP_EBX                     ;·Get·the·program·name
+	5B                          ; POP_EBX                     ;·Get·the·actual·output name
+	B9 41020000                 ; LOADI32_ECX %577            ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	BA 80010000                 ; LOADI32_EDX %384            ; Prepare file as RW for owner only (600 in octal)
+	B8 05000000                 ; LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	CD80                        ; INT_80                      ; Now open that file
+	89C5                        ; COPY_EAX_to_EBP             ; Preserve the file pointer we were given
+
+	B8 2D000000                 ; LOADI32_EAX %45             ; the Syscall # for SYS_BRK
+	BB 00000000                 ; LOADI32_EBX %0              ; Get current brk
+	CD80                        ; INT_80                      ; Let the kernel do the work
+	89C7                        ; COPY_EAX_to_EDI             ; Set our malloc pointer
+
+	B8 2D000000                 ; LOADI32_EAX %45             ; the Syscall # for SYS_BRK
+	89FB                        ; COPY_EDI_to_EBX             ; Using current pointer
+	81C3 00001000               ; ADDI32_EBX %0x100000        ; Allocate 1MB
+	CD80                        ; INT_80                      ; Let the kernel do the work
+
+# :core
+	5B                          ; POP_EBX                     ;·Get·the·actual·input name
+	81FB 00000000               ; CMPI32_EBX %0               ; Check for null string
+	74 3B                       ; JE8 !done                   ; Hit null be done
+
+	B9 00000000                 ; LOADI32_ECX %0              ;·prepare·read_only
+	BA 00000000                 ; LOADI32_EDX %0              ; prevent any interactions
+	B8 05000000                 ; LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	CD80                        ; INT_80                      ; Now open that damn file
+	89C6                        ; COPY_EAX_to_ESI             ; Protect INPUT
+# :keep
+	BA 00001000                 ; LOADI32_EDX %0x100000       ; set the size of chars we want
+	89F9                        ; COPY_EDI_to_ECX             ; Where to put it
+	89F3                        ; COPY_ESI_to_EBX             ; Where are we reading from
+	B8 03000000                 ; LOADI32_EAX %3              ; the syscall number for read
+	CD80                        ; INT_80                      ; call the Kernel
+	50                          ; PUSH_EAX                    ; Protect the number of bytes read
+
+	89C2                        ; COPY_EAX_to_EDX             ; Number of bytes to write
+	89F9                        ; COPY_EDI_to_ECX             ; What we are writing
+	89EB                        ; COPY_EBP_to_EBX             ; Write to target file
+	B8 04000000                 ; LOADI32_EAX %4              ; the syscall number for write
+	CD80                        ; INT_80                      ; call the Kernel
+
+	58                          ; POP_EAX                     ; Get bytes read
+	3D 00001000                 ; CMPI32_EAX %0x100000        ; Check if buffer was fully used
+	74 DA                       ; JE8 !keep                   ; Keep looping if was full
+	EB BC                       ; JMP8 !core                  ; Otherwise move to next file
+
+# :done
+	; program completed Successfully
+	BB 00000000                 ; LOADI32_EBX %0              ; All is well
+	B8 01000000                 ; LOADI32_EAX %1              ; put the exit syscall number in eax
+	CD80                        ; INT_80                      ; Call it a good day
+
+# :ELF_end

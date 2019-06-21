@@ -1,0 +1,869 @@
+;; Copyright (C) 2017 Jeremiah Orians
+;; This file is part of stage0.
+;;
+;; stage0 is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+;;
+;; stage0 is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+	;; Register usage:
+	;; EAX, ECX, EBX => Temps
+	;; EDI => MALLOC
+	;; EBP => HEAD
+	;; [Output] => Output_file
+	;; [Input] => Input_file
+
+	;; Struct format: (size 32)
+	;; NEXT => 0
+	;; TYPE => 8
+	;; TEXT => 16
+	;; EXPRESSION => 24
+
+	;; Types
+	;; None => 0
+	;; MACRO => 1
+	;; STRING => 2
+
+; Where the ELF Header is going to hit
+; Simply jump to _start
+; Our main function
+:_start
+	58                          ; POP_EAX                     ;·Get·the·number·of·arguments
+	5B                          ; POP_EBX                     ;·Get·the·program·name
+	5B                          ; POP_EBX                     ;·Get·the·actual·input name
+	B9 00000000                 ; LOADI32_ECX %0              ;·prepare·read_only
+	B8 05000000                 ; LOADI32_EAX %5              ;·the·syscall·number·for·open()
+	CD80                        ; INT_80                      ; Now open that damn file
+	A3 &Input                   ; STORE32_Absolute32_eax &Input ; Preserve the file pointer we were given
+
+	5B                          ; POP_EBX                     ;·Get·the·actual·output name
+	B9 41020000                 ; LOADI32_ECX %577            ; Prepare file as O_WRONLY|O_CREAT|O_TRUNC
+	BA 80010000                 ; LOADI32_EDX %384            ; Prepare file as RW for owner only (600 in octal)
+	B8 05000000                 ; LOADI32_EAX %5              ; the·syscall·number·for·open()
+	CD80                        ; INT_80                      ; Now open that damn file
+	83F8 00                     ; CMPI8_EAX !0                ; Check for missing output
+	0F8F %_start_out            ; JG32 %_start_out            ; Have real input
+	B8 01000000                 ; LOADI32_EAX %1              ; Use stdout
+
+:_start_out
+	A3 &Output                  ; STORE32_Absolute32_eax &Output ; Preserve the file pointer we were given
+
+	B8 2D000000                 ; LOADI32_EAX %45             ; the Syscall # for SYS_BRK
+	BB 00000000                 ; LOADI32_EBX %0              ; Get current brk
+	CD80                        ; INT_80                      ; Let the kernel do the work
+	89C7                        ; COPY_EAX_to_EDI             ; Set our malloc pointer
+
+	E8 %Tokenize_Line           ; CALL32 %Tokenize_Line       ; Get all lines
+	89E8                        ; COPY_EBP_to_EAX             ; prepare for Reverse_List
+	E8 %Reverse_List            ; CALL32 %Reverse_List        ; Correct order
+	89C5                        ; COPY_EAX_to_EBP             ; Update HEAD
+	E8 %Identify_Macros         ; CALL32 %Identify_Macros     ; Find the DEFINEs
+	E8 %Line_Macro              ; CALL32 %Line_Macro          ; Apply the DEFINEs
+	E8 %Process_String          ; CALL32 %Process_String      ; Handle strings
+	E8 %Eval_Immediates         ; CALL32 %Eval_Immediates     ; Handle Numbers
+	E8 %Preserve_Other          ; CALL32 %Preserve_Other      ; Collect the remaining
+	E8 %Print_Hex               ; CALL32 %Print_Hex           ; Output our results
+
+:Done
+	; program completed Successfully
+	BB 00000000                 ; LOADI32_EBX %0              ; All is well
+	B8 01000000                 ; LOADI32_EAX %1              ; put the exit syscall number in eax
+	CD80                        ; INT_80                      ; Call it a good day
+
+
+;; Tokenize_Line Function
+;; Using input file [Input] and Head EBP
+;; Creates a linked list of structs
+;; Uses EBX for in_set strings, ECX for Int C and EDX for Struct Token* p
+:Tokenize_Line
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+:restart
+	E8 %fgetc                   ; CALL32 %fgetc               ; Read a char
+	83F8 FC                     ; CMPI8_EAX !-4               ; Check for EOF
+	0F84 %done                  ; JE32 %done                  ; File is collected
+
+	0FB6C0                      ; MOVZX_al                    ; We have to zero extend it to use it
+	89C1                        ; COPY_EAX_to_ECX             ; Protect C
+
+	BB &comments                ; LOADI32_EBX &comments       ; Get pointer to "#;"
+	E8 %In_Set                  ; CALL32 %In_Set              ; Check for comments
+	83F8 01                     ; CMPI8_EAX !1                ; If comments
+	0F84 %Purge_LineComment     ; JE32 %Purge_LineComment     ; try again
+
+	89C8                        ; COPY_ECX_to_EAX             ; put C in place for check
+	BB &terminators             ; LOADI32_EBX &terminators    ; Get pointer to "\n\t "
+	E8 %In_Set                  ; CALL32 %In_Set              ; Check for terminators
+	83F8 01                     ; CMPI8_EAX !1                ; If terminator
+	0F84 %restart               ; JE32 %restart               ; try again
+
+	B8 20000000                 ; LOADI32_EAX %32             ; Malloc the struct P
+	E8 %malloc                  ; CALL32 %malloc              ; Get pointer to P
+	89C2                        ; COPY_EAX_to_EDX             ; Protect P
+	892A                        ; STORE32_EBP_into_Address_EDX ; P->NEXT = HEAD
+	89D5                        ; COPY_EDX_to_EBP             ; HEAD = P
+
+	89C8                        ; COPY_ECX_to_EAX             ; put C in place for check
+	BB &string_char             ; LOADI32_EBX &string_char    ; Get pointer to "\"'"
+	E8 %In_Set                  ; CALL32 %In_Set              ; Check for string chars
+	83F8 01                     ; CMPI8_EAX !1                ; If string char
+	0F84 %Store_String          ; JE32 %Store_String          ; Get string
+
+	E8 %Store_Atom              ; CALL32 %Store_Atom          ; Get whole token
+	E9 %restart                 ; JMP32 %restart
+
+:done
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; fgetc function
+;; Recieves FILE* in [Input]
+;; Returns -4 (EOF) or char in EAX
+:fgetc
+	52                          ; PUSH_EDX                    ; Protect EDX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	53                          ; PUSH_EBX                    ; Protect EBX
+	B8 FCFFFFFF                 ; LOADI32_EAX %-4             ; Put EOF in eax
+	50                          ; PUSH_EAX                    ; Assume bad (If nothing read, value will remain EOF)
+	8D0C24                      ; LEA32_ECX_from_esp          ; Get stack address
+	8B1D &Input                 ; LOAD32_Absolute32_ebx &Input ; Where are we reading from
+	B8 03000000                 ; LOADI32_EAX %3              ; the syscall number for read
+	BA 01000000                 ; LOADI32_EDX %1              ; set the size of chars we want
+	CD80                        ; INT_80                      ; call the Kernel
+	58                          ; POP_EAX                     ; Get either char or EOF
+	5B                          ; POP_EBX                     ; Restore EBX
+	59                          ; POP_ECX                     ; Restore ECX
+	5A                          ; POP_EDX                     ; Restore EDX
+	C3                          ; RET
+
+
+;; Malloc isn't actually required if the program being built fits in the initial memory
+;; However, it doesn't take much to add it.
+;; Requires EDI to be initialized and EAX to have the number of desired bytes
+:malloc
+	52                          ; PUSH_EDX                    ; Protect EDX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	53                          ; PUSH_EBX                    ; Protect EBX
+
+	89FB                        ; COPY_EDI_to_EBX             ; Using the current pointer
+	01C3                        ; ADD_EAX_to_EBX              ; Request the number of desired bytes
+	B8 2D000000                 ; LOADI32_EAX %45             ; the Syscall # for SYS_BRK
+	CD80                        ; INT_80                      ; call the Kernel
+	89F8                        ; COPY_EDI_to_EAX             ; Return pointer
+	89DF                        ; COPY_EBX_to_EDI             ; Update pointer
+
+	5B                          ; POP_EBX                     ; Restore EBX
+	59                          ; POP_ECX                     ; Restore ECX
+	5A                          ; POP_EDX                     ; Restore EDX
+	C3                          ; RET
+
+
+;; Purge_LineComment function
+;; Reads chars until LF and jumps to restart
+:Purge_LineComment
+	E8 %fgetc                   ; CALL32 %fgetc               ; Get a char
+	0FB6C0                      ; MOVZX_al                    ; Zero extend
+	83F8 0A                     ; CMPI8_EAX !10               ; While not LF
+	0F85 %Purge_LineComment     ; JNE32 %Purge_LineComment    ; Keep reading
+	E9 %restart                 ; JMP32 %restart
+
+
+;; Store_String Function
+;; Recieves C in ECX, HEAD in EDX and Input file in [Output]
+;; Uses EBX for terminator, ECX for C and EDX for string
+:Store_String
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+
+	B8 02000000                 ; LOADI32_EAX %2              ; Using TYPE STRING
+	8942 08                     ; STORE32_EAX_into_Address_EDX_Immediate8 !8 ; HEAD->TYPE = STRING
+	B8 00010000                 ; LOADI32_EAX %256            ; Malloc the string
+	E8 %malloc                  ; CALL32 %malloc              ; Get pointer to P
+	8942 10                     ; STORE32_EAX_into_Address_EDX_Immediate8 !16 ; HEAD->TEXT = STRING
+	89CB                        ; COPY_ECX_to_EBX             ; Protect terminator
+	89C2                        ; COPY_EAX_to_EDX             ; Protect string pointer
+:Store_String_Loop
+	880A                        ; STORE8_cl_into_Address_EDX  ; write byte
+	E8 %fgetc                   ; CALL32 %fgetc               ; read next char
+	0FB6C0                      ; MOVZX_al                    ; Zero extend it
+	89C1                        ; COPY_EAX_to_ECX             ; Update C
+	83C2 01                     ; ADDI8_EDX !1                ; STRING = STRING + 1
+	39D9                        ; CMP_EBX_ECX                 ; See if we hit terminator
+	0F85 %Store_String_Loop     ; JNE32 %Store_String_Loop    ; Otherwise keep looping
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	89D0                        ; COPY_EDX_to_EAX             ; return HEAD
+	E9 %restart                 ; JMP32 %restart
+
+
+;; Store_Atom Function
+;; Recieves C in ECX, HEAD in EDX and Input file in [Input]
+;; Uses EBX for in_set strings, ECX for C and EDX for string
+:Store_Atom
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+
+	B8 00010000                 ; LOADI32_EAX %256            ; Malloc the string
+	E8 %malloc                  ; CALL32 %malloc              ; Get pointer to P
+	8942 10                     ; STORE32_EAX_into_Address_EDX_Immediate8 !16 ; HEAD->TEXT = STRING
+	BB &terminators             ; LOADI32_EBX &terminators    ; Get pointer to "\n\t "
+	89C2                        ; COPY_EAX_to_EDX             ; Protect string pointer
+:Store_Atom_loop
+	880A                        ; STORE8_cl_into_Address_EDX  ; write byte
+	E8 %fgetc                   ; CALL32 %fgetc               ; read next char
+	0FB6C0                      ; MOVZX_al                    ; Zero extend it
+	89C1                        ; COPY_EAX_to_ECX             ; Update C
+	83C2 01                     ; ADDI8_EDX !1                ; STRING = STRING + 1
+	E8 %In_Set                  ; CALL32 %In_Set              ; Check for terminators
+	83F8 00                     ; CMPI8_EAX !0                ; Check for "\n\t "
+	0F84 %Store_Atom_loop       ; JE32 %Store_Atom_loop       ; Loop otherwise
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	89D0                        ; COPY_EDX_to_EAX             ; return HEAD
+	C3                          ; RET
+
+
+;; In_Set function
+;; Recieves Char C in EAX and CHAR* in EBX
+;; Returns 1 if true, zero if false in EAX
+:In_Set
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+:In_Set_loop
+	8A0B                        ; LOAD8_cl_from_EBX           ; Read char
+	0FB6C9                      ; MOVZX_cl                    ; Zero extend it
+
+	39C8                        ; CMP_EAX_ECX                 ; See if they match
+	0F84 %In_Set_True           ; JE32 %In_Set_True           ; return true
+
+	83F9 00                     ; CMPI8_ECX !0                ; Check for NULL
+	0F84 %In_Set_False          ; JE32 %In_Set_False          ; return false
+
+	83C3 01                     ; ADDI8_EBX !1                ; s = s + 1
+	E9 %In_Set_loop             ; JMP32 %In_Set_loop          ; Keep looping
+
+:In_Set_True
+	B8 01000000                 ; LOADI32_EAX %1              ; Set True
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+:In_Set_False
+	B8 00000000                 ; LOADI32_EAX %0              ; Set FALSE
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+;; Char sets
+:terminators
+0A092000                        ; "\n\t "
+
+:comments
+3B2300                          ; ";#"
+
+:string_char
+22 27 00                        ; "\"\'"
+
+
+;; Reverse_List function
+;; Recieves List in EAX
+;; Returns the list reversed in EAX
+:Reverse_List
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	89C3                        ; COPY_EAX_to_EBX             ; Set HEAD
+	B8 00000000                 ; LOADI32_EAX %0              ; ROOT = NULL
+:Reverse_List_Loop
+	83FB 00                     ; CMPI8_EBX !0                ; WHILE HEAD != NULL
+	0F84 %Reverse_List_Done     ; JE32 %Reverse_List_Done     ; Stop otherwise
+
+	8B0B                        ; LOAD32_ECX_from_EBX         ; NEXT = HEAD->NEXT
+	8903                        ; STORE32_EAX_into_Address_EBX ; HEAD->NEXT = ROOT
+	89D8                        ; COPY_EBX_to_EAX             ; ROOT = HEAD
+	89CB                        ; COPY_ECX_to_EBX             ; HEAD = NEXT
+	E9 %Reverse_List_Loop       ; JMP32 %Reverse_List_Loop    ; Keep Going
+
+:Reverse_List_Done
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; Identify_Macros function
+;; Recieves List in EAX
+;; Updates the list in place; does not modify registers
+;; Uses EBX for DEFINE, ECX for I
+:Identify_Macros
+	50                          ; PUSH_EAX                    ; Protect EAX
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+	BB &DEFINE_str              ; LOADI32_EBX &DEFINE_str     ; Setup define string
+	89C1                        ; COPY_EAX_to_ECX             ; I = HEAD
+:Identify_Macros_Loop
+	8B41 10                     ; LOAD32_EAX_from_ECX_Immediate8 !16 ; I->TEXT
+	E8 %match                   ; CALL32 %match               ; IF "DEFINE" == I->TEXT
+	83F8 00                     ; CMPI8_EAX !0                ; Check if match
+	0F85 %Identify_Macros_Next  ; JNE32 %Identify_Macros_Next ; Skip the work
+
+	;; Deal with MACRO
+	B8 01000000                 ; LOADI32_EAX %1              ; Using MACRO
+	8941 08                     ; STORE32_EAX_into_Address_ECX_Immediate8 !8 ; I->TYPE = MACRO
+
+	8B01                        ; LOAD32_EAX_from_ECX         ; I->NEXT
+	8B40 10                     ; LOAD32_EAX_from_EAX_Immediate8 !16 ; I->NEXT->TEXT
+	8941 10                     ; STORE32_EAX_into_Address_ECX_Immediate8 !16 ; I->TEXT = I->NEXT->TEXT
+
+	8B01                        ; LOAD32_EAX_from_ECX         ; I->NEXT
+	8B00                        ; LOAD32_EAX_from_EAX         ; I->NEXT->NEXT
+	8B40 10                     ; LOAD32_EAX_from_EAX_Immediate8 !16 ; I->NEXT->NEXT->TEXT
+	8941 18                     ; STORE32_EAX_into_Address_ECX_Immediate8 !24 ; I->EXPRESSION = I->NEXT->NEXT->TEXT
+
+	8B01                        ; LOAD32_EAX_from_ECX         ; I->NEXT
+	8B00                        ; LOAD32_EAX_from_EAX         ; I->NEXT->NEXT
+	8B00                        ; LOAD32_EAX_from_EAX         ; I->NEXT->NEXT->NEXT
+	8901                        ; STORE32_EAX_into_Address_ECX ; I->NEXT = I->NEXT->NEXT->NEXT
+
+:Identify_Macros_Next
+	8B09                        ; LOAD32_ECX_from_ECX         ; I = I->NEXT
+	83F9 00                     ; CMPI8_ECX !0                ; Check for NULL
+	0F85 %Identify_Macros_Loop  ; JNE32 %Identify_Macros_Loop ; Keep looping otherwise
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	58                          ; POP_EAX                     ; Restore EAX
+	C3                          ; RET
+
+:DEFINE_str
+444546494E4500                  ; "DEFINE"
+
+
+;; match function
+;; Recieves CHAR* in EAX and CHAR* in EBX
+;; Returns 0 (TRUE) or 1 (FALSE) in EAX
+:match
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+	89C1                        ; COPY_EAX_to_ECX             ; S1 in place
+	89DA                        ; COPY_EBX_to_EDX             ; S2 in place
+:match_Loop
+	8A01                        ; LOAD8_al_from_ECX           ; S1[0]
+	0FB6C0                      ; MOVZX_al                    ; Make it useful
+	8A1A                        ; LOAD8_bl_from_EDX           ; S2[0]
+	0FB6DB                      ; MOVZX_bl                    ; Make it useful
+	39D8                        ; CMP_EAX_EBX                 ; See if they match
+	0F85 %match_False           ; JNE32 %match_False          ; If not
+
+	83C1 01                     ; ADDI8_ECX !1                ; S1 = S1 + 1
+	83C2 01                     ; ADDI8_EDX !1                ; S2 = S2 + 1
+	83F8 00                     ; CMPI8_EAX !0                ; If reached end of string
+	0F84 %match_Done            ; JE32 %match_Done            ; Perfect match
+	E9 %match_Loop              ; JMP32 %match_Loop           ; Otherwise keep looping
+
+:match_False
+	B8 01000000                 ; LOADI32_EAX %1              ; Return false
+:match_Done
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; Line_Macro function
+;; Recieves List in EAX
+;; Updates the list in place; does not modify registers
+;; Uses EAX for I, EBX for I->TEXT, ECX for I->EXPRESSION
+:Line_Macro
+	50                          ; PUSH_EAX                    ; Protect EAX
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+:Line_Macro_Loop
+	8B58 08                     ; LOAD32_EBX_from_EAX_Immediate8 !8 ; I->TYPE
+	83FB 01                     ; CMPI8_EBX !1                ; IF MACRO == I->TYPE
+	0F85 %Line_Macro_Next       ; JNE32 %Line_Macro_Next      ; Otherwise move on
+
+	;; Is a macro apply
+	8B58 10                     ; LOAD32_EBX_from_EAX_Immediate8 !16 ; I->TEXT
+	8B48 18                     ; LOAD32_ECX_from_EAX_Immediate8 !24 ; I->EXPRESSION
+	8B00                        ; LOAD32_EAX_from_EAX         ; I->NEXT
+	E8 %Set_Expression          ; CALL32 %Set_Expression      ; Apply it
+	E9 %Line_Macro_Loop         ; JMP32 %Line_Macro_Loop      ; Move on to next
+
+:Line_Macro_Next
+	8B00                        ; LOAD32_EAX_from_EAX         ; I->NEXT
+	83F8 00                     ; CMPI8_EAX !0                ; Check for NULL
+	0F85 %Line_Macro_Loop       ; JNE32 %Line_Macro_Loop      ; Keep going
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	58                          ; POP_EAX                     ; Restore EAX
+	C3                          ; RET
+
+
+;; Set_Expression function
+;; Recieves List in EAX, CHAR* in EBX and CHAR* in ECX
+;; Updates the list in place; does not modify registers
+;; Uses EBX for C, ECX for EXP and EDX for I
+:Set_Expression
+	50                          ; PUSH_EAX                    ; Protect EAX
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+	89C2                        ; COPY_EAX_to_EDX             ; Set I
+:Set_Expression_Loop
+	8B42 08                     ; LOAD32_EAX_from_EDX_Immediate8 !8 ; I->TYPE
+	83F8 01                     ; CMPI8_EAX !1                ; IF MACRO == I->TYPE
+	0F84 %Set_Expression_Next   ; JE32 %Set_Expression_Next   ; Ignore and move on
+
+	8B42 10                     ; LOAD32_EAX_from_EDX_Immediate8 !16 ; I->TEXT
+	E8 %match                   ; CALL32 %match               ; Check for match
+	83F8 00                     ; CMPI8_EAX !0                ; If match
+	0F85 %Set_Expression_Next   ; JNE32 %Set_Expression_Next  ; Otherwise next
+
+	;; We have a non-macro match
+	894A 18                     ; STORE32_ECX_into_Address_EDX_Immediate8 !24 ; I->EXPRESSION = EXP
+
+:Set_Expression_Next
+	8B12                        ; LOAD32_EDX_from_EDX         ; I = I->NEXT
+	83FA 00                     ; CMPI8_EDX !0                ; IF NULL == I
+	0F85 %Set_Expression_Loop   ; JNE32 %Set_Expression_Loop  ; Otherwise keep looping
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	58                          ; POP_EAX                     ; Restore EAX
+	C3                          ; RET
+
+
+;; Process_String function
+;; Recieves List in EAX
+;; Update the list in place; does not modify registers
+;; Uses EBX for I->TEXT, ECX for I and EDX for S
+:Process_String
+	50                          ; PUSH_EAX                    ; Protect EAX
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+	89C1                        ; COPY_EAX_to_ECX             ; I = HEAD
+:Process_String_loop
+	8B41 08                     ; LOAD32_EAX_from_ECX_Immediate8 !8 ; I->TYPE
+	83F8 02                     ; CMPI8_EAX !2                ; IF STRING == I->TYPE
+	0F85 %Process_String_Next   ; JNE32 %Process_String_Next  ; Skip to next
+
+	8B59 10                     ; LOAD32_EBX_from_ECX_Immediate8 !16 ; I->TEXT
+	8A03                        ; LOAD8_al_from_EBX           ; I->TEXT[0]
+	0FB6C0                      ; MOVZX_al                    ; make it useful
+	83F8 27                     ; CMPI8_EAX !39               ; IF '\'' == I->TEXT[0]
+	0F85 %Process_String_Raw    ; JNE32 %Process_String_Raw   ; Deal with '\"'
+
+	;; Deal with '\''
+	83C3 01                     ; ADDI8_EBX !1                ; I->TEXT + 1
+	8959 18                     ; STORE32_EBX_into_Address_ECX_Immediate8 !24 ; I->EXPRESSION = I->TEXT + 1
+	E9 %Process_String_Next     ; JMP32 %Process_String_Next  ; Move on to next
+
+:Process_String_Raw
+	89D8                        ; COPY_EBX_to_EAX             ; Get length of I->TEXT
+	E8 %string_length           ; CALL32 %string_length       ; Do it
+	C1E8 02                     ; SHRI8_EAX !2                ; LENGTH = LENGTH >> 2
+	83C0 01                     ; ADDI8_EAX !1                ; LENGTH = LENGTH + 1
+	C1E0 03                     ; SHLI8_EAX !3                ; LENGTH = LENGTH << 3
+	E8 %malloc                  ; CALL32 %malloc              ; Get string
+	89DA                        ; COPY_EBX_to_EDX             ; S = I->TEXT
+	83C2 01                     ; ADDI8_EDX !1                ; S = S + 1
+	8941 18                     ; STORE32_EAX_into_Address_ECX_Immediate8 !24 ; I->EXPRESSION = hexify
+	89C3                        ; COPY_EAX_to_EBX             ; Put hexify buffer in ebx
+
+:Process_String_Raw_Loop
+	8A02                        ; LOAD8_al_from_EDX           ; Read 1 chars
+	0FB6C0                      ; MOVZX_al                    ; Make it useful
+	83C2 01                     ; ADDI8_EDX !1                ; S = S + 1
+	3C 00                       ; CMPI8_AL !0                 ; Check for NULL
+	9C                          ; PUSH_FLAGS                  ; Protect condition
+	E8 %hex8                    ; CALL32 %hex8                ; write them all
+	9D                          ; POP_FLAGS                   ; restore condition
+	0F85 %Process_String_Raw_Loop ; JNE32 %Process_String_Raw_Loop ; Keep looping
+
+:Process_String_Next
+	8B09                        ; LOAD32_ECX_from_ECX         ; I = I->NEXT
+	83F9 00                     ; CMPI8_ECX !0                ; IF NULL == I
+	0F85 %Process_String_loop   ; JNE32 %Process_String_loop  ; Otherwise keep looping
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	58                          ; POP_EAX                     ; Restore EAX
+	C3                          ; RET
+
+
+;; string_length function
+;; Recieves CHAR* in EAX
+;; Returns INT in EAX
+;; Uses EAX for CH, EBX for S and ECX for INDEX
+:string_length
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	89C3                        ; COPY_EAX_to_EBX             ; Set S
+	B9 00000000                 ; LOADI32_ECX %0              ; INDEX = 0
+:string_length_loop
+	8A040B                      ; LOAD8_al_from_EBX_indexed_ECX ; S[0]
+	0FB6C0                      ; MOVZX_al                    ; make it useful
+	83F8 00                     ; CMPI8_EAX !0                ; IF NULL == S[0]
+	0F84 %string_length_done    ; JE32 %string_length_done    ; Stop
+
+	83C1 01                     ; ADDI8_ECX !1                ; INDEX = INDEX + 1
+	E9 %string_length_loop      ; JMP32 %string_length_loop   ; Keep going
+
+:string_length_done
+	89C8                        ; COPY_ECX_to_EAX             ; RETURN INDEX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; Eval_Immediates function
+;; Recieves List in EAX
+;; Updates the list in place; does not modify registers
+;; Uses EBX for I->TEXT[0], ECX for I->TEXT[1] and EDX for I
+:Eval_Immediates
+	50                          ; PUSH_EAX                    ; Protect EAX
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+	89C2                        ; COPY_EAX_to_EDX             ; I = HEAD
+:Eval_Immediates_Loop
+	;; Check for MACRO
+	8B42 08                     ; LOAD32_EAX_from_EDX_Immediate8 !8 ; I->TYPE
+	83F8 01                     ; CMPI8_EAX !1                ; IF MACRO == I-TYPE
+	0F84 %Eval_Immediates_Next  ; JE32 %Eval_Immediates_Next  ; Skip to next
+
+	;; Check for NULL EXPRESSION
+	8B42 18                     ; LOAD32_EAX_from_EDX_Immediate8 !24 ; I->EXPRESSION
+	83F8 00                     ; CMPI8_EAX !0                ; IF NULL == I->EXPRESSION
+	0F85 %Eval_Immediates_Next  ; JNE32 %Eval_Immediates_Next ; Skip to next
+
+	;; Check if number
+	8B42 10                     ; LOAD32_EAX_from_EDX_Immediate8 !16 ; I->TEXT
+	8A18                        ; LOAD8_bl_from_EAX           ; I->TEXT[0]
+	0FB6DB                      ; MOVZX_bl                    ; Extend to use
+	83C0 01                     ; ADDI8_EAX !1                ; I->TEXT + 1
+	8A08                        ; LOAD8_cl_from_EAX           ; I->TEXT[1]
+	0FB6C9                      ; MOVZX_cl                    ; Extend to use
+	E8 %numerate_string         ; CALL32 %numerate_string     ; Convert string to INT
+	83F8 00                     ; CMPI8_EAX !0                ; IF 0 == numerate_number(I->TEXT + 1)
+	0F85 %Eval_Immediates_value ; JNE32 %Eval_Immediates_value ; Has a value
+
+	;; Last chance for Immediate
+	83F9 30                     ; CMPI8_ECX !48               ; If '0' == I->TEXT[1]
+	0F85 %Eval_Immediates_Next  ; JNE32 %Eval_Immediates_Next ; Skip to next
+
+:Eval_Immediates_value
+	E8 %express_number          ; CALL32 %express_number      ; Convert value to hex string
+	8942 18                     ; STORE32_EAX_into_Address_EDX_Immediate8 !24 ; I->EXPRESSION = express_number(value, I-TEXT[0])
+
+:Eval_Immediates_Next
+	8B12                        ; LOAD32_EDX_from_EDX         ; I = I->NEXT
+	83FA 00                     ; CMPI8_EDX !0                ; IF NULL == I
+	0F85 %Eval_Immediates_Loop  ; JNE32 %Eval_Immediates_Loop ; Otherwise keep looping
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	58                          ; POP_EAX                     ; Restore EAX
+	C3                          ; RET
+
+
+;; numerate_string function
+;; Recieves CHAR* in EAX
+;; Returns value of CHAR* in EAX
+;; Uses EAX for VALUE, EBX for S, ECX for CH and EDI for NEGATIVE?
+:numerate_string
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+	57                          ; PUSH_EDI                    ; Protect EDI
+	89C3                        ; COPY_EAX_to_EBX             ; put S in correct place
+	B8 00000000                 ; LOADI32_EAX %0              ; Initialize to Zero
+:numerate_string_loop
+	8A4B 01                     ; LOAD8_cl_from_EBX_Immediate8 !1 ; S[1]
+	0FB6C9                      ; MOVZX_cl                    ; make it useful
+	83F9 78                     ; CMPI8_ECX !120              ; IF 'x' == S[1]
+	0F84 %numerate_hex          ; JE32 %numerate_hex          ; Deal with hex input
+
+	;; Assume decimal input
+	B9 00000000                 ; LOADI32_ECX %0              ; Assume no negation
+	8A0B                        ; LOAD8_cl_from_EBX           ; S[0]
+	0FB6C9                      ; MOVZX_cl                    ; make it useful
+	83F9 2D                     ; CMPI8_ECX !45               ; IF '-' == S[0]
+	0F85 %numerate_decimal      ; JNE32 %numerate_decimal     ; Skip negation
+
+	BF 01000000                 ; LOADI32_EDI %1              ; Set FLAG
+	83C3 01                     ; ADDI8_EBX !1                ; S = S + 1
+
+:numerate_decimal
+	8A0B                        ; LOAD8_cl_from_EBX           ; S[0]
+	0FB6C9                      ; MOVZX_cl                    ; make it useful
+	83F9 00                     ; CMPI8_ECX !0                ; IF NULL == S[0]
+	0F84 %numerate_decimal_done ; JE32 %numerate_decimal_done ; We are done
+
+	6BC0 0A                     ; IMULI8_EAX !10              ; VALUE = VALUE * 10
+	83E9 30                     ; SUBI8_ECX !48               ; CH = CH - '0'
+	83F9 09                     ; CMPI8_ECX !9                ; Check for illegal
+	0F8F %numerate_string_fail  ; JG32 %numerate_string_fail  ; If CH > '9'
+	83F9 00                     ; CMPI8_ECX !0                ; Check for illegal
+	0F8C %numerate_string_fail  ; JL32 %numerate_string_fail  ; IF CH < 0
+	01C8                        ; ADD_ECX_to_EAX              ; VALUE = VALUE + CH
+	83C3 01                     ; ADDI8_EBX !1                ; S = S + 1
+	E9 %numerate_decimal        ; JMP32 %numerate_decimal     ; Keep looping
+
+:numerate_decimal_done
+	83FF 01                     ; CMPI8_EDI !1                ; Check if need to negate
+	0F85 %numerate_string_done  ; JNE32 %numerate_string_done ; Nope
+
+	6BC0 FF                     ; IMULI8_EAX !-1              ; VALUE = VALUE * -1
+	E9 %numerate_string_done    ; JMP32 %numerate_string_done ; Done
+
+:numerate_hex
+	83C3 02                     ; ADDI8_EBX !2                ; S = S + 2
+:numerate_hex_loop
+	8A0B                        ; LOAD8_cl_from_EBX           ; S[0]
+	0FB6C9                      ; MOVZX_cl                    ; make it useful
+	83F9 00                     ; CMPI8_ECX !0                ; IF NULL == S[0]
+	0F84 %numerate_string_done  ; JE32 %numerate_string_done  ; We are done
+
+	C1E0 04                     ; SHLI8_EAX !4                ; VALUE = VALUE << 4
+	83E9 30                     ; SUBI8_ECX !48               ; CH = CH - '0'
+	83F9 0A                     ; CMPI8_ECX !10               ; IF 10 >= CH
+	0F8C %numerate_hex_digit    ; JL32 %numerate_hex_digit    ; NO
+	83E9 07                     ; SUBI8_ECX !7                ; Push A-F into range
+:numerate_hex_digit
+	83F9 0F                     ; CMPI8_ECX !15               ; Check for illegal
+	0F8F %numerate_string_fail  ; JG32 %numerate_string_fail  ; If CH > 'F'
+	83F9 00                     ; CMPI8_ECX !0                ; Check for illegal
+	0F8C %numerate_string_fail  ; JL32 %numerate_string_fail  ; IF CH < 0
+	01C8                        ; ADD_ECX_to_EAX              ; VALUE = VALUE + CH
+	83C3 01                     ; ADDI8_EBX !1                ; S = S + 1
+	E9 %numerate_hex_loop       ; JMP32 %numerate_hex_loop    ; Keep looping
+
+:numerate_string_fail
+	B8 00000000                 ; LOADI32_EAX %0              ; return ZERO
+
+:numerate_string_done
+	5F                          ; POP_EDI                     ; Restore EDI
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; express_number function
+;; Recieves INT in EAX and CHAR in EBX
+;; Allocates a string and expresses the value in hex
+;; Returns string in EAX
+;; Uses EAX for VALUE, EBX for S and ECX for CH
+:express_number
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+	89D9                        ; COPY_EBX_to_ECX             ; Put CH in right place
+	89C3                        ; COPY_EAX_to_EBX             ; Protect VALUE
+	83F9 25                     ; CMPI8_ECX !37               ; IF '%' == CH
+	0F85 %express_number2       ; JNE32 %express_number2      ; Otherwise try @
+
+	B8 09000000                 ; LOADI32_EAX %9              ; We need 3bytes
+	E8 %malloc                  ; CALL32 %malloc              ; Get S pointer
+	93                          ; XCHG_EAX_EBX                ; Put S and VALUE in place
+	53                          ; PUSH_EBX                    ; Protect S
+	E8 %hex32l                  ; CALL32 %hex32l              ; Store 32bits
+	E9 %express_number_done     ; JMP32 %express_number_done  ; done
+
+:express_number2
+	83F9 40                     ; CMPI8_ECX !64               ; IF '@' == CH
+	0F85 %express_number1       ; JNE32 %express_number1      ; Othrewise try !
+
+	B8 05000000                 ; LOADI32_EAX %5              ; We need 3bytes
+	E8 %malloc                  ; CALL32 %malloc              ; Get S pointer
+	93                          ; XCHG_EAX_EBX                ; Put S and VALUE in place
+	53                          ; PUSH_EBX                    ; Protect S
+	E8 %hex16l                  ; CALL32 %hex16l              ; Store 16bits
+	E9 %express_number_done     ; JMP32 %express_number_done  ; done
+
+:express_number1
+	B8 03000000                 ; LOADI32_EAX %3              ; We need 3bytes
+	E8 %malloc                  ; CALL32 %malloc              ; Get S pointer
+	93                          ; XCHG_EAX_EBX                ; Put S and VALUE in place
+	53                          ; PUSH_EBX                    ; Protect S
+	E8 %hex8                    ; CALL32 %hex8                ; Store 8bit
+
+:express_number_done
+	58                          ; POP_EAX                     ; Restore S
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; HEX to ascii routine
+;; Recieves INT in EAX and CHAR* in EBX
+;; Stores ascii of INT in CHAR*
+;; Returns only modifying EAX
+:hex64l
+	50                          ; PUSH_EAX                    ; Protect top 32
+	E8 %hex32l                  ; CALL32 %hex32l              ; Store it
+	58                          ; POP_EAX                     ; do top 32
+	C1E8 20                     ; SHRI8_EAX !32               ; do bottom 32 first
+:hex32l
+	50                          ; PUSH_EAX                    ; Protect top 16
+	E8 %hex16l                  ; CALL32 %hex16l              ; Store it
+	58                          ; POP_EAX                     ; do top 16
+	C1E8 10                     ; SHRI8_EAX !16               ; do bottom 16 first
+:hex16l
+	50                          ; PUSH_EAX                    ; Protect top byte
+	E8 %hex8                    ; CALL32 %hex8                ; Store it
+	58                          ; POP_EAX                     ; do high byte
+	C1E8 08                     ; SHRI8_EAX !8                ; do bottom byte first
+:hex8
+	50                          ; PUSH_EAX                    ; Protect bottom nibble
+	C1E8 04                     ; SHRI8_EAX !4                ; do high nibble first
+	E8 %hex4                    ; CALL32 %hex4                ; Store it
+	58                          ; POP_EAX                     ; do low nibble
+:hex4
+	83E0 0F                     ; ANDI8_EAX !0xF              ; isolate nibble
+	04 30                       ; ADDI8_AL !48                ; convert to ascii
+	3C 39                       ; CMPI8_AL !57                ; valid digit?
+	0F86 %hex1                  ; JBE32 %hex1                 ; yes
+	04 07                       ; ADDI8_AL !7                 ; use alpha range
+:hex1
+	8803                        ; STORE8_al_into_Address_EBX  ; store result
+	83C3 01                     ; ADDI8_EBX !1                ; next position
+	C3                          ; RET
+
+
+;; Preserve_Other function
+;; Recieves List in EAX
+;; Updates the list in place; does not modify registers
+;; Uses EAX for I, EBX for I->TEXT
+:Preserve_Other
+	50                          ; PUSH_EAX                    ; Protect EAX
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	52                          ; PUSH_EDX                    ; Protect EDX
+:Preserve_Other_Loop
+	8B58 18                     ; LOAD32_EBX_from_EAX_Immediate8 !24 ; I->EXPRESSION
+	83FB 00                     ; CMPI8_EBX !0                ; IF NULL == I->EXPRESSION
+	0F85 %Preserve_Other_Next   ; JNE32 %Preserve_Other_Next  ; Otherwise next
+
+	;; Needs preserving
+	8B58 10                     ; LOAD32_EBX_from_EAX_Immediate8 !16 ; I->TEXT
+	8958 18                     ; STORE32_EBX_into_Address_EAX_Immediate8 !24 ; I->EXPRESSION = I->TEXT
+
+:Preserve_Other_Next
+	8B00                        ; LOAD32_EAX_from_EAX         ; I = I->NEXT
+	83F8 00                     ; CMPI8_EAX !0                ; IF NULL == I
+	0F85 %Preserve_Other_Loop   ; JNE32 %Preserve_Other_Loop  ; Otherwise keep looping
+
+	5A                          ; POP_EDX                     ; Restore EDX
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	58                          ; POP_EAX                     ; Restore EAX
+	C3                          ; RET
+
+
+;; Print_Hex function
+;; Recieves list in EAX
+;; walks the list and prints the I->EXPRESSION for all nodes followed by newline
+;; Uses EBX for I
+:Print_Hex
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	89EB                        ; COPY_EBP_to_EBX             ; I = Head
+:Print_Hex_Loop
+	8B43 08                     ; LOAD32_EAX_from_EBX_Immediate8 !8 ; I->TYPE
+	83F8 01                     ; CMPI8_EAX !1                ; IF MACRO == I->TYPE
+	0F84 %Print_Hex_Next        ; JE32 %Print_Hex_Next        ; Skip
+
+	8B43 18                     ; LOAD32_EAX_from_EBX_Immediate8 !24 ; Using EXPRESSION
+	E8 %File_Print              ; CALL32 %File_Print          ; Print it
+	B8 0A000000                 ; LOADI32_EAX %10             ; NEWLINE
+	E8 %fputc                   ; CALL32 %fputc               ; Append it
+
+:Print_Hex_Next
+	8B1B                        ; LOAD32_EBX_from_EBX         ; Iterate to next Token
+	83FB 00                     ; CMPI8_EBX !0                ; Check for NULL
+	0F85 %Print_Hex_Loop        ; JNE32 %Print_Hex_Loop       ; Otherwise keep looping
+
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; File_Print function
+;; Recieves CHAR* in EAX
+;; calls fputc for every non-null char
+:File_Print
+	53                          ; PUSH_EBX                    ; Protect EBX
+	51                          ; PUSH_ECX                    ; Protect ECX
+	89C3                        ; COPY_EAX_to_EBX             ; Protect S
+	83F8 00                     ; CMPI8_EAX !0                ; Protect against nulls
+	0F84 %File_Print_Done       ; JE32 %File_Print_Done       ; Simply don't try to print them
+:File_Print_Loop
+	8A03                        ; LOAD8_al_from_EBX           ; Read byte
+	0FB6C0                      ; MOVZX_al                    ; zero extend
+	83F8 00                     ; CMPI8_EAX !0                ; Check for NULL
+	0F84 %File_Print_Done       ; JE32 %File_Print_Done       ; Stop at NULL
+
+	E8 %fputc                   ; CALL32 %fputc               ; write it
+	83C3 01                     ; ADDI8_EBX !1                ; S = S + 1
+	E9 %File_Print_Loop         ; JMP32 %File_Print_Loop      ; Keep going
+
+:File_Print_Done
+	59                          ; POP_ECX                     ; Restore ECX
+	5B                          ; POP_EBX                     ; Restore EBX
+	C3                          ; RET
+
+
+;; fputc function
+;; recieves CHAR in EAX and FILE* in [Output]
+;; writes char and returns
+:fputc
+	52                          ; PUSH_EDX                    ; Protect EDX
+	51                          ; PUSH_ECX                    ; protect ECX
+	53                          ; PUSH_EBX                    ; protect EBX
+	50                          ; PUSH_EAX                    ; We are writing eax
+	8D0C24                      ; LEA32_ECX_from_esp          ; Get stack address
+	8B1D &Output                ; LOAD32_Absolute32_ebx &Output ; Write to target file
+	B8 04000000                 ; LOADI32_EAX %4              ; the syscall number for write
+	BA 01000000                 ; LOADI32_EDX %1              ; set the size of chars we want
+	CD80                        ; INT_80                      ; call the Kernel
+	58                          ; POP_EAX                     ; Restore stack
+	5B                          ; POP_EBX                     ; Restore EBX
+	59                          ; POP_ECX                     ; Restore ECX
+	5A                          ; POP_EDX                     ; Restore EDX
+	C3                          ; RET
+
+:Output
+	00000000                    ; NULL
+:Input
+	00000000                    ; NULL
+:ELF_end

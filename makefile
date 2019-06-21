@@ -92,11 +92,11 @@ asm: High_level_prototypes/asm.c | bin
 dis: High_level_prototypes/disasm.c | bin
 	$(CC) -ggdb High_level_prototypes/disasm.c -o bin/dis
 
-hex: Linux\ Bootstrap/hex.c | bin
-	$(CC) Linux\ Bootstrap/hex.c -o bin/hex
+hex: Linux\ Bootstrap/Legacy_pieces/hex.c | bin
+	$(CC) Linux\ Bootstrap/Legacy_pieces/hex.c -o bin/hex
 
-xeh: Linux\ Bootstrap/xeh.c | bin
-	$(CC) Linux\ Bootstrap/xeh.c -o bin/xeh
+xeh: Linux\ Bootstrap/Legacy_pieces/xeh.c | bin
+	$(CC) Linux\ Bootstrap/Legacy_pieces/xeh.c -o bin/xeh
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
