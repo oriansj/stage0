@@ -780,7 +780,7 @@ void preserve_other(struct Token* p)
 			}
 			else
 			{
-				file_print("Recieved invalid other; ", stderr);
+				file_print("Received invalid other; ", stderr);
 				file_print(i->Text, stderr);
 				file_print("\n", stderr);
 				exit(EXIT_FAILURE);
@@ -821,7 +821,7 @@ void range_check(int displacement, int number_of_bytes)
 		return;
 	}
 
-	file_print("Recieved an invalid number of bytes in range_check\n", stderr);
+	file_print("Received an invalid number of bytes in range_check\n", stderr);
 	exit(EXIT_FAILURE);
 }
 
@@ -975,7 +975,7 @@ void eval_immediates(struct Token* p)
 			}
 			else
 			{
-				file_print("Unknown architecture recieved in eval_immediates\n", stderr);
+				file_print("Unknown architecture received in eval_immediates\n", stderr);
 				exit(EXIT_FAILURE);
 			}
 		}
