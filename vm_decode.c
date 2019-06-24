@@ -63,7 +63,7 @@ void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* messa
 /* Deal with illegal instructions and their encodings */
 void illegal_instruction(struct lilith* vm, struct Instruction* c)
 {
-	fprintf(stderr, "Invalid instruction was recieved at address:%08X\n", c->ip);
+	fprintf(stderr, "Invalid instruction was received at address:%08X\n", c->ip);
 	fprintf(stderr, "After %lu instructions\n", performance_counter);
 	fprintf(stderr, "Unable to execute the following instruction:\n\t%s\n", c->operation);
 	c->invalid = true;
