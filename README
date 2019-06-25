@@ -32,7 +32,7 @@ Which only have the goal of creating a bootstrapping path to a C compiler capabl
 compiling GCC, with only the explicit requirement of a single 1 KByte binary or less.
 
 Additionally, all code must be able to be understood by 70% of the population of programmers.
-If the code can not be understood by that volume, it needs to be altered until it satifies the above requirement.
+If the code can not be understood by that volume, it needs to be altered until it satisfies the above requirement.
 
 * Also found within
 This repo contains a few of my false start pieces that may be of interest to people who
@@ -133,7 +133,7 @@ To convert back to the chars inside of the "quotes" with the addition of a
 trailing NULL character or the number desired (Must be atleast 1, no upper
 bound) and restrictions such as padding to word boundries are accetpable.
 3) 'Raw char strings' will passing anything inside of them (except ' which
-termininates the string).
+terminates the string).
 
 Thus by combining :label, @label, DEFINE SYSCALL 0F05, Raw strings and chars;
 one has created a rather flexible and powerful Assembler capable of building
@@ -181,7 +181,7 @@ functional M2-Planet level C compiler, FORTH and a Minimal Garbage collecting
 Lisp and can be used to build more advanced tools that can be used in
 bootstrapping whole operating systems with modern tool stacks.
 
-*** inital_library
+*** initial_library
 A library collection of very useful FORTH functionality designed to make the
 lives of any FORTH programmer easier.
 
