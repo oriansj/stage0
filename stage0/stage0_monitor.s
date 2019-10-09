@@ -29,7 +29,7 @@
 	FOPEN_WRITE
 
 :loop
-	LOADUI R1 0                 ; Read from tty
+	FALSE R1                    ; Read from tty
 	FGETC                       ; Read a Char
 
 	CMPSKIPI.NE R0 13           ; Replace all CR
@@ -115,7 +115,7 @@
 	TRUE R0
 	RET R13
 :ascii_comment
-	LOADUI R1 0                 ; Read from tty
+	FALSE R1                    ; Read from tty
 	FGETC                       ; Read another char
 	CMPSKIPI.NE R0 13           ; Replace all CR
 	LOADUI R0 10                ; WIth LF
