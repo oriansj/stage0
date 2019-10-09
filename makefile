@@ -110,7 +110,20 @@ Generate-rom-test: ALL-ROMS
 	mkdir -p test
 	sha256sum roms/* | sort -k2 >| test/SHA256SUMS
 
-test: ALL-ROMS test/SHA256SUMS
+test_stage0_monitor_asm_match: stage0_monitor
+	mkdir -p test/stage0_test_scratch
+	sed 's/^[^#]*# //' stage0/stage0_monitor.hex0 > test/stage0_test_scratch/stage0_monitor.hex0.s
+	bin/asm test/stage0_test_scratch/stage0_monitor.hex0.s > test/stage0_test_scratch/stage0_monitor.hex0.hex0
+	bin/hex < test/stage0_test_scratch/stage0_monitor.hex0.hex0 > test/stage0_test_scratch/stage0_monitor.hex0.bin
+	bin/asm stage0/stage0_monitor.s > test/stage0_test_scratch/stage0_monitor.s.hex0
+	bin/hex < test/stage0_test_scratch/stage0_monitor.s.hex0 > test/stage0_test_scratch/stage0_monitor.s.bin
+	sha256sum roms/stage0_monitor | sed 's@roms/stage0_monitor@test/stage0_test_scratch/stage0_monitor.s.bin@' > test/stage0_test_scratch/stage0_monitor.s.expected_sum
+	sha256sum -c test/stage0_test_scratch/stage0_monitor.s.expected_sum
+	sha256sum roms/stage0_monitor | sed 's@roms/stage0_monitor@test/stage0_test_scratch/stage0_monitor.hex0.bin@' > test/stage0_test_scratch/stage0_monitor.hex0.expected_sum
+	sha256sum -c test/stage0_test_scratch/stage0_monitor.hex0.expected_sum
+
+
+test: ALL-ROMS test/SHA256SUMS test_stage0_monitor_asm_match
 	sha256sum -c test/SHA256SUMS
 
 # Prototypes
@@ -148,6 +161,7 @@ prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c |
 .PHONY: clean
 clean:
 	rm -f libvm.so libvm-production.so bin/vm bin/vm-production
+	rm -rf test/stage0_test_scratch
 
 .PHONY: clean-hard
 clean-hard: clean

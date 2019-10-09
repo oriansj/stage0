@@ -14,7 +14,7 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-# :start 0
+# :start ; offset = 0
 E0002D2B0001 # LOADUI R11 1 ; Our toggle
 E0002D2D0600 # LOADUI R13 0x600 ; Where we are starting our Stack
              # ;;  R14 will be storing our condition
@@ -28,7 +28,7 @@ E0002D201100 # LOADUI R0 0x1100
 E0002D201101 # LOADUI R0 0x1101
 42100001     # FOPEN_WRITE
 
-# :loop 24
+# :loop ; offset =  24
 0D000021     # FALSE R1 ; Read from tty
 42100100     # FGETC ; Read a Char
 E000A030000d # CMPSKIPI.NE R0 13 ; Replace all CR
@@ -62,7 +62,7 @@ E100B0F0000f # ANDI R15 R0 0x0F ; Store First nibble
 3C00ffae     # JUMP @loop
 
 # ;; Combined second nybble in pair with first
-# :second_nybble 76
+# :second_nybble ; offset = 76
 E0002D5F0004 # SL0I R15 4 ; Shift our first nibble
 E100B000000f # ANDI R0 R0 0x0F ; Mask out top
 0500000F     # ADD R0 R0 R15 ; Combine nibbles
@@ -73,7 +73,7 @@ E0002D211100 # LOADUI R1 0x1100 ; Write the combined byte
 42100200     # FPUTC ; To TAPE_01
 3C00ff8a     # JUMP @loop ; Try to get more bytes
 
-# :hex 9a
+# :hex ; offset = 9a
 # ;; Deal with line comments starting with #
 E1001FE00023 # CMPUI R14 R0 35
 E0002C5E007e # JUMP.E R14 @ascii_comment
@@ -109,23 +109,23 @@ E0002C7E000e # JUMP.LE R14 @ascii_low
 # ;; Ignore the rest
 3C00001e # JUMP @ascii_other
 
-# :ascii_num FD
+# :ascii_num ; offset = FD
 E10011000030 # SUBUI R0 R0 48
 0D01001D     # RET R13
 
-# :ascii_low 108
+# :ascii_low ; offset = 108
 E10011000057 # SUBUI R0 R0 87
 0D01001D     # RET R13
 
-# :ascii_high 112
+# :ascii_high ; offset = 112
 E10011000037 # SUBUI R0 R0 55
 0D01001D     # RET R13
 
-# :ascii_other 11c
+# :ascii_other ; offset = 11c
 0D000030     # TRUE R0
 0D01001D     # RET R13
 
-# :ascii_comment 124
+# :ascii_comment ; offset = 124
 0D000021     # FALSE R1 ; Read from tty
 42100100     # FGETC ; Read another char
 E000A030000d # CMPSKIPI.NE R0 13 ; Replace all CR
@@ -137,7 +137,7 @@ E0002D211101 # LOADUI R1 0x1101 ; Write to TAPE_02
 E0002C6Effd2 # JUMP.NE R14 @ascii_comment ; Otherwise keep looping
 3C00ffc6     # JUMP @ascii_other
 
-# :finish 156
+# :finish ; offset = 156
 E0002D201100 # LOADUI R0 0x1100 ; Close TAPE_01
 42100002     # FCLOSE
 E0002D201101 # LOADUI R0 0x1101 ; Close TAPE_02
