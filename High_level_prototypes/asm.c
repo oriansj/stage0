@@ -621,7 +621,7 @@ void print_text(struct Token* p)
 	}
 	else if(':' == p->Text[0])
 	{
-		fprintf(stdout, " %x", p->address);
+		fprintf(stdout, " ; offset = %x", p->address);
 	}
 
 	if((NULL != p->next) && !((p->type & EOL)))
