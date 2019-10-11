@@ -15,7 +15,7 @@
 ; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 :start
-	LOADUI R11 1                ; Our toggle
+	TRUE R11                    ; Our toggle
 	LOADUI R13 0x600            ; Where we are starting our Stack
 	;;  R14 will be storing our condition
 	FALSE R15                   ; Our holder
@@ -69,7 +69,7 @@
 	ADD R0 R0 R15               ; Combine nibbles
 
 	;; Writeout and prepare for next cycle
-	LOADI R11 1                 ; Flip the toggle
+	TRUE R11                    ; Flip the toggle
 	LOADUI R1 0x1100            ; Write the combined byte
 	FPUTC                       ; To TAPE_01
 	JUMP @loop                  ; Try to get more bytes
