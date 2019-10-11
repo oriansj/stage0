@@ -23,7 +23,7 @@ gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
 
 However if you are trying to hand convert the source code to your TTL Logic
 or relay based computer to ensure complete immunity from the trusting trust attack,
-please instead implement the equivelent of:
+please instead implement the equivalent of:
 gcc vm.h vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm
 
 And we probably want a safe place to put the programs we make:
@@ -57,7 +57,7 @@ or
 ./bin/vm --rom roms/stage0_monitor --tape_01 roms/stage1_assembler-0 --tape_02 /dev/null
 
 
-If you fail to specificy --tape_01 and/or --tape_02, this will produce tape_01 with the resulting binary and tape_02 with the source code input
+If you fail to specify --tape_01 and/or --tape_02, this will produce tape_01 with the resulting binary and tape_02 with the source code input
 (this is really important for bootstrapping a text editor)
 
 stage1_assembler-0 should have the sha256sum of 13b45134a88c1c6db349cb40f82269cee9edfce71ac644dc0e137bad053bf5ce
@@ -123,7 +123,7 @@ Assuming that you have been doing all of the above the hard way on physical hard
 
 Once you have written your definition file, mark it as something special and the following tool will allow you to duplicate the CAT functionality.
 
-To build our tool that concatinates multiple tapes into a single tape output:
+To build our tool that concatenates multiple tapes into a single tape output:
 First prepend High_level_prototypes/defs to your stage1/CAT.s file and save it as temp
 
 Then to assemble our first assembly program, we need to run 2 different programs for our different passes.
@@ -141,7 +141,7 @@ This also of course could be used for tape duplication if you are noticing wear 
 
 * Step 6a Build us a Lisp
 If you are anything like me, you'll probably spend some time trying to find the easiest to implement High level programming language for your step after assembly.
-The One thing that you'll find is that actually, Lisp is probably the easiest langauge to implement after you have a working assembler.
+The One thing that you'll find is that actually, Lisp is probably the easiest language to implement after you have a working assembler.
 
 We first need to create our prepared tape:
 cat High_level_prototypes/defs stage2/lisp.s > temp
@@ -184,7 +184,7 @@ Tuning needs to be done to run with any less than 4MB of Memory
 Since I got tired of people saying you can't write a C compiler in assembly, I did exactly that and as you can see it was completed relatively quickly.
 You'll note that the C compiler is 16370 bytes large, making it larger than the Lisp and FORTH put together but not much harder to implement than the lisp.
 
-Having done all of the above; I must say one needs a really solid assembler and a minimal disassembler to effectively bootstrap a C compiler (alteast until you get the point that the tokenizer is working).
+Having done all of the above; I must say one needs a really solid assembler and a minimal disassembler to effectively bootstrap a C compiler (at least until you get the point that the tokenizer is working).
 
 We first need to create our prepared tape:
 cat High_level_prototypes/defs stage2/cc_x86.s > cc_TEMP
