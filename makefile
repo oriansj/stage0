@@ -110,7 +110,7 @@ Generate-rom-test: ALL-ROMS
 	mkdir -p test
 	sha256sum roms/* | sort -k2 >| test/SHA256SUMS
 
-test_stage0_monitor_asm_match: stage0_monitor
+test_stage0_monitor_asm_match: asm stage0_monitor
 	mkdir -p test/stage0_test_scratch
 	sed 's/^[^#]*# //' stage0/stage0_monitor.hex0 > test/stage0_test_scratch/stage0_monitor.hex0.s
 	bin/asm test/stage0_test_scratch/stage0_monitor.hex0.s > test/stage0_test_scratch/stage0_monitor.hex0.hex0

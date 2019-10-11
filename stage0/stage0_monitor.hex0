@@ -15,20 +15,35 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 # :start ; offset = 0
-E0002D2B0001 # LOADUI R11 1 ; Our toggle
-E0002D2D0600 # LOADUI R13 0x600 ; Where we are starting our Stack
-             # ;;  R14 will be storing our condition
-0D00002F     # FALSE R15 ; Our holder
+
+0D00003C     # TRUE R12 ; Our toggle, set to -1 (0xFFFFFFFF)
+
+# ;; Prepare often-used values that will be held in registers
+090001AC     # ABS R10 R12 ; Set R10 to 1
+E0002D2B1100 # LOADUI R11 0x1100 ; R11 will hold 0x1100
+             #
+             # ;; R14 will be storing our condition
+             # ;;
+             # ;; R13 will be a stack pointer. It will be zero
+             # ;; on the start, and the stack grows up.
+             # ;; This means that when stack is used, the
+             # ;; first instructions of this program will be
+             # ;; overwritten. But because this is initialization
+             # ;; code, it is already not used at the time.
+             # ;; And the stack usage is fixed - there is only one CALL
+             # ;; instruction in this file
+             # ;;
+             # ;; R15 Is our holder. It is initialized to zero on start.
 
 # ;; Prep TAPE_01
-E0002D201100 # LOADUI R0 0x1100
+0900040B     # COPY R0 R11 ; 0x1100
 42100001     # FOPEN_WRITE
 
 # ;; Prep TAPE_02
-E0002D201101 # LOADUI R0 0x1101
+050210BA     # OR R0 R11 R10 ; 0x1101
 42100001     # FOPEN_WRITE
 
-# :loop ; offset =  24
+# :loop ; offset = 1e
 0D000021     # FALSE R1 ; Read from tty
 42100100     # FGETC ; Read a Char
 E000A030000d # CMPSKIPI.NE R0 13 ; Replace all CR
@@ -36,44 +51,47 @@ E0002D20000a # LOADUI R0 10 ; WIth LF
 42100200     # FPUTC ; Display the Char to User
 
 # ;; Check for Ctrl-D
-
 E000A0300004 # CMPSKIPI.NE R0 4
-3C000110     # JUMP @finish
+3C000108     # JUMP @finish
 
 # ;; Check for EOF
-E0002CC0010a # JUMP.NP R0 @finish
+E0002CC00102 # JUMP.NP R0 @finish
 
 # ;; Write out unprocessed byte
-E0002D211101 # LOADUI R1 0x1101 ; Write to TAPE_02
+050211BA     # OR R1 R11 R10 ; Write to TAPE_02
 42100200     # FPUTC ; Print the Char
 
 # ;; Convert byte to nybble
-E0002D0D003e # CALLI R13 @hex ; Convert it
+E0002D0D003a # CALLI R13 @hex ; Convert it
 
 # ;; Get another byte if nonhex
-E0002CC0ffc2 # JUMP.NP R0 @loop ; Don't use nonhex chars
+E0002CC0ffc4 # JUMP.NP R0 @loop ; Don't use nonhex chars
 
 # ;; Deal with the case of second nybble
-E0002C9B000e # JUMP.Z R11 @second_nybble ; Jump if toggled
+E0002C9C000e # JUMP.Z R12 @second_nybble ; Jump if toggled
 
 # ;; Process first byte of pair
 E100B0F0000f # ANDI R15 R0 0x0F ; Store First nibble
-0D00002B     # FALSE R11 ; Flip the toggle
-3C00ffae     # JUMP @loop
+0D00002C     # FALSE R12 ; Flip the toggle
+3C00ffb0     # JUMP @loop
 
 # ;; Combined second nybble in pair with first
-# :second_nybble ; offset = 76
+
+# :second_nybble ; offset = 6e
 E0002D5F0004 # SL0I R15 4 ; Shift our first nibble
 E100B000000f # ANDI R0 R0 0x0F ; Mask out top
 0500000F     # ADD R0 R0 R15 ; Combine nibbles
 
 # ;; Writeout and prepare for next cycle
-E0002D1B0001 # LOADI R11 1 ; Flip the toggle
-E0002D211100 # LOADUI R1 0x1100 ; Write the combined byte
-42100200     # FPUTC ; To TAPE_01
-3C00ff8a     # JUMP @loop ; Try to get more bytes
+0D00003C     # TRUE R12 ; Flip the toggle
 
-# :hex ; offset = 9a
+# ; Write the combined byte
+0900041B     # COPY R1 R11 ; To TAPE_01
+42100200     # FPUTC
+3C00ff90     # JUMP @loop ; Try to get more bytes
+
+# :hex ; offset = 8e
+
 # ;; Deal with line comments starting with #
 E1001FE00023 # CMPUI R14 R0 35
 E0002C5E007e # JUMP.E R14 @ascii_comment
@@ -107,39 +125,39 @@ E1001FE00066 # CMPUI R14 R0 102
 E0002C7E000e # JUMP.LE R14 @ascii_low
 
 # ;; Ignore the rest
-3C00001e # JUMP @ascii_other
+3C00001e     # JUMP @ascii_other
 
-# :ascii_num ; offset = FD
+# :ascii_num ; offset = f2
 E10011000030 # SUBUI R0 R0 48
 0D01001D     # RET R13
 
-# :ascii_low ; offset = 108
+# :ascii_low ; offset = fc
 E10011000057 # SUBUI R0 R0 87
 0D01001D     # RET R13
 
-# :ascii_high ; offset = 112
+# :ascii_high ; offset = 106
 E10011000037 # SUBUI R0 R0 55
 0D01001D     # RET R13
 
-# :ascii_other ; offset = 11c
+# :ascii_other ; offset = 110
 0D000030     # TRUE R0
 0D01001D     # RET R13
 
-# :ascii_comment ; offset = 124
+# :ascii_comment ; offset = 118
 0D000021     # FALSE R1 ; Read from tty
 42100100     # FGETC ; Read another char
 E000A030000d # CMPSKIPI.NE R0 13 ; Replace all CR
 E0002D20000a # LOADUI R0 10 ; WIth LF
 42100200     # FPUTC ; Let the user see it
 E1001FE0000a # CMPUI R14 R0 10 ; Stop at the end of line
-E0002D211101 # LOADUI R1 0x1101 ; Write to TAPE_02
+050211BA     # OR R1 R11 R10 ; Write to TAPE_02
 42100200     # FPUTC ; The char we just read
-E0002C6Effd2 # JUMP.NE R14 @ascii_comment ; Otherwise keep looping
-3C00ffc6     # JUMP @ascii_other
+E0002C6Effd4 # JUMP.NE R14 @ascii_comment ; Otherwise keep looping
+3C00ffc8     # JUMP @ascii_other
 
-# :finish ; offset = 156
-E0002D201100 # LOADUI R0 0x1100 ; Close TAPE_01
+# :finish ; offset = 148
+0900040B     # COPY R0 R11 ; Close TAPE_01
 42100002     # FCLOSE
-E0002D201101 # LOADUI R0 0x1101 ; Close TAPE_02
+050210BA     # OR R0 R11 R10 ; Close TAPE_02
 42100002     # FCLOSE
 FFFFFFFF     # HALT
