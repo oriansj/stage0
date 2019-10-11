@@ -21,9 +21,18 @@
 	ABS R10 R12                 ; Set R10 to 1
 	LOADUI R11 0x1100           ; R11 will hold 0x1100
 
-	COPY R13 R11                ; Stack will start at 0x1100
-	;;  R14 will be storing our condition
-	FALSE R15                   ; Our holder
+	;; R14 will be storing our condition
+	;;
+	;; R13 will be a stack pointer. It will be zero
+	;; on the start, and the stack grows up.
+	;; This means that when stack is used, the
+	;; first instructions of this program will be
+	;; overwritten. But because this is initialization
+	;; code, it is already not used at the time.
+	;; And the stack usage is fixed - there is only one CALL
+	;; instruction in this file
+	;;
+	;; R15 Is our holder. It is initialized to zero on start.
 
 	;; Prep TAPE_01
 	COPY R0 R11                 ; 0x1100
