@@ -37,7 +37,7 @@ gcc Linux\ Bootstrap/hex.c -o bin/hex
 Then we can use it to make our bootstrap binary:
 ./bin/hex < stage0/stage0_monitor.hex0 > roms/stage0_monitor
 
-Which should have the sha256sum of 792e2be913921dd55a28f55dcf2e6b1523d34fdbccc27c38f77e74c99ef97a4b
+Which should have the sha256sum of c9d397b195c6ba2bb4b19428d8b21e7737a32e5275f3027270d8925aec878042
 
 * Step 2 create a hex assembler
 Now that we have a Hex monitor, we are now capable of either creating a text file (no ability to correct mistakes along the way) or any arbitrary hex program we want.
