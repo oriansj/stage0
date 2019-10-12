@@ -18,14 +18,14 @@
 These notes exist for those people who want to independently create their own bootstrap tree.
 Those wishing to save themselves decades of work, would be wise to use the below information and
 Plan on making the following tools:
-Hex Monitor with writes out binaries to external storage medium and Text input into another
+Hex Monitor which writes out binaries to external storage medium and Text input into another
 A Loader (especially on platforms that have a 512byte bootloader limitation)
 A Line Text editor (because perfect typing is hard)
 A hex/octal assembler (So that you will not need the Hex Monitor any further)
 An improved hex/octal assembler that supports labels and calculation of relative and absolute addresses
-A Cat equivelent (Because definition files are awesome)
-A Less equivelent (Because you want to be able to just read your written code)
-A line macro program (Because Hex mnemonics suck and ADD32I are alot easier to identify)
+A Cat equivalent (Because definition files are awesome)
+A Less equivalent (Because you want to be able to just read your written code)
+A line macro program (Because Hex mnemonics suck and ADD32I are a lot easier to identify)
 The stage0-vm in assembly or a compiler/interpreter for the higher language of your choice you plan on leveraging to implement the stage0-vm
 
 * Platform specific information
@@ -50,13 +50,13 @@ things as assemblers and C compilers that hide most of the horrible darkness fro
 
 *** Restart code
 To restart the segment loaded from the bootsector:
-| Hex    | Assembly Equivelent |
+| Hex    | Assembly Equivalent |
 |--------+---------------------|
 | 68007C | push 7C00           |
 | C3     | ret                 |
 
 For an intersegment restart:
-| Hex    | Assembly Equivelent |
+| Hex    | Assembly Equivalent |
 |--------+---------------------|
 | 6A00   | push 0              |
 | 68007C | push 7C00           |
@@ -105,7 +105,7 @@ By writing the stage 0 code in commented hex, it becomes possible for universal 
 
 The only real problem is that the commented hex has to be manually validated [An insanely painful process] and each and every single platform has to perform the exact same tasks.
 
-Since all such projects have to start somewhere, I have choosen to do it myself and with the 8088.
+Since all such projects have to start somewhere, I have chosen to do it myself and with the 8088.
 
 To make my work easier, I first created the working code in 16bit assembly.
 
@@ -115,10 +115,10 @@ What I however require is someone with a completely alien platform verify the co
 
 Which is listed along with all of the checksums of the validated binaries produced thus far in the file Checksums.org
 
-If your compiled hex is different in any way, please let me know as the process should produce bit idential binaries.
+If your compiled hex is different in any way, please let me know as the process should produce bit identical binaries.
 
 ** Stage 1
-Stage 1 attempts to save myself from alot of manual typing and the inevitable errors that occur.
+Stage 1 attempts to save myself from a lot of manual typing and the inevitable errors that occur.
 
 It simply provides the functionality required to produce 32KB or smaller binaries from Commented Hex files.
 
@@ -133,6 +133,6 @@ However despite those stupid limitations, they have saved alot of manual work co
 Having these binaries are a huge step forward compared to not having them but they assume you don't make mistakes.
 
 ** Stage 2
-Stage 2 will be introducing enhancements to Stage 1 programs that allow you to fix the problems you accidentially introduce.
+Stage 2 will be introducing enhancements to Stage 1 programs that allow you to fix the problems you accidentally introduce.
 
-We will also begin to introduce programs that make software development alot easier.
+We will also begin to introduce programs that make software development a lot easier.
