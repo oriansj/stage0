@@ -14,32 +14,36 @@
 ; You should have received a copy of the GNU General Public License
 ; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
+;; R14 will be storing our condition
+;;
+;; R13 will be a stack pointer. It will be zero
+;; on the start, and the stack grows up.
+;; This means that when stack is used, the
+;; first instructions of this program will be
+;; overwritten. But because this is initialization
+;; code, it is already not used at the time.
+;; And the stack usage is fixed - there is only one CALL
+;; instruction in this file
+;;
+;; R2 Is our holder.
+;; It holds the first nybble of the byte till the second iteration
+;;
+;; R12 Is our toggle. It is initialized to zero on start.
+;; When non-zero, it means that we are processing the second nybble
+;;
+;; R8 will hold zero. It is initialized to zero on start.
+
 :start
-	TRUE R12                    ; Our toggle, set to -1 (0xFFFFFFFF)
-
 	;; Prepare often-used values that will be held in registers
-	ABS R10 R12                 ; Set R10 to 1
-	LOADUI R11 0x1100           ; R11 will hold 0x1100
-
-	;; R14 will be storing our condition
-	;;
-	;; R13 will be a stack pointer. It will be zero
-	;; on the start, and the stack grows up.
-	;; This means that when stack is used, the
-	;; first instructions of this program will be
-	;; overwritten. But because this is initialization
-	;; code, it is already not used at the time.
-	;; And the stack usage is fixed - there is only one CALL
-	;; instruction in this file
-	;;
-	;; R15 Is our holder. It is initialized to zero on start.
+	LOADUI R15 0xF              ; Set R15 to 0xF
+	LOADUI R11 0x1101           ; R11 will hold 0x1101
 
 	;; Prep TAPE_01
-	COPY R0 R11                 ; 0x1100
+	MUX R0 R15 R11 R8           ; 0x1100 = ((0x1101 & ~0xF) | (0 | 0xF))
 	FOPEN_WRITE
 
 	;; Prep TAPE_02
-	OR R0 R11 R10               ; 0x1101
+	COPY R0 R11                 ; 0x1101
 	FOPEN_WRITE
 
 :loop
@@ -59,7 +63,7 @@
 	JUMP.NP R0 @finish
 
 	;; Write out unprocessed byte
-	OR R1 R11 R10               ; Write to TAPE_02
+	COPY R1 R11                 ; Write to TAPE_02
 	FPUTC                       ; Print the Char
 
 	;; Convert byte to nybble
@@ -69,23 +73,23 @@
 	JUMP.NP R0 @loop            ; Don't use nonhex chars
 
 	;; Deal with the case of second nybble
-	JUMP.Z R12 @second_nybble   ; Jump if toggled
+	JUMP.NZ R12 @second_nybble  ; Jump if toggled
 
 	;; Process first byte of pair
-	ANDI R15 R0 0x0F            ; Store First nibble
-	FALSE R12                   ; Flip the toggle
+	AND R2 R0 R15              ; Store First nibble
+	TRUE R12                   ; Flip the toggle
 	JUMP @loop
 
 	;; Combined second nybble in pair with first
 :second_nybble
-	SL0I R15 4                  ; Shift our first nibble
-	ANDI R0 R0 0x0F             ; Mask out top
-	ADD R0 R0 R15               ; Combine nibbles
+	SL0I R2 4                  ; Shift our first nibble
+	AND R0 R0 R15              ; Mask out top
+	ADD R0 R0 R2               ; Combine nibbles
 
 	;; Writeout and prepare for next cycle
-	TRUE R12                    ; Flip the toggle
+	FALSE R12                   ; Flip the toggle
                                     ; Write the combined byte
-	COPY R1 R11                 ; To TAPE_01
+	MUX R1 R15 R11 R8           ; To TAPE_01 
 	FPUTC
 	JUMP @loop                  ; Try to get more bytes
 
@@ -136,14 +140,14 @@
 	LOADUI R0 10                ; WIth LF
 	FPUTC                       ; Let the user see it
 	CMPUI R14 R0 10             ; Stop at the end of line
-	OR R1 R11 R10               ; Write to TAPE_02
+	COPY R1 R11                 ; Write to TAPE_02
 	FPUTC                       ; The char we just read
 	JUMP.NE R14 @ascii_comment  ; Otherwise keep looping
 	JUMP @ascii_other
 
 :finish
-	COPY R0 R11                 ; Close TAPE_01
+	MUX R0 R15 R11 R8           ; Close TAPE_01
 	FCLOSE
-	OR R0 R11 R10               ; Close TAPE_02
+	COPY R0 R11                 ; Close TAPE_02
 	FCLOSE
 	HALT
