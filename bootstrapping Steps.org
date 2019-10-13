@@ -69,9 +69,9 @@ So, lets make a line text editor, (it'll be 916 bytes long and require you to ty
 
 You can build this file 2 ways:
 
-1) Cheat and simply use stage1/SET.hex0 and run:
+1) Cheat and simply use stage1/SET.hex2 and run:
 
-./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/SET.hex0 --tape_02 roms/SET
+./bin/vm --rom roms/stage1_assembler-2 --tape_01 stage1/SET.hex2 --tape_02 roms/SET
 
 or
 
