@@ -62,29 +62,6 @@ If you fail to specify --tape_01 and/or --tape_02, this will produce tape_01 wit
 
 stage1_assembler-0 should have the sha256sum of 13b45134a88c1c6db349cb40f82269cee9edfce71ac644dc0e137bad053bf5ce
 
-* Step 2b Lets make a Line text editor
-Now I don't know about you but I suck at not making mistakes and having to fix a whole line instead of an entire file is a hell of an improvement.
-
-So, lets make a line text editor, (it'll be 916 bytes long and require you to type 1,832 characters perfectly to make it)
-
-You can build this file 2 ways:
-
-1) Cheat and simply use stage1/SET.hex0 and run:
-
-./bin/vm --rom roms/stage1_assembler-0 --tape_01 stage1/SET.hex0 --tape_02 roms/SET
-
-or
-
-2) Manually type in the contents of stage1/SET.hex2 (Minus the comments of course) while running:
-
-./bin/vm --rom roms/stage0_monitor --tape_01 /dev/null --tape_02 temp
-
-Then you can compile the text file with the stage1_assembler-2 that we already made.
-
-From this point on I will assume you are going to take the easy route and simply load the source code using some mechanism you trust or are using SET to manually duplicate the entries of the code files used in each of the proceeding steps.
-
-SET should have the SHA256SUM of 059d38e34275029f2de5f600f08fe01bd13cd173f7da58e3fbec7114074beff2
-
 * Step 3 create a better hex assembler
 Now that it is easy(ish) to create text files and we have a really stupid hex assembler, we probably don't want to manually calculate offsets and jumps any more.
 
@@ -105,6 +82,29 @@ To build our last and greatest Hex assembler:
 
 Now tape_02 contains the last hex assembler we will need
 roms/stage1_assembler-2 should have the sha256sum of 2c02c50958f489a660a4915d2a9e207a0c61f411d42628bdaf4dcf6bf7149a9d
+
+* Step 4b Lets make a Line text editor
+Now I don't know about you but I suck at not making mistakes and having to fix a whole line instead of an entire file is a hell of an improvement.
+
+So, lets make a line text editor, (it'll be 916 bytes long and require you to type 1,832 characters perfectly to make it)
+
+You can build this file 2 ways:
+
+1) Cheat and simply use stage1/SET.hex2 and run:
+
+./bin/vm --rom roms/stage1_assembler-2 --tape_01 stage1/SET.hex2 --tape_02 roms/SET
+
+or
+
+2) Manually type in the contents of stage1/SET.hex2 (Minus the comments of course) while running:
+
+./bin/vm --rom roms/stage0_monitor --tape_01 /dev/null --tape_02 temp
+
+Then you can compile the text file with the stage1_assembler-2 that we already made.
+
+From this point on I will assume you are going to take the easy route and simply load the source code using some mechanism you trust or are using SET to manually duplicate the entries of the code files used in each of the proceeding steps.
+
+SET should have the SHA256SUM of 059d38e34275029f2de5f600f08fe01bd13cd173f7da58e3fbec7114074beff2
 
 * Step 5 Lets get us a line macro assembler
 I don't know about you but at this point, I don't wanna convert another instruction into HEX by hand, so to save myself the pain we are going to write the most often ignored but important development in computer programming. The LINE MACRO ASSEMBLER.
