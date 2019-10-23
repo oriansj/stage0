@@ -42,7 +42,7 @@ FFFFFFFF	# HALT
 
 
 # ;; Readfile function
-# ;; Recieves pointer to head in R1
+# ;; Receives pointer to head in R1
 # ;; Creates Nodes and imports text until EOF
 # ;; Alters R0 R1 R14
 # ;; Returns to whatever called it
@@ -64,7 +64,7 @@ E0002C9E @ReadFile	# JUMP.Z R14 @ReadFile
 
 
 # ;; Readline function
-# ;; Recieves Pointer to node in R0
+# ;; Receives Pointer to node in R0
 # ;; And Input in R1
 # ;; Allocates Text segment on Heap
 # ;; Sets node's pointer to Text segment
@@ -132,7 +132,7 @@ E10023240008	# STORE32 R2 R4 8
 
 
 # ;; addline Function
-# ;; Recieves pointers in R0 R1
+# ;; Receives pointers in R0 R1
 # ;; Alters R0 if NULL
 # ;; Appends nodes together
 # ;; Returns to whatever called it
@@ -257,7 +257,7 @@ E0002D0F @RemoveLine	# CALLI R15 @RemoveLine
 
 # ;; GetRoot function
 # ;; Walks backwards through nodes until beginning
-# ;; Recieves node pointer in R0 and Returns result in R0
+# ;; Receives node pointer in R0 and Returns result in R0
 # ;; Returns to whatever called it
 :GetRoot
 # ;; Preserve registers
@@ -302,7 +302,7 @@ E000A0320000	# CMPSKIPI.NE R2 0 ; If Head->Next is NULL
 
 
 # ;; Printline function
-# ;; Recieves a string pointer in R0
+# ;; Receives a string pointer in R0
 # ;; Prints string interface specified in R1
 # ;; Does not alter registers
 # ;; Returns to whatever called it
@@ -337,7 +337,7 @@ E1000F330001	# ADDUI R3 R3 1 ; Prep for next loop
 
 
 # ;; AppendLine Function
-# ;; Recieves a Node in R0
+# ;; Receives a Node in R0
 # ;; Creates a new Node and appends it
 # ;; Does not alter registers
 # ;; Returns to whatever calls it
@@ -367,7 +367,7 @@ E10023010000	# STORE32 R0 R1 0 ; head->next = p
 
 
 # ;; InsertLine Function
-# ;; Recieves a Node in R0
+# ;; Receives a Node in R0
 # ;; Creates a new Node and prepends it
 # ;; Does not alter registers
 # ;; Returns to whatever called it
@@ -397,7 +397,7 @@ E10023010004	# STORE32 R0 R1 4 ; head->prev = p
 
 
 # ;; RemoveLine Function
-# ;; Recieves Node in R0
+# ;; Receives Node in R0
 # ;; Returns replacement node in R0
 # ;; Returns to whatever called it
 :RemoveLine

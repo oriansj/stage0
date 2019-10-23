@@ -449,7 +449,7 @@ DEFINE ZERO_EXTEND_BL 480FB6DB
 	POP_R11                     ; Restore HEAD
 	RET
 
-	;; Recieves pointer in RBX
+	;; Receives pointer in RBX
 	;; Writes out char and updates RBX
 :consume_token
 	CALLI32 %Read_byte          ; Consume_token

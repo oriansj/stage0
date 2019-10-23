@@ -443,7 +443,7 @@
 	5E                          ; POP_ESI                     ; Restore esi
 	C3                          ; RET
 
-;; Recieves pointer in EBX
+;; Receives pointer in EBX
 ;; Writes out char and updates EBX
 :B #:consume_token
 	E8 %y                       ; CALL32 %Read_byte           ; Consume_token

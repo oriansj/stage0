@@ -15,7 +15,7 @@
 ; along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; Readline function
-;; Recieves Pointer to node in R0
+;; Receives Pointer to node in R0
 ;; And Input in R1
 ;; Allocates Text segment on Heap
 ;; Sets node's pointer to Text segment

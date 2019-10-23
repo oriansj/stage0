@@ -420,7 +420,7 @@ CF 05 00 00 00 00 00 00 ## p_memsz
 	415B                        ; POP_R11                     ; Restore HEAD
 	C3                          ; RET
 
-	;; Recieves pointer in RBX
+	;; Receives pointer in RBX
 	;; Writes out char and updates RBX
 :A # :consume_token
 	E8 %x                       ; CALLI32 %Read_byte          ; Consume_token

@@ -97,7 +97,7 @@
 
 ;; Append_Cell
 ;; Adds a cell to the end of a CDR chain
-;; Recieves HEAD in R0 and Tail in R1
+;; Receives HEAD in R0 and Tail in R1
 ;; Returns HEAD if not NULL
 :append_Cell
 	CMPSKIPI.NE R0 0            ; If HEAD is NULL
@@ -123,7 +123,7 @@
 
 ;; Tokenize
 ;; Converts a string into a list of tokens
-;; Recieves HEAD in R0, Pointer to String in R1 and Size of string in R2
+;; Receives HEAD in R0, Pointer to String in R1 and Size of string in R2
 ;; Returns HEAD of list in R0
 :tokenize
 	;; Deal with Edge case
@@ -186,7 +186,7 @@
 
 
 ;; is_integer
-;; Recieves pointer to string in R0
+;; Receives pointer to string in R0
 ;; Returns TRUE or FALSE in R0
 :is_integer
 	PUSHR R1 R15                ; Protect R1
@@ -209,7 +209,7 @@
 
 
 ;; numerate_string function
-;; Recieves pointer To string in R0
+;; Receives pointer To string in R0
 ;; Returns number in R0 equal to value of string
 ;; Or Zero in the event of invalid string
 :numerate_string
@@ -290,7 +290,7 @@
 ;; atom
 ;; Converts tokens into native forms
 ;; Aka numbers become numbers and everything else is a symbol
-;; Recieves a pointer to Token in R0
+;; Receives a pointer to Token in R0
 ;; Returns a pointer to a Cell in R0
 :atom
 	PUSHR R1 R15                ; Protect R1
@@ -374,7 +374,7 @@
 
 ;; readobj
 ;; Breaks up tokens on the token_stack until its empty
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns a Cell in R0
 :readobj
 	PUSHR R1 R15                ; Protect R1
@@ -407,7 +407,7 @@
 
 ;; readlist
 ;; CONS up Rest of elements until ) is found
-;; Recieves nothing
+;; Receives nothing
 ;; Returns A Cell in R0
 :readlist
 	PUSHR R1 R15                ; Protect R1
@@ -436,7 +436,7 @@
 
 ;; parse
 ;; Starts the recursive tokenizing and atomizing of input
-;; Recieves a string in R0 and its length in R1
+;; Receives a string in R0 and its length in R1
 ;; Returns a list of Cells in R0
 :parse
 	PUSHR R2 R15                ; Protect R2
@@ -459,7 +459,7 @@
 
 
 ;; Our simple malloc function
-;; Recieves A number of bytes to allocate in R0
+;; Receives A number of bytes to allocate in R0
 ;; Returns a pointer to Segment in R0
 :malloc
 	PUSHR R1 R15                ; Protect R1
@@ -610,7 +610,7 @@
 
 ;; Write_Int
 ;; Writes desired integer to desired IO
-;; Recieves Integer in R0 and IO in R1
+;; Receives Integer in R0 and IO in R1
 ;; Returns Nothing
 :Max_Decimal
 	'3B9ACA00'
@@ -669,7 +669,7 @@
 
 ;; Print_String
 ;; Prints the string pointed in R0 to IO in R1
-;; Recieves string pointer in R0 and IO in R1
+;; Receives string pointer in R0 and IO in R1
 ;; Returns nothing
 :Print_String
 	PUSHR R0 R15                ; Protect R0
@@ -692,7 +692,7 @@
 
 ;; writeobj
 ;; Outputs to the IO in R12
-;; Recieves a Cell list in R0
+;; Receives a Cell list in R0
 ;; Returns nothing
 :writeobj
 	PUSHR R0 R15                ; Protect R0
@@ -811,7 +811,7 @@
 
 ;; strcmp
 ;; A simple string compare function
-;; Recieves string pointers in R0 and R1
+;; Receives string pointers in R0 and R1
 ;; Returns result of comparision in R0
 :strcmp
 	;; Preserve registers
@@ -840,7 +840,7 @@
 
 ;; findsym
 ;; Attempts to find a symbol in a CONS list
-;; Recieves a string in R0
+;; Receives a string in R0
 ;; Returns Cell or NIL in R0
 :findsym
 	PUSHR R1 R15                ; Protect R1
@@ -875,7 +875,7 @@
 
 ;; intern
 ;; Either find symbol or make it
-;; Recieves string pointer in R0
+;; Receives string pointer in R0
 ;; Returns a Cell pointer in R0
 :intern
 	PUSHR R1 R15                ; Protect R1
@@ -908,7 +908,7 @@
 
 ;; extend
 ;; CONS up symbols with an environment
-;; Recieves an environment in R0, symbol in R1 and Value in R2
+;; Receives an environment in R0, symbol in R1 and Value in R2
 ;; Returns a CONS of CONS in R0
 :extend
 	PUSHR R1 R15                ; Protect R1
@@ -928,7 +928,7 @@
 
 
 ;; multiple_extend
-;; Recieves an environment in R0, symbol in R1 and Values in R2
+;; Receives an environment in R0, symbol in R1 and Values in R2
 ;; Returns an extended environment in R0
 :multiple_extend
 	PUSHR R1 R15                ; Protect R1
@@ -959,7 +959,7 @@
 
 
 ;; extend_env
-;; Recieves a Symbol in R0, a Value in R1 and an environment pointer in R2
+;; Receives a Symbol in R0, a Value in R1 and an environment pointer in R2
 ;; Returns Value in R0 after extending top
 :extend_env
 	PUSHR R1 R15                ; Protect Val
@@ -982,7 +982,7 @@
 
 
 ;; assoc
-;; Recieves a Key in R0 and an alist in R1
+;; Receives a Key in R0 and an alist in R1
 ;; Returns Value if Found or NIL in R0
 :assoc
 	PUSHR R1 R15                ; Protect R1
@@ -1014,7 +1014,7 @@
 
 
 ;; evlis
-;; Recieves Expressions in R0 and an Environment in R1
+;; Receives Expressions in R0 and an Environment in R1
 ;; Returns the result of Evaluation of those Expressions
 ;; in respect to the given Environment in R0
 :evlis
@@ -1041,7 +1041,7 @@
 
 
 ;; progn
-;; Recieves Expressions in R0 and an Environment in R1
+;; Receives Expressions in R0 and an Environment in R1
 ;; Returns the result of Evaluation of those Expressions
 ;; in respect to the given Environment in R0
 :progn
@@ -1069,7 +1069,7 @@
 
 
 ;; Apply
-;; Recieves a Procedure in R0 and Values in R1
+;; Receives a Procedure in R0 and Values in R1
 ;; Applies the procedure to the values and returns the result in R0
 :apply
 	PUSHR R1 R15                ; Protect R1
@@ -1124,7 +1124,7 @@
 
 
 ;; evcond
-;; Recieves an Expression in R0 and an Environment in R1
+;; Receives an Expression in R0 and an Environment in R1
 ;; Walks down conditions until true one is found and return
 ;; Desired expression's result in R0
 ;; if none of the conditions are true, and the result of
@@ -1166,7 +1166,7 @@
 
 
 ;; eval
-;; Recieves an Expression in R0 and an Environment in R1
+;; Receives an Expression in R0 and an Environment in R1
 ;; Evaluates the expression in the given environment and returns
 ;; The result in R0
 :eval
@@ -1224,7 +1224,7 @@
 	HALT
 
 :eval_error_Message
-	"EVAL Recieved unknown Object"
+	"EVAL Received unknown Object"
 
 	;; Result must be in R0 by this point
 	;; Simply Clean up and return result in R0
@@ -1237,7 +1237,7 @@
 
 
 ;; process_sym
-;; Recieves Expression in R0 and an Environment in R1
+;; Receives Expression in R0 and an Environment in R1
 ;; Returns symbol in R0
 :process_sym
 	CALLI R15 @assoc            ; ASSOC to get tmp
@@ -1258,7 +1258,7 @@
 
 
 ;; process_if
-;; Recieves Expression in R0 and an Environment in R1
+;; Receives Expression in R0 and an Environment in R1
 ;; Returns the evaluation of the expression if true in R0
 ;; Or the evaluation of the CDR of the expression
 :process_if
@@ -1278,7 +1278,7 @@
 
 
 ;; process_setb
-;; Recieves Expression in R0 and an Environment in R1
+;; Receives Expression in R0 and an Environment in R1
 ;; Sets the desired variable to desired value/type
 ;; Returns the value/type in R0
 :process_setb
@@ -1297,7 +1297,7 @@
 
 
 ;; process_let
-;; Recieves Expression in R0 and an Environment in R1
+;; Receives Expression in R0 and an Environment in R1
 ;; Creates lexical closure and evaluates inside of it
 ;; Returns the value/type in R0
 :process_let
@@ -1347,7 +1347,7 @@
 	RET R15
 
 ;; process_cons
-;; Recieves Expression in R0 and an Environment in R1
+;; Receives Expression in R0 and an Environment in R1
 ;; Returns the evaluation of whatever special used or
 ;; The application of the evaluation in R0
 :process_cons
@@ -1448,7 +1448,7 @@
 
 
 ;; prim_apply
-;; Recieves arglist in R0
+;; Receives arglist in R0
 ;; Returns result of applying ARGS->CAR to ARGS->CDR->CAR
 :prim_apply_String
 	"apply"
@@ -1468,7 +1468,7 @@
 
 
 ;; nullp
-;; Recieves a CELL in R0
+;; Receives a CELL in R0
 ;; Returns NIL if not NIL or TEE if NIL
 :nullp_String
 	"null?"
@@ -1484,7 +1484,7 @@
 
 
 ;; prim_sum
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Adds all values and returns a Cell with result in R0
 :prim_sum_String
 	"+"
@@ -1515,7 +1515,7 @@
 
 
 ;; prim_sub
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Subtracts all of the values and returns a Cell with the result in R0
 :prim_sub_String
 	"-"
@@ -1548,7 +1548,7 @@
 
 
 ;; prim_prod
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Multiplies all of the values and returns a Cell with the result in R0
 :prim_prod_String
 	"*"
@@ -1579,7 +1579,7 @@
 
 
 ;; prim_div
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Divides all of the values and returns a Cell with the result in R0
 :prim_div_String
 	"/"
@@ -1612,7 +1612,7 @@
 
 
 ;; prim_mod
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Remainders all of the values and returns a Cell with the result in R0
 :prim_mod_String
 	"mod"
@@ -1645,7 +1645,7 @@
 
 
 ;; prim_and
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; ANDs all of the values and returns a Cell with the result in R0
 :prim_and_String
 	"and"
@@ -1679,7 +1679,7 @@
 
 
 ;; prim_or
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; ORs all of the values and returns a Cell with the result in R0
 :prim_or_String
 	"or"
@@ -1713,7 +1713,7 @@
 
 
 ;; prim_not
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; NOTs first of the values and returns a Cell with the result in R0
 :prim_not_String
 	"not"
@@ -1736,7 +1736,7 @@
 
 
 ;; prim_numgt
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Compares values and returns a Cell with the result in R0
 :prim_numgt_String
 	">"
@@ -1775,7 +1775,7 @@
 
 
 ;; prim_numge
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Compares values and returns a Cell with the result in R0
 :prim_numge_String
 	">="
@@ -1814,7 +1814,7 @@
 
 
 ;; prim_numeq
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Compares values and returns a Cell with the result in R0
 :prim_numeq_String
 	"="
@@ -1853,7 +1853,7 @@
 
 
 ;; prim_numle
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Compares values and returns a Cell with the result in R0
 :prim_numle_String
 	"<="
@@ -1892,7 +1892,7 @@
 
 
 ;; prim_numlt
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Compares values and returns a Cell with the result in R0
 :prim_numlt_String
 	"<"
@@ -1931,7 +1931,7 @@
 
 
 ;; prim_listp
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Compares values and returns a Cell with the result in R0
 :prim_listp_String
 	"list?"
@@ -1955,7 +1955,7 @@
 
 
 ;; prim_charp
-;; Recieves argslist in R0
+;; Receives argslist in R0
 ;; Returns #t if CHAR else NIL
 :prim_charp_String
 	"char?"
@@ -1979,7 +1979,7 @@
 
 
 ;; prim_numberp
-;; Recieves argslist in R0
+;; Receives argslist in R0
 ;; Returns #t if NUMBER else NIL
 :prim_numberp_String
 	"number?"
@@ -2003,7 +2003,7 @@
 
 
 ;; prim_symbolp
-;; Recieves argslist in R0
+;; Receives argslist in R0
 ;; Returns #t if SYMBOL else NIL
 :prim_symbolp_String
 	"symbol?"
@@ -2027,7 +2027,7 @@
 
 
 ;; prim_stringp
-;; Recieves argslist in R0
+;; Receives argslist in R0
 ;; Returns #t if CHAR else NIL
 :prim_stringp_String
 	"string?"
@@ -2051,7 +2051,7 @@
 
 
 ;; prim_output
-;; Recieves argslist in R0
+;; Receives argslist in R0
 ;; Outputs to whatever is specified in R12 and returns TEE
 :prim_output
 	PUSHR R1 R15                ; Protect R1
@@ -2092,7 +2092,7 @@
 
 
 ;; prim_output_INT
-;; Recieves an INT CELL in R0 and desired Output in R1
+;; Receives an INT CELL in R0 and desired Output in R1
 ;; Outputs value and returns
 :prim_output_INT
 	PUSHR R0 R15                ; Protect R0
@@ -2105,7 +2105,7 @@
 
 
 ;; prim_output_SYM
-;; Recieves a SYM CELL in R0 and desired Output in R1
+;; Receives a SYM CELL in R0 and desired Output in R1
 ;; Outputs string and returns
 :prim_output_SYM
 	PUSHR R0 R15                ; Protect R0
@@ -2118,7 +2118,7 @@
 
 
 ;; prim_output_CHAR
-;; Recieves an CHAR CELL in R0 and desired Output in R1
+;; Receives an CHAR CELL in R0 and desired Output in R1
 ;; Outputs Last CHAR and returns
 :prim_output_CHAR
 	PUSHR R0 R15                ; Protect R0
@@ -2131,7 +2131,7 @@
 
 
 ;; prim_stringeq
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Compares strings and returns a Cell with the result in R0
 :prim_stringeq_String
 	"string=?"
@@ -2173,7 +2173,7 @@
 
 
 ;; prim_display
-;; Recieves argslist in R0
+;; Receives argslist in R0
 ;; Outputs to TTY R12 and returns TEE
 :prim_display_String
 	"display"
@@ -2183,7 +2183,7 @@
 
 
 ;; prim_write
-;; Recieves argslist in R0
+;; Receives argslist in R0
 ;; Write to Tape_02 and returns TEE
 :prim_write_String
 	"write"
@@ -2195,7 +2195,7 @@
 
 
 ;; prim_freecell
-;; Recieves either NIL or a list in R0
+;; Receives either NIL or a list in R0
 ;; If NIL displays header, otherwise just returns number of free cells in R0
 :prim_freecell_String
 	"free_mem"
@@ -2221,7 +2221,7 @@
 
 
 ;; prim_integer_to_char
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Converts INT to CHAR
 :prim_integer_to_char_String
 	"integer->char"
@@ -2243,7 +2243,7 @@
 
 
 ;; prim_char_to_integer
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Converts CHAR to INT
 :prim_char_to_integer_String
 	"char->integer"
@@ -2265,7 +2265,7 @@
 
 
 ;; string_to_list
-;; Recieves a pointer to string in R0
+;; Receives a pointer to string in R0
 ;; Returns a list of chars
 :string_to_list
 	CMPSKIPI.NE R0 $NIL         ; If NIL Expression
@@ -2294,7 +2294,7 @@
 
 
 ;; prim_string_to_list
-;; Recieves a pointer to a CONS whose CAR should be a STRING
+;; Receives a pointer to a CONS whose CAR should be a STRING
 ;; Returns a list of CHARs in R0
 :prim_string_to_list_String
 	"string->list"
@@ -2322,7 +2322,7 @@
 
 
 ;; list_to_string
-;; Recieves an index in R0, a String pointer in R1
+;; Receives an index in R0, a String pointer in R1
 ;; And a list of arguments in R2
 ;; Alters only R0
 :list_to_string
@@ -2368,7 +2368,7 @@
 
 
 ;; prim_list_to_string
-;; Recieves a list in R0
+;; Receives a list in R0
 ;; Returns a String CELL in R0
 :prim_list_to_string_String
 	"list->string"
@@ -2411,7 +2411,7 @@
 
 
 ;; prim_cons
-;; Recieves an arglist in R0 and returns a CONS in R0
+;; Receives an arglist in R0 and returns a CONS in R0
 :prim_cons_String
 	"cons"
 :prim_cons
@@ -2425,7 +2425,7 @@
 
 
 ;; prim_car
-;; Recieves an arglist in R0 and returns the CAR in R0
+;; Receives an arglist in R0 and returns the CAR in R0
 :prim_car_String
 	"car"
 :prim_car
@@ -2437,7 +2437,7 @@
 
 
 ;; prim_cdr
-;; Recieves an arglist in R0 and returns the CDR in R0
+;; Receives an arglist in R0 and returns the CDR in R0
 :prim_cdr_String
 	"cdr"
 :prim_cdr
@@ -2449,7 +2449,7 @@
 
 
 ;; spinup
-;; Recieves a symbol in R0 and a primitive in R1
+;; Receives a symbol in R0 and a primitive in R1
 ;; Returns nothing but CONS both to all_symbols and top_env
 :spinup
 	PUSHR R0 R15                ; Protect R0
@@ -2615,7 +2615,7 @@
 
 
 ;; Global init function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; sets up all_symbols and top_env
 :init_sl3
@@ -2903,14 +2903,14 @@
 	NOP
 
 ;; cells_remaining
-;; Recieves nothing and returns number of remaining cells in R0
+;; Receives nothing and returns number of remaining cells in R0
 :cells_remaining
 	LOADR R0 @left_to_take      ; Get number of cells left
 	RET R15
 
 
 ;; update_remaining
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Updates left_to_take via counting
 :update_remaining
@@ -2943,7 +2943,7 @@
 
 
 ;; insert_ordered
-;; Recieves a cell and a list of cells in R0 and R1
+;; Receives a cell and a list of cells in R0 and R1
 ;; Inserts cell into the list from lowest to highest
 ;; Returns resulting list in R0
 :insert_ordered
@@ -2964,7 +2964,7 @@
 
 
 ;; reclaim_marked
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Reclaims and updates free_cells
 :reclaim_marked
@@ -3006,7 +3006,7 @@
 
 
 ;; mark_all_cells
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Marks all unfree cells
 :mark_all_cells
@@ -3040,7 +3040,7 @@
 
 
 ;; unmark_cells
-;; Recieves a List in R0 and R1 and a Count in R2
+;; Receives a List in R0 and R1 and a Count in R2
 ;; Returns nothing
 ;; Unmarks all connected Cells
 :unmark_cells
@@ -3101,7 +3101,7 @@
 
 
 ;; relocate_cell
-;; Recieves a current, target and List in R0, R1 and R2
+;; Receives a current, target and List in R0, R1 and R2
 ;; Returns nothing
 ;; Relocate all references to a cell and walks down list
 :relocate_cell
@@ -3154,7 +3154,7 @@
 
 
 ;; compact
-;; Recieves a List in R0
+;; Receives a List in R0
 ;; Returns nothing
 ;; Finds cells to relocate and has all references updated
 :compact
@@ -3225,7 +3225,7 @@
 
 
 ;; garbage_collect
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; The Core of Garbage Collection
 :garbage_collect
@@ -3256,7 +3256,7 @@
 
 
 ;; garbage_init
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Initializes Garbage Heap
 :garbage_init
@@ -3279,7 +3279,7 @@
 
 
 ;; pop_cons
-;; Recieves nothing
+;; Receives nothing
 ;; Returns a Free CONS in R0
 ;; Updates left_to_take
 :pop_cons
@@ -3310,7 +3310,7 @@
 
 
 ;; make_int
-;; Recieves an Integer in R0
+;; Receives an Integer in R0
 ;; Returns a CELL in R0
 :make_int
 	PUSHR R1 R15                ; Protect R1
@@ -3324,7 +3324,7 @@
 
 
 ;; make_char
-;; Recieves a CHAR in R0
+;; Receives a CHAR in R0
 ;; Returns a CELL in R0
 :make_char
 	PUSHR R1 R15                ; Protect R1
@@ -3338,7 +3338,7 @@
 
 
 ;; make_string
-;; Recieves a string pointer in R0
+;; Receives a string pointer in R0
 ;; Returns a CELL in R0
 :make_string
 	PUSHR R1 R15                ; Protect R1
@@ -3352,7 +3352,7 @@
 
 
 ;; make_sym
-;; Recieves a string pointer in R0
+;; Receives a string pointer in R0
 ;; Returns a Cell in R0
 :make_sym
 	PUSHR R1 R15                ; Protect R1
@@ -3366,7 +3366,7 @@
 
 
 ;; make_cons
-;; Recieves a Cell in R0 and R1
+;; Receives a Cell in R0 and R1
 ;; Returns a combined Cell in R0
 :make_cons
 	PUSHR R2 R15                ; Protect R2
@@ -3381,7 +3381,7 @@
 
 
 ;; make_proc
-;; Recieves Cells in R0, R1 and R2
+;; Receives Cells in R0, R1 and R2
 ;; Returns a combined Cell in R0
 :make_proc
 	PUSHR R3 R15                ; Protect R3
@@ -3397,7 +3397,7 @@
 
 
 ;; make_prim
-;; Recieves pointer to function in R0
+;; Receives pointer to function in R0
 ;; Returns a Cell in R0
 :make_prim
 	PUSHR R1 R15                ; Protect R1

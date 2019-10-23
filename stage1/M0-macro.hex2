@@ -124,7 +124,7 @@ E10020100000	# STORE R1 R0 0 ; head->next = root
 
 
 # ;; Purge_Line_Comment Function
-# ;; Recieves char in R0 and desired input in R1
+# ;; Receives char in R0 and desired input in R1
 # ;; Modifies R0
 # ;; Returns to Tokenize_Line as if the entire line
 # ;; Comment never existed
@@ -136,7 +136,7 @@ E000A020000a	# CMPSKIPI.E R0 10 ; Stop When LF is reached
 
 
 # ;; Store_String function
-# ;; Recieves Char in R0, desired input in R1
+# ;; Receives Char in R0, desired input in R1
 # ;; And node pointer in R2
 # ;; Modifies node Text to point to string and sets
 # ;; Type to string.
@@ -158,7 +158,7 @@ E10023020004	# STORE32 R0 R2 4 ; Set node type
 
 
 # ;; Store_Atom function
-# ;; Recieves Char in R0, desired input in R1
+# ;; Receives Char in R0, desired input in R1
 # ;; And node pointer in R2
 # ;; Modifies node Text to point to string
 :Store_Atom
@@ -185,7 +185,7 @@ E1000FEE0001	# ADDUI R14 R14 1 ; Correct Malloc
 
 
 # ;; strcmp function
-# ;; Recieves pointers to null terminated strings
+# ;; Receives pointers to null terminated strings
 # ;; In R0 and R1
 # ;; Returns if they are equal in R0
 # ;; Returns to whatever called it
@@ -266,7 +266,7 @@ E0002CA2 @Identify_Macros_0	# JUMP.NZ R2 @Identify_Macros_0 ; Loop if i not NULL
 
 
 # ;; Line_Macro Function
-# ;; Recieves a node pointer in R0
+# ;; Receives a node pointer in R0
 # ;; Causes macros to be applied
 # ;; Returns to whatever called it
 :Line_Macro
@@ -286,7 +286,7 @@ E0002CA0 @Line_Macro_0	# JUMP.NZ R0 @Line_Macro_0 ; If Next is Null Don't loop
 
 
 # ;; setExpression Function
-# ;; Recieves a node pointer in R0
+# ;; Receives a node pointer in R0
 # ;; A string pointer to compare against in R1
 # ;; A string pointer for replacement in R2
 # ;; Doesn't modify any registers
@@ -318,7 +318,7 @@ E0002CA4 @setExpression_0	# JUMP.NZ R4 @setExpression_0 ; Loop if next isn't NUL
 
 
 # ;; Process_String Function
-# ;; Recieves a Node in R0
+# ;; Receives a Node in R0
 # ;; Doesn't modify registers
 # ;; Returns back to whatever called it
 :Process_String
@@ -355,7 +355,7 @@ E0002CA0 @Process_String_0	# JUMP.NZ R0 @Process_String_0 ; If Next isn't NULL R
 
 
 # ;; Hexify_String Function
-# ;; Recieves a node pointer in R0
+# ;; Receives a node pointer in R0
 # ;; Converts Quoted text to Hex values
 # ;; Pads values up to multiple of 4 bytes
 # ;; Doesn't modify registers
@@ -415,7 +415,7 @@ E1000FEE0001	# ADDUI R14 R14 1 ; Increment address pointer
 
 
 # ;; Eval_Immediates function
-# ;; Recieves a node in R0
+# ;; Receives a node in R0
 # ;; Converts number into Hex
 # ;; And write into Memory and fix pointer
 :Eval_Immediates
@@ -446,7 +446,7 @@ E0002CA3 @Eval_Immediates_0	# JUMP.NZ R3 @Eval_Immediates_0 ; And loop
 
 
 # ;; numerate_string function
-# ;; Recieves pointer To string in R0
+# ;; Receives pointer To string in R0
 # ;; Returns number in R0 equal to value of string
 # ;; Or Zero in the event of invalid string
 :numerate_string

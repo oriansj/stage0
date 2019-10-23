@@ -1482,7 +1482,7 @@
 ;; Reads Tape_01 until EOF
 ;; Then switches into TTY Mode
 :cold_done
-	;; IF TTY Recieves EOF call it quits
+	;; IF TTY Receives EOF call it quits
 	CMPSKIPI.NE R7 0            ; Check if TTY
 	JUMP @final_Cleanup         ; Clean up and call it a day
 

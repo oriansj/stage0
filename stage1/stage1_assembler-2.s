@@ -323,7 +323,7 @@
 
 
 ;; Our simple string compare function
-;; Recieves two pointers in R0 and R1
+;; Receives two pointers in R0 and R1
 ;; Returns the difference between the strings in R0
 ;; Returns to whatever called it
 :strcmp
@@ -354,7 +354,7 @@
 
 
 ;; Processimmediate Function
-;; Recieves an integer value in R0
+;; Receives an integer value in R0
 ;; Writes out the values to Tape_02
 ;; Doesn't modify registers
 ;; Returns to whatever called it
