@@ -94,7 +94,7 @@ header_string2: db 10, ":ELF_data", 10, 10, "# Program global variables", 10, 0
 header_string3: db 10, "# Program strings", 10, 0
 
 ;; read_all_tokens function
-;; Recieves Token_List* in EAX
+;; Receives Token_List* in EAX
 ;; Tokenizes all input and returns updated list in EAX
 ;; Returns TOKEN in EAX
 ;; Uses EAX for C
@@ -112,7 +112,7 @@ read_all_tokens_done:
 
 
 ;; get_token function
-;; Recieves INT in EAX
+;; Receives INT in EAX
 ;; Makes a list of TOKEN_LIST
 ;; C and STRING_INDEX are stored in memory, ECX is used for S and EDX is used for current
 ;; Returns C in EAX
@@ -275,7 +275,7 @@ malloc:
 
 
 ;; clear_white_space function
-;; Recieves INT C in EAX
+;; Receives INT C in EAX
 ;; Returns first non-whitespace char in EAX
 clear_white_space:
 	cmp eax, 32                 ; Check for ' '
@@ -298,7 +298,7 @@ clear_white_space_done:
 
 
 ;; In_Set function
-;; Recieves Char C in EAX and CHAR* in EBX
+;; Receives Char C in EAX and CHAR* in EBX
 ;; Returns 1 if true, zero if false in EAX
 In_Set:
 	push ebx                    ; Protect EBX
@@ -334,7 +334,7 @@ strings: db 34, 39, 0
 
 
 ;; purge_macro function
-;; Recieves CH in EAX
+;; Receives CH in EAX
 ;; Reads chars until Line feed is read
 ;; returns line feed
 purge_macro:
@@ -345,7 +345,7 @@ purge_macro:
 
 
 ;; preserve_keyword function
-;; Recieves INT C in EAX
+;; Receives INT C in EAX
 ;; collects all chars in keyword
 ;; Returns C in EAX
 ;; Uses ECX for INT C
@@ -380,7 +380,7 @@ preserve_keyword_done:
 
 
 ;; preserve_symbol function
-;; Recieves INT C in EAX
+;; Receives INT C in EAX
 ;; collects all chars in symbol
 ;; Returns C in EAX
 ;; Uses ECX for INT C
@@ -407,7 +407,7 @@ preserve_symbol_done:
 
 
 ;; consume_word function
-;; recieves INT C in EAX
+;; receives INT C in EAX
 ;; returns INT C in EAX
 ;; Uses EAX for C, EBX for FREQ and ECX for ESCAPE
 consume_word:
@@ -444,7 +444,7 @@ consume_word_iter:
 
 
 ;; consume_byte function
-;; Recieves INT C in EAX
+;; Receives INT C in EAX
 ;; Inserts C into string S, updates String S
 ;; Returns Next char in EAX
 consume_byte:
@@ -459,7 +459,7 @@ consume_byte:
 
 
 ;; fixup_label function
-;; Recieves S in ECX
+;; Receives S in ECX
 ;; prepends ':' to string and returns registers un changed
 ;; Uses EAX for HOLD, EBX for PREV and ECX for S[0]
 fixup_label:
@@ -509,7 +509,7 @@ fgetc_done:
 
 
 ;; Reverse_List function
-;; Recieves List in EAX
+;; Receives List in EAX
 ;; Returns the list reversed in EAX
 Reverse_List:
 	push ebx                    ; Protect EBX
@@ -533,7 +533,7 @@ Reverse_List_Done:
 
 
 ;; recursive_output function
-;; Recieves list in EAX
+;; Receives list in EAX
 ;; walks the list and prints the I->S for all nodes backwards
 ;; Uses EBX for I
 recursive_output:
@@ -556,7 +556,7 @@ recursive_output_done:
 
 
 ;; File_Print function
-;; Recieves CHAR* in EAX
+;; Receives CHAR* in EAX
 ;; calls fputc for every non-null char
 File_Print:
 	push ebx                    ; Protect EBX
@@ -581,7 +581,7 @@ File_Print_Done:
 
 
 ;; fputc function
-;; recieves CHAR in EAX and load FILE* from [OUTPUT_FILE]
+;; receives CHAR in EAX and load FILE* from [OUTPUT_FILE]
 ;; writes char and returns
 fputc:
 	push ebx                    ; Protect EBX
@@ -601,7 +601,7 @@ fputc:
 
 
 ;; program function
-;; recieves nothing, returns nothing
+;; receives nothing, returns nothing
 ;; Uses EAX for type_size
 program:
 	;; The binary initialized the globals to null, so we can skip those steps
@@ -708,7 +708,7 @@ program_string_1: db 10, "NOP", 10, 0
 
 
 ;; declare_function function
-;; Recieves nothing and returns nothing
+;; Receives nothing and returns nothing
 ;; Sets current function and adds it to the global function list
 declare_function:
 	push ebx                    ; Protect EBX
@@ -784,7 +784,7 @@ declare_function_string_3: db 10, 0
 
 
 ;; collect_arguments function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Adds arguments to the function definition
 ;; holds struct type* type_size in ECX, then replace with struct token_list* a in ECX when type_size is used
@@ -880,7 +880,7 @@ collect_arguments_done:
 
 
 ;; statement function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks down global_token recursively to collect the contents of the function
 statement:
@@ -1071,7 +1071,7 @@ statement_string_4: db "ERROR in statement", 10, "Missing ;", 10, 0
 
 
 ;; recursive_statement function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks the global_token list to build the contents of statements
 ;; Uses struct token_list* frame in ECX
@@ -1136,7 +1136,7 @@ recursive_statement_string_1: db "POP_ebx", 9, "# _recursive_statement_locals", 
 
 
 ;; return_result function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Cleans up function and generates return
 ;; Also handles returing expressions
@@ -1184,7 +1184,7 @@ return_result_string_2: db "RETURN", 10, 0
 
 
 ;; collect_local function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks global_token list to create function locals
 ;; Uses ECX for struct token_list* A
@@ -1316,7 +1316,7 @@ collect_local_string_3: db "PUSH_eax", 9, "#", 0
 
 
 ;; process_asm function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Simply inlines the asm statements
 ;; Uses EBX for global_token temp storage
@@ -1368,7 +1368,7 @@ process_asm_string_3: db "ERROR in process_asm", 10, "MISSING ;", 10, 0
 
 
 ;; process_if function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Increments current_count recurses into expression + statement
 ;; Uses ECX for char* NUMBER_STRING
@@ -1502,7 +1502,7 @@ restore_break_frame:
 
 
 ;; set_break_frame microfunction
-;; Recieves char* head in EAX and char* num in EBX
+;; Receives char* head in EAX and char* num in EBX
 ;; Overwrites EAX and EBX
 ;; Returns to calling function
 set_break_frame:
@@ -1517,7 +1517,7 @@ set_break_frame:
 
 
 ;; process_do function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Increments current_count and leverages save/restore_break_frame pieces
 ;; Uses ECX for char* NUMBER_STRING
@@ -1601,7 +1601,7 @@ process_do_string_7: db ":DO_END_", 0
 
 
 ;; process_while function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Increments current_count and leverages save/restore_break_frame pieces
 ;; Uses ECX for char* NUMBER_STRING
@@ -1692,7 +1692,7 @@ process_while_string_7: db ":END_WHILE_", 0
 
 
 ;; process_for function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Increments current_count and leverages save/restore_break_frame pieces
 ;; Uses ECX for char* NUMBER_STRING
@@ -1840,7 +1840,7 @@ process_for_string_13: db ":FOR_END_", 0
 
 
 ;; process_break function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Handles the break out of loops case
 ;; Uses EBX for struct token_list* break_frame and ECX for struct token_list* I
@@ -1918,7 +1918,7 @@ process_break_string_4: db "ERROR in break statement",10, "Missing ;", 10, 0
 
 
 ;; expression function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Walks global_token and updates output_list
 ;; Uses EAX and EBX for match and ECX for char* store
@@ -1974,7 +1974,7 @@ expression_string_1: db "STORE_CHAR", 10, 0
 
 
 ;; bitwise_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks global_token list and updates output list
 ;; Just calls other functions
@@ -1985,7 +1985,7 @@ bitwise_expr:
 
 
 ;; bitwise_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Just calls general_recursion a bunch
 ;; Uses EAX, EBX, ECX and EDX for passing constants to general recursion
@@ -2035,7 +2035,7 @@ bitwise_expr_stub_string_2: db "XOR_ebx_eax_into_eax", 10, 0
 
 
 ;; relational_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Walks global_token list and updates output list
 ;; just calls other function
@@ -2046,7 +2046,7 @@ relational_expr:
 
 
 ;; relational_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Just calls general_recursion a bunch
 ;; Uses EAX, EBX, ECX and EDX for passing constants to general recursion
@@ -2105,7 +2105,7 @@ relational_expr_stub_string_5: db "CMP", 10, "SETNE", 10, "MOVEZBL", 10, 0
 
 
 ;; additive_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Walks global_token list and updates output list
 ;; just calls other function
@@ -2116,7 +2116,7 @@ additive_expr:
 
 
 ;; additive_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Just calls general_recursion a bunch
 ;; Uses EAX, EBX, ECX and EDX for passing constants to general recursion
@@ -2182,7 +2182,7 @@ additive_expr_stub_string_6: db "COPY_eax_to_ecx", 10, "COPY_ebx_to_eax", 10, "S
 
 
 ;; postfix_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Walks global_token list and updates output list
 ;; just calls other function
@@ -2193,7 +2193,7 @@ postfix_expr:
 
 
 ;; postfix_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns Nothing
 ;; Checks for "[" and "->" and deals with them otherwise does nothing
 ;; Uses EAX, EBX, ECX and EDX for passing constants to general recursion
@@ -2226,7 +2226,7 @@ postfix_expr_stub_done:
 
 
 ;; unary_expr_sizeof function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Uses ECX for A->SIZE
 unary_expr_sizeof:
@@ -2268,7 +2268,7 @@ unary_expr_sizeof_string_3: db 10, 0
 
 
 ;; postfix_expr_array function
-;; Recieves Nothing
+;; Receives Nothing
 ;; Returns Nothing
 ;; Uses EBX for struct type* ARRAY and ECX for char* ASSIGN
 postfix_expr_array:
@@ -2346,7 +2346,7 @@ postfix_expr_array_string_6: db 0
 
 
 ;; ceil_log2 function
-;; Recieves int a in EAX
+;; Receives int a in EAX
 ;; Performs log2 on A and
 ;; Returns result in EAX
 ;; Uses EBX for INT A and ECX for INT RESULT
@@ -2379,7 +2379,7 @@ ceil_log2_done:
 
 
 ;; postfix_expr_arrow function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Emits a bunch and updates current_target
 ;; Uses EBX for struct type* I
@@ -2447,7 +2447,7 @@ postfix_expr_arrow_string_3: db "LOAD_INTEGER", 10, 0
 
 
 ;; primary_expr function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 primary_expr:
 	push ebx                    ; Protect EBX
@@ -2605,7 +2605,7 @@ primary_expr_string_7:db "0123456789", 0
 
 
 ;; primary_expr_variable function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Walks global and updates output
 ;; Uses EAX for struct token_list* a and ECX for char* S
@@ -2703,7 +2703,7 @@ primary_expr_variable_string_2: db "LOAD_IMMEDIATE_eax %", 0
 
 
 ;; function_call function
-;; Recieves char* S in EAX and int BOOL in EBX
+;; Receives char* S in EAX and int BOOL in EBX
 ;; Builds stack frames before and tears them down after function calls
 ;; Uses ECX for char* S, EDX for int BOOL, ESI for PASSED
 function_call:
@@ -2847,7 +2847,7 @@ function_call_string_15: db "POP_edi", 9, "# Prevent overwrite", 10, 0
 
 
 ;; variable_load function
-;; Recieves struct token_list* A in EAX
+;; Receives struct token_list* A in EAX
 ;; Returns nothing
 ;; Updates output and current_target
 ;; Uses ECX for A
@@ -2914,7 +2914,7 @@ variable_load_string_2: db "LOAD_INTEGER", 10, 0
 
 
 ;; function_load function
-;; Recieves struct token_list* a in EAX
+;; Receives struct token_list* a in EAX
 ;; Returns nothing
 ;; Uses ECX to hold A->S
 function_load:
@@ -2955,7 +2955,7 @@ function_load_string_1: db 10, 0
 
 
 ;; global_load function
-;; Recieves struct token_list* A in EAX
+;; Receives struct token_list* A in EAX
 ;; Returns nothing
 ;; Uses EBX to hold A->S
 global_load:
@@ -2996,7 +2996,7 @@ global_load_string_2: db "LOAD_INTEGER", 10, 0
 
 
 ;; sym_lookup function
-;; Recieves char* S in EAX and struct token_list* symbol_list in EBX
+;; Receives char* S in EAX and struct token_list* symbol_list in EBX
 ;; Uses I->S in EAX, S in EBX and I in ECX
 ;; Returns match or NULL
 sym_lookup:
@@ -3024,7 +3024,7 @@ sym_lookup_done:
 
 
 ;; primary_expr_number function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Simply uses current global token to update output and then steps to next global_token
 primary_expr_number:
@@ -3048,7 +3048,7 @@ primary_expr_number_string_1: db 10, 0
 
 
 ;; primary_expr_string function
-;; recieves nothing
+;; receives nothing
 ;; Returns nothing
 ;; creates entries for string and calls to generate string output
 ;; uses ECX for char* number_string
@@ -3102,7 +3102,7 @@ primary_expr_string_string_1: db ":STRING_", 0
 
 
 ;; primary_expr_char function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Updates output_list using global_token
 primary_expr_char:
@@ -3133,14 +3133,14 @@ primary_expr_char_string_1: db 10, 0
 
 
 ;; primary_expr_failure function
-;; Recieves nothing
+;; Receives nothing
 ;; Does not return but aborts hard
 ;; Complains about the bad input
 primary_expr_failure:
 ;	call line_error             ; Get line of issue
 	mov eax, 2                  ; Using Standard error
 	mov [Output_file], eax      ; write to standard error
-	mov eax, primary_expr_failure_string_0 ; Using "Recieved "
+	mov eax, primary_expr_failure_string_0 ; Using "Received "
 	call File_Print             ; Print it
 
 	mov eax, [global_token]     ; Using global_token
@@ -3151,12 +3151,12 @@ primary_expr_failure:
 	call File_Print             ; Print it
 	jmp Exit_Failure            ; Abort Hard
 
-primary_expr_failure_string_0: db "Recieved ", 0
+primary_expr_failure_string_0: db "Received ", 0
 primary_expr_failure_string_1: db " in primary_expr", 10, 0
 
 
 ;; general_recursion function
-;; Recieves FUNCTION F in EAX, char* S in EBX, char* name in ECX and FUNCTION iterate in EDX
+;; Receives FUNCTION F in EAX, char* S in EBX, char* name in ECX and FUNCTION iterate in EDX
 ;; Returns nothing
 ;; Uses ECX for char* S, EDX for FUNCTION iterate and EBP for FUNCTION F
 ;; But generally recurses a shitload
@@ -3194,7 +3194,7 @@ general_recursion_done:
 
 
 ;; promote_type function
-;; Recieves struct type* a in EAX and struct type* b in EBX
+;; Receives struct type* a in EAX and struct type* b in EBX
 ;; Returns the most recent type in EAX
 ;; Uses EAX for struct type* I, ECX for struct type* A and EDX for struct type* B
 promote_type:
@@ -3245,7 +3245,7 @@ promote_type_done:
 
 
 ;; common_recursion function
-;; Recieves FUNCTION F in EAX
+;; Receives FUNCTION F in EAX
 ;; Returns Nothing
 ;; Walks global_token list and update output_list
 ;; Updates current_target
@@ -3277,7 +3277,7 @@ common_recursion_string_1: db "POP_ebx", 9, "# _common_recursion", 10, 0
 
 
 ;; require_match function
-;; Recieves char* message in EAX and char* required in EBX
+;; Receives char* message in EAX and char* required in EBX
 ;; Returns nothing
 ;; Uses ECX to hold message and updates global_token
 require_match:
@@ -3308,7 +3308,7 @@ require_match_good:
 
 
 ;; uniqueID Function
-;; Recieves char*S in EAX, struct token_list* l in EBX snd char* num in ECX
+;; Receives char*S in EAX, struct token_list* l in EBX snd char* num in ECX
 ;; Returns updated struct token_list* L in EAX
 uniqueID:
 	push ebx                    ; Protect EBX
@@ -3331,7 +3331,7 @@ uniqueID_string_0: db 10, 0
 
 
 ;; uniqueID_out function
-;; Recieves char* S in EAX and char* num in EBX
+;; Receives char* S in EAX and char* num in EBX
 ;; Returns nothing
 uniqueID_out:
 	push eax                    ; Protect EAX
@@ -3348,7 +3348,7 @@ uniqueID_out:
 
 
 ;; emit_out function
-;; Recieves char* S in EAX
+;; Receives char* S in EAX
 ;; Returns nothing
 ;; Updates output_list
 ;; MUST NOT ALTER REGISTERS
@@ -3364,7 +3364,7 @@ emit_out:
 
 
 ;; emit function
-;; Recieves char *s in EAX and struct token_list* head in EBX
+;; Receives char *s in EAX and struct token_list* head in EBX
 ;; Returns struct token_list* T in EAX
 emit:
 	push ecx                    ; Protect ECX
@@ -3378,9 +3378,9 @@ emit:
 
 
 ;; escape_lookup function
-;; Recieves char* c in EAX
+;; Receives char* c in EAX
 ;; Returns integer value of char in EAX
-;; Aborts hard if unknown escape is recieved
+;; Aborts hard if unknown escape is received
 ;; Uses ECX to hold char* C
 escape_lookup:
 	push ebx                    ; Protect EBX
@@ -3424,7 +3424,7 @@ escape_lookup:
 	;; Aborting hard
 	mov eax, 2                  ; Using Standard error
 	mov [Output_file], eax      ; write to standard error
-	mov eax, escape_lookup_string_0 ; Using "Unknown escape recieved: "
+	mov eax, escape_lookup_string_0 ; Using "Unknown escape received: "
 	call File_Print             ; Print it
 	mov eax, ecx                ; Using C
 	call File_Print             ; Print it
@@ -3452,12 +3452,12 @@ escape_lookup_hex:
 	add eax, ebx                ; hex(c[2]) << 4 + hex(c[3])
 	jmp escape_lookup_done      ; Be done
 
-escape_lookup_string_0: db "Unknown escape recieved: ", 0
+escape_lookup_string_0: db "Unknown escape received: ", 0
 escape_lookup_string_1: db " Unable to process", 10, 0
 
 
 ;; char2hex function
-;; Recieves char in EAX
+;; Receives char in EAX
 ;; Returns hex or aborts hard
 char2hex:
 	sub eax, 48                 ; Try 0-9
@@ -3487,7 +3487,7 @@ char2hex_string_0: db "Tried to print non-hex number", 10, 0
 
 
 ;; parse_string function
-;; Recieves char* string in EAX
+;; Receives char* string in EAX
 ;; Returns cleaned up string
 ;; Protects char* string in EBX
 parse_string:
@@ -3512,7 +3512,7 @@ parse_string_done:
 
 
 ;; weird function
-;; Recieves char* string in EAX
+;; Receives char* string in EAX
 ;; Returns true(0) or false(1) in EAX
 ;; Uses ECX to hold char* string
 weird:
@@ -3582,7 +3582,7 @@ weird_string_1: db 9, 10, 13, 32, 0
 
 
 ;; collect_regular_string function
-;; Recieves char* string in EAX
+;; Receives char* string in EAX
 ;; Malloc and creates new string to return in EAX
 ;; Uses ECX for return string and EDX for passed string
 collect_regular_string:
@@ -3638,7 +3638,7 @@ collect_regular_string_done:
 
 
 ;; collect_weird_string function
-;; Recieves char* string in EAX
+;; Receives char* string in EAX
 ;; Mallocs and returns char* hold in EAX
 ;; Uses ECX for char* hold and EDX for char* string
 collect_weird_string:
@@ -3706,7 +3706,7 @@ collect_weird_string_done:
 
 
 ;; HEX to ascii routine
-;; Recieves INT in EAX and CHAR* in ECX
+;; Receives INT in EAX and CHAR* in ECX
 ;; Stores ascii of INT in CHAR*
 ;; Returns only modifying EAX and ECX
 hex8:
@@ -3727,7 +3727,7 @@ hex1:
 
 
 ;; type_name function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns type_size in EAX
 ;; Uses ECX for STRUCT TYPE* RET
 type_name:
@@ -3814,7 +3814,7 @@ type_name_string_1: db 10, 0
 
 
 ;; lookup_type function
-;; Recieves char* s in EAX and struct type* start in EBX
+;; Receives char* s in EAX and struct type* start in EBX
 ;; Returns struct type* in EAX
 ;; Uses EBX for S and ECX for I
 lookup_type:
@@ -3842,7 +3842,7 @@ lookup_type_done:
 
 
 ;; create_struct function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; Uses global_token to malloc a struct's definition
 ;; Uses ECX for int OFFSET, EDX for struct type* head, EBP for struct type* I,
@@ -3959,7 +3959,7 @@ create_struct_string_1: db "ERROR in create_struct", 10, " Missing ;", 10, 0
 
 
 ;; lookup_member function
-;; Recieves struct type* parent in EAX and char* name in EBX
+;; Receives struct type* parent in EAX and char* name in EBX
 ;; Returns struct type* I in EAX
 ;; Uses char* NAME in EBX, ECX for struct type* I and EDX to hold parent for errors
 ;; Aborts hard if not found
@@ -4017,7 +4017,7 @@ lookup_member_string_2: db 10, 0
 
 
 ;; build_member function
-;; Recieves struct type* last in EAX, int offset in EBX and global member_size in EDI
+;; Receives struct type* last in EAX, int offset in EBX and global member_size in EDI
 ;; Updates member_size in EDI and returns struct type* I in EAX
 ;; Uses ECX for struct type* member_type and EDX for struct type* I
 build_member:
@@ -4086,7 +4086,7 @@ build_member_string_0: db "Struct only supports [num] form", 10, 0
 
 
 ;; build_union function
-;; Recieves struct type* last in EAX, int offset in EBX and global member_size in EDI
+;; Receives struct type* last in EAX, int offset in EBX and global member_size in EDI
 ;; Updates member_size in EDI and returns struct type* LAST in EAX
 ;; Uses ECX for struct type* last, EDX for int offset, ESI for int size and EDI for int member_size
 build_union:
@@ -4152,7 +4152,7 @@ build_union_string_1: db "ERROR in build_union", 10, "Missing ;", 10, 0
 
 
 ;; sym_declare function
-;; Recieves char *s in EAX, struct type* t in EBX, and struct token_list* list in ECX
+;; Receives char *s in EAX, struct type* t in EBX, and struct token_list* list in ECX
 ;; Returns struct token_list* in EAX
 ;; Uses EAX for A
 sym_declare:
@@ -4168,7 +4168,7 @@ sym_declare:
 
 
 ;; match function
-;; Recieves CHAR* in EAX and CHAR* in EBX
+;; Receives CHAR* in EAX and CHAR* in EBX
 ;; Returns 0 (TRUE) or 1 (FALSE) in EAX
 match:
 	push ebx                    ; Protect EBX
@@ -4200,7 +4200,7 @@ match_Done:
 
 
 ;; numerate_number function
-;; Recieves an INT A in EAX
+;; Receives an INT A in EAX
 ;; Returns char* result in EAX
 ;; Allocates 16 bytes of memory
 ;; Behaves badly when given a negative number too large
@@ -4280,7 +4280,7 @@ numerate_number_ZERO:
 
 
 ;; numerate_string function
-;; Recieves CHAR* in EAX
+;; Receives CHAR* in EAX
 ;; Returns value of CHAR* in EAX
 ;; Uses EAX for VALUE, EBX for S, ECX for CH and ESI for NEGATIVE?
 numerate_string:
@@ -4363,7 +4363,7 @@ numerate_string_done:
 
 
 ;; Exit_Failure function
-;; Recieves nothing
+;; Receives nothing
 ;; And aborts hard
 ;; Does NOT return
 Exit_Failure:
@@ -4510,7 +4510,7 @@ type_unsigned_name: db "unsigned", 0
 
 
 ;; debug_list function
-;; Recieves struct token_list* in EAX
+;; Receives struct token_list* in EAX
 ;; Prints contents of list and exits
 ;; Does NOT return
 debug_list:

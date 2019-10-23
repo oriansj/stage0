@@ -374,7 +374,7 @@
 	415B                        ; POP_R11                     ; Restore HEAD
 	C3                          ; RET
 
-	;; Recieves pointer in RBX
+	;; Receives pointer in RBX
 	;; Writes out char and updates RBX
 :consume_token
 	E8 %Read_byte               ; CALLI32 %Read_byte          ; Consume_token

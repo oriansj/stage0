@@ -16,7 +16,7 @@
 
 
 ;; add_node Function
-;; Recieves pointers in R0 R1
+;; Receives pointers in R0 R1
 ;; Alters R0 if NULL
 ;; Appends nodes together
 ;; Returns to whatever called it

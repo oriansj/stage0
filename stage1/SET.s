@@ -47,7 +47,7 @@
 
 
 ;; Readfile function
-;; Recieves pointer to head in R1
+;; Receives pointer to head in R1
 ;; Creates Nodes and imports text until EOF
 ;; Alters R0 R1 R14
 ;; Returns to whatever called it
@@ -69,7 +69,7 @@
 
 
 ;; Readline function
-;; Recieves Pointer to node in R0
+;; Receives Pointer to node in R0
 ;; And Input in R1
 ;; Allocates Text segment on Heap
 ;; Sets node's pointer to Text segment
@@ -143,7 +143,7 @@
 
 
 ;; addline Function
-;; Recieves pointers in R0 R1
+;; Receives pointers in R0 R1
 ;; Alters R0 if NULL
 ;; Appends nodes together
 ;; Returns to whatever called it
@@ -290,7 +290,7 @@
 
 ;; GetRoot function
 ;; Walks backwards through nodes until beginning
-;; Recieves node pointer in R0 and Returns result in R0
+;; Receives node pointer in R0 and Returns result in R0
 ;; Returns to whatever called it
 :GetRoot
 	;; Preserve registers
@@ -338,7 +338,7 @@
 
 
 ;; Printline function
-;; Recieves a string pointer in R0
+;; Receives a string pointer in R0
 ;; Prints string interface specified in R1
 ;; Does not alter registers
 ;; Returns to whatever called it
@@ -374,7 +374,7 @@
 
 
 ;; AppendLine Function
-;; Recieves a Node in R0
+;; Receives a Node in R0
 ;; Creates a new Node and appends it
 ;; Does not alter registers
 ;; Returns to whatever calls it
@@ -407,7 +407,7 @@
 
 
 ;; InsertLine Function
-;; Recieves a Node in R0
+;; Receives a Node in R0
 ;; Creates a new Node and prepends it
 ;; Does not alter registers
 ;; Returns to whatever called it
@@ -440,7 +440,7 @@
 
 
 ;; RemoveLine Function
-;; Recieves Node in R0
+;; Receives Node in R0
 ;; Returns replacement node in R0
 ;; Returns to whatever called it
 :RemoveLine

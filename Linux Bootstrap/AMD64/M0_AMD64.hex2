@@ -129,7 +129,7 @@
 
 
 ;; fgetc function
-;; Recieves FILE* in R15
+;; Receives FILE* in R15
 ;; Returns -4 (EOF) or char in RAX
 :fgetc
 	48C7C0 FCFFFFFF         # LOADI32_RAX %-4             ; Put EOF in rax
@@ -175,7 +175,7 @@
 
 
 ;; Store_String Function
-;; Recieves C in RCX, HEAD in RDX and Input file in R14
+;; Receives C in RCX, HEAD in RDX and Input file in R14
 ;; Uses RBX for terminator, RCX for C and RDX for string
 :Store_String
 	53                      # PUSH_RBX                    ; Protect RBX
@@ -206,7 +206,7 @@
 
 
 ;; Store_Atom Function
-;; Recieves C in RCX, HEAD in RDX and Input file in R15
+;; Receives C in RCX, HEAD in RDX and Input file in R15
 ;; Uses RBX for in_set strings, RCX for C and RDX for string
 :Store_Atom
 	53                      # PUSH_RBX                    ; Protect RBX
@@ -236,7 +236,7 @@
 
 
 ;; In_Set function
-;; Recieves Char C in RAX and CHAR* in RBX
+;; Receives Char C in RAX and CHAR* in RBX
 ;; Returns 1 if true, zero if false in RAX
 :In_Set
 	53                      # PUSH_RBX                    ; Protect RBX
@@ -278,7 +278,7 @@
 
 
 ;; Reverse_List function
-;; Recieves List in RAX
+;; Receives List in RAX
 ;; Returns the list reversed in RAX
 :Reverse_List
 	53                      # PUSH_RBX                    ; Protect RBX
@@ -302,7 +302,7 @@
 
 
 ;; Identify_Macros function
-;; Recieves List in RAX
+;; Receives List in RAX
 ;; Updates the list in place; does not modify registers
 ;; Uses RBX for DEFINE, RCX for I
 :Identify_Macros
@@ -352,7 +352,7 @@
 
 
 ;; match function
-;; Recieves CHAR* in RAX and CHAR* in RBX
+;; Receives CHAR* in RAX and CHAR* in RBX
 ;; Returns 0 (TRUE) or 1 (FALSE) in RAX
 :match
 	53                      # PUSH_RBX                    ; Protect RBX
@@ -384,7 +384,7 @@
 
 
 ;; Line_Macro function
-;; Recieves List in RAX
+;; Receives List in RAX
 ;; Updates the list in place; does not modify registers
 ;; Uses RAX for I, RBX for I->TEXT, RCX for I->EXPRESSION
 :Line_Macro
@@ -417,7 +417,7 @@
 
 
 ;; Set_Expression function
-;; Recieves List in RAX, CHAR* in RBX and CHAR* in RCX
+;; Receives List in RAX, CHAR* in RBX and CHAR* in RCX
 ;; Updates the list in place; does not modify registers
 ;; Uses RBX for C, RCX for EXP and RDX for I
 :Set_Expression
@@ -452,7 +452,7 @@
 
 
 ;; Process_String function
-;; Recieves List in RAX
+;; Receives List in RAX
 ;; Update the list in place; does not modify registers
 ;; Uses RBX for I->TEXT, RCX for I and RDX for S
 :Process_String
@@ -512,7 +512,7 @@
 
 
 ;; string_length function
-;; Recieves CHAR* in RAX
+;; Receives CHAR* in RAX
 ;; Returns INT in RAX
 ;; Uses RAX for CH, RBX for S and RCX for INDEX
 :string_length
@@ -537,7 +537,7 @@
 
 
 ;; Eval_Immediates function
-;; Recieves List in RAX
+;; Receives List in RAX
 ;; Updates the list in place; does not modify registers
 ;; Uses RBX for I->TEXT[0], RCX for I->TEXT[1] and RDX for I
 :Eval_Immediates
@@ -589,7 +589,7 @@
 
 
 ;; numerate_string function
-;; Recieves CHAR* in RAX
+;; Receives CHAR* in RAX
 ;; Returns value of CHAR* in RAX
 ;; Only supports negative decimals and Uppercase Hex (eg 5, -3 and 0xCC)
 ;; Uses RAX for VALUE, RBX for S, RCX for CH and RSI for NEGATIVE?
@@ -673,7 +673,7 @@
 
 
 ;; express_number function
-;; Recieves INT in RAX and CHAR in RBX
+;; Receives INT in RAX and CHAR in RBX
 ;; Allocates a string and expresses the value in hex
 ;; Returns string in RAX
 ;; Uses RAX for VALUE, RBX for S and RCX for CH
@@ -720,7 +720,7 @@
 
 
 ;; HEX to ascii routine
-;; Recieves INT in RAX and CHAR* in RBX
+;; Receives INT in RAX and CHAR* in RBX
 ;; Stores ascii of INT in CHAR*
 ;; Returns only modifying RAX
 :hex64l
@@ -756,7 +756,7 @@
 
 
 ;; Preserve_Other function
-;; Recieves List in RAX
+;; Receives List in RAX
 ;; Updates the list in place; does not modify registers
 ;; Uses RAX for I, RBX for I->TEXT
 :Preserve_Other
@@ -786,7 +786,7 @@
 
 
 ;; Print_Hex function
-;; Recieves list in RAX
+;; Receives list in RAX
 ;; walks the list and prints the I->EXPRESSION for all nodes followed by newline
 ;; Uses RBX for I
 :Print_Hex
@@ -814,7 +814,7 @@
 
 
 ;; File_Print function
-;; Recieves CHAR* in RAX
+;; Receives CHAR* in RAX
 ;; calls fputc for every non-null char
 :File_Print
 	53                      # PUSH_RBX                    ; Protect RBX
@@ -839,7 +839,7 @@
 
 
 ;; fputc function
-;; recieves CHAR in RAX and FILE* in R14
+;; receives CHAR in RAX and FILE* in R14
 ;; writes char and returns
 :fputc
 	50                      # PUSH_RAX                    ; We are writing rax

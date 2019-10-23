@@ -373,7 +373,7 @@ print_chars:
 	pop r11                     ; Restore HEAD
 	ret
 
-	;; Recieves pointer in RBX
+	;; Receives pointer in RBX
 	;; Writes out char and updates RBX
 consume_token:
 	call Read_byte              ; Consume_token

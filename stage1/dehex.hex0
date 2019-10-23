@@ -76,7 +76,7 @@ E0002D20003a	# LOADUI R0 58 ; Prep
 E0002D200009	# LOADUI R0 9 ; Prep
 42100200	# FPUTC ; Write it
 # :dehex_0 a0
-0902800F	# POPR R0 R15 ; Restore byte recieved
+0902800F	# POPR R0 R15 ; Restore byte received
 E0002D0F003a	# CALLI R15 @hex8 ; Use a subset
 E0002D200020	# LOADUI R0 32 ; Prep for writing space
 42100200	# FPUTC ; Write it

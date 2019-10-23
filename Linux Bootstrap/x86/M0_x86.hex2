@@ -129,7 +129,7 @@
 
 
 ;; fgetc function
-;; Recieves FILE* in [Input]
+;; Receives FILE* in [Input]
 ;; Returns -4 (EOF) or char in EAX
 :fgetc
 	52                          ; PUSH_EDX                    ; Protect EDX
@@ -181,7 +181,7 @@
 
 
 ;; Store_String Function
-;; Recieves C in ECX, HEAD in EDX and Input file in [Output]
+;; Receives C in ECX, HEAD in EDX and Input file in [Output]
 ;; Uses EBX for terminator, ECX for C and EDX for string
 :Store_String
 	53                          ; PUSH_EBX                    ; Protect EBX
@@ -212,7 +212,7 @@
 
 
 ;; Store_Atom Function
-;; Recieves C in ECX, HEAD in EDX and Input file in [Input]
+;; Receives C in ECX, HEAD in EDX and Input file in [Input]
 ;; Uses EBX for in_set strings, ECX for C and EDX for string
 :Store_Atom
 	53                          ; PUSH_EBX                    ; Protect EBX
@@ -242,7 +242,7 @@
 
 
 ;; In_Set function
-;; Recieves Char C in EAX and CHAR* in EBX
+;; Receives Char C in EAX and CHAR* in EBX
 ;; Returns 1 if true, zero if false in EAX
 :In_Set
 	53                          ; PUSH_EBX                    ; Protect EBX
@@ -284,7 +284,7 @@
 
 
 ;; Reverse_List function
-;; Recieves List in EAX
+;; Receives List in EAX
 ;; Returns the list reversed in EAX
 :Reverse_List
 	53                          ; PUSH_EBX                    ; Protect EBX
@@ -308,7 +308,7 @@
 
 
 ;; Identify_Macros function
-;; Recieves List in EAX
+;; Receives List in EAX
 ;; Updates the list in place; does not modify registers
 ;; Uses EBX for DEFINE, ECX for I
 :Identify_Macros
@@ -358,7 +358,7 @@
 
 
 ;; match function
-;; Recieves CHAR* in EAX and CHAR* in EBX
+;; Receives CHAR* in EAX and CHAR* in EBX
 ;; Returns 0 (TRUE) or 1 (FALSE) in EAX
 :match
 	53                          ; PUSH_EBX                    ; Protect EBX
@@ -390,7 +390,7 @@
 
 
 ;; Line_Macro function
-;; Recieves List in EAX
+;; Receives List in EAX
 ;; Updates the list in place; does not modify registers
 ;; Uses EAX for I, EBX for I->TEXT, ECX for I->EXPRESSION
 :Line_Macro
@@ -423,7 +423,7 @@
 
 
 ;; Set_Expression function
-;; Recieves List in EAX, CHAR* in EBX and CHAR* in ECX
+;; Receives List in EAX, CHAR* in EBX and CHAR* in ECX
 ;; Updates the list in place; does not modify registers
 ;; Uses EBX for C, ECX for EXP and EDX for I
 :Set_Expression
@@ -458,7 +458,7 @@
 
 
 ;; Process_String function
-;; Recieves List in EAX
+;; Receives List in EAX
 ;; Update the list in place; does not modify registers
 ;; Uses EBX for I->TEXT, ECX for I and EDX for S
 :Process_String
@@ -518,7 +518,7 @@
 
 
 ;; string_length function
-;; Recieves CHAR* in EAX
+;; Receives CHAR* in EAX
 ;; Returns INT in EAX
 ;; Uses EAX for CH, EBX for S and ECX for INDEX
 :string_length
@@ -543,7 +543,7 @@
 
 
 ;; Eval_Immediates function
-;; Recieves List in EAX
+;; Receives List in EAX
 ;; Updates the list in place; does not modify registers
 ;; Uses EBX for I->TEXT[0], ECX for I->TEXT[1] and EDX for I
 :Eval_Immediates
@@ -595,7 +595,7 @@
 
 
 ;; numerate_string function
-;; Recieves CHAR* in EAX
+;; Receives CHAR* in EAX
 ;; Returns value of CHAR* in EAX
 ;; Uses EAX for VALUE, EBX for S, ECX for CH and EDI for NEGATIVE?
 :numerate_string
@@ -678,7 +678,7 @@
 
 
 ;; express_number function
-;; Recieves INT in EAX and CHAR in EBX
+;; Receives INT in EAX and CHAR in EBX
 ;; Allocates a string and expresses the value in hex
 ;; Returns string in EAX
 ;; Uses EAX for VALUE, EBX for S and ECX for CH
@@ -725,7 +725,7 @@
 
 
 ;; HEX to ascii routine
-;; Recieves INT in EAX and CHAR* in EBX
+;; Receives INT in EAX and CHAR* in EBX
 ;; Stores ascii of INT in CHAR*
 ;; Returns only modifying EAX
 :hex64l
@@ -761,7 +761,7 @@
 
 
 ;; Preserve_Other function
-;; Recieves List in EAX
+;; Receives List in EAX
 ;; Updates the list in place; does not modify registers
 ;; Uses EAX for I, EBX for I->TEXT
 :Preserve_Other
@@ -791,7 +791,7 @@
 
 
 ;; Print_Hex function
-;; Recieves list in EAX
+;; Receives list in EAX
 ;; walks the list and prints the I->EXPRESSION for all nodes followed by newline
 ;; Uses EBX for I
 :Print_Hex
@@ -819,7 +819,7 @@
 
 
 ;; File_Print function
-;; Recieves CHAR* in EAX
+;; Receives CHAR* in EAX
 ;; calls fputc for every non-null char
 :File_Print
 	53                          ; PUSH_EBX                    ; Protect EBX
@@ -844,7 +844,7 @@
 
 
 ;; fputc function
-;; recieves CHAR in EAX and FILE* in [Output]
+;; receives CHAR in EAX and FILE* in [Output]
 ;; writes char and returns
 :fputc
 	52                          ; PUSH_EDX                    ; Protect EDX

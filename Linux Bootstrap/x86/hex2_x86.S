@@ -400,7 +400,7 @@ print_chars:
 	pop esi                     ; Restore esi
 	ret
 
-;; Recieves pointer in EBX
+;; Receives pointer in EBX
 ;; Writes out char and updates EBX
 consume_token:
 	call Read_byte              ; Consume_token
