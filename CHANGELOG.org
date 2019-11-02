@@ -19,14 +19,15 @@
 Added support for envp in cc_x86.s
 Added support for --POSIX-MODE to allow cross-platform testing to be easier
 Expanded the disassembler's support of HALCODE to include POSIX instructions
-Imported from mescc-tools:
+Imported from mescc-tools-seed:
 	for AMD64:
 		catm in hex0, M1 and NASM
 		hex0 in hex0, M1 and NASM
 		hex1 in hex0, hex1, M1 and NASM
 		hex2 in hex1, hex2, M1 and NASM
 		M0 in hex2, M1 and NASM
-		cc_x86 in NASM
+		cc_x86 in M1 and NASM
+		cc_amd64 in M1 and NASM
 	for x86:
 		catm in hex0, M1 and NASM
 		hex0 in hex0, M1 and NASM
@@ -34,6 +35,8 @@ Imported from mescc-tools:
 		hex2 in hex1, hex2, M1 and NASM
 		M0 in hex2, M1 and NASM
 		cc_x86 in M1 and NASM
+		cc_amd64 in M1 and NASM
+Added a way to check the hex0 thanks to Dmitry Petukhov
 
 ** Changed
 Reduced stack usage thanks to akkartik
@@ -41,12 +44,16 @@ Changed argv, argc behavior in cc_x86.s
 updated stage3/M2-Planet_x86.c to commit 56db0fcad4b3362d14d20e69a17e45d751c264a5
 updated stage3/get_machine.c to new form for M2-Planet
 Moved previous Linux bootstrap files to Legacy_pieces
+Reduced size of hex0-monitor thanks to Dmitry Petukhov
 
 ** Fixed
 Add debug label
 Correct sha256sum that wasn't updated by change
 Fixed checksums that were wrong in previous commit
 Fixed description of RET to clarify order of operations
+Fixed multiple mistakes in documentation thanks to Dmitry Petukhov
+A great many typos thanks to Andrius Štikonas
+A few tyos thanks to 0xflotus
 
 ** Removed
 

@@ -1,0 +1,3 @@
+[submodule "Linux Bootstrap"]
+	path = Linux Bootstrap
+	url = https://github.com/oriansj/mescc-tools-seed
