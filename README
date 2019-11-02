@@ -85,7 +85,7 @@ Its functionality is reduced compared to the stage0 monitor simply because it
 only performs half of the required functions; that of generating binaries from
 hex0 source files.
 
-It most important features of note are:
+Its most important features of note are:
 ; line comments and
 # line comments
 As careful notes are essential for this stage.
@@ -99,7 +99,7 @@ Further because of the mescc-tools standardization of syntax @label indicates a
 16bit relative displacement.
 
 Alternative architectures porting this need not limit themselves to 16bit
-displacements should they so choose, rather they must provide atleast 1 size
+displacements should they so choose, rather they must provide at least 1 size
 of displacement or if they so desire, they may skip and write their Hex2
 assembler in Hex0 but as it is a much larger program, I recommend against it.
 
@@ -130,9 +130,9 @@ definition)
 2) "Raw strings" allow every character except " as there is no support for
 string escapes, including NULL; which are converted to Hex chars for Hex2
 To convert back to the chars inside of the "quotes" with the addition of a
-trailing NULL character or the number desired (Must be atleast 1, no upper
-bound) and restrictions such as padding to word boundries are accetpable.
-3) 'Raw char strings' will passing anything inside of them (except ' which
+trailing NULL character or the number desired (Must be at least 1, no upper
+bound) and restrictions such as padding to word boundaries are acceptable.
+3) 'Raw char strings' will be passing anything inside of them (except ' which
 terminates the string).
 
 Thus by combining :label, @label, DEFINE SYSCALL 0F05, Raw strings and chars;
@@ -151,7 +151,7 @@ the time and effort was put forth by Caleb and Jeremiah to provide a framework
 for those people to contribute immediately; thus the FORTH was born.
 
 Several efforts were taken to make the FORTH more standard but ultimately it was
-determined, Assembly was preferable as the underlaying architecture wasn't total
+determined, Assembly was preferable as the underlying architecture wasn't total
 garbage.
 
 It now sits waiting for any FORTH programmer who wishes to prove FORTH is a real

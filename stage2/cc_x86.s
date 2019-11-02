@@ -95,7 +95,7 @@
 
 
 ;; clearWhiteSpace function
-;; Recieves a character in R0 and FILE* in R1 and line_num in R11
+;; Receives a character in R0 and FILE* in R1 and line_num in R11
 ;; Returns first non-whitespace character in R0
 :clearWhiteSpace
 	CMPSKIPI.NE R0 32           ; Check for a Space
@@ -116,7 +116,7 @@
 
 
 ;; consume_byte function
-;; Recieves a char in R0, FILE* in R1 and index in R13
+;; Receives a char in R0, FILE* in R1 and index in R13
 ;; Returns next char in R0
 :consume_byte
 	STOREX8 R0 R14 R13          ; Put char onto HEAP
@@ -126,7 +126,7 @@
 
 
 ;; consume_word function
-;; Recieves a char in R0, FILE* in R1, FREQUENT in R2 and index in R13
+;; Receives a char in R0, FILE* in R1, FREQUENT in R2 and index in R13
 ;; Returns next char in R0
 :consume_word
 	PUSHR R3 R15                ; Protect R3
@@ -148,7 +148,7 @@
 
 
 ;; fixup_label function
-;; Recieves nothing (But uses R14 as HEAP pointer)
+;; Receives nothing (But uses R14 as HEAP pointer)
 ;; Returns 32 in R0 and no other registers altered
 :fixup_label
 	PUSHR R1 R15                ; Protect R1 from change
@@ -171,7 +171,7 @@
 
 
 ;; in_set2 function
-;; Recieves a Char in R0, FILE* in R1, char* in R2 and index in R13
+;; Receives a Char in R0, FILE* in R1, char* in R2 and index in R13
 ;; Return result in R2
 :in_set2
 	PUSHR R3 R15                ; Protect R3 from changes
@@ -194,7 +194,7 @@
 
 
 ;; in_set function
-;; Recieves a Char in R0, char* in R1
+;; Receives a Char in R0, char* in R1
 ;; Return result in R0
 :in_set
 	PUSHR R2 R15                ; Protect R3 from changes
@@ -236,7 +236,7 @@
 "
 
 ;; preserve_keyword function
-;; Recieves a Char in R0, FILE* in R1 and index in R13
+;; Receives a Char in R0, FILE* in R1 and index in R13
 ;; Overwrites R2
 ;; Returns next CHAR
 :preserve_keyword
@@ -255,7 +255,7 @@
 
 
 ;; preserve_symbol function
-;; Recieves a Char in R0, FILE* in R1 and index in R13
+;; Receives a Char in R0, FILE* in R1 and index in R13
 ;; Overwrites R2
 ;; Returns next CHAR
 :preserve_symbol
@@ -272,7 +272,7 @@
 
 
 ;; purge_macro function
-;; Recieves a Char in R0, FILE* in R1 and index in R13
+;; Receives a Char in R0, FILE* in R1 and index in R13
 ;; Returns next CHAR via jumping to get_token_reset
 :purge_macro
 	CMPSKIPI.NE R0 10           ; Check for Line Feed
@@ -283,7 +283,7 @@
 
 
 ;; get_token function
-;; Recieves a Char in R0, FILE* in R1, line_num in R11 and TOKEN in R10
+;; Receives a Char in R0, FILE* in R1, line_num in R11 and TOKEN in R10
 ;; sets index in R13 and current in R12
 ;; Overwrites R2
 ;; Returns next CHAR
@@ -398,7 +398,7 @@
 
 
 ;; reverse_list function
-;; Recieves a Token_list in R0
+;; Receives a Token_list in R0
 ;; Returns List in Reverse order in R0
 :reverse_list
 	PUSHR R1 R15                ; Protect R1
@@ -420,7 +420,7 @@
 
 
 ;; read_all_tokens function
-;; Recieves a FILE* in R0
+;; Receives a FILE* in R0
 ;; sets line_num in R11 and TOKEN in R10
 ;; Overwrites R2
 ;; Returns struct token_list* in R0
@@ -447,7 +447,7 @@
 
 
 ;; parse_string function
-;; Recieves char* string in R0
+;; Receives char* string in R0
 ;; R14 is HEAP Pointer
 ;; Returns char* in R0
 :parse_string
@@ -469,7 +469,7 @@
 
 ;; weird function
 ;; Analyze string to determine if it's output would be weird for mescc-tools
-;; Recieves char* in R0
+;; Receives char* in R0
 ;; Returns BOOL in R0
 :weird
 	PUSHR R1 R15                ; Protect R1
@@ -522,7 +522,7 @@
 
 ;; collect_weird_string function
 ;; Converts weird string into a form mescc-tools can handle cleanly
-;; Recieves char* in R0
+;; Receives char* in R0
 ;; R14 is HEAP Pointer and $hex_chars as the table
 ;; Returns char* in R0
 :collect_weird_string
@@ -580,7 +580,7 @@
 
 
 ;; hex function
-;; Recieves Char in R0
+;; Receives Char in R0
 ;; Return Int in R0
 :hex
 	SUBUI R0 R0 48              ; First shift
@@ -609,7 +609,7 @@
 
 
 ;; escape_lookup function
-;; Recieves char* in R0
+;; Receives char* in R0
 ;; Returns char in R0
 :escape_lookup
 	PUSHR R1 R15                ; Protect R1
@@ -678,12 +678,12 @@
 	HALT
 
 :escape_lookup_string0
-	"Recieved invalid escape \\"
+	"Received invalid escape \\"
 
 
 ;; collect_regular_string function
 ;; Converts C string into a RAW string for mescc-tools
-;; Recieves char* in R0
+;; Receives char* in R0
 ;; R14 is HEAP Pointer
 ;; Returns char* in R0
 :collect_regular_string
@@ -728,7 +728,7 @@
 
 
 ;; unary_expr_sizeof function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 :unary_expr_sizeof
@@ -771,7 +771,7 @@ Missing )
 
 
 ;; constant_load function
-;; Recieves struct token_list* a in R0
+;; Receives struct token_list* a in R0
 ;; Returns nothing
 :constant_load
 	PUSHR R0 R15                ; Protect R0
@@ -790,7 +790,7 @@ Missing )
 
 
 ;; variable_load function
-;; Recieves struct token_list* a in R0
+;; Receives struct token_list* a in R0
 ;;	and struct token_list* current_target in R8
 ;; Returns Nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -853,7 +853,7 @@ Missing )
 
 
 ;; function_load function
-;; Recieves struct token_list* a in R0
+;; Receives struct token_list* a in R0
 ;; Returns nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 :function_load
@@ -888,7 +888,7 @@ Missing )
 
 
 ;; global_load function
-;; Recieves struct token_list* a in R0
+;; Receives struct token_list* a in R0
 ;;	and struct token_list* current_target in R8
 ;; Returns nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -926,7 +926,7 @@ Missing )
 
 ;; primary_expr_failure function
 ;; Fails hard and fast
-;; Recieves nothing
+;; Receives nothing
 ;; HALTs and will trash registers
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 :primary_expr_failure
@@ -944,14 +944,14 @@ Missing )
 	HALT
 
 :primary_expr_failure_string0
-	"Recieved "
+	"Received "
 :primary_expr_failure_string1
 	" in primary_expr
 "
 
 
 ;; primary_expr_string function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1003,7 +1003,7 @@ Missing )
 
 
 ;; primary_expr_char function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1140,7 +1140,7 @@ Missing )
 
 
 ;; promote_type function
-;; Recieves struct type* in R0 and struct type* in R1
+;; Receives struct type* in R0 and struct type* in R1
 ;; Returns first match struct type* in R0
 :promote_type
 	JUMP.Z R1 @promote_type_abort0 ; If B is NULL just abort
@@ -1187,7 +1187,7 @@ Missing )
 
 
 ;; common_recursion function
-;; Recieves FUNCTION* in R0
+;; Receives FUNCTION* in R0
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1228,7 +1228,7 @@ Missing )
 
 
 ;; general_recursion function
-;; Recieves FUNCTION F in R0, char* s in R1, char* name in R2
+;; Receives FUNCTION F in R0, char* s in R1, char* name in R2
 ;; and FUNCTION ITERATE in R3
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
@@ -1266,7 +1266,7 @@ Missing )
 
 
 ;; ceil_log2 function
-;; Recieves INT A in R0
+;; Receives INT A in R0
 ;; Returns LOG2(A) in R0
 :ceil_log2
 	PUSHR R1 R15                ; Protect R1
@@ -1292,7 +1292,7 @@ Missing )
 
 
 ;; postfix_expr_arrow function
-;; Recieves nothing
+;; Receives nothing
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1368,7 +1368,7 @@ ADD_ebx_to_eax
 
 
 ;; postfix_expr_array function
-;; Recieves nothing
+;; Receives nothing
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1446,7 +1446,7 @@ Missing ]
 
 
 ;; postfix_expr_stub function
-;; Recieves nothing
+;; Receives nothing
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1498,7 +1498,7 @@ Missing ]
 
 
 ;; additive_expr_stub function
-;; recieves nothing
+;; receives nothing
 ;; returns nothing
 ;; Updates struct token_list*
 :additive_expr_stub
@@ -1585,7 +1585,7 @@ SAR_eax_cl
 
 
 ;; additive_expr function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1600,7 +1600,7 @@ SAR_eax_cl
 
 
 ;; relational_expr_stub function
-;; recieves nothing
+;; receives nothing
 ;; returns nothing
 ;; Updates struct token_list*
 :relational_expr_stub
@@ -1681,7 +1681,7 @@ MOVEZBL
 
 
 ;; relational_expr function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1696,7 +1696,7 @@ MOVEZBL
 
 
 ;; relational_expr_stub function
-;; recieves nothing
+;; receives nothing
 ;; returns nothing
 ;; Updates struct token_list*
 :bitwise_expr_stub
@@ -1751,7 +1751,7 @@ MOVEZBL
 
 
 ;; bitwise_expr function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1766,7 +1766,7 @@ MOVEZBL
 
 
 ;; primary_expr function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -1889,7 +1889,7 @@ Didn't get )
 
 
 ;; expression function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -2080,7 +2080,7 @@ MISSING )
 
 
 ;; set_break_frame microfunction
-;; Recieves char* num in R0, char* head in R1
+;; Receives char* num in R0, char* head in R1
 ;; Overwrites R0
 ;; Sets break frame using
 ;; R9 holding FUNC
@@ -2414,7 +2414,7 @@ MISSING )
 
 
 ;; return_result function
-;; Recieves nothing
+;; Receives nothing
 ;; Returns nothing
 ;;	and struct token_list* FUNC in R9
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -2460,7 +2460,7 @@ MISSING ;
 
 
 ;; process_break function
-;; Recieves nothing
+;; Receives nothing
 ;;	and struct token_list* FUNC in R9
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns the token_lists modified
@@ -2540,7 +2540,7 @@ Missing ;
 
 
 ;; process_asm function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -2602,7 +2602,7 @@ MISSING ;
 
 
 ;; recursive_statement function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -2659,7 +2659,7 @@ MISSING ;
 
 
 ;; statement function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -2837,7 +2837,7 @@ MISSING ;
 
 
 ;; collect_local function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -2949,7 +2949,7 @@ Missing ;
 
 
 ;; collect_arguments function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	struct token_list* global_list in R10
@@ -3012,7 +3012,7 @@ Missing ;
 
 
 ;; declare_function function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	and struct token_list* global_list in R10
@@ -3094,7 +3094,7 @@ Missing ;
 
 
 ;; program function
-;; Recieves struct token_list* global_token in R13,
+;; Receives struct token_list* global_token in R13,
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	and struct token_list* global_list in R10
@@ -3248,7 +3248,7 @@ Missing ;
 NOP
 "
 :program_string2
-	"Recieved "
+	"Received "
 :program_string3
 	" in program
 "
@@ -3259,7 +3259,7 @@ Missing ;
 
 
 ;; sym_declare function
-;; Recieves char* in R0, struct type* in R1, struct token_list* in R2
+;; Receives char* in R0, struct type* in R1, struct token_list* in R2
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns struct token_list* in R0
 :sym_declare
@@ -3272,7 +3272,7 @@ Missing ;
 
 
 ;; sym_lookup function
-;; Recieves char* in R0 and struct token_list in R1
+;; Receives char* in R0 and struct token_list in R1
 ;; Returns struct token_list* or NULL in R0
 :sym_lookup
 	PUSHR R2 R15                ; Protect R2
@@ -3293,7 +3293,7 @@ Missing ;
 
 
 ;; function_call function
-;; Recieves CHAR* S in R0 and INT BOOL in R1
+;; Receives CHAR* S in R0 and INT BOOL in R1
 ;;	struct token_list* out in R12,
 ;;	struct token_list* string_list in R11
 ;;	and struct token_list* global_list in R10
@@ -3452,7 +3452,7 @@ LOAD_INTEGER
 
 
 ;; emit function
-;; Recieves char* in R0, struct token_list* in R1
+;; Receives char* in R0, struct token_list* in R1
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns struct token_list* in R0
 :emit
@@ -3467,7 +3467,7 @@ LOAD_INTEGER
 
 
 ;; emit_out function
-;; Recieves char* in R0
+;; Receives char* in R0
 ;;	struct token_list* out in R12,
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns struct token_list* in R0
@@ -3480,7 +3480,7 @@ LOAD_INTEGER
 
 
 ;; uniqueID function
-;; Recieves char* in R0, struct token_list* in R1 and char* in R2
+;; Receives char* in R0, struct token_list* in R1 and char* in R2
 ;; Calls emit repeatedly
 ;; Returns struct token_list* in R0
 :uniqueID
@@ -3501,7 +3501,7 @@ LOAD_INTEGER
 
 
 ;; uniqueID_out function
-;; Recieves char* in R0, char* in R1
+;; Receives char* in R0, char* in R1
 ;; Calls emit_out repeatedly
 ;; Returns nothing
 :uniqueID_out
@@ -3519,7 +3519,7 @@ LOAD_INTEGER
 
 
 ;; file_print function
-;; Recieves pointer to string in R0 and FILE* in R1
+;; Receives pointer to string in R0 and FILE* in R1
 ;; Returns nothing
 :file_print
 	PUSHR R2 R15                ; Protect R2 from Overwrite
@@ -3536,7 +3536,7 @@ LOAD_INTEGER
 
 
 ;; recursive_output function
-;; Recieves token_list in R0 and FILE* in R1
+;; Receives token_list in R0 and FILE* in R1
 ;; Returns nothing and alters nothing
 :recursive_output
 	JUMP.Z R0 @recursive_output_abort ; Abort if NULL
@@ -3553,7 +3553,7 @@ LOAD_INTEGER
 
 
 ;; match function
-;; Recieves a CHAR* in R0, CHAR* in R1
+;; Receives a CHAR* in R0, CHAR* in R1
 ;; Returns Bool in R0 indicating if strings match
 :match
 	PUSHR R1 R15                ; Protect R1
@@ -3582,7 +3582,7 @@ LOAD_INTEGER
 
 
 ;; lookup_type function
-;; Recieves a CHAR* in R0 and struct type* in R1
+;; Receives a CHAR* in R0 and struct type* in R1
 ;; Returns struct type* in R0 or NULL if no match
 :lookup_type
 	PUSHR R1 R15                ; Protect R1
@@ -3603,7 +3603,7 @@ LOAD_INTEGER
 
 
 ;; lookup_member function
-;; Recieves struct type* parent in R0 and char* name in R1
+;; Receives struct type* parent in R0 and char* name in R1
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 	;; Returns struct type* of member in R0 or aborts with error
 :lookup_member
@@ -3651,7 +3651,7 @@ LOAD_INTEGER
 
 
 ;; build_member function
-;; Recieves a struct type* in R0, int in R1 and int in R2
+;; Receives a struct type* in R0, int in R1 and int in R2
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Modifies R2 to current member_size
 ;; Returns struct type* in R0
@@ -3713,7 +3713,7 @@ LOAD_INTEGER
 
 
 ;; build_union function
-;; Recieves a struct type* in R0, int in R1 and int in R2
+;; Receives a struct type* in R0, int in R1 and int in R2
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Modifies R2 to current member_size
 ;; Returns struct type* in R0
@@ -3765,7 +3765,7 @@ Missing ;
 
 
 ;; create_struct function
-;; Recieves Nothing
+;; Receives Nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns Nothing
 :create_struct
@@ -3852,7 +3852,7 @@ Missing ;
 
 
 ;; type_name function
-;; Recieves Nothing
+;; Receives Nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns struct type* in R0
 :type_name
@@ -3906,7 +3906,7 @@ Missing ;
 
 
 ;; line_error function
-;; Recieves Nothing
+;; Receives Nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns nothing
 :line_error
@@ -3927,7 +3927,7 @@ Missing ;
 
 
 ;; require_match function
-;; Recieves char* in R0 and char* in R1
+;; Receives char* in R0 and char* in R1
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns Nothing
 :require_match
@@ -3953,7 +3953,7 @@ Missing ;
 
 
 ;; numerate_number function
-;; Recieves int in R0
+;; Receives int in R0
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
 ;; Returns pointer to string generated
 :numerate_number
@@ -4020,7 +4020,7 @@ Missing ;
 
 
 ;; numerate_string function
-;; Recieves pointer To string in R0
+;; Receives pointer To string in R0
 ;; Returns number in R0 equal to value of string
 ;; Or Zero in the event of invalid string
 :numerate_string
@@ -4293,7 +4293,7 @@ Missing ;
 
 
 ;; debug_list function
-;; Recieves struct token_list* in R0
+;; Receives struct token_list* in R0
 ;; Prints contents of list and HALTS
 ;; Does not return
 :debug_list

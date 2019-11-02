@@ -20,6 +20,7 @@ tmp/
 __pycache__/
 roms/
 prototypes/
+test/stage0_test_scratch/
 
 # Generated files that don't need to be version controlled
 *.so

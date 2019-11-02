@@ -87,7 +87,7 @@
 	LOADUI R0 9                 ; Prep
 	FPUTC                       ; Write it
 :dehex_0
-	POPR R0 R15                 ; Restore byte recieved
+	POPR R0 R15                 ; Restore byte received
 	CALLI R15 @hex8             ; Use a subset
 
 	LOADUI R0 32                ; Prep for writing space

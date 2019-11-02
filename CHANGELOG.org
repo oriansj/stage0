@@ -81,7 +81,7 @@ Added program to search for unusual characters that are not human detectable
 Expanded stage0 web IDE to include the PC and instruction counter
 Performance tuned hex1 to reduce both size and instruction count
 Performance tuned hex0 to reduce both size and instruction count
-Performance tuned hex2 to reduce both size and isntruction count
+Performance tuned hex2 to reduce both size and instruction count
 The stage0 vm now halts on ALL invalid instructions
 Displacements in the Stage0-vm no longer match that of the Knight hardware platform; instead of from the start of the instruction, from the end of the immediate to the target address.
 The Stage0-vm has relocated the 2OPI and 1OPI instructions and adjusted their encodings accordingly to simplify instruction size logic.
