@@ -47,6 +47,8 @@ In order to build stage0 and all the pieces, one only needs to run make all.
 Each individual piece can be built by simply running make $piece with $piece being replaced by the actual part you want to make.
 
 The only pieces that have any external dependencies are the Web IDE (Python3+CherryPy), libvm (GCC) and vm (GCC+GNU getopt)
+Those wishing to work in Python, please checkout https://github.com/markjenkins/knightpies
+He does an amazing job
 
 * Future
 ** Software
