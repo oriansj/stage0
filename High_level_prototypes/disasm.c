@@ -1379,6 +1379,10 @@ void decode_HALCODE(struct Instruction* c)
 			strncpy(Name, "FSEEK", 19);
 			break;
 		}
+		case 0x000015: /* ACCESS */
+		{
+			strncpy(Name, "ACCESS", 19);
+		}
 		case 0x00003C: /* EXIT */
 		{
 			strncpy(Name, "EXIT", 19);
@@ -1387,6 +1391,16 @@ void decode_HALCODE(struct Instruction* c)
 		case 0x00003F: /* UNAME */
 		{
 			strncpy(Name, "UNAME", 19);
+			break;
+		}
+		case 0x000050: /* CHDIR */
+		{
+			strncpy(Name, "CHDIR", 19);
+			break;
+		}
+		case 0x000051: /* FCHDIR */
+		{
+			strncpy(Name, "FCHDIR", 19);
 			break;
 		}
 		case 0x00005A: /* CHMOD */

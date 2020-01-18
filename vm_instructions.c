@@ -173,6 +173,25 @@ void vm_UNAME(struct lilith* vm)
 	writeout_string(vm, arch_name, vm->reg[0] + 260);
 }
 
+void vm_CHDIR(struct lilith* vm)
+{
+	char* s = string_copy(vm, vm->reg[0]);
+	vm->reg[0] = chdir(s);
+	free(s);
+}
+
+void vm_FCHDIR(struct lilith* vm)
+{
+	vm->reg[0] = fchdir(vm->reg[0]);
+}
+
+void vm_ACCESS(struct lilith* vm)
+{
+	char* s = string_copy(vm, vm->reg[0]);
+	vm->reg[0] = access(s, vm->reg[1]);
+	free(s);
+}
+
 void vm_FOPEN(struct lilith* vm)
 {
 	char* s = string_copy(vm, vm->reg[0]);

@@ -470,8 +470,11 @@ mappings have been exposed for use.
 | 42 00 00 02 | FOPEN  | open(char* FILENAME, int FLAGS, int MODE) using R0, R1 and R2 respectively |
 | 42 00 00 03 | FCLOSE | close(int FD) using R0                                                     |
 | 42 00 00 08 | FSEEK  | seek(int FD, off_t OFFSET, int WHENCE) using R0, R1 and R2 respectively    |
+| 42 00 00 15 | ACCESS | access(char* pathname, int mode) using R0 and R1 respectively              |
 | 42 00 00 3C | EXIT   | exit(int ERROR_CODE) using R0                                              |
 | 42 00 00 3F | UNAME  | uname(struct utsname* BUF) using R0                                        |
+| 42 00 00 50 | CHDIR  | chdir(char* path) using R0                                                 |
+| 42 00 00 51 | FCHDIR | fchdir(int fd) using RO                                                    |
 | 42 00 00 5A | CHMOD  | chmod(char* PATHNAME, int MODE) using R0 and R1 respectively               |
 |-------------+--------+----------------------------------------------------------------------------|
 | 42 10 01 00 | FGETC  | read 1 byte into register 0 from device who's ID is in register 1          |

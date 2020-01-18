@@ -269,6 +269,17 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 				vm_FSEEK(vm);
 				break;
 			}
+			case 0x000015: /* access */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "ACCESS", 19);
+				#elif TRACE
+				record_trace("ACCESS");
+				#endif
+
+				vm_ACCESS(vm);
+				break;
+			}
 			case 0x00003C: /* EXIT */
 			{
 				#ifdef DEBUG
@@ -289,6 +300,28 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 				#endif
 
 				vm_UNAME(vm);
+				break;
+			}
+			case 0x000050: /* CHDIR */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "CHDIR", 19);
+				#elif TRACE
+				record_trace("CHDIR");
+				#endif
+
+				vm_CHDIR(vm);
+				break;
+			}
+			case 0x000051: /* FCHDIR */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "FCHDIR", 19);
+				#elif TRACE
+				record_trace("FCHDIR");
+				#endif
+
+				vm_FCHDIR(vm);
 				break;
 			}
 			case 0x00005A: /* CHMOD */
