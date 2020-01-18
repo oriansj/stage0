@@ -37,6 +37,7 @@ Imported from mescc-tools-seed:
 		cc_x86 in M1 and NASM
 		cc_amd64 in M1 and NASM
 Added a way to check the hex0 thanks to Dmitry Petukhov
+Extended POSIX-mode to include even more POSIX primitives (access, chdir and fchdir)
 
 ** Changed
 Reduced stack usage thanks to akkartik
