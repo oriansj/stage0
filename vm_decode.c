@@ -302,6 +302,17 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 				vm_UNAME(vm);
 				break;
 			}
+			case 0x00004F: /* GETCWD */
+			{
+				#ifdef DEBUG
+				strncpy(Name, "GETCWD", 19);
+				#elif TRACE
+				record_trace("GETCWD");
+				#endif
+
+				vm_GETCWD(vm);
+				break;
+			}
 			case 0x000050: /* CHDIR */
 			{
 				#ifdef DEBUG

@@ -1393,6 +1393,11 @@ void decode_HALCODE(struct Instruction* c)
 			strncpy(Name, "UNAME", 19);
 			break;
 		}
+		case 0x00004F: /* GETCWD */
+		{
+			strncpy(Name, "GETCWD", 19);
+			break;
+		}
 		case 0x000050: /* CHDIR */
 		{
 			strncpy(Name, "CHDIR", 19);

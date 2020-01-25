@@ -102,6 +102,7 @@ struct Instruction
 void vm_EXIT(struct lilith* vm, uint64_t performance_counter);
 void vm_CHMOD(struct lilith* vm);
 void vm_UNAME(struct lilith* vm);
+void vm_GETCWD(struct lilith* vm);
 void vm_CHDIR(struct lilith* vm);
 void vm_FCHDIR(struct lilith* vm);
 void vm_ACCESS(struct lilith* vm);
