@@ -28,8 +28,10 @@
 	;; We will be using R12 for holding our nybble
 	;; We will be using R13 for our register size in bytes
 	;; We will be using R14 for our head-node
-	LOADUI R15 $stack           ; We will be using R15 for our stack
-
+	LOADUI R15 0x400           ; We will be using R15 for our stack
+	;; should be $stack but hex1 doesn't support absolute addressing and that
+	;; number is past the end of program (by a small margin)
+	;; otherwise we overwrite end of the program with stack pushes
 
 ;; Main program functionality
 ;; Reads in Tape_01 and writes out results onto Tape_02
@@ -488,6 +490,6 @@
 	TRUE R0
 	RET R15
 
-
 ;; Where we will putting our stack
+;; not actually used because hex1 doesn't support absolute addresses
 :stack
