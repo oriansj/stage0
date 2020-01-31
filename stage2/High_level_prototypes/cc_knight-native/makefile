@@ -14,24 +14,27 @@
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
-# Folders that hold cached results
-bin/
-tmp/
-__pycache__/
-roms/
-prototypes/
-test/stage0_test_scratch/
-scratch/
 
-# Generated files that don't need to be version controlled
-*.so
-*.o
-tape_*
-rom
-*.qst
-*.tmp
-z_disassembled
+all: cc_knight-native
 
-# Ignore custom fonts the users might load
-public/*.ttf
+CC?=gcc
+CFLAGS=-D_GNU_SOURCE -O0 -std=c99 -ggdb
 
+cc_knight-native: cc_reader.c cc_strings.c cc_core.c cc.c cc_types.c cc.h
+	$(CC) $(CFLAGS) \
+	functions/match.c \
+	functions/numerate_number.c \
+	functions/number_pack.c \
+	functions/file_print.c \
+	functions/string.c \
+	cc_reader.c \
+	cc_strings.c \
+	cc_types.c \
+	cc_core.c \
+	cc.c \
+	cc.h \
+	gcc_req.h \
+	-o cc_knight-native
+
+clean: cc_knight-native
+	rm -f cc_knight-native

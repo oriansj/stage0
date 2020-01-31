@@ -15,7 +15,7 @@
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
 
 
-all: M2-Planet
+all: cc_x86
 
 CC?=gcc
 CFLAGS=-D_GNU_SOURCE -O0 -std=c99 -ggdb

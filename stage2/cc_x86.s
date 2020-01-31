@@ -62,6 +62,8 @@
 	CALLI R15 @file_print       ; Write string
 	MOVE R0 R11                 ; using Contents of strings_list
 	CALLI R15 @recursive_output ; Recursively write
+	LOADUI R0 $header_string4   ; Using our final header string
+	CALLI R15 @file_print       ; Write string
 	HALT                        ; We have completed compiling our input
 
 ;; Symbol lists
@@ -83,8 +85,6 @@
 "
 :header_string2
 	"
-:ELF_data
-
 # Program global variables
 "
 
@@ -93,6 +93,10 @@
 # Program strings
 "
 
+:header_string4
+	"
+:ELF_end
+"
 
 ;; clearWhiteSpace function
 ;; Receives a character in R0 and FILE* in R1 and line_num in R11
@@ -3245,7 +3249,7 @@ Missing ;
 	":GLOBAL_"
 :program_string1
 	"
-NOP
+NULL
 "
 :program_string2
 	"Received "

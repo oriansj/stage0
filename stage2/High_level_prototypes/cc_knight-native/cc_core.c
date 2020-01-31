@@ -43,7 +43,8 @@ int Address_of;
 char* parse_string(char* string);
 int escape_lookup(char* c);
 char* numerate_number(int a);
-
+int numerate_string(char *a);
+char* number_to_hex(int a, int bytes);
 
 struct token_list* emit(char *s, struct token_list* head)
 {
@@ -115,21 +116,21 @@ void function_call(char* s, int bool)
 {
 	require_match("ERROR in process_expression_list\nNo ( was found\n", "(");
 	int passed = 0;
-	emit_out("PUSH_edi\t# Prevent overwriting in recursion\n");
-	emit_out("PUSH_ebp\t# Protect the old base pointer\n");
-	emit_out("COPY_esp_to_edi\t# Copy new base pointer\n");
+	emit_out("PUSHR R13 R15\t# Prevent overwriting in recursion\n");
+	emit_out("PUSHR R14 R15\t# Protect the old base pointer\n");
+	emit_out("COPY R13 R15\t# Copy new base pointer\n");
 
 	if(global_token->s[0] != ')')
 	{
 		expression();
-		emit_out("PUSH_eax\t#_process_expression1\n");
+		emit_out("PUSHR R0 R15\t#_process_expression1\n");
 		passed = 1;
 
 		while(global_token->s[0] == ',')
 		{
 			global_token = global_token->next;
 			expression();
-			emit_out("PUSH_eax\t#_process_expression2\n");
+			emit_out("PUSHR R0 R15\t#_process_expression2\n");
 			passed = passed + 1;
 		}
 	}
@@ -138,31 +139,30 @@ void function_call(char* s, int bool)
 
 	if(TRUE == bool)
 	{
-		emit_out("LOAD_BASE_ADDRESS_eax %");
+		emit_out("LOAD R0 R14 ");
 		emit_out(s);
-		emit_out("\nLOAD_INTEGER\n");
-		emit_out("COPY_edi_to_ebp\n");
-		emit_out("CALL_eax\n");
+		emit_out("\nMOVE R14 R13\n");
+		emit_out("CALL R0 R15\n");
 	}
 	else
 	{
-		emit_out("COPY_edi_to_ebp\n");
-		emit_out("CALL_IMMEDIATE %FUNCTION_");
+		emit_out("MOVE R14 R13\n");
+		emit_out("CALLI R15 @FUNCTION_");
 		emit_out(s);
 		emit_out("\n");
 	}
 
 	for(; passed > 0; passed = passed - 1)
 	{
-		emit_out("POP_ebx\t# _process_expression_locals\n");
+		emit_out("POPR R1 R15\t# _process_expression_locals\n");
 	}
-	emit_out("POP_ebp\t# Restore old base pointer\n");
-	emit_out("POP_edi\t# Prevent overwrite\n");
+	emit_out("POPR R14 R15\t# Restore old base pointer\n");
+	emit_out("POPR R13 R15\t# Prevent overwrite\n");
 }
 
 void constant_load(struct token_list* a)
 {
-	emit_out("LOAD_IMMEDIATE_eax %");
+	emit_out("LOADI R0 ");
 	emit_out(a->arguments->s);
 	emit_out("\n");
 }
@@ -175,14 +175,14 @@ void variable_load(struct token_list* a)
 		return;
 	}
 	current_target = a->type;
-	emit_out("LOAD_BASE_ADDRESS_eax %");
+	emit_out("ADDI R0 R14 ");
 	emit_out(numerate_number(a->depth));
 	emit_out("\n");
 
 	if(TRUE == Address_of) return;
 	if(match("=", global_token->s)) return;
 
-	emit_out("LOAD_INTEGER\n");
+	emit_out("LOAD R0 R0 0\n");
 }
 
 void function_load(struct token_list* a)
@@ -193,7 +193,7 @@ void function_load(struct token_list* a)
 		return;
 	}
 
-	emit_out("LOAD_IMMEDIATE_eax &FUNCTION_");
+	emit_out("LOADUI R0 $FUNCTION_");
 	emit_out(a->s);
 	emit_out("\n");
 }
@@ -201,10 +201,10 @@ void function_load(struct token_list* a)
 void global_load(struct token_list* a)
 {
 	current_target = a->type;
-	emit_out("LOAD_IMMEDIATE_eax &GLOBAL_");
+	emit_out("LOADUI R0 $GLOBAL_");
 	emit_out(a->s);
 	emit_out("\n");
-	if(!match("=", global_token->s)) emit_out("LOAD_INTEGER\n");
+	if(!match("=", global_token->s)) emit_out("LOAD R0 R0 0\n");
 }
 
 /*
@@ -230,7 +230,7 @@ void primary_expr_string()
 {
 	char* number_string = numerate_number(current_count);
 	current_count = current_count + 1;
-	emit_out("LOAD_IMMEDIATE_eax &STRING_");
+	emit_out("LOADUI R0 $STRING_");
 	uniqueID_out(function->s, number_string);
 
 	/* The target */
@@ -244,7 +244,7 @@ void primary_expr_string()
 
 void primary_expr_char()
 {
-	emit_out("LOAD_IMMEDIATE_eax %");
+	emit_out("LOADI R0 ");
 	emit_out(numerate_number(escape_lookup(global_token->s + 1)));
 	emit_out("\n");
 	global_token = global_token->next;
@@ -252,8 +252,18 @@ void primary_expr_char()
 
 void primary_expr_number()
 {
-	emit_out("LOAD_IMMEDIATE_eax %");
-	emit_out(global_token->s);
+	int size = numerate_string(global_token->s);
+	if((32768 > size) && (size > -32768))
+	{
+		emit_out("LOADI R0 ");
+		emit_out(global_token->s);
+	}
+	else
+	{
+		emit_out("LOADR R0 4\nJUMP 4\n'");
+		emit_out(number_to_hex(size, 4));
+		emit_out("'");
+	}
 	emit_out("\n");
 	global_token = global_token->next;
 }
@@ -330,10 +340,10 @@ void common_recursion(FUNCTION f)
 {
 	last_type = current_target;
 	global_token = global_token->next;
-	emit_out("PUSH_eax\t#_common_recursion\n");
+	emit_out("PUSHR R0 R15\t#_common_recursion\n");
 	f();
 	current_target = promote_type(current_target, last_type);
-	emit_out("POP_ebx\t# _common_recursion\n");
+	emit_out("POPR R1 R15\t# _common_recursion\n");
 }
 
 void general_recursion( FUNCTION f, char* s, char* name, FUNCTION iterate)
@@ -383,14 +393,14 @@ void postfix_expr_arrow()
 	if(0 != i->offset)
 	{
 		emit_out("# -> offset calculation\n");
-		emit_out("LOAD_IMMEDIATE_ebx %");
+		emit_out("ADDUI R0 R0 ");
 		emit_out(numerate_number(i->offset));
-		emit_out("\nADD_ebx_to_eax\n");
+		emit_out("\n");
 	}
 
 	if(!match("=", global_token->s) && (4 == i->size))
 	{
-		emit_out("LOAD_INTEGER\n");
+		emit_out("LOAD R0 R0 0\n");
 	}
 }
 
@@ -399,21 +409,21 @@ void postfix_expr_array()
 	struct type* array = current_target;
 	common_recursion(expression);
 	current_target = array;
-	char* assign = "LOAD_INTEGER\n";
+	char* assign = "LOAD R0 R0 0\n";
 
 	/* Add support for Ints */
 	if(match("char*",  current_target->name))
 	{
-		assign = "LOAD_BYTE\n";
+		assign = "LOAD8 R0 R0 0\n";
 	}
 	else
 	{
-		emit_out("SAL_eax_Immediate8 !");
+		emit_out("SALI R0 ");
 		emit_out(numerate_number(ceil_log2(current_target->indirect->size)));
 		emit_out("\n");
 	}
 
-	emit_out("ADD_ebx_to_eax\n");
+	emit_out("ADD R0 R0 R1\n");
 	require_match("ERROR in postfix_expr\nMissing ]\n", "]");
 
 	if(match("=", global_token->s))
@@ -439,7 +449,7 @@ void unary_expr_sizeof()
 	struct type* a = type_name();
 	require_match("ERROR in unary_expr\nMissing )\n", ")");
 
-	emit_out("LOAD_IMMEDIATE_eax %");
+	emit_out("LOADUI R0 ");
 	emit_out(numerate_number(a->size));
 	emit_out("\n");
 }
@@ -478,13 +488,13 @@ void postfix_expr()
  */
 void additive_expr_stub()
 {
-	general_recursion(postfix_expr, "ADD_ebx_to_eax\n", "+", additive_expr_stub);
-	general_recursion(postfix_expr, "SUBTRACT_eax_from_ebx_into_ebx\nMOVE_ebx_to_eax\n", "-", additive_expr_stub);
-	general_recursion(postfix_expr, "MULTIPLY_eax_by_ebx_into_eax\n", "*", additive_expr_stub);
-	general_recursion(postfix_expr, "XCHG_eax_ebx\nLOAD_IMMEDIATE_edx %0\nDIVIDE_eax_by_ebx_into_eax\n", "/", additive_expr_stub);
-	general_recursion(postfix_expr, "XCHG_eax_ebx\nLOAD_IMMEDIATE_edx %0\nMODULUS_eax_from_ebx_into_ebx\nMOVE_edx_to_eax\n", "%", additive_expr_stub);
-	general_recursion(postfix_expr, "COPY_eax_to_ecx\nCOPY_ebx_to_eax\nSAL_eax_cl\n", "<<", additive_expr_stub);
-	general_recursion(postfix_expr, "COPY_eax_to_ecx\nCOPY_ebx_to_eax\nSAR_eax_cl\n", ">>", additive_expr_stub);
+	general_recursion(postfix_expr, "ADD R0 R1 R0\n", "+", additive_expr_stub);
+	general_recursion(postfix_expr, "SUB R0 R1 R0\n", "-", additive_expr_stub);
+	general_recursion(postfix_expr, "MUL R0 R1 R0\n", "*", additive_expr_stub);
+	general_recursion(postfix_expr, "DIVU R0 R1 R0\n", "/", additive_expr_stub);
+	general_recursion(postfix_expr, "MODU R0 R1 R0\n", "%", additive_expr_stub);
+	general_recursion(postfix_expr, "SAL R0 R1 R0\n", "<<", additive_expr_stub);
+	general_recursion(postfix_expr, "SAR R0 R1 R0\n", ">>", additive_expr_stub);
 }
 
 
@@ -506,12 +516,12 @@ void additive_expr()
 
 void relational_expr_stub()
 {
-	general_recursion(additive_expr, "CMP\nSETL\nMOVEZBL\n", "<", relational_expr_stub);
-	general_recursion(additive_expr, "CMP\nSETLE\nMOVEZBL\n", "<=", relational_expr_stub);
-	general_recursion(additive_expr, "CMP\nSETGE\nMOVEZBL\n", ">=", relational_expr_stub);
-	general_recursion(additive_expr, "CMP\nSETG\nMOVEZBL\n", ">", relational_expr_stub);
-	general_recursion(additive_expr, "CMP\nSETE\nMOVEZBL\n", "==", relational_expr_stub);
-	general_recursion(additive_expr, "CMP\nSETNE\nMOVEZBL\n", "!=", relational_expr_stub);
+	general_recursion(additive_expr, "CMPSKIP.GE R1 R0\nLOADUI R2 1\nMOVE R0 R2\n", "<", relational_expr_stub);
+	general_recursion(additive_expr, "CMPSKIP.G R1 R0\nLOADUI R2 1\nMOVE R0 R2\n", "<=", relational_expr_stub);
+	general_recursion(additive_expr, "CMPSKIP.L R1 R0\nLOADUI R2 1\nMOVE R0 R2\n", ">=", relational_expr_stub);
+	general_recursion(additive_expr, "CMPSKIP.LE R1 R0\nLOADUI R2 1\nMOVE R0 R2\n", ">", relational_expr_stub);
+	general_recursion(additive_expr, "CMPSKIP.NE R1 R0\nLOADUI R2 1\nMOVE R0 R2\n", "==", relational_expr_stub);
+	general_recursion(additive_expr, "CMPSKIP.E R1 R0\nLOADUI R2 1\nMOVE R0 R2\n", "!=", relational_expr_stub);
 }
 
 void relational_expr()
@@ -531,11 +541,11 @@ void relational_expr()
  */
 void bitwise_expr_stub()
 {
-	general_recursion(relational_expr, "AND_eax_ebx\n", "&", bitwise_expr_stub);
-	general_recursion(relational_expr, "AND_eax_ebx\n", "&&", bitwise_expr_stub);
-	general_recursion(relational_expr, "OR_eax_ebx\n", "|", bitwise_expr_stub);
-	general_recursion(relational_expr, "OR_eax_ebx\n", "||", bitwise_expr_stub);
-	general_recursion(relational_expr, "XOR_ebx_eax_into_eax\n", "^", bitwise_expr_stub);
+	general_recursion(relational_expr, "AND R0 R0 R1\n", "&", bitwise_expr_stub);
+	general_recursion(relational_expr, "AND R0 R0 R1\n", "&&", bitwise_expr_stub);
+	general_recursion(relational_expr, "OR R0 R0 R1\n", "|", bitwise_expr_stub);
+	general_recursion(relational_expr, "OR R0 R0 R1\n", "||", bitwise_expr_stub);
+	general_recursion(relational_expr, "XOR R0 R0 R1\n", "^", bitwise_expr_stub);
 }
 
 
@@ -566,15 +576,13 @@ void primary_expr()
 	if(match("sizeof", global_token->s)) unary_expr_sizeof();
 	else if('-' == global_token->s[0])
 	{
-		emit_out("LOAD_IMMEDIATE_eax %0\n");
 		common_recursion(primary_expr);
-		emit_out("SUBTRACT_eax_from_ebx_into_ebx\nMOVE_ebx_to_eax\n");
+		emit_out("NEG R0 R0\n");
 	}
 	else if('!' == global_token->s[0])
 	{
-		emit_out("LOAD_IMMEDIATE_eax %1\n");
 		common_recursion(postfix_expr);
-		emit_out("XOR_ebx_eax_into_eax\n");
+		emit_out("XORI R0 R0 1\n");
 	}
 	else if(global_token->s[0] == '(')
 	{
@@ -597,11 +605,11 @@ void expression()
 		char* store;
 		if(!match("]", global_token->prev->s) || !match("char*", current_target->name))
 		{
-			store = "STORE_INTEGER\n";
+			store = "STORE R0 R1 0\n";
 		}
 		else
 		{
-			store = "STORE_CHAR\n";
+			store = "STORE8 R0 R1 0\n";
 		}
 
 		common_recursion(expression);
@@ -618,19 +626,19 @@ void collect_local()
 	struct token_list* a = sym_declare(global_token->s, type_size, function->locals);
 	if(match("main", function->s) && (NULL == function->locals))
 	{
-		a->depth = -20;
+		a->depth = 4;
 	}
 	else if((NULL == function->arguments) && (NULL == function->locals))
 	{
-		a->depth = -8;
+		a->depth = 4;
 	}
 	else if(NULL == function->locals)
 	{
-		a->depth = function->arguments->depth - 8;
+		a->depth = function->arguments->depth + 8;
 	}
 	else
 	{
-		a->depth = function->locals->depth - 4;
+		a->depth = function->locals->depth + 4;
 	}
 
 	function->locals = a;
@@ -649,7 +657,7 @@ void collect_local()
 
 	require_match("ERROR in collect_local\nMissing ;\n", ";");
 
-	emit_out("PUSH_eax\t#");
+	emit_out("PUSHR R0 R15\t#");
 	emit_out(a->s);
 	emit_out("\n");
 }
@@ -669,13 +677,13 @@ void process_if()
 	require_match("ERROR in process_if\nMISSING (\n", "(");
 	expression();
 
-	emit_out("TEST\nJUMP_EQ %ELSE_");
+	emit_out("JUMP.Z R0 @ELSE_");
 	uniqueID_out(function->s, number_string);
 
 	require_match("ERROR in process_if\nMISSING )\n", ")");
 	statement();
 
-	emit_out("JUMP %_END_IF_");
+	emit_out("JUMP @_END_IF_");
 	uniqueID_out(function->s, number_string);
 	emit_out(":ELSE_");
 	uniqueID_out(function->s, number_string);
@@ -721,9 +729,9 @@ void process_for()
 	require_match("ERROR in process_for\nMISSING ;1\n", ";");
 	expression();
 
-	emit_out("TEST\nJUMP_EQ %FOR_END_");
+	emit_out("JUMP.Z R0 @FOR_END_");
 	uniqueID_out(function->s, number_string);
-	emit_out("JUMP %FOR_THEN_");
+	emit_out("JUMP @FOR_THEN_");
 	uniqueID_out(function->s, number_string);
 	emit_out(":FOR_ITER_");
 	uniqueID_out(function->s, number_string);
@@ -731,7 +739,7 @@ void process_for()
 	require_match("ERROR in process_for\nMISSING ;2\n", ";");
 	expression();
 
-	emit_out("JUMP %FOR_");
+	emit_out("JUMP @FOR_");
 	uniqueID_out(function->s, number_string);
 	emit_out(":FOR_THEN_");
 	uniqueID_out(function->s, number_string);
@@ -739,7 +747,7 @@ void process_for()
 	require_match("ERROR in process_for\nMISSING )\n", ")");
 	statement();
 
-	emit_out("JUMP %FOR_ITER_");
+	emit_out("JUMP @FOR_ITER_");
 	uniqueID_out(function->s, number_string);
 	emit_out(":FOR_END_");
 	uniqueID_out(function->s, number_string);
@@ -793,7 +801,7 @@ void process_do()
 	require_match("ERROR in process_do\nMISSING )\n", ")");
 	require_match("ERROR in process_do\nMISSING ;\n", ";");
 
-	emit_out("TEST\nJUMP_NE %DO_");
+	emit_out("JUMP.NZ R0 @DO_");
 	uniqueID_out(function->s, number_string);
 	emit_out(":DO_END_");
 	uniqueID_out(function->s, number_string);
@@ -828,7 +836,7 @@ void process_while()
 	require_match("ERROR in process_while\nMISSING (\n", "(");
 	expression();
 
-	emit_out("TEST\nJUMP_EQ %END_WHILE_");
+	emit_out("JUMP.Z R0 @END_WHILE_");
 	uniqueID_out(function->s, number_string);
 	emit_out("# THEN_while_");
 	uniqueID_out(function->s, number_string);
@@ -836,7 +844,7 @@ void process_while()
 	require_match("ERROR in process_while\nMISSING )\n", ")");
 	statement();
 
-	emit_out("JUMP %WHILE_");
+	emit_out("JUMP @WHILE_");
 	uniqueID_out(function->s, number_string);
 	emit_out(":END_WHILE_");
 	uniqueID_out(function->s, number_string);
@@ -858,9 +866,9 @@ void return_result()
 	struct token_list* i;
 	for(i = function->locals; NULL != i; i = i->next)
 	{
-		emit_out("POP_ebx\t# _return_result_locals\n");
+		emit_out("POPR R1 R15\t# _return_result_locals\n");
 	}
-	emit_out("RETURN\n");
+	emit_out("RET R15\n");
 }
 
 void process_break()
@@ -875,11 +883,11 @@ void process_break()
 	while(i != break_frame)
 	{
 		if(NULL == i) break;
-		emit_out("POP_ebx\t# break_cleanup_locals\n");
+		emit_out("POPR R1 R15\t# break_cleanup_locals\n");
 		i = i->next;
 	}
 	global_token = global_token->next;
-	emit_out("JUMP %");
+	emit_out("JUMP @");
 	emit_out(break_target_head);
 	emit_out(break_target_func);
 	emit_out("_");
@@ -900,12 +908,12 @@ void recursive_statement()
 	global_token = global_token->next;
 
 	/* Clean up any locals added */
-	if(!match("RETURN\n", out->s))
+	if(!match("RET R15\n", out->s))
 	{
 		struct token_list* i;
 		for(i = function->locals; frame != i; i = i->next)
 		{
-			emit_out( "POP_ebx\t# _recursive_statement_locals\n");
+			emit_out( "POPR R1 R15\t# _recursive_statement_locals\n");
 		}
 	}
 	function->locals = frame;
@@ -970,7 +978,7 @@ void statement()
 	else if(match("goto", global_token->s))
 	{
 		global_token = global_token->next;
-		emit_out("JUMP %");
+		emit_out("JUMP @");
 		emit_out(global_token->s);
 		emit_out("\n");
 		global_token = global_token->next;
@@ -1016,11 +1024,11 @@ void collect_arguments()
 			struct token_list* a = sym_declare(global_token->s, type_size, function->arguments);
 			if(NULL == function->arguments)
 			{
-				a->depth = -4;
+				a->depth = 0;
 			}
 			else
 			{
-				a->depth = function->arguments->depth - 4;
+				a->depth = function->arguments->depth + 4;
 			}
 
 			global_token = global_token->next;
@@ -1054,10 +1062,10 @@ void declare_function()
 		emit_out("\n");
 		statement();
 
-		/* Prevent duplicate RETURNS */
-		if(!match("RETURN\n", out->s))
+		/* Prevent duplicate RET R15S */
+		if(!match("RET R15\n", out->s))
 		{
-			emit_out("RETURN\n");
+			emit_out("RET R15\n");
 		}
 	}
 }
