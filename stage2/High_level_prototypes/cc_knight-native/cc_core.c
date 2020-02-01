@@ -147,9 +147,9 @@ void function_call(char* s, int bool)
 	else
 	{
 		emit_out("MOVE R14 R13\n");
-		emit_out("CALLI R15 @FUNCTION_");
+		emit_out("LOADR R0 4\nJUMP 4\n&FUNCTION_");
 		emit_out(s);
-		emit_out("\n");
+		emit_out("\nCALL R0 R15\n");
 	}
 
 	for(; passed > 0; passed = passed - 1)
@@ -193,7 +193,7 @@ void function_load(struct token_list* a)
 		return;
 	}
 
-	emit_out("LOADUI R0 $FUNCTION_");
+	emit_out("LOADR R0 4\nJUMP 4\n&FUNCTION_");
 	emit_out(a->s);
 	emit_out("\n");
 }
@@ -201,7 +201,7 @@ void function_load(struct token_list* a)
 void global_load(struct token_list* a)
 {
 	current_target = a->type;
-	emit_out("LOADUI R0 $GLOBAL_");
+	emit_out("LOADR R0 4\nJUMP 4\n&GLOBAL_");
 	emit_out(a->s);
 	emit_out("\n");
 	if(!match("=", global_token->s)) emit_out("LOAD R0 R0 0\n");
@@ -230,7 +230,7 @@ void primary_expr_string()
 {
 	char* number_string = numerate_number(current_count);
 	current_count = current_count + 1;
-	emit_out("LOADUI R0 $STRING_");
+	emit_out("LOADR R0 4\nJUMP 4\n&STRING_");
 	uniqueID_out(function->s, number_string);
 
 	/* The target */

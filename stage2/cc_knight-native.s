@@ -889,7 +889,9 @@ Missing )
 	RET R15
 
 :function_load_string0
-	"LOADUI R0 $FUNCTION_"
+	"LOADR R0 4
+JUMP 4
+&FUNCTION_"
 
 
 ;; global_load function
@@ -923,7 +925,9 @@ Missing )
 	RET R15
 
 :global_load_string0
-	"LOADUI R0 $GLOBAL_"
+	"LOADR R0 4
+JUMP 4
+&GLOBAL_"
 :global_load_string1
 	"LOAD R0 R0 0
 "
@@ -1002,7 +1006,9 @@ Missing )
 	RET R15
 
 :primary_expr_string_string0
-	"LOADUI R0 $STRING_"
+	"LOADR R0 4
+JUMP 4
+&STRING_"
 :primary_expr_string_string1
 	":STRING_"
 
@@ -3415,7 +3421,7 @@ Missing ;
 	CALLI R15 @emit_out         ; emit it
 	MOVE R0 R2                  ; Using S
 	CALLI R15 @emit_out         ; emit it
-	LOADUI R0 $newline          ; Using "\n"
+	LOADUI R0 $function_call_string16 ; The terminator
 	CALLI R15 @emit_out         ; emit it
 
 :function_call_call_done
@@ -3478,7 +3484,9 @@ No ) was found
 	"MOVE R14 R13
 "
 :function_call_string12
-	"CALLI R15 @FUNCTION_"
+	"LOADR R0 4
+JUMP 4
+&FUNCTION_"
 :function_call_string13
 	"POPR R1 R15	# _process_expression_locals
 "
@@ -3487,6 +3495,10 @@ No ) was found
 "
 :function_call_string15
 	"POPR R13 R15	# Prevent overwrite
+"
+:function_call_string16
+	"
+CALL R0 R15
 "
 
 
