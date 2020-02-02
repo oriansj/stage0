@@ -40,11 +40,11 @@ vm-trace: vm.h vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.
 # Build the roms
 ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp cc_x86 forth
 
-stage0_monitor: hex stage0/stage0_monitor.hex0 | roms
-	./bin/hex < stage0/stage0_monitor.hex0 > roms/stage0_monitor
+stage0_monitor: vm stage0/stage0_monitor.hex0 | roms
+	./bin/vm --rom seed/NATIVE/knight/hex0-seed --tape_01 stage0/stage0_monitor.hex0 --tape_02 roms/stage0_monitor
 
-stage1_assembler-0: hex stage1/stage1_assembler-0.hex0 | roms
-	./bin/hex < stage1/stage1_assembler-0.hex0 > roms/stage1_assembler-0
+stage1_assembler-0: vm stage1/stage1_assembler-0.hex0 | roms
+	./bin/vm --rom seed/NATIVE/knight/hex0-seed --tape_01 stage1/stage1_assembler-0.hex0 --tape_02 roms/stage1_assembler-0
 
 SET: stage1_assembler-2 vm stage1/SET.hex2 | roms
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 stage1/SET.hex2 --tape_02 roms/SET

@@ -16,12 +16,32 @@
 
 * Current
 ** Added
+Added High level prototype for stage1_assembler-0
+Added High level prototype for stage0_monitor
+Added High level prototype for CAT.s
+Added High level prototype for cc_x86.s
+Added posix-mode primtive getcwd
+Added High level prototype for cc_knight-native
+Added cc_knight-native.s
+Added High level prototype for cc_amd64
+Added cc_amd64.s
+Added High level prototype for cc_knight-posix
+Added cc_knight-posix.s
+Added High level prototype for cc_armv7l
+Added cc_armv7l.s
+Added High level prototype for cc_aarch64
+Added cc_aarch64.s
+Added submodule for universal bootstrap binaries
 
 ** Changed
+Modified cc_knight-native.s to generate output compatible with large binaries
 
 ** Fixed
+Eliminated the discrepency between stage1/stage1_assembler-2.s and stage1/stage1_assembler-2.hex1
 
 ** Removed
+Eliminated need for GCC to build hex.c to build the bootstrap binaries
+Eliminated floppy disk images
 
 * 0.3.0 - 2020-01-18
 ** Added
