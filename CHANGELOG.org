@@ -16,6 +16,15 @@
 
 * Current
 ** Added
+
+** Changed
+
+** Fixed
+
+** Removed
+
+* 0.4.0 - 2020-02-02
+** Added
 Added High level prototype for stage1_assembler-0
 Added High level prototype for stage0_monitor
 Added High level prototype for CAT.s
