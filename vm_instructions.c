@@ -745,8 +745,23 @@ void MULTIPLY(struct lilith* vm, struct Instruction* c)
 	tmp1 = (signed_vm_register)(vm->reg[c->reg2]);
 	tmp2 = (signed_vm_register)( vm->reg[c->reg3]);
 	btmp1 = ((signed_wide_register)tmp1) * ((signed_wide_register)tmp2);
+
+#ifdef VM256
+	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x10000000000000000000000000000000000000000000000000000000000000000);
+	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x10000000000000000000000000000000000000000000000000000000000000000);
+#elif VM128
+	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x100000000000000000000000000000000);
+	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x100000000000000000000000000000000);
+#elif VM64
+	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x10000000000000000);
+	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x10000000000000000);
+#elif VM32
 	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x100000000);
 	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x100000000);
+#else
+	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x10000);
+	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x10000);
+#endif
 }
 
 void MULTIPLYU(struct lilith* vm, struct Instruction* c)
@@ -754,8 +769,22 @@ void MULTIPLYU(struct lilith* vm, struct Instruction* c)
 	unsigned_wide_register ubtmp1;
 
 	ubtmp1 = (unsigned_wide_register)(vm->reg[c->reg2]) * (unsigned_wide_register)(vm->reg[c->reg3]);
-	vm->reg[c->reg0] = ubtmp1 % 0x100000000;
-	vm->reg[c->reg1] = ubtmp1 / 0x100000000;
+#ifdef VM256
+	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x10000000000000000000000000000000000000000000000000000000000000000);
+	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x10000000000000000000000000000000000000000000000000000000000000000);
+#elif VM128
+	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x100000000000000000000000000000000);
+	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x100000000000000000000000000000000);
+#elif VM64
+	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x10000000000000000);
+	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x10000000000000000);
+#elif VM32
+	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x100000000);
+	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x100000000);
+#else
+	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x10000);
+	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x10000);
+#endif
 }
 
 void DIVIDE(struct lilith* vm, struct Instruction* c)
@@ -908,8 +937,19 @@ void MUL(struct lilith* vm, struct Instruction* c)
 
 	signed_wide_register sum = tmp1 * tmp2;
 
-	/* We only want the bottom 32bits */
-	vm->reg[c->reg0] = sum % 0x100000000;
+
+	/* We only want the bottom half of the bits */
+#ifdef VM256
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000000000000000000000000000000000000000000000000000);
+#elif VM128
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000000000000000000000000000);
+#elif VM64
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000);
+#elif VM32
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000);
+#else
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000);
+#endif
 }
 
 void MULH(struct lilith* vm, struct Instruction* c)
@@ -921,8 +961,18 @@ void MULH(struct lilith* vm, struct Instruction* c)
 
 	signed_wide_register sum = tmp1 * tmp2;
 
-	/* We only want the top 32bits */
-	vm->reg[c->reg0] = sum / 0x100000000;
+	/* We only want the top half of the bits */
+#ifdef VM256
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000000000000000000000000000000000000000000000000000);
+#elif VM128
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000000000000000000000000000);
+#elif VM64
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000);
+#elif VM32
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000);
+#else
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000);
+#endif
 }
 
 void MULU(struct lilith* vm, struct Instruction* c)
@@ -933,8 +983,18 @@ void MULU(struct lilith* vm, struct Instruction* c)
 	tmp2 = vm->reg[c->reg2];
 	sum = tmp1 * tmp2;
 
-		/* We only want the bottom 32bits */
-		vm->reg[c->reg0] = sum % 0x100000000;
+	/* We only want the bottom half of the bits */
+#ifdef VM256
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000000000000000000000000000000000000000000000000000);
+#elif VM128
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000000000000000000000000000);
+#elif VM64
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000);
+#elif VM32
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000);
+#else
+	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000);
+#endif
 }
 
 void MULUH(struct lilith* vm, struct Instruction* c)
@@ -945,8 +1005,18 @@ void MULUH(struct lilith* vm, struct Instruction* c)
 	tmp2 = vm->reg[c->reg2];
 	sum = tmp1 * tmp2;
 
-		/* We only want the top 32bits */
-		vm->reg[c->reg0] = sum / 0x100000000;
+	/* We only want the top half of the bits */
+#ifdef VM256
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000000000000000000000000000000000000000000000000000);
+#elif VM128
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000000000000000000000000000);
+#elif VM64
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000);
+#elif VM32
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000);
+#else
+	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000);
+#endif
 }
 
 void DIV(struct lilith* vm, struct Instruction* c)
@@ -1172,6 +1242,18 @@ void LOADXU16(struct lilith* vm, struct Instruction* c)
 	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], false, 2);
 }
 
+#ifdef VM16
+void LOADX32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "LOADX32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+void LOADXU32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "LOADXU32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void LOADX32(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true, 4);
@@ -1181,6 +1263,7 @@ void LOADXU32(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2], true, 4);
 }
+#endif
 
 void STOREX(struct lilith* vm, struct Instruction* c)
 {
@@ -1197,10 +1280,18 @@ void STOREX16(struct lilith* vm, struct Instruction* c)
 	writeout_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0], 2);
 }
 
+#ifdef VM16
+void STOREX32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "STOREX32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void STOREX32(struct lilith* vm, struct Instruction* c)
 {
 	writeout_bytes(vm, vm->reg[c->reg1] + vm->reg[c->reg2] , vm->reg[c->reg0], 4);
 }
+#endif
 
 void NEG(struct lilith* vm, struct Instruction* c)
 {
@@ -1422,6 +1513,18 @@ void LOADU16(struct lilith* vm, struct Instruction* c)
 	vm->reg[c->reg0] = readin_bytes(vm, vm->reg[c->reg1] + c->raw_Immediate, false, 2);
 }
 
+#ifdef VM16
+void LOAD32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "LOAD32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+void LOADU32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "LOADU32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void LOAD32(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = readin_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), true, 4);
@@ -1431,6 +1534,7 @@ void LOADU32(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = readin_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), false, 4);
 }
+#endif
 
 void CMPUI(struct lilith* vm, struct Instruction* c)
 {
@@ -1465,10 +1569,18 @@ void STORE16(struct lilith* vm, struct Instruction* c)
 	writeout_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0], 2);
 }
 
+#ifdef VM16
+void STORE32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "STORE32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void STORE32(struct lilith* vm, struct Instruction* c)
 {
 	writeout_bytes(vm, (vm->reg[c->reg1] + c->raw_Immediate), vm->reg[c->reg0], 4);
 }
+#endif
 
 void JUMP_C(struct lilith* vm, struct Instruction* c)
 {
@@ -1634,6 +1746,18 @@ void LOADRU16(struct lilith* vm, struct Instruction* c)
 	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate), false, 2);
 }
 
+#ifdef VM16
+void LOADR32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "LOADR32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+void LOADRU32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "LOADRU32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void LOADR32(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate), true, 4);
@@ -1642,6 +1766,7 @@ void LOADRU32(struct lilith* vm, struct Instruction* c)
 {
 	vm->reg[c->reg0] = readin_bytes(vm, (vm->ip + c->raw_Immediate), false, 4);
 }
+#endif
 
 void STORER(struct lilith* vm, struct Instruction* c)
 {
@@ -1658,10 +1783,18 @@ void STORER16(struct lilith* vm, struct Instruction* c)
 	writeout_bytes(vm, (vm->ip + c->raw_Immediate), vm->reg[c->reg0], 2);
 }
 
+#ifdef VM16
+void STORER32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "LOADXU32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void STORER32(struct lilith* vm, struct Instruction* c)
 {
 	writeout_bytes(vm, (vm->ip + c->raw_Immediate), vm->reg[c->reg0], 4);
 }
+#endif
 
 void JUMP(struct lilith* vm, struct Instruction* c)
 {
@@ -1915,11 +2048,21 @@ void PUSH16(struct lilith* vm, struct Instruction* c)
 	writeout_bytes(vm, vm->reg[c->reg1] , vm->reg[c->reg0], 2);
 	vm->reg[c->reg1] = vm->reg[c->reg1] + 2;
 }
+
+#ifdef VM16
+void PUSH32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "PUSH32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void PUSH32(struct lilith* vm, struct Instruction* c)
 {
 	writeout_bytes(vm, vm->reg[c->reg1] , vm->reg[c->reg0], 4);
 	vm->reg[c->reg1] = vm->reg[c->reg1] + 4;
 }
+#endif
+
 void POPR(struct lilith* vm, struct Instruction* c)
 {
 	unsigned_vm_register tmp;
@@ -1960,6 +2103,19 @@ void POPU16(struct lilith* vm, struct Instruction* c)
 	writeout_bytes(vm, vm->reg[c->reg1], 0, 2);
 	vm->reg[c->reg0] = tmp;
 }
+
+#ifdef VM16
+void POP32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "POP32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+void POPU32(struct lilith* vm, struct Instruction* c)
+{
+	fprintf(stderr, "POPU32 isn't a valid instruction on 16bit processors\n");
+	exit(EXIT_FAILURE);
+}
+#else
 void POP32(struct lilith* vm, struct Instruction* c)
 {
 	signed_vm_register tmp;
@@ -1976,6 +2132,7 @@ void POPU32(struct lilith* vm, struct Instruction* c)
 	writeout_bytes(vm, vm->reg[c->reg1], 0, 4);
 	vm->reg[c->reg0] = tmp;
 }
+#endif
 
 void ANDI(struct lilith* vm, struct Instruction* c)
 {

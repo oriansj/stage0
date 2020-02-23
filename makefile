@@ -28,8 +28,14 @@ development: vm libvm.so asm dis ALL-ROMS
 vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c | bin
 	$(CC) -DVM32=true vm_minimal.c vm_instructions.c vm_decode.c -o bin/vm-minimal
 
+vm16: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
+	$(CC) -ggdb -DVM16=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm16
+
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
 	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+
+vm64: vm.h vm.c vm_instructions.c vm_decode.c tty.c | bin
+	$(CC) -ggdb -DVM64=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm64
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c | bin
 	$(CC) -DVM32=true vm.c vm_instructions.c vm_decode.c -o bin/vm-production
@@ -64,7 +70,7 @@ M0: stage1_assembler-2 vm stage1/M0-macro.hex2 | roms
 M0-compact: M0 stage1_assembler-2 vm stage1/M0-macro-compact.s | roms
 	cat High_level_prototypes/defs stage1/M0-macro-compact.s >| M0_TEMP
 	./bin/vm --rom roms/M0 --tape_01 M0_TEMP --tape_02 M0_TEMP2 --memory 64K
-	./bin/vm --rom roms/stage1_assembler-2 --tape_01 M0_TEMP2 --tape_02 roms/M0-compact --memory 48K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 M0_TEMP2 --tape_02 roms/M0-compact --memory 5K
 	rm M0_TEMP M0_TEMP2
 
 CAT: M0 stage1_assembler-2 vm High_level_prototypes/defs stage1/CAT.s | roms
@@ -152,6 +158,9 @@ prototype_stage1_assembler-1: stage1_assembler-1.c | prototypes
 
 prototype_stage1_assembler-2: stage1_assembler-2.c | prototypes
 	gcc stage1/High_level_prototypes/stage1_assembler-2.c -o prototypes/prototype_stage1_assembler-2
+
+prototype_M0-compact: M0-macro-compact.c | prototypes
+	gcc stage1/High_level_prototypes/M0-macro-compact.c -o prototypes/prototype_M0-compact
 
 prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c | prototypes
 	gcc -O2 stage2/High_level_prototypes/lisp.h \

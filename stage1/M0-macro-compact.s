@@ -17,7 +17,7 @@
 :start
 	;; We will be using R12 for scratch
 	;; We will be using R13 for storage of tokens
-	LOADUI R14 0x800           ; Our malloc pointer (Initialized)
+	LOADUI R14 0x800            ; Our malloc pointer (Initialized)
 	LOADUI R15 $stack           ; Put stack at end of program
 
 	;; Prep TAPE_01

@@ -16,7 +16,7 @@
 
 :start
 	;; We will be using R13 for storage of Head
-	LOADUI R14 0x4000           ; Our malloc pointer (Initialized)
+	LOADUI R14 0x700            ; Our malloc pointer (Initialized)
 	LOADUI R15 $stack           ; Put stack at end of program
 
 ;; Main program

@@ -66,6 +66,7 @@ typedef uint16_t unsigned_vm_register;
 #define imax 15
 #define reg_size 2
 #define arch_name "knight16-base"
+#define vm16 42
 #endif
 
 /* Virtual machine state */
