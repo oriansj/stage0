@@ -61,28 +61,34 @@ stage1_assembler-2: stage1_assembler-1 vm stage1/stage1_assembler-2.hex1 | roms
 M0: stage1_assembler-2 vm stage1/M0-macro.hex2 | roms
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 stage1/M0-macro.hex2 --tape_02 roms/M0 --memory 48K
 
+M0-compact: M0 stage1_assembler-2 vm stage1/M0-macro-compact.s | roms
+	cat High_level_prototypes/defs stage1/M0-macro-compact.s >| M0_TEMP
+	./bin/vm --rom roms/M0 --tape_01 M0_TEMP --tape_02 M0_TEMP2 --memory 64K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 M0_TEMP2 --tape_02 roms/M0-compact --memory 48K
+	rm M0_TEMP M0_TEMP2
+
 CAT: M0 stage1_assembler-2 vm High_level_prototypes/defs stage1/CAT.s | roms
 	cat High_level_prototypes/defs stage1/CAT.s >| CAT_TEMP
 	./bin/vm --rom roms/M0 --tape_01 CAT_TEMP --tape_02 CAT_TEMP2 --memory 48K
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 CAT_TEMP2 --tape_02 roms/CAT --memory 48K
 	rm CAT_TEMP CAT_TEMP2
 
-lisp: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/lisp.s | roms
+lisp: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/lisp.s | roms
 	cat High_level_prototypes/defs stage2/lisp.s > lisp_TEMP
-	./bin/vm --rom roms/M0 --tape_01 lisp_TEMP --tape_02 lisp_TEMP2 --memory 256K
+	./bin/vm --rom roms/M0-compact --tape_01 lisp_TEMP --tape_02 lisp_TEMP2 --memory 8K
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 lisp_TEMP2 --tape_02 roms/lisp --memory 48K
 	rm lisp_TEMP lisp_TEMP2
 
-cc_x86: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_x86.s | roms
+cc_x86: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_x86.s | roms
 	cat High_level_prototypes/defs stage2/cc_x86.s > cc_TEMP
-	./bin/vm --rom roms/M0 --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 256K
-	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 48K
+	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 8K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 32K
 	rm cc_TEMP cc_TEMP2
 
-forth: M0 stage1_assembler-2 vm High_level_prototypes/defs stage2/forth.s | roms
+forth: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/forth.s | roms
 	cat High_level_prototypes/defs stage2/forth.s > forth_TEMP
-	./bin/vm --rom roms/M0 --tape_01 forth_TEMP --tape_02 forth_TEMP2 --memory 128K
-	./bin/vm --rom roms/stage1_assembler-2 --tape_01 forth_TEMP2 --tape_02 roms/forth --memory 48K
+	./bin/vm --rom roms/M0-compact --tape_01 forth_TEMP --tape_02 forth_TEMP2 --memory 8K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 forth_TEMP2 --tape_02 roms/forth --memory 12K
 	rm forth_TEMP forth_TEMP2
 
 # Primitive development tools, not required but it was handy
