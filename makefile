@@ -134,8 +134,76 @@ test_stage0_monitor_asm_match: asm stage0_monitor
 	sha256sum roms/stage0_monitor | sed 's@roms/stage0_monitor@test/stage0_test_scratch/stage0_monitor.hex0.bin@' > test/stage0_test_scratch/stage0_monitor.hex0.expected_sum
 	sha256sum -c test/stage0_test_scratch/stage0_monitor.hex0.expected_sum
 
+.SILENT: testM0
+.PHONY: testM0
+testM0: vm16 vm vm64 M0-compact prototypes/prototype_M0-macro-compact ALL-ROMS
+	echo assembling ALL-ROMS with prototype_M0-macro-compact and M0 with 32 bit vm and M0-compact with vm, vm64 and vm16; \
+	VM_LIST='vm vm64 vm16'; \
+	STAGE_1_UNIFORM_PROG_LIST="stage1_assembler-0 stage1_assembler-1 \
+stage1_assembler-2 CAT SET"; \
+	STAGE_2_UNIFORM_PROG_LIST='cc_x86 forth lisp'; \
+	ASSEMBLER_PROG_LIST="stage0/stage0_monitor"; \
+	for stage1prog in $$STAGE_1_UNIFORM_PROG_LIST; do \
+	ASSEMBLER_PROG_LIST="$$ASSEMBLER_PROG_LIST stage1/$$stage1prog"; \
+	done; \
+	ASSEMBLER_PROG_LIST="$$ASSEMBLER_PROG_LIST \
+stage1/M0-macro stage1/M0-macro-compact stage1/dehex"; \
+	for stage2prog in $$STAGE_2_UNIFORM_PROG_LIST; do \
+	ASSEMBLER_PROG_LIST="$$ASSEMBLER_PROG_LIST stage2/$$stage2prog"; \
+	done; \
+	for prog in $$ASSEMBLER_PROG_LIST; do \
+	cat High_level_prototypes/defs "$$prog".s > "$$prog"_TEMP.s; \
+	./prototypes/prototype_M0-macro-compact "$$prog"_TEMP.s > \
+	"$$prog"_protoM0compact_TEMP.hex2; \
+	./bin/vm --memory 256K --rom roms/stage1_assembler-2 \
+	    --tape_01 "$$prog"_protoM0compact_TEMP.hex2 \
+	    --tape_02 "$$prog"_built_protoM0compact > /dev/null 2>&1; \
+	rm "$$prog"_protoM0compact_TEMP.hex2; \
+	M0ROMLIST='M0 M0-compact'; \
+	for rom in $$M0ROMLIST; do \
+	for vm in $$VM_LIST; do \
+	    if [ $$rom = M0-compact ] || [ $$vm = vm ]; then \
+	        ./bin/$$vm --memory 256K --rom roms/$$rom \
+	        --tape_01 "$$prog"_TEMP.s \
+	        --tape_02 "$$prog"_"$$vm"_TEMP.hex2 > /dev/null 2>&1; \
+	        ./bin/vm --memory 256K --rom roms/stage1_assembler-2 \
+	        --tape_01 "$$prog"_"$$vm"_TEMP.hex2 \
+	        --tape_02 "$$prog"_built_"$$vm"_"$$rom"> /dev/null 2>&1; \
+	        rm "$$prog"_"$$vm"_TEMP.hex2; \
+	    fi; \
+	done; done; \
+	rm "$$prog"_TEMP.s; \
+	done; \
+	BUILDSUFFIXLIST='protoM0compact'; \
+	for vm in $$VM_LIST; do \
+	for rom in $$M0ROMLIST; do \
+	    if [ $$rom = M0-compact ] || [ $$vm = vm ]; then \
+	    BUILDSUFFIXLIST="$$BUILDSUFFIXLIST $$vm"; \
+	    BUILDSUFFIXLIST="$$BUILDSUFFIXLIST"_; \
+	    BUILDSUFFIXLIST="$$BUILDSUFFIXLIST""$$rom"; \
+	fi; \
+	done; done; \
+	for buildsuffix in $$BUILDSUFFIXLIST; do \
+	cmp roms/stage0_monitor stage0/stage0_monitor_built_"$$buildsuffix"; \
+	rm stage0/stage0_monitor_built_$$buildsuffix; \
+	for stage1prog in $$STAGE_1_UNIFORM_PROG_LIST; do \
+	    cmp roms/$$stage1prog stage1/"$$stage1prog"_built_"$$buildsuffix"; \
+	    rm stage1/"$$stage1prog"_built_"$$buildsuffix"; \
+	done; \
+	cmp roms/M0 stage1/M0-macro_built_"$$buildsuffix"; \
+	rm stage1/M0-macro_built_"$$buildsuffix"; \
+	cmp roms/M0-compact stage1/M0-macro-compact_built_"$$buildsuffix"; \
+	rm stage1/M0-macro-compact_built_"$$buildsuffix"; \
+	cmp roms/DEHEX stage1/dehex_built_"$$buildsuffix"; \
+	rm stage1/dehex_built_"$$buildsuffix"; \
+	for stage2prog in $$STAGE_2_UNIFORM_PROG_LIST; do \
+	    cmp roms/$$stage2prog stage2/"$$stage2prog"_built_"$$buildsuffix"; \
+	    rm stage2/"$$stage2prog"_built_"$$buildsuffix"; \
+	done; \
+	done; \
+	echo done M0 test
 
-test: ALL-ROMS test/SHA256SUMS test_stage0_monitor_asm_match
+test: ALL-ROMS test/SHA256SUMS test_stage0_monitor_asm_match testM0
 	sha256sum -c test/SHA256SUMS
 
 # Prototypes
