@@ -203,7 +203,31 @@ stage1/M0-macro stage1/M0-macro-compact stage1/dehex"; \
 	done; \
 	echo done M0 test
 
-test: ALL-ROMS test/SHA256SUMS test_stage0_monitor_asm_match testM0
+.SILENT: testdisasmpy
+.PHONY: testdisasmpy
+testdisasmpy: ALL-ROMS M0-compact vm
+	ROM_LIST="stage0_monitor stage1_assembler-0 \
+stage1_assembler-1 stage1_assembler-2 CAT SET M0 M0-compact DEHEX \
+cc_x86 forth lisp"; \
+	for rom in $$ROM_LIST; do \
+	    ./High_level_prototypes/disasm.py --address-mode none \
+		roms/"$$rom" > "$$rom".TEMP.dis.s; \
+	    cat High_level_prototypes/defs "$$rom".TEMP.dis.s > \
+	        "$$rom".TEMP.dis_cat.s; \
+	    rm "$$rom".TEMP.dis.s; \
+	    ./bin/vm --memory 2M --rom roms/M0 \
+	        --tape_01 "$$rom".TEMP.dis_cat.s \
+	        --tape_02 "$$rom".TEMP.hex2 > /dev/null 2>&1; \
+	    rm "$$rom".TEMP.dis_cat.s ; \
+	    ./bin/vm --memory 256K --rom roms/stage1_assembler-2 \
+	        --tape_01 "$$rom".TEMP.hex2 \
+	        --tape_02 "$$rom".TEMP > /dev/null 2>&1; \
+	    rm "$$rom".TEMP.hex2; \
+	    cmp roms/"$$rom" "$$rom".TEMP; \
+	    rm "$$rom".TEMP; \
+	done;
+
+test: ALL-ROMS test/SHA256SUMS test_stage0_monitor_asm_match testM0 testdisasmpy
 	sha256sum -c test/SHA256SUMS
 
 # Prototypes

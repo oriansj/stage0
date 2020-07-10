@@ -251,7 +251,7 @@ def main(argv):
 			global POSIX_MODE
 			POSIX_MODE = True
 
-	subprocess.call("./bin/dis " + ROM_Name + " >| z_disassembled", shell=True)
+	subprocess.call("python3 ./High_level_prototypes/disasm.py --suppress-newline-tab-in-string " + ROM_Name + " >| z_disassembled", shell=True)
 	Reset_lilith()
 
 Current_IP = 0
