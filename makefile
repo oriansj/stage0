@@ -227,8 +227,12 @@ cc_x86 forth lisp"; \
 	    rm "$$rom".TEMP; \
 	done;
 
-test: ALL-ROMS test/SHA256SUMS test_stage0_monitor_asm_match testM0 testdisasmpy
+test: ALL-ROMS
 	sha256sum -c test/SHA256SUMS
+
+test-all: ALL-ROMS test/SHA256SUMS test_stage0_monitor_asm_match testM0 testdisasmpy
+	sha256sum -c test/SHA256SUMS
+
 
 # Prototypes
 ALL-PROTOTYPES: prototype_dehex prototype_M0 prototype_more prototype_SET prototype_stage1_assembler-1 prototype_stage1_assembler-2 prototype_lisp

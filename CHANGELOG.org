@@ -16,10 +16,16 @@
 
 * Current
 ** Added
+Added High level prototype for a more memory efficient version of M0
+Added M0-compact to reduce memory requirements of bootstrapping a C compiler
+Python disassembler to improve the user experience (thank you Mark Jenkins)
+test rebuild of ALL-ROMS from .s files multiple ways
 
 ** Changed
+Removed excess space after folder name (stage2/High_level_prototypes/lisp)
 
 ** Fixed
+properly report errors for invalid instructions on 16bit versions of knight
 
 ** Removed
 
