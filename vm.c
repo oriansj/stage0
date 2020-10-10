@@ -23,6 +23,11 @@ size_t load_program(struct lilith* vm, char* rom_name)
 {
 	FILE* program;
 	program = fopen(rom_name, "r");
+	if(NULL == program)
+	{
+		fprintf(stderr, "The rom file: %s could not be found\nif you are running the make; you forgot the git submodules\nPlease review the section: \"Need to know information\" in the README\n", rom_name);
+		exit(EXIT_FAILURE);
+	}
 
 	/* Figure out how much we need to load */
 	fseek(program, 0, SEEK_END);

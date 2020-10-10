@@ -58,6 +58,10 @@ Add more ports to more hardware platforms.
 Implement the Knight processor in FPGA and then convert into TTL.
 
 * Need to know information
+This repository utilizes submodules, so you need to clone this repository using
+`git clone --recursive`. If you have already cloned it run `git submodule update
+--init` or after a pull be sure to do: `git submodule update --recursive`
+
 ** stage0
 The stage0 is the ultimate lowest level of bootstrap that is useful for systems
 without firmware, operating systems nor any other provided software functionality

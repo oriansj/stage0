@@ -258,13 +258,13 @@ prototype_stage1_assembler-2: stage1_assembler-2.c | prototypes
 prototype_M0-compact: M0-macro-compact.c | prototypes
 	gcc stage1/High_level_prototypes/M0-macro-compact.c -o prototypes/prototype_M0-compact
 
-prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c | prototypes
-	gcc -O2 stage2/High_level_prototypes/lisp.h \
-	        stage2/High_level_prototypes/lisp.c \
-	        stage2/High_level_prototypes/lisp_cell.c \
-	        stage2/High_level_prototypes/lisp_eval.c \
-	        stage2/High_level_prototypes/lisp_print.c \
-	        stage2/High_level_prototypes/lisp_read.c \
+prototype_lisp: stage2/High_level_prototypes/lisp/lisp.c stage2/High_level_prototypes/lisp/lisp.h stage2/High_level_prototypes/lisp/lisp_cell.c stage2/High_level_prototypes/lisp/lisp_eval.c stage2/High_level_prototypes/lisp/lisp_print.c stage2/High_level_prototypes/lisp/lisp_read.c | prototypes
+	gcc -O2 stage2/High_level_prototypes/lisp/lisp.h \
+	        stage2/High_level_prototypes/lisp/lisp.c \
+	        stage2/High_level_prototypes/lisp/lisp_cell.c \
+	        stage2/High_level_prototypes/lisp/lisp_eval.c \
+	        stage2/High_level_prototypes/lisp/lisp_print.c \
+	        stage2/High_level_prototypes/lisp/lisp_read.c \
 	        -o prototypes/prototype_lisp
 
 
@@ -272,7 +272,7 @@ prototype_lisp: lisp.c lisp.h lisp_cell.c lisp_eval.c lisp_print.c lisp_read.c |
 .PHONY: clean
 clean:
 	rm -f libvm.so libvm-production.so bin/vm bin/vm-production
-	rm -rf test/stage0_test_scratch
+	rm -rf test/stage0_test_scratch prototypes/
 
 .PHONY: clean-hard
 clean-hard: clean
