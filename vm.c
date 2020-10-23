@@ -67,7 +67,9 @@ void execute_vm(struct lilith* vm)
 int main(int argc, char **argv)
 {
 	POSIX_MODE = false;
-	int c;
+	FUZZING = false;
+	char* c;
+	int length;
 	int Memory_Size = (16 * 1024);
 
 	tape_01_name = "tape_01";
@@ -75,70 +77,68 @@ int main(int argc, char **argv)
 	char* rom_name = NULL;
 	char class;
 
-	static struct option long_options[] = {
-		{"rom", required_argument, 0, 'r'},
-		{"tape_01", required_argument, 0, '1'},
-		{"tape_02", required_argument, 0, '2'},
-		{"memory", required_argument, 0, 'm'},
-		{"POSIX-MODE", no_argument, 0, 'P'},
-		{"help", no_argument, 0, 'h'},
-		{0, 0, 0, 0}
-	};
-	int option_index = 0;
-	while ((c = getopt_long(argc, argv, "r:h:1:2:m:P", long_options, &option_index)) != -1)
+	int i = 1;
+	while(i <= argc)
 	{
-		switch (c)
+		if(NULL == argv[i])
 		{
-			case 0: break;
-			case 'r':
+			i = i + 1;
+		}
+		else if(match(argv[i], "-r") || match(argv[i], "--rom"))
+		{
+			rom_name = argv[i + 1];
+			i = i + 2;
+		}
+		else if(match(argv[i], "-h") || match(argv[i], "--help"))
+		{
+			fprintf(stdout, "Usage: %s --rom $rom [--tape_01 $foo] [--tape_02 $bar]\n", argv[0]);
+			exit(EXIT_SUCCESS);
+		}
+		else if(match(argv[i], "-1") || match(argv[i], "--tape_01"))
+		{
+			tape_01_name = argv[i + 1];
+			i = i + 2;
+		}
+		else if(match(argv[i], "-2") || match(argv[i], "--tape_02"))
+		{
+			tape_02_name = argv[i + 1];
+			i = i + 2;
+		}
+		else if(match(argv[i], "-m") || match(argv[i], "--memory"))
+		{
+			length = strlen(argv[i + 1]) - 1;
+			c = argv[i+1];
+			class = c[length];
+			c[length] = 0;
+			Memory_Size = atoi(c);
+			if('K' == class)
 			{
-				rom_name = optarg;
-				break;
+				Memory_Size = Memory_Size * 1024;
 			}
-			case 'h':
+			else if('M' == class)
 			{
-				fprintf(stdout, "Usage: %s --rom $rom [--tape_01 $foo] [--tape_02 $bar]\n", argv[0]);
-				exit(EXIT_SUCCESS);
+				Memory_Size = Memory_Size * 1024 * 1024;
 			}
-			case '1':
+			else if('G' == class)
 			{
-				tape_01_name = optarg;
-				break;
+				Memory_Size = Memory_Size * 1024 * 1024 * 1024;
 			}
-			case '2':
-			{
-				tape_02_name = optarg;
-				break;
-			}
-			case 'm':
-			{
-				int length = strlen(optarg) - 1;
-				class = optarg[length];
-				optarg[length] = 0;
-				Memory_Size = atoi(optarg);
-				if('K' == class)
-				{
-					Memory_Size = Memory_Size * 1024;
-				}
-				else if('M' == class)
-				{
-					Memory_Size = Memory_Size * 1024 * 1024;
-				}
-				else if('G' == class)
-				{
-					Memory_Size = Memory_Size * 1024 * 1024 * 1024;
-				}
-				break;
-			}
-			case 'P':
-			{
+			i = i + 2;
+		}
+		else if(match(argv[i], "-P") || match(argv[i], "--POSIX-MODE"))
+		{
 				POSIX_MODE = true;
-				break;
-			}
-			default:
-			{
-				exit(EXIT_FAILURE);
-			}
+				i = i + 1;
+		}
+		else if(match(argv[i], "-F") || match(argv[i], "--fuzzing"))
+		{
+			FUZZING = true;
+			i = i + 1;
+		}
+		else
+		{
+			fprintf(stderr, "unknown option %s\n", argv[i]);
+			exit(EXIT_FAILURE);
 		}
 	}
 

@@ -322,3 +322,8 @@ char* tape_02_name;
 
 /* Enable POSIX Mode */
 bool POSIX_MODE;
+bool FUZZING;
+
+/* Commonly useful functions */
+void require(int boolean, char* error);
+int match(char* a, char* b);

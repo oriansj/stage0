@@ -255,7 +255,11 @@ void vm_FOPEN_READ(struct lilith* vm)
 
 void vm_FOPEN_WRITE(struct lilith* vm)
 {
-	if(POSIX_MODE)
+	if(FUZZING)
+	{
+		vm->reg[0] = 0;
+	}
+	else if(POSIX_MODE)
 	{
 		char* s = string_copy(vm, vm->reg[0]);
 		/* 577 is O_WRONLY|O_CREAT|O_TRUNC, 384 is 600 in octal */
@@ -286,12 +290,16 @@ void vm_FCLOSE(struct lilith* vm)
 	{
 		if(0x00001100 == vm->reg[0])
 		{
+			require(NULL != tape_01, "tape_01 not valid for fclose\nAborting to prevent issues\n");
 			fclose(tape_01);
+			tape_01 = NULL;
 		}
 
 		if (0x00001101 == vm->reg[0])
 		{
+			require(NULL != tape_02, "tape_02 not valid for fclose\nAborting to prevent issues\n");
 			fclose(tape_02);
+			tape_02 = NULL;
 		}
 	}
 }
@@ -306,11 +314,13 @@ void vm_FSEEK(struct lilith* vm)
 	{
 		if(0x00001100 == vm->reg[0])
 		{
+			require(NULL != tape_01, "tape_01 not valid for fseek\nAborting to prevent issues\n");
 			fseek(tape_01, vm->reg[1], SEEK_CUR);
 		}
 
 		if (0x00001101 == vm->reg[0])
 		{
+			require(NULL != tape_02, "tape_02 not valid for fseek\nAborting to prevent issues\n");
 			fseek(tape_02, vm->reg[1], SEEK_CUR);
 		}
 	}
@@ -326,11 +336,13 @@ void vm_REWIND(struct lilith* vm)
 	{
 		if(0x00001100 == vm->reg[0])
 		{
+			require(NULL != tape_01, "tape_01 not valid for rewind\nAborting to prevent issues\n");
 			rewind(tape_01);
 		}
 
 		if (0x00001101 == vm->reg[0])
 		{
+			require(NULL != tape_02, "tape_02 not valid for rewind\nAborting to prevent issues\n");
 			rewind(tape_02);
 		}
 	}
@@ -359,11 +371,13 @@ void vm_FGETC(struct lilith* vm)
 
 		if(0x00001100 == vm->reg[1])
 		{
+			require(NULL != tape_01, "tape_01 not valid for fgetc\nAborting to prevent issues\n");
 			byte = fgetc(tape_01);
 		}
 
 		if (0x00001101 == vm->reg[1])
 		{
+			require(NULL != tape_02, "tape_02 not valid for fgetc\nAborting to prevent issues\n");
 			byte = fgetc(tape_02);
 		}
 	}
@@ -391,11 +405,13 @@ void vm_FPUTC(struct lilith* vm)
 
 		if(0x00001100 == vm->reg[1])
 		{
+			require(NULL != tape_01, "tape_01 not valid for fputc\nAborting to prevent issues\n");
 			fputc(byte, tape_01);
 		}
 
 		if (0x00001101 == vm->reg[1])
 		{
+			require(NULL != tape_02, "tape_02 not valid for fputc\nAborting to prevent issues\n");
 			fputc(byte, tape_02);
 		}
 	}
@@ -793,6 +809,7 @@ void DIVIDE(struct lilith* vm, struct Instruction* c)
 
 	tmp1 = (signed_vm_register)(vm->reg[c->reg2]);
 	tmp2 = (signed_vm_register)(vm->reg[c->reg3]);
+	require(0 != tmp2, "DIVIDE by zero exception\n");
 	vm->reg[c->reg0] = tmp1 / tmp2;
 	vm->reg[c->reg1] = tmp1 % tmp2;
 }
@@ -803,6 +820,7 @@ void DIVIDEU(struct lilith* vm, struct Instruction* c)
 
 	utmp1 = vm->reg[c->reg2];
 	utmp2 = vm->reg[c->reg3];
+	require(0 != utmp2, "DIVIDEU by zero exception\n");
 	vm->reg[c->reg0] = utmp1 / utmp2;
 	vm->reg[c->reg1] = utmp1 % utmp2;
 }
@@ -1026,6 +1044,7 @@ void DIV(struct lilith* vm, struct Instruction* c)
 	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
 	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
+	require(0 != tmp2, "DIV by zero exception\n");
 	vm->reg[c->reg0] = tmp1 / tmp2;
 }
 
@@ -1036,16 +1055,19 @@ void MOD(struct lilith* vm, struct Instruction* c)
 	tmp1 = (signed_vm_register)(vm->reg[c->reg1]);
 	tmp2 = (signed_vm_register)(vm->reg[c->reg2]);
 
+	require(0 != tmp2, "MOD by zero exception\n");
 	vm->reg[c->reg0] = tmp1 % tmp2;
 }
 
 void DIVU(struct lilith* vm, struct Instruction* c)
 {
+	require(0 != vm->reg[c->reg2], "DIVU by zero exception\n");
 	vm->reg[c->reg0] = vm->reg[c->reg1] / vm->reg[c->reg2];
 }
 
 void MODU(struct lilith* vm, struct Instruction* c)
 {
+	require(0 != vm->reg[c->reg2], "MODU by zero exception\n");
 	vm->reg[c->reg0] = vm->reg[c->reg1] % vm->reg[c->reg2];
 }
 
