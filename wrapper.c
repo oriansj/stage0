@@ -17,7 +17,7 @@
 
 #include "vm.h"
 #define DEBUG true
-uint32_t performance_counter;
+extern uint32_t performance_counter;
 static struct lilith* Globalvm;
 
 void unpack_byte(uint8_t a, char* c);

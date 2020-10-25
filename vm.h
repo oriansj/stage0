@@ -316,13 +316,18 @@ void read_instruction(struct lilith* vm, struct Instruction *current);
 void eval_instruction(struct lilith* vm, struct Instruction* current);
 void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* message);
 
+/* Avoid redefinition. Must be already defined in only one .c*/
+#ifndef VM_H__VAR_DEF
+#define VM_H__VAR_DEF extern
+#endif
+
 /* Allow tape names to be effectively changed */
-char* tape_01_name;
-char* tape_02_name;
+VM_H__VAR_DEF char* tape_01_name;
+VM_H__VAR_DEF char* tape_02_name;
 
 /* Enable POSIX Mode */
-bool POSIX_MODE;
-bool FUZZING;
+VM_H__VAR_DEF bool POSIX_MODE;
+VM_H__VAR_DEF bool FUZZING;
 
 /* Commonly useful functions */
 void require(int boolean, char* error);
