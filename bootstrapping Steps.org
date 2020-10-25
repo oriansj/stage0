@@ -19,7 +19,7 @@ First to get a vm that can run our code:
 make development
 
 For those of you who don't want to depend upon make, simply run:
-gcc -ggdb -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c -o bin/vm
+gcc -ggdb -DVM32=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
 
 However if you are trying to hand convert the source code to your TTL Logic
 or relay based computer to ensure complete immunity from the trusting trust attack,
@@ -32,7 +32,7 @@ mkdir roms
 * Step 1 create original bootstrap binary
 There are numerous methods but for simplicity, lets first get a basic hex assembler:
 
-gcc Linux\ Bootstrap/hex.c -o bin/hex
+gcc Linux\ Bootstrap/Legacy_pieces/hex.c -o bin/hex
 
 Then we can use it to make our bootstrap binary:
 ./bin/hex < stage0/stage0_monitor.hex0 > roms/stage0_monitor
