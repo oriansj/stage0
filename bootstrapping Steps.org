@@ -116,7 +116,7 @@ To build our line macro assembler:
 
 Now with our new line macro assembler, which with our definition file High_level_prototypes/defs means we can write straight assembly from here on out.
 
-roms/M0 should have the sha256sum of 3020b194ead31ae19ba66fc35ed95465514373f6005896350d1608c9efabbdca
+roms/M0 should have the sha256sum of cc31320b390d97409d54afb7c29171a12532aaa66487d1b2e3a0bb3ffe36dc15
 
 * Step 5b Saving a bunch of duplicate work
 Assuming that you have been doing all of the above the hard way on physical hardware with real paper tapes, this step is for you.
@@ -194,7 +194,7 @@ Then we use our M0 Line macro assembler to convert our assembly into hex2 format
 Then we need to assemble that hex into our desired program:
 ./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 48K
 
-roms/cc_x86 should with the sha256sum of d04462af441ec9c2d23080b654b4cc30f34cc27b09669146db02be7652ffdf81
+roms/cc_x86 should with the sha256sum of 1b44b454b8e7beab41ecc4fb81220ef0a396bfeb954a3589861b6807dea0c313
 
 Our C compiler will read any code in tape_01 and output the compiled output to tape_02.
 The compiled output is macro assembly (allowing for easy inspection) which then must go through the appropriate macro assembler and hex2 steps to become a working binary.
