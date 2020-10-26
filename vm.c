@@ -15,7 +15,6 @@
  * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define VM_H__VAR_DEF
 #include "vm.h"
 #include <getopt.h>
 
