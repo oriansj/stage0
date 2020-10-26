@@ -55,17 +55,24 @@ typedef struct cell
 
 struct cell* make_cons(struct cell* a, struct cell* b);
 
+
+/* Avoid redefinition. Must be already defined in only one .c*/
+#ifndef LISP_H__VAR_DEF
+#define LISP_H__VAR_DEF extern
+#endif
+
+
 /* Global objects */
-struct cell *all_symbols;
-struct cell *top_env;
-struct cell *nil;
-struct cell *tee;
-struct cell *quote;
-struct cell *s_if;
-struct cell *s_lambda;
-struct cell *s_define;
-struct cell *s_setb;
-struct cell *s_cond;
-struct cell *s_begin;
-struct cell *s_let;
-FILE* output;
+LISP_H__VAR_DEF struct cell *all_symbols;
+LISP_H__VAR_DEF struct cell *top_env;
+LISP_H__VAR_DEF struct cell *nil;
+LISP_H__VAR_DEF struct cell *tee;
+LISP_H__VAR_DEF struct cell *quote;
+LISP_H__VAR_DEF struct cell *s_if;
+LISP_H__VAR_DEF struct cell *s_lambda;
+LISP_H__VAR_DEF struct cell *s_define;
+LISP_H__VAR_DEF struct cell *s_setb;
+LISP_H__VAR_DEF struct cell *s_cond;
+LISP_H__VAR_DEF struct cell *s_begin;
+LISP_H__VAR_DEF struct cell *s_let;
+LISP_H__VAR_DEF FILE* output;
