@@ -27,19 +27,7 @@ char tty_getchar();
 #endif
 
 /* Define the value needed to split the result so that it fits the register size. */
-#ifdef VM256
-#define VM_SIZE 256
-#elif VM128
-#define VM_SIZE 128
-#elif VM64
-#define VM_SIZE 64
-#elif VM32
-#define VM_SIZE 32
-#else
-#define VM_SIZE 16
-#endif
-
-#define TO_SPLIT_REGS (((signed_wide_register) 1) << VM_SIZE)
+#define TO_SPLIT_REGS (((signed_wide_register) 1) << umax)
 
 
 /* Use first byte of next instruction to identify size */
