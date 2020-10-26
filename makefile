@@ -29,13 +29,13 @@ vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c functions/require.c 
 	$(CC) -DVM32=true vm_minimal.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-minimal
 
 vm16: vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -ggdb -DVM16=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm16
+	$(CC) -ggdb -DVM16=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm16
 
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
 	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
 
 vm64: vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -ggdb -DVM64=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm64
+	$(CC) -ggdb -DVM64=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm64
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c | bin
 	$(CC) -DVM32=true vm.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-production
@@ -112,10 +112,10 @@ xeh: Linux\ Bootstrap/Legacy_pieces/xeh.c | bin
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c tty.c
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c
 
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c
+	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c
 
 # Tests
 Generate-rom-test: ALL-ROMS
