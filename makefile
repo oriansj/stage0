@@ -29,13 +29,13 @@ vm-minimal: vm.h vm_minimal.c vm_instructions.c vm_decode.c functions/require.c 
 	$(CC) -DVM32=true vm_minimal.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-minimal
 
 vm16: vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -ggdb -DVM16=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm16
+	$(CC) -ggdb -DVM16=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm16
 
 vm: vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
 	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
 
 vm64: vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -ggdb -DVM64=true -Dtty_lib=true vm.h vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm64
+	$(CC) -ggdb -DVM64=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm64
 
 vm-production: vm.h vm.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c | bin
 	$(CC) -DVM32=true vm.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-production
@@ -112,17 +112,17 @@ xeh: Linux\ Bootstrap/Legacy_pieces/xeh.c | bin
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c tty.c
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c
 
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c
+	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c
 
 # Tests
 Generate-rom-test: ALL-ROMS
 	mkdir -p test
 	sha256sum roms/* | sort -k2 >| test/SHA256SUMS
 
-test_stage0_monitor_asm_match: asm stage0_monitor
+test_stage0_monitor_asm_match: asm hex stage0_monitor
 	mkdir -p test/stage0_test_scratch
 	sed 's/^[^#]*# //' stage0/stage0_monitor.hex0 > test/stage0_test_scratch/stage0_monitor.hex0.s
 	bin/asm test/stage0_test_scratch/stage0_monitor.hex0.s > test/stage0_test_scratch/stage0_monitor.hex0.hex0
@@ -136,8 +136,8 @@ test_stage0_monitor_asm_match: asm stage0_monitor
 
 .SILENT: testM0
 .PHONY: testM0
-testM0: vm16 vm vm64 M0-compact prototypes/prototype_M0-macro-compact ALL-ROMS
-	echo assembling ALL-ROMS with prototype_M0-macro-compact and M0 with 32 bit vm and M0-compact with vm, vm64 and vm16; \
+testM0: vm16 vm vm64 M0-compact prototype_M0-compact ALL-ROMS
+	echo assembling ALL-ROMS with prototype_M0-compact and M0 with 32 bit vm and M0-compact with vm, vm64 and vm16; \
 	VM_LIST='vm vm64 vm16'; \
 	STAGE_1_UNIFORM_PROG_LIST="stage1_assembler-0 stage1_assembler-1 \
 stage1_assembler-2 CAT SET"; \
@@ -153,7 +153,7 @@ stage1/M0-macro stage1/M0-macro-compact stage1/dehex"; \
 	done; \
 	for prog in $$ASSEMBLER_PROG_LIST; do \
 	cat High_level_prototypes/defs "$$prog".s > "$$prog"_TEMP.s; \
-	./prototypes/prototype_M0-macro-compact "$$prog"_TEMP.s > \
+	./prototypes/prototype_M0-compact "$$prog"_TEMP.s > \
 	"$$prog"_protoM0compact_TEMP.hex2; \
 	./bin/vm --memory 256K --rom roms/stage1_assembler-2 \
 	    --tape_01 "$$prog"_protoM0compact_TEMP.hex2 \

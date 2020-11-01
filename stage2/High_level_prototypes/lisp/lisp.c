@@ -15,6 +15,7 @@
  * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define LISP_H__VAR_DEF
 #include "lisp.h"
 #include <stdint.h>
 

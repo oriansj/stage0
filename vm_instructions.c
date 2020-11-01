@@ -15,6 +15,7 @@
  * along with stage0.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define VM_H__VAR_DEF
 #include "vm.h"
 #include <unistd.h>
 #include <sys/stat.h>
@@ -25,6 +26,10 @@ FILE* tape_02;
 #ifdef tty_lib
 char tty_getchar();
 #endif
+
+/* Define the value needed to split the result so that it fits the register size. */
+#define TO_SPLIT_REGS (((signed_wide_register) 1) << umax)
+
 
 /* Use first byte of next instruction to identify size */
 int next_instruction_size(struct lilith* vm)
@@ -121,7 +126,7 @@ unsigned_vm_register shift_register(unsigned_vm_register source, unsigned_vm_reg
 			amount = amount - 1;
 			if(!zero)
 			{
-				tmp = tmp | (1 << imax);
+				tmp = tmp | (((unsigned_vm_register) 1) << imax);
 			}
 		}
 	}
@@ -762,22 +767,8 @@ void MULTIPLY(struct lilith* vm, struct Instruction* c)
 	tmp2 = (signed_vm_register)( vm->reg[c->reg3]);
 	btmp1 = ((signed_wide_register)tmp1) * ((signed_wide_register)tmp2);
 
-#ifdef VM256
-	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x10000000000000000000000000000000000000000000000000000000000000000);
-	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x10000000000000000000000000000000000000000000000000000000000000000);
-#elif VM128
-	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x100000000000000000000000000000000);
-	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x100000000000000000000000000000000);
-#elif VM64
-	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x10000000000000000);
-	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x10000000000000000);
-#elif VM32
-	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x100000000);
-	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x100000000);
-#else
-	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % 0x10000);
-	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / 0x10000);
-#endif
+	vm->reg[c->reg0] = (signed_vm_register)(btmp1 % TO_SPLIT_REGS);
+	vm->reg[c->reg1] = (signed_vm_register)(btmp1 / TO_SPLIT_REGS);
 }
 
 void MULTIPLYU(struct lilith* vm, struct Instruction* c)
@@ -785,22 +776,8 @@ void MULTIPLYU(struct lilith* vm, struct Instruction* c)
 	unsigned_wide_register ubtmp1;
 
 	ubtmp1 = (unsigned_wide_register)(vm->reg[c->reg2]) * (unsigned_wide_register)(vm->reg[c->reg3]);
-#ifdef VM256
-	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x10000000000000000000000000000000000000000000000000000000000000000);
-	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x10000000000000000000000000000000000000000000000000000000000000000);
-#elif VM128
-	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x100000000000000000000000000000000);
-	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x100000000000000000000000000000000);
-#elif VM64
-	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x10000000000000000);
-	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x10000000000000000);
-#elif VM32
-	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x100000000);
-	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x100000000);
-#else
-	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % 0x10000);
-	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / 0x10000);
-#endif
+	vm->reg[c->reg0] = (signed_vm_register)(ubtmp1 % TO_SPLIT_REGS);
+	vm->reg[c->reg1] = (signed_vm_register)(ubtmp1 / TO_SPLIT_REGS);
 }
 
 void DIVIDE(struct lilith* vm, struct Instruction* c)
@@ -955,19 +932,8 @@ void MUL(struct lilith* vm, struct Instruction* c)
 
 	signed_wide_register sum = tmp1 * tmp2;
 
-
 	/* We only want the bottom half of the bits */
-#ifdef VM256
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000000000000000000000000000000000000000000000000000);
-#elif VM128
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000000000000000000000000000);
-#elif VM64
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000);
-#elif VM32
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000);
-#else
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000);
-#endif
+	vm->reg[c->reg0] = (signed_vm_register)(sum % TO_SPLIT_REGS);
 }
 
 void MULH(struct lilith* vm, struct Instruction* c)
@@ -980,17 +946,7 @@ void MULH(struct lilith* vm, struct Instruction* c)
 	signed_wide_register sum = tmp1 * tmp2;
 
 	/* We only want the top half of the bits */
-#ifdef VM256
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000000000000000000000000000000000000000000000000000);
-#elif VM128
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000000000000000000000000000);
-#elif VM64
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000);
-#elif VM32
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000);
-#else
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000);
-#endif
+	vm->reg[c->reg0] = (signed_vm_register)(sum / TO_SPLIT_REGS);
 }
 
 void MULU(struct lilith* vm, struct Instruction* c)
@@ -1002,17 +958,7 @@ void MULU(struct lilith* vm, struct Instruction* c)
 	sum = tmp1 * tmp2;
 
 	/* We only want the bottom half of the bits */
-#ifdef VM256
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000000000000000000000000000000000000000000000000000);
-#elif VM128
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000000000000000000000000000);
-#elif VM64
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000000000000000);
-#elif VM32
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x100000000);
-#else
-	vm->reg[c->reg0] = (signed_vm_register)(sum % 0x10000);
-#endif
+	vm->reg[c->reg0] = (signed_vm_register)(sum % TO_SPLIT_REGS);
 }
 
 void MULUH(struct lilith* vm, struct Instruction* c)
@@ -1024,17 +970,7 @@ void MULUH(struct lilith* vm, struct Instruction* c)
 	sum = tmp1 * tmp2;
 
 	/* We only want the top half of the bits */
-#ifdef VM256
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000000000000000000000000000000000000000000000000000);
-#elif VM128
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000000000000000000000000000);
-#elif VM64
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000000000000000);
-#elif VM32
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x100000000);
-#else
-	vm->reg[c->reg0] = (signed_vm_register)(sum / 0x10000);
-#endif
+	vm->reg[c->reg0] = (signed_vm_register)(sum / TO_SPLIT_REGS);
 }
 
 void DIV(struct lilith* vm, struct Instruction* c)
@@ -1218,7 +1154,7 @@ void ROL(struct lilith* vm, struct Instruction* c)
 	for(i = vm->reg[c->reg2]; i > 0; i = i - 1)
 	{
 		bit = (tmp & 1);
-		tmp = (tmp / 2) + (bit << imax);
+		tmp = (tmp / 2) + (((unsigned_vm_register) bit) << imax);
 	}
 
 	vm->reg[c->reg0] = tmp;
@@ -1417,17 +1353,7 @@ void FALSE(struct lilith* vm, struct Instruction* c)
 
 void TRUE(struct lilith* vm, struct Instruction* c)
 {
-#ifdef VM256
-	vm->reg[c->reg0] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-#elif VM128
-	vm->reg[c->reg0] = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-#elif VM64
-	vm->reg[c->reg0] = 0xFFFFFFFFFFFFFFFF;
-#elif VM32
-	vm->reg[c->reg0] = 0xFFFFFFFF;
-#else
-	vm->reg[c->reg0] = 0xFFFF;
-#endif
+	vm->reg[c->reg0] = TO_SPLIT_REGS -1;
 }
 
 void JSR_COROUTINE(struct lilith* vm, struct Instruction* c)
