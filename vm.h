@@ -17,318 +17,233 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-
-#ifdef VM256
-typedef __int512_t signed_wide_register;
-typedef __uint512_t unsigned_wide_register;
-typedef __int256_t signed_vm_register;
-typedef __uint256_t unsigned_vm_register;
-#define umax 256
-#define imax 255
-#define reg_size 32
-#define arch_name "knight256-base"
-#elif VM128
-typedef __int256_t signed_wide_register;
-typedef __uint256_t unsigned_wide_register;
-typedef __int128_t signed_vm_register;
-typedef __uint128_t unsigned_vm_register;
-#define umax 128
-#define imax 127
-#define reg_size 16
-#define arch_name "knight128-base"
-#elif VM64
-typedef __int128_t signed_wide_register;
-typedef __uint128_t unsigned_wide_register;
-typedef int64_t signed_vm_register;
-typedef uint64_t unsigned_vm_register;
-#define umax 64
-#define imax 63
-#define reg_size 8
-#define arch_name "knight64-base"
-#elif VM32
-typedef int64_t signed_wide_register;
-typedef uint64_t unsigned_wide_register;
-typedef int32_t signed_vm_register;
-typedef uint32_t unsigned_vm_register;
-#define umax 32
-#define imax 31
-#define reg_size 4
-#define arch_name "knight32-base"
-#else
-typedef int32_t signed_wide_register;
-typedef uint32_t unsigned_wide_register;
-typedef int16_t signed_vm_register;
-typedef uint16_t unsigned_vm_register;
-#define umax 16
-#define imax 15
-#define reg_size 2
-#define arch_name "knight16-base"
-#define vm16 42
-#endif
-
-/* Virtual machine state */
-struct lilith
-{
-	uint8_t *memory;
-	size_t amount_of_Ram;
-	unsigned_vm_register reg[16];
-	unsigned_vm_register ip;
-	bool halted;
-	bool exception;
-};
-
-/* Unpacked instruction */
-struct Instruction
-{
-	unsigned_vm_register ip;
-	uint8_t raw0, raw1, raw2, raw3;
-	char opcode[3];
-	uint32_t raw_XOP;
-	char XOP[6];
-	char operation[9];
-	int16_t raw_Immediate;
-	char Immediate[7];
-	uint32_t HAL_CODE;
-	uint8_t reg0;
-	uint8_t reg1;
-	uint8_t reg2;
-	uint8_t reg3;
-	bool invalid;
-};
+#include "vm_types.h"
 
 /* Prototypes for functions in vm_instructions.c*/
-void vm_EXIT(struct lilith* vm, uint64_t performance_counter);
-void vm_CHMOD(struct lilith* vm);
-void vm_UNAME(struct lilith* vm);
-void vm_GETCWD(struct lilith* vm);
-void vm_CHDIR(struct lilith* vm);
-void vm_FCHDIR(struct lilith* vm);
-void vm_ACCESS(struct lilith* vm);
-void vm_FOPEN(struct lilith* vm);
-void vm_FOPEN_READ(struct lilith* vm);
-void vm_FOPEN_WRITE(struct lilith* vm);
-void vm_FCLOSE(struct lilith* vm);
-void vm_FSEEK(struct lilith* vm);
-void vm_REWIND(struct lilith* vm);
-void vm_FGETC(struct lilith* vm);
-void vm_FPUTC(struct lilith* vm);
-void vm_HAL_MEM(struct lilith* vm);
-void ADD_CI(struct lilith* vm, struct Instruction* c);
-void ADD_CO(struct lilith* vm, struct Instruction* c);
-void ADD_CIO(struct lilith* vm, struct Instruction* c);
-void ADDU_CI(struct lilith* vm, struct Instruction* c);
-void ADDU_CO(struct lilith* vm, struct Instruction* c);
-void ADDU_CIO(struct lilith* vm, struct Instruction* c);
-void SUB_BI(struct lilith* vm, struct Instruction* c);
-void SUB_BO(struct lilith* vm, struct Instruction* c);
-void SUB_BIO(struct lilith* vm, struct Instruction* c);
-void SUBU_BI(struct lilith* vm, struct Instruction* c);
-void SUBU_BO(struct lilith* vm, struct Instruction* c);
-void SUBU_BIO(struct lilith* vm, struct Instruction* c);
-void MULTIPLY(struct lilith* vm, struct Instruction* c);
-void MULTIPLYU(struct lilith* vm, struct Instruction* c);
-void DIVIDE(struct lilith* vm, struct Instruction* c);
-void DIVIDEU(struct lilith* vm, struct Instruction* c);
-void MUX(struct lilith* vm, struct Instruction* c);
-void NMUX(struct lilith* vm, struct Instruction* c);
-void SORT(struct lilith* vm, struct Instruction* c);
-void SORTU(struct lilith* vm, struct Instruction* c);
-void ADD(struct lilith* vm, struct Instruction* c);
-void ADDU(struct lilith* vm, struct Instruction* c);
-void SUB(struct lilith* vm, struct Instruction* c);
-void SUBU(struct lilith* vm, struct Instruction* c);
-void CMP(struct lilith* vm, struct Instruction* c);
-void CMPU(struct lilith* vm, struct Instruction* c);
-void MUL(struct lilith* vm, struct Instruction* c);
-void MULH(struct lilith* vm, struct Instruction* c);
-void MULU(struct lilith* vm, struct Instruction* c);
-void MULUH(struct lilith* vm, struct Instruction* c);
-void DIV(struct lilith* vm, struct Instruction* c);
-void MOD(struct lilith* vm, struct Instruction* c);
-void DIVU(struct lilith* vm, struct Instruction* c);
-void MODU(struct lilith* vm, struct Instruction* c);
-void MAX(struct lilith* vm, struct Instruction* c);
-void MAXU(struct lilith* vm, struct Instruction* c);
-void MIN(struct lilith* vm, struct Instruction* c);
-void MINU(struct lilith* vm, struct Instruction* c);
-void AND(struct lilith* vm, struct Instruction* c);
-void OR(struct lilith* vm, struct Instruction* c);
-void XOR(struct lilith* vm, struct Instruction* c);
-void NAND(struct lilith* vm, struct Instruction* c);
-void NOR(struct lilith* vm, struct Instruction* c);
-void XNOR(struct lilith* vm, struct Instruction* c);
-void MPQ(struct lilith* vm, struct Instruction* c);
-void LPQ(struct lilith* vm, struct Instruction* c);
-void CPQ(struct lilith* vm, struct Instruction* c);
-void BPQ(struct lilith* vm, struct Instruction* c);
-void SAL(struct lilith* vm, struct Instruction* c);
-void SAR(struct lilith* vm, struct Instruction* c);
-void SL0(struct lilith* vm, struct Instruction* c);
-void SR0(struct lilith* vm, struct Instruction* c);
-void SL1(struct lilith* vm, struct Instruction* c);
-void SR1(struct lilith* vm, struct Instruction* c);
-void ROL(struct lilith* vm, struct Instruction* c);
-void ROR(struct lilith* vm, struct Instruction* c);
-void LOADX(struct lilith* vm, struct Instruction* c);
-void LOADX8(struct lilith* vm, struct Instruction* c);
-void LOADXU8(struct lilith* vm, struct Instruction* c);
-void LOADX16(struct lilith* vm, struct Instruction* c);
-void LOADXU16(struct lilith* vm, struct Instruction* c);
-void LOADX32(struct lilith* vm, struct Instruction* c);
-void LOADXU32(struct lilith* vm, struct Instruction* c);
-void STOREX(struct lilith* vm, struct Instruction* c);
-void STOREX8(struct lilith* vm, struct Instruction* c);
-void STOREX16(struct lilith* vm, struct Instruction* c);
-void STOREX32(struct lilith* vm, struct Instruction* c);
-void NEG(struct lilith* vm, struct Instruction* c);
-void ABS(struct lilith* vm, struct Instruction* c);
-void NABS(struct lilith* vm, struct Instruction* c);
-void SWAP(struct lilith* vm, struct Instruction* c);
-void COPY(struct lilith* vm, struct Instruction* c);
-void MOVE(struct lilith* vm, struct Instruction* c);
-void BRANCH(struct lilith* vm, struct Instruction* c);
-void CALL(struct lilith* vm, struct Instruction* c);
-void READPC(struct lilith* vm, struct Instruction* c);
-void READSCID(struct lilith* vm, struct Instruction* c);
-void FALSE(struct lilith* vm, struct Instruction* c);
-void TRUE(struct lilith* vm, struct Instruction* c);
-void JSR_COROUTINE(struct lilith* vm, struct Instruction* c);
-void RET(struct lilith* vm, struct Instruction* c);
-void PUSHPC(struct lilith* vm, struct Instruction* c);
-void POPPC(struct lilith* vm, struct Instruction* c);
-void ADDI(struct lilith* vm, struct Instruction* c);
-void ADDUI(struct lilith* vm, struct Instruction* c);
-void SUBI(struct lilith* vm, struct Instruction* c);
-void SUBUI(struct lilith* vm, struct Instruction* c);
-void CMPI(struct lilith* vm, struct Instruction* c);
-void LOAD(struct lilith* vm, struct Instruction* c);
-void LOAD8(struct lilith* vm, struct Instruction* c);
-void LOADU8(struct lilith* vm, struct Instruction* c);
-void LOAD16(struct lilith* vm, struct Instruction* c);
-void LOADU16(struct lilith* vm, struct Instruction* c);
-void LOAD32(struct lilith* vm, struct Instruction* c);
-void LOADU32(struct lilith* vm, struct Instruction* c);
-void CMPUI(struct lilith* vm, struct Instruction* c);
-void STORE(struct lilith* vm, struct Instruction* c);
-void STORE8(struct lilith* vm, struct Instruction* c);
-void STORE16(struct lilith* vm, struct Instruction* c);
-void STORE32(struct lilith* vm, struct Instruction* c);
-void JUMP_C(struct lilith* vm, struct Instruction* c);
-void JUMP_B(struct lilith* vm, struct Instruction* c);
-void JUMP_O(struct lilith* vm, struct Instruction* c);
-void JUMP_G(struct lilith* vm, struct Instruction* c);
-void JUMP_GE(struct lilith* vm, struct Instruction* c);
-void JUMP_E(struct lilith* vm, struct Instruction* c);
-void JUMP_NE(struct lilith* vm, struct Instruction* c);
-void JUMP_LE(struct lilith* vm, struct Instruction* c);
-void JUMP_L(struct lilith* vm, struct Instruction* c);
-void JUMP_Z(struct lilith* vm, struct Instruction* c);
-void JUMP_NZ(struct lilith* vm, struct Instruction* c);
-void CALLI(struct lilith* vm, struct Instruction* c);
-void LOADI(struct lilith* vm, struct Instruction* c);
-void LOADUI(struct lilith* vm, struct Instruction* c);
-void SALI(struct lilith* vm, struct Instruction* c);
-void SARI(struct lilith* vm, struct Instruction* c);
-void SL0I(struct lilith* vm, struct Instruction* c);
-void SR0I(struct lilith* vm, struct Instruction* c);
-void SL1I(struct lilith* vm, struct Instruction* c);
-void SR1I(struct lilith* vm, struct Instruction* c);
-void LOADR(struct lilith* vm, struct Instruction* c);
-void LOADR8(struct lilith* vm, struct Instruction* c);
-void LOADRU8(struct lilith* vm, struct Instruction* c);
-void LOADR16(struct lilith* vm, struct Instruction* c);
-void LOADRU16(struct lilith* vm, struct Instruction* c);
-void LOADR32(struct lilith* vm, struct Instruction* c);
-void LOADRU32(struct lilith* vm, struct Instruction* c);
-void STORER(struct lilith* vm, struct Instruction* c);
-void STORER8(struct lilith* vm, struct Instruction* c);
-void STORER16(struct lilith* vm, struct Instruction* c);
-void STORER32(struct lilith* vm, struct Instruction* c);
-void JUMP(struct lilith* vm, struct Instruction* c);
-void JUMP_P(struct lilith* vm, struct Instruction* c);
-void JUMP_NP(struct lilith* vm, struct Instruction* c);
-void CMPJUMPI_G(struct lilith* vm, struct Instruction* c);
-void CMPJUMPI_GE(struct lilith* vm, struct Instruction* c);
-void CMPJUMPI_E(struct lilith* vm, struct Instruction* c);
-void CMPJUMPI_NE(struct lilith* vm, struct Instruction* c);
-void CMPJUMPI_LE(struct lilith* vm, struct Instruction* c);
-void CMPJUMPI_L(struct lilith* vm, struct Instruction* c);
-void CMPJUMPUI_G(struct lilith* vm, struct Instruction* c);
-void CMPJUMPUI_GE(struct lilith* vm, struct Instruction* c);
-void CMPJUMPUI_LE(struct lilith* vm, struct Instruction* c);
-void CMPJUMPUI_L(struct lilith* vm, struct Instruction* c);
-void CMPSKIPI_G(struct lilith* vm, struct Instruction* c);
-void CMPSKIPI_GE(struct lilith* vm, struct Instruction* c);
-void CMPSKIPI_E(struct lilith* vm, struct Instruction* c);
-void CMPSKIPI_NE(struct lilith* vm, struct Instruction* c);
-void CMPSKIPI_LE(struct lilith* vm, struct Instruction* c);
-void CMPSKIPI_L(struct lilith* vm, struct Instruction* c);
-void CMPSKIPUI_G(struct lilith* vm, struct Instruction* c);
-void CMPSKIPUI_GE(struct lilith* vm, struct Instruction* c);
-void CMPSKIPUI_LE(struct lilith* vm, struct Instruction* c);
-void CMPSKIPUI_L(struct lilith* vm, struct Instruction* c);
-void PUSHR(struct lilith* vm, struct Instruction* c);
-void PUSH8(struct lilith* vm, struct Instruction* c);
-void PUSH16(struct lilith* vm, struct Instruction* c);
-void PUSH32(struct lilith* vm, struct Instruction* c);
-void POPR(struct lilith* vm, struct Instruction* c);
-void POP8(struct lilith* vm, struct Instruction* c);
-void POPU8(struct lilith* vm, struct Instruction* c);
-void POP16(struct lilith* vm, struct Instruction* c);
-void POPU16(struct lilith* vm, struct Instruction* c);
-void POP32(struct lilith* vm, struct Instruction* c);
-void POPU32(struct lilith* vm, struct Instruction* c);
-void ANDI(struct lilith* vm, struct Instruction* c);
-void ORI(struct lilith* vm, struct Instruction* c);
-void XORI(struct lilith* vm, struct Instruction* c);
-void NANDI(struct lilith* vm, struct Instruction* c);
-void NORI(struct lilith* vm, struct Instruction* c);
-void XNORI(struct lilith* vm, struct Instruction* c);
-void NOT(struct lilith* vm, struct Instruction* c);
-void CMPSKIP_G(struct lilith* vm, struct Instruction* c);
-void CMPSKIP_GE(struct lilith* vm, struct Instruction* c);
-void CMPSKIP_E(struct lilith* vm, struct Instruction* c);
-void CMPSKIP_NE(struct lilith* vm, struct Instruction* c);
-void CMPSKIP_LE(struct lilith* vm, struct Instruction* c);
-void CMPSKIP_L(struct lilith* vm, struct Instruction* c);
-void CMPSKIPU_G(struct lilith* vm, struct Instruction* c);
-void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c);
-void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c);
-void CMPSKIPU_L(struct lilith* vm, struct Instruction* c);
-void CMPJUMP_G(struct lilith* vm, struct Instruction* c);
-void CMPJUMP_GE(struct lilith* vm, struct Instruction* c);
-void CMPJUMP_E(struct lilith* vm, struct Instruction* c);
-void CMPJUMP_NE(struct lilith* vm, struct Instruction* c);
-void CMPJUMP_LE(struct lilith* vm, struct Instruction* c);
-void CMPJUMP_L(struct lilith* vm, struct Instruction* c);
-void CMPJUMPU_G(struct lilith* vm, struct Instruction* c);
-void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c);
-void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c);
-void CMPJUMPU_L(struct lilith* vm, struct Instruction* c);
+extern void vm_EXIT(struct lilith* vm, uint64_t performance_counter);
+extern void vm_CHMOD(struct lilith* vm);
+extern void vm_UNAME(struct lilith* vm);
+extern void vm_GETCWD(struct lilith* vm);
+extern void vm_CHDIR(struct lilith* vm);
+extern void vm_FCHDIR(struct lilith* vm);
+extern void vm_ACCESS(struct lilith* vm);
+extern void vm_FOPEN(struct lilith* vm);
+extern void vm_FOPEN_READ(struct lilith* vm);
+extern void vm_FOPEN_WRITE(struct lilith* vm);
+extern void vm_FCLOSE(struct lilith* vm);
+extern void vm_FSEEK(struct lilith* vm);
+extern void vm_REWIND(struct lilith* vm);
+extern void vm_FGETC(struct lilith* vm);
+extern void vm_FPUTC(struct lilith* vm);
+extern void vm_HAL_MEM(struct lilith* vm);
+extern void ADD_CI(struct lilith* vm, struct Instruction* c);
+extern void ADD_CO(struct lilith* vm, struct Instruction* c);
+extern void ADD_CIO(struct lilith* vm, struct Instruction* c);
+extern void ADDU_CI(struct lilith* vm, struct Instruction* c);
+extern void ADDU_CO(struct lilith* vm, struct Instruction* c);
+extern void ADDU_CIO(struct lilith* vm, struct Instruction* c);
+extern void SUB_BI(struct lilith* vm, struct Instruction* c);
+extern void SUB_BO(struct lilith* vm, struct Instruction* c);
+extern void SUB_BIO(struct lilith* vm, struct Instruction* c);
+extern void SUBU_BI(struct lilith* vm, struct Instruction* c);
+extern void SUBU_BO(struct lilith* vm, struct Instruction* c);
+extern void SUBU_BIO(struct lilith* vm, struct Instruction* c);
+extern void MULTIPLY(struct lilith* vm, struct Instruction* c);
+extern void MULTIPLYU(struct lilith* vm, struct Instruction* c);
+extern void DIVIDE(struct lilith* vm, struct Instruction* c);
+extern void DIVIDEU(struct lilith* vm, struct Instruction* c);
+extern void MUX(struct lilith* vm, struct Instruction* c);
+extern void NMUX(struct lilith* vm, struct Instruction* c);
+extern void SORT(struct lilith* vm, struct Instruction* c);
+extern void SORTU(struct lilith* vm, struct Instruction* c);
+extern void ADD(struct lilith* vm, struct Instruction* c);
+extern void ADDU(struct lilith* vm, struct Instruction* c);
+extern void SUB(struct lilith* vm, struct Instruction* c);
+extern void SUBU(struct lilith* vm, struct Instruction* c);
+extern void CMP(struct lilith* vm, struct Instruction* c);
+extern void CMPU(struct lilith* vm, struct Instruction* c);
+extern void MUL(struct lilith* vm, struct Instruction* c);
+extern void MULH(struct lilith* vm, struct Instruction* c);
+extern void MULU(struct lilith* vm, struct Instruction* c);
+extern void MULUH(struct lilith* vm, struct Instruction* c);
+extern void DIV(struct lilith* vm, struct Instruction* c);
+extern void MOD(struct lilith* vm, struct Instruction* c);
+extern void DIVU(struct lilith* vm, struct Instruction* c);
+extern void MODU(struct lilith* vm, struct Instruction* c);
+extern void MAX(struct lilith* vm, struct Instruction* c);
+extern void MAXU(struct lilith* vm, struct Instruction* c);
+extern void MIN(struct lilith* vm, struct Instruction* c);
+extern void MINU(struct lilith* vm, struct Instruction* c);
+extern void AND(struct lilith* vm, struct Instruction* c);
+extern void OR(struct lilith* vm, struct Instruction* c);
+extern void XOR(struct lilith* vm, struct Instruction* c);
+extern void NAND(struct lilith* vm, struct Instruction* c);
+extern void NOR(struct lilith* vm, struct Instruction* c);
+extern void XNOR(struct lilith* vm, struct Instruction* c);
+extern void MPQ(struct lilith* vm, struct Instruction* c);
+extern void LPQ(struct lilith* vm, struct Instruction* c);
+extern void CPQ(struct lilith* vm, struct Instruction* c);
+extern void BPQ(struct lilith* vm, struct Instruction* c);
+extern void SAL(struct lilith* vm, struct Instruction* c);
+extern void SAR(struct lilith* vm, struct Instruction* c);
+extern void SL0(struct lilith* vm, struct Instruction* c);
+extern void SR0(struct lilith* vm, struct Instruction* c);
+extern void SL1(struct lilith* vm, struct Instruction* c);
+extern void SR1(struct lilith* vm, struct Instruction* c);
+extern void ROL(struct lilith* vm, struct Instruction* c);
+extern void ROR(struct lilith* vm, struct Instruction* c);
+extern void LOADX(struct lilith* vm, struct Instruction* c);
+extern void LOADX8(struct lilith* vm, struct Instruction* c);
+extern void LOADXU8(struct lilith* vm, struct Instruction* c);
+extern void LOADX16(struct lilith* vm, struct Instruction* c);
+extern void LOADXU16(struct lilith* vm, struct Instruction* c);
+extern void LOADX32(struct lilith* vm, struct Instruction* c);
+extern void LOADXU32(struct lilith* vm, struct Instruction* c);
+extern void STOREX(struct lilith* vm, struct Instruction* c);
+extern void STOREX8(struct lilith* vm, struct Instruction* c);
+extern void STOREX16(struct lilith* vm, struct Instruction* c);
+extern void STOREX32(struct lilith* vm, struct Instruction* c);
+extern void NEG(struct lilith* vm, struct Instruction* c);
+extern void ABS(struct lilith* vm, struct Instruction* c);
+extern void NABS(struct lilith* vm, struct Instruction* c);
+extern void SWAP(struct lilith* vm, struct Instruction* c);
+extern void COPY(struct lilith* vm, struct Instruction* c);
+extern void MOVE(struct lilith* vm, struct Instruction* c);
+extern void BRANCH(struct lilith* vm, struct Instruction* c);
+extern void CALL(struct lilith* vm, struct Instruction* c);
+extern void READPC(struct lilith* vm, struct Instruction* c);
+extern void READSCID(struct lilith* vm, struct Instruction* c);
+extern void FALSE(struct lilith* vm, struct Instruction* c);
+extern void TRUE(struct lilith* vm, struct Instruction* c);
+extern void JSR_COROUTINE(struct lilith* vm, struct Instruction* c);
+extern void RET(struct lilith* vm, struct Instruction* c);
+extern void PUSHPC(struct lilith* vm, struct Instruction* c);
+extern void POPPC(struct lilith* vm, struct Instruction* c);
+extern void ADDI(struct lilith* vm, struct Instruction* c);
+extern void ADDUI(struct lilith* vm, struct Instruction* c);
+extern void SUBI(struct lilith* vm, struct Instruction* c);
+extern void SUBUI(struct lilith* vm, struct Instruction* c);
+extern void CMPI(struct lilith* vm, struct Instruction* c);
+extern void LOAD(struct lilith* vm, struct Instruction* c);
+extern void LOAD8(struct lilith* vm, struct Instruction* c);
+extern void LOADU8(struct lilith* vm, struct Instruction* c);
+extern void LOAD16(struct lilith* vm, struct Instruction* c);
+extern void LOADU16(struct lilith* vm, struct Instruction* c);
+extern void LOAD32(struct lilith* vm, struct Instruction* c);
+extern void LOADU32(struct lilith* vm, struct Instruction* c);
+extern void CMPUI(struct lilith* vm, struct Instruction* c);
+extern void STORE(struct lilith* vm, struct Instruction* c);
+extern void STORE8(struct lilith* vm, struct Instruction* c);
+extern void STORE16(struct lilith* vm, struct Instruction* c);
+extern void STORE32(struct lilith* vm, struct Instruction* c);
+extern void JUMP_C(struct lilith* vm, struct Instruction* c);
+extern void JUMP_B(struct lilith* vm, struct Instruction* c);
+extern void JUMP_O(struct lilith* vm, struct Instruction* c);
+extern void JUMP_G(struct lilith* vm, struct Instruction* c);
+extern void JUMP_GE(struct lilith* vm, struct Instruction* c);
+extern void JUMP_E(struct lilith* vm, struct Instruction* c);
+extern void JUMP_NE(struct lilith* vm, struct Instruction* c);
+extern void JUMP_LE(struct lilith* vm, struct Instruction* c);
+extern void JUMP_L(struct lilith* vm, struct Instruction* c);
+extern void JUMP_Z(struct lilith* vm, struct Instruction* c);
+extern void JUMP_NZ(struct lilith* vm, struct Instruction* c);
+extern void CALLI(struct lilith* vm, struct Instruction* c);
+extern void LOADI(struct lilith* vm, struct Instruction* c);
+extern void LOADUI(struct lilith* vm, struct Instruction* c);
+extern void SALI(struct lilith* vm, struct Instruction* c);
+extern void SARI(struct lilith* vm, struct Instruction* c);
+extern void SL0I(struct lilith* vm, struct Instruction* c);
+extern void SR0I(struct lilith* vm, struct Instruction* c);
+extern void SL1I(struct lilith* vm, struct Instruction* c);
+extern void SR1I(struct lilith* vm, struct Instruction* c);
+extern void LOADR(struct lilith* vm, struct Instruction* c);
+extern void LOADR8(struct lilith* vm, struct Instruction* c);
+extern void LOADRU8(struct lilith* vm, struct Instruction* c);
+extern void LOADR16(struct lilith* vm, struct Instruction* c);
+extern void LOADRU16(struct lilith* vm, struct Instruction* c);
+extern void LOADR32(struct lilith* vm, struct Instruction* c);
+extern void LOADRU32(struct lilith* vm, struct Instruction* c);
+extern void STORER(struct lilith* vm, struct Instruction* c);
+extern void STORER8(struct lilith* vm, struct Instruction* c);
+extern void STORER16(struct lilith* vm, struct Instruction* c);
+extern void STORER32(struct lilith* vm, struct Instruction* c);
+extern void JUMP(struct lilith* vm, struct Instruction* c);
+extern void JUMP_P(struct lilith* vm, struct Instruction* c);
+extern void JUMP_NP(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPI_G(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPI_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPI_E(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPI_NE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPI_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPI_L(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPUI_G(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPUI_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPUI_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPUI_L(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPI_G(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPI_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPI_E(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPI_NE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPI_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPI_L(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPUI_G(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPUI_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPUI_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPUI_L(struct lilith* vm, struct Instruction* c);
+extern void PUSHR(struct lilith* vm, struct Instruction* c);
+extern void PUSH8(struct lilith* vm, struct Instruction* c);
+extern void PUSH16(struct lilith* vm, struct Instruction* c);
+extern void PUSH32(struct lilith* vm, struct Instruction* c);
+extern void POPR(struct lilith* vm, struct Instruction* c);
+extern void POP8(struct lilith* vm, struct Instruction* c);
+extern void POPU8(struct lilith* vm, struct Instruction* c);
+extern void POP16(struct lilith* vm, struct Instruction* c);
+extern void POPU16(struct lilith* vm, struct Instruction* c);
+extern void POP32(struct lilith* vm, struct Instruction* c);
+extern void POPU32(struct lilith* vm, struct Instruction* c);
+extern void ANDI(struct lilith* vm, struct Instruction* c);
+extern void ORI(struct lilith* vm, struct Instruction* c);
+extern void XORI(struct lilith* vm, struct Instruction* c);
+extern void NANDI(struct lilith* vm, struct Instruction* c);
+extern void NORI(struct lilith* vm, struct Instruction* c);
+extern void XNORI(struct lilith* vm, struct Instruction* c);
+extern void NOT(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIP_G(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIP_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIP_E(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIP_NE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIP_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIP_L(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPU_G(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPU_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPU_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPSKIPU_L(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMP_G(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMP_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMP_E(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMP_NE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMP_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMP_L(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPU_G(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c);
+extern void CMPJUMPU_L(struct lilith* vm, struct Instruction* c);
 
 /* Prototypes for functions in vm_decode.c*/
-struct lilith* create_vm(size_t size);
-void destroy_vm(struct lilith* vm);
-void read_instruction(struct lilith* vm, struct Instruction *current);
-void eval_instruction(struct lilith* vm, struct Instruction* current);
-void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* message);
-
-/* Avoid redefinition. Must be already defined in only one .c*/
-#ifndef VM_H__VAR_DEF
-#define VM_H__VAR_DEF extern
-#endif
+extern struct lilith* create_vm(size_t size);
+extern void destroy_vm(struct lilith* vm);
+extern void read_instruction(struct lilith* vm, struct Instruction *current);
+extern void eval_instruction(struct lilith* vm, struct Instruction* current);
+extern void outside_of_world(struct lilith* vm, unsigned_vm_register place, char* message);
 
 /* Allow tape names to be effectively changed */
-VM_H__VAR_DEF char* tape_01_name;
-VM_H__VAR_DEF char* tape_02_name;
+extern char* tape_01_name;
+extern char* tape_02_name;
 
 /* Enable POSIX Mode */
-VM_H__VAR_DEF bool POSIX_MODE;
-VM_H__VAR_DEF bool FUZZING;
+extern bool POSIX_MODE;
+extern bool FUZZING;
 
 /* Commonly useful functions */
-void require(int boolean, char* error);
-int match(char* a, char* b);
+extern void require(int boolean, char* error);
+extern int match(char* a, char* b);

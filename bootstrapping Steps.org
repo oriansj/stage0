@@ -19,7 +19,7 @@ First to get a vm that can run our code:
 make development
 
 For those of you who don't want to depend upon make, simply run:
-gcc -ggdb -DVM32=true -Dtty_lib=true vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
+gcc -ggdb -DVM32=true -Dtty_lib=true vm.c vm_globals.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
 
 However if you are trying to hand convert the source code to your TTL Logic
 or relay based computer to ensure complete immunity from the trusting trust attack,
