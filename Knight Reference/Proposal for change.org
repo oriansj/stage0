@@ -34,10 +34,53 @@ To reduce the number of registers to save, an additional register (RSAVE) can be
 Even a seperate FRSAVE for floats and VRSAVE for vectors, if they are seperate register files.
 In DEC Alpha 21264 used seperate Integer register files for each execution unit. Writes to any of the register files thus have to be synchronized, which required a clock cycle to complete, negatively impacting performance by one percent.
 
+** Reserve single byte 0x69 for overflow trapping prefix
+*** Benefits
+Instructions checking for overflow do not need to be present at all instructions that could overflow; thus resulting in a smaller binary.
+Overflow condition codes do not need to stored in a register.
+
+*** Disadvantages
+This induces additional implemention complexity.
+This will consume one of the 256 opcode space.
+
+*** Supporting material
+Real world example: x86 into instruction
+Real world counter example: MIPS overflow trapping behavior
+This was explicitly unavailable for AMD64
+
+** Reserve single byte 0x99 as an experimental prefix
+*** Benefits
+Allow implementers to experiment with custom instructions; that could be shifted to proper encodings with a microcode update if they are found to be generally useful and thus added to the standard.
+
+*** Disadvantages
+This will consume one of the 256 opcode space.
+Use will result in binaries that only work on specific hardware.
+
+*** Supporting material
+Real world example: OpenPOWER Foundation PowerPC
+Real world counter example: Berkeley RISC-V
+
 * Reviewed
 * In Debate
 * Voting on
 * Denied
+** Optimize immediate encoding
+*** Benefits
+Immediates can be encoded in less bits.
+Enables the use of just a single immediate size.
+
+*** Disadvantages
+It is a bitch and a half to bootstrap when dealing with this crap.
+Forces additional complexity on the assembler writer.
+
+*** Supporting material
+Real world example: RISC-V
+Real world counter example: Every sane architecture
+RISC-V has been known to break immediates into 4 different chunks with different properties.
+
+*** Reason for Denial
+Bootstrapping simplicity will not be compromised. NO EXCEPTIONS.
+
 ** Add Condition Code Register
 *** Benefits
 Allows one to remove need for encoding a condition register in instructions that effect conditional states and thus have more compact representations.
