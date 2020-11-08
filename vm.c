@@ -16,7 +16,6 @@
  */
 
 #include "vm.h"
-#include <getopt.h>
 
 /* Load program tape into Memory */
 size_t load_program(struct lilith* vm, char* rom_name)

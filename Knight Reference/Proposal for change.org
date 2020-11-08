@@ -1,0 +1,135 @@
+## Copyright (C) 2016,2020 Jeremiah Orians
+## This file is part of stage0.
+##
+## stage0 is free software: you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation, either version 3 of the License, or
+## (at your option) any later version.
+##
+## stage0 is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
+
+* Unreviewed
+** Unified Floating Point/Integer Registers
+*** Benefits
+Removes need for instructions that copy values between floating point and integer register sets.
+Allows all registers to be used when performing floating point or integer heavy code bases.
+
+*** Disadvantages
+This requires a single register file to have sufficient read and write ports to support both the integer execution unit and the floating-point unit.
+The connections for each port is an additional capacitive load that must be driven by register memory cell.
+This makes it more difficult to build high frequency superscalar implementations.
+Requires registers to be large enough to hold floating point types supported. eg 32bit, 64bit, 128bit, etc
+
+*** Supporting material
+Real world example: Motorola 88000, DEC Alpha 21264
+Real world counter example: Intel x86, Motorola 68000
+Adding an entire new set of registers, which means that operating system software needs to be modified to preserve additional CPU state information.
+To reduce the number of registers to save, an additional register (RSAVE) can be added to track which registers have been modified - unmodified registers don't need to be stored.
+Even a seperate FRSAVE for floats and VRSAVE for vectors, if they are seperate register files.
+In DEC Alpha 21264 used seperate Integer register files for each execution unit. Writes to any of the register files thus have to be synchronized, which required a clock cycle to complete, negatively impacting performance by one percent.
+
+* Reviewed
+* In Debate
+* Voting on
+* Denied
+** Add Condition Code Register
+*** Benefits
+Allows one to remove need for encoding a condition register in instructions that effect conditional states and thus have more compact representations.
+Removes need to spend limited registers on storing conditional states.
+
+*** Disadvantages
+Requires additional transistors in minimal implementations.
+In pipelined processors, such as superscalar and speculative processors, this can create hazards that slow processing or require extra hardware to work around them.
+Requires additional instructions to save and restore its contents.
+
+*** Supporting material
+Real world example: Intel x86, AMD AMD64, ARM ARM 32bit architecture
+Real world counter example: Stanford MIPS and DEC Alpha
+The use of condition registers can be avoided by the use of compare-branch and compare-jump instructions; which can be expanded into seperate instructions internally.
+
+*** Reason for Denial
+Not compatible with historical Knight implementations.
+The advantages of a Dedicated Condition Code register; like MIPS Dedicated Multiply/Divide registers are not worth the trouble they provide.
+
+** Make all instructions have conditional execution
+*** Benefits
+Conditional execution of instructions reduces branch overhead and compensates for the lack of a branch predictor in minimal chips.
+Reduces the number of branch, jump and skip instructions.
+
+*** Disadvantages
+Increases the size of all instructions.
+Significantly increases complexity of OoO implementations.
+Requires a Condition Code Register to not have to encode an additional register with all instructions.
+Hyper-majority of all instructions will be always execute.
+Induces implementation complexity that costs additional transistors.
+
+*** Supporting material
+Real world example: ARM 32bit, x86 CMOV
+Real world counter example: Most reasonable architectures
+Predicates are basically a way to make an OoO machinerun very slowly: they generate unbreakable data dependencies in ways a branch does not.
+So a predicate makes perfect sense in an in-order machine that is statically scheduled.
+
+*** Reason for Denial
+The disadvantages outweigh the advantages.
+It tries to be too clever by half and fails on all accounts.
+
+** include shifts and/or rotates into arithmetic instructions
+*** Benefits
+Barrel shifter can be used without performance penalty with most arithmetic instructions and address calculations.
+Reduces the number of instructions required in crypto object code.
+
+*** Disadvantages
+Requires additional bits in the instructions to encode the shift/rotate immediate
+Adds additional complexity in decode and execute phases.
+
+*** Supporting material
+Real world example: ARM 32bit
+Real world counter example: Most CPU architectures
+Requiring a barrel shifter in the execution path extends the pipeline lenght or reduces the clock speed of the execute stage.
+One must either include duplicate instructions to perform the shift before and after the operation; otherwise half the benefit is lost.
+EG i = a + b << 4 or i = (a + b) << 4 or i = (a << 4) + b all produce different results and which is implied excludes the others.
+
+*** Reason for Denial
+Use in ARM demonstrates the infrequency of use.
+Implementation complexity in ARM relating to implementation of this feature indicates a waste of transistors and encoding bits.
+
+** Implement single instruction size
+*** Benefits
+Fixed-length instructions simplify fetch, decode, and issue logic considerably.
+Simplifies assembler implementation.
+
+*** Disadvantages
+A single fixed size results in reduced code density, which is more adverse a characteristic in embedded computing than it is in the workstation and server markets.
+Makes inefficient use of L1/L2 cache space.
+
+*** Supporting material
+Real world example: Stanford MIPS, Berkeley SPARC
+Real world counter example: MIPS16 instructions, Berkeley RISC II
+Instruction-format expanders which invisibly "up-convert" instructions to larger internal representations are cheap to implement; thus making the complexity of supporting smaller instruction formats cheap.
+Programs for the original Berkeley RISC I were only about 30% larger than the VAX but very close to that of the Z8000, validating the argument that the higher code density of CISC designs was not actually all that impressive in reality.
+
+*** Reason for Denial
+Wastes valuable opcode space.
+Limits future instruction set evolution.
+
+* Approved
+** Add PC-Relative addressing
+*** Benefits
+This makes position independent code, as is often used in shared libraries and code loaded at run time, more efficient.
+
+*** Disadvantages
+Requires additional instructions as PC is not part of the general register set.
+
+*** Supporting material
+Real world example: Motorola 6809, AMD AMD64
+Real world counter example: Intel x86, MIPSv5
+This can be approximated with a fake function call in order to obtain the return value on stack (x86) or in a special register (PowerPC, SPARC, MIPS)
+
+*** Reason for Approval
+Historically included in Knight implementations

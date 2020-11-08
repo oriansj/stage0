@@ -1,4 +1,4 @@
-## Copyright (C) 2016 Jeremiah Orians
+## Copyright (C) 2016,2020 Jeremiah Orians
 ## This file is part of stage0.
 ##
 ## stage0 is free software: you can redistribute it and/or modify
@@ -13,88 +13,6 @@
 ##
 ## You should have received a copy of the GNU General Public License
 ## along with stage0.  If not, see <http://www.gnu.org/licenses/>.
-
-* High level programming information that is likely useful
-** M0
-*** What is it?
-M0 is the most minimal macro-assembler possible to self bootstrap on the Knight ISA specification.
-In fact it is so minimal that a definition file or individual definitions need to be prepended to source files for it to work.
-And example of a definitions is the following:
-DEFINE ADD 05000
-
-*** What are its assumptions?
-- all numbers outside of quotes are to be converted to 4 hex nybbles.
-- all strings are to be converted into hex form and start with a " and end with a ", no nesting
-- all definitions need to be applied if possible.
-- definitions can not be recursive or nested
-- all other details about the resulting binary will be handled by a hex2 assembler or better.
-- Line comments start with # or ; and continue to the end of the line and are not output
-
-*** How to use it
-Simply create a definition, such as
-DEFINE ADD 05000
-and then use ADD where you need 05000
-That is it.
-
-*** Does it provide any error checking?
-No
-
-**** Seriously?
-M0 assumes you write perfect code and never make a single mistake.
-If you want an macro assembler that helps to catch dumb mistakes, use something else.
-
-*** Can I use M0 without stage0 vm?
-Yes, that is why https://github.com/oriansj/MESCC_Tools exists
-
-** Hex2
-*** What is it?
-Hex2 is a standard set of rules that are architecture dependent which when combined with an implementation that support it functions like an advanced hex assembler.
-The goal behind hex2 is that any programmer should be able to implement a compatable implemention within a couple hours in C,
-or a couple of days in assembly or a couple of weeks if they hand encode it in hex itself.
-Its design is optimal for instruction sets that are nybble aligned or at worst verbose for instruction sets that are byte aligned.
-
-*** What are its assumptions?
-The most important assumption is that ALL labels are globally unique and should have only 1 instance.
-
-Hex2 only assumes 4 types of inputs:
-1) Hex nybbles to be assembled
-2) Line comments beginning with # or ; to be ignored and dropped
-3) Labels that begin with :
-4) Pointers to labels that start with @,$ or &
-
-For pointers starting with @, it is assumed that the user wants the 16bit relative displacement required by the preceeding instruction to the label;
-this is primarily used for jump, calli address immediates and PC relative loads and stores.
-For pointers starting with $, it is assumed that the user wants the 16bit absolute address of the label;
-this is primarily used for pointer comparisons involving hand encoded objects.
-For pointers starting with &, it is assumed that the user wants the 32bit absolute address of the label;
-this is primarily for hand encoding objects or instructions that want 32bit absolute addresses
-
-Should one wish to manually calculate the displacement field of an instruction, simply subtract the address of the byte after the immediate from the address of the target.
-
-*** More advanced?
-It is possible for a hex2 assembler to support more than just the minimal set as defined above and is frequently the case on complicated instruction sets.
-However, to be considered hex2 compliant a program should not depend on those additions.
-However, a hex assembler which supports those extensions can be considered fully compliant as long as hex2 compliant programs can be compiled correctly.
-
-*** How to use it
-In theory, you should never have to use hex2 directly as it is a rather tedious language to program in.
-Its primary design is to allow extremely low level and auditable bootstrap programs.
-But should you wish to do so, it'll probably be advisable for it to look something like this:
-:Store_String_0
-05049045                # STOREX8 R0 R4 R5 ; Store the Byte
-42100100                # FGETC ; Get next Byte
-0F550001                # ADDUI R5 R5 1 ; Prep for next loop
-C306 @Store_String_0    # CMPJUMPI.NE R0 R6 @Store_String_0 ; Loop if matching not found
-
-With very clear label names, a mixture of low and high level comments. It does become possible to write fixable code.
-But lets be honest, the only time you need to write hex2 is:
-When bootstrapping something new/ugly without M0
-OR
-All of stage0 was lost due to a category 5 disaster.
-
-*** Should you use it?
-Only if engaged in low level bootstrapping with the desire to defend against the trusting trust attack in an auditable fashion.
-Otherwise, just use gcc or llvm and save yourself alot of responsibility.
 
 * Instruction Listing
 ** 00 xx xx xx :: NOP
@@ -842,7 +760,6 @@ This ordering was selected simply because makes the starting IP address 0 and is
 |     0D | Integer group  |               4 |
 
 *** Class E 2OPI
-This is a very rare and special group as each entry consumes a piece of the precious 256 entry opcode space.
 |--------------+------------+------------+------------+------------------|
 | opcode 8bits | XOP 16bits | Reg0 4bits | Reg1 4bits | Immediate 16bits |
 |--------------+------------+------------+------------+------------------|
@@ -859,7 +776,6 @@ This is a very rare and special group as each entry consumes a piece of the prec
 | Opcode | Function group | Length in Bytes |
 |--------+----------------+-----------------|
 | E0     | Integer group  |               6 |
-
 
 *** Class G 0OPI
 |--------------+-----------+------------------|
