@@ -20,6 +20,7 @@ Added High level prototype for a more memory efficient version of M0
 Added M0-compact to reduce memory requirements of bootstrapping a C compiler
 Python disassembler to improve the user experience (thank you Mark Jenkins)
 test rebuild of ALL-ROMS from .s files multiple ways
+Updated submodules to reflect new support for AArch64
 
 ** Changed
 Removed excess space after folder name (stage2/High_level_prototypes/lisp)
