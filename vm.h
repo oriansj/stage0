@@ -228,6 +228,12 @@ extern void CMPJUMPU_G(struct lilith* vm, struct Instruction* c);
 extern void CMPJUMPU_GE(struct lilith* vm, struct Instruction* c);
 extern void CMPJUMPU_LE(struct lilith* vm, struct Instruction* c);
 extern void CMPJUMPU_L(struct lilith* vm, struct Instruction* c);
+extern void SET_G(struct lilith* vm, struct Instruction* c);
+extern void SET_GE(struct lilith* vm, struct Instruction* c);
+extern void SET_E(struct lilith* vm, struct Instruction* c);
+extern void SET_NE(struct lilith* vm, struct Instruction* c);
+extern void SET_LE(struct lilith* vm, struct Instruction* c);
+extern void SET_L(struct lilith* vm, struct Instruction* c);
 
 /* Prototypes for functions in vm_decode.c*/
 extern struct lilith* create_vm(size_t size);

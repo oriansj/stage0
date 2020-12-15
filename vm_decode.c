@@ -1855,6 +1855,72 @@ bool eval_2OPI_Int(struct lilith* vm, struct Instruction* c)
 	/* 0xB0 ... 0xDF */
 	switch(c->raw2)
 	{
+		case 0x0: /* SET.G */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "SET.G", 19);
+			#elif TRACE
+			record_trace("SET.G");
+			#endif
+
+			SET_G(vm, c);
+			break;
+		}
+		case 0x1: /* SET.GE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "SET.GE", 19);
+			#elif TRACE
+			record_trace("SET.GE");
+			#endif
+
+			SET_GE(vm, c);
+			break;
+		}
+		case 0x2: /* SET.E */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "SET.E", 19);
+			#elif TRACE
+			record_trace("SET.E");
+			#endif
+
+			SET_E(vm, c);
+			break;
+		}
+		case 0x3: /* SET.NE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "SET.NE", 19);
+			#elif TRACE
+			record_trace("SET.NE");
+			#endif
+
+			SET_NE(vm, c);
+			break;
+		}
+		case 0x4: /* SET.LE */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "SET.LE", 19);
+			#elif TRACE
+			record_trace("SET.LE");
+			#endif
+
+			SET_LE(vm, c);
+			break;
+		}
+		case 0x5: /* SET.L */
+		{
+			#ifdef DEBUG
+			strncpy(Name, "SET.L", 19);
+			#elif TRACE
+			record_trace("SET.L");
+			#endif
+
+			SET_L(vm, c);
+			break;
+		}
 		case 0x0E: /* ADDI */
 		{
 			#ifdef DEBUG

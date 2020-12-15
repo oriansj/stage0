@@ -609,6 +609,19 @@ This block specified for instructions that require immediates
 *** 2OPI Groups
 2OPI ii ii is the Immediate, a = b OP ii ii
 
+**** 2OPI Set group
+| Hex               | Name             | Comment                         |
+|-------------------+------------------+---------------------------------|
+| E1 00 00 ab ii ii | SET.G a b ii ii  | gbitset(a) ? b = ii ii : b = 0  |
+| E1 00 01 ab ii ii | SET.GE a b ii ii | gebitset(a) ? b = ii ii : b = 0 |
+| E1 00 02 ab ii ii | SET.E a b ii ii  | ebitset(a) ? b = ii ii : b = 0  |
+| E1 00 03 ab ii ii | SET.NE a b ii ii | nebitset(a) ? b = ii ii : b = 0 |
+| E1 00 04 ab ii ii | SET.LE a b ii ii | lebitset(a) ? b = ii ii : b = 0 |
+| E1 00 05 ab ii ii | SET.L a b ii ii  | lbitset(a) ? b = ii ii : b = 0  |
+| E1 00 06 xx xx xx | Reserved         |                                 |
+| ...               |                  |                                 |
+| E1 00 0D xx xx xx | Reserved         |                                 |
+
 **** 2OPI Integer
 | Hex               | Name            | Comment                  |
 |-------------------+-----------------+--------------------------|

@@ -112,10 +112,10 @@ xeh: Linux\ Bootstrap/Legacy_pieces/xeh.c | bin
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_globals.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c
 
 libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c
+	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_globals.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c
 
 # Tests
 Generate-rom-test: ALL-ROMS

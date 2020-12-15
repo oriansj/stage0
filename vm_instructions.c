@@ -1393,6 +1393,42 @@ void POPPC(struct lilith* vm, struct Instruction* c)
 	writeout_bytes(vm, vm->reg[c->reg0], 0, reg_size);
 }
 
+void SET_G(struct lilith* vm, struct Instruction* c)
+{
+	if(GreaterThan_bit_set(vm->reg[c->reg0])) vm->reg[c->reg1] = c->raw_Immediate;
+	else vm->reg[c->reg1] = 0;
+}
+
+void SET_GE(struct lilith* vm, struct Instruction* c)
+{
+	if(GreaterThan_bit_set(vm->reg[c->reg0]) || EQual_bit_set(vm->reg[c->reg0])) vm->reg[c->reg1] = c->raw_Immediate;
+	else vm->reg[c->reg1] = 0;
+}
+
+void SET_E(struct lilith* vm, struct Instruction* c)
+{
+	if(EQual_bit_set(vm->reg[c->reg0])) vm->reg[c->reg1] = c->raw_Immediate;
+	else vm->reg[c->reg1] = 0;
+}
+
+void SET_NE(struct lilith* vm, struct Instruction* c)
+{
+	if(!EQual_bit_set(vm->reg[c->reg0])) vm->reg[c->reg1] = c->raw_Immediate;
+	else vm->reg[c->reg1] = 0;
+}
+
+void SET_LE(struct lilith* vm, struct Instruction* c)
+{
+	if(LessThan_bit_set(vm->reg[c->reg0]) || EQual_bit_set(vm->reg[c->reg0])) vm->reg[c->reg1] = c->raw_Immediate;
+	else vm->reg[c->reg1] = 0;
+}
+
+void SET_L(struct lilith* vm, struct Instruction* c)
+{
+	if(LessThan_bit_set(vm->reg[c->reg0])) vm->reg[c->reg1] = c->raw_Immediate;
+	else vm->reg[c->reg1] = 0;
+}
+
 void ADDI(struct lilith* vm, struct Instruction* c)
 {
 	signed_vm_register tmp1;
