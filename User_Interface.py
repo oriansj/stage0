@@ -58,6 +58,8 @@ def Reset_lilith():
 	print ("Size of loaded ROM image: " + str(size) + " bytes\n")
 
 	if(POSIX_MODE):
+		global Stack_Size
+		Set_Register(12, size + Stack_Size)
 		Set_Register(15, size)
 
 def Step_lilith():
@@ -247,6 +249,14 @@ def main(argv):
 				Memory_Size = (int(arg[:-1]) * 1024 * 1024)
 			elif arg.endswith('G'):
 				Memory_Size = (int(arg[:-1]) * 1024 * 1024 * 1024)
+		elif opt in ("-S", "--STACK"):
+			global Stack_Size
+			if arg.endswith('K'):
+				Stack_Size = (int(arg[:-1]) * 1024)
+			elif arg.endswith('M'):
+				Stack_Size = (int(arg[:-1]) * 1024 * 1024)
+			elif arg.endswith('G'):
+				Stack_Size = (int(arg[:-1]) * 1024 * 1024 * 1024)
 		elif opt in ("-P", "--POSIX-MODE"):
 			global POSIX_MODE
 			POSIX_MODE = True
@@ -256,6 +266,7 @@ def main(argv):
 
 Current_IP = 0
 Memory_Size = 16 * 1024
+Stack_Size = 64 * 1024
 Current_Page = 0
 Watchpoints = {0}
 Count=0

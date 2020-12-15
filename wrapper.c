@@ -160,24 +160,24 @@ void insert_address(char* p, uint32_t value)
 void process_Memory_Row(char* p, uint32_t addr)
 {
 	char* segment = p;
-	strncpy(segment, "<tr>\n<td>", 9);
+	strncpy(segment, "<tr>\n<td>", 10);
 	segment = segment + 9;
 	insert_address(segment, addr);
 	segment = segment + 8;
-	strncpy(segment, "</td>", 5);
+	strncpy(segment, "</td>", 6);
 	segment = segment + 5;
 	int i;
 	for(i = 0; i < 16; i = i + 1)
 	{
-		strncpy(segment, "<td>", 4);
+		strncpy(segment, "<td>", 5);
 		segment = segment + 4;
 		unpack_byte(Globalvm->memory[i + addr], segment);
 		segment = segment + 2;
-		strncpy(segment, "</td>", 5);
+		strncpy(segment, "</td>", 6);
 		segment = segment + 5;
 	}
 
-	strncpy(segment, "\n</tr>\n", 7);
+	strncpy(segment, "\n</tr>\n", 8);
 }
 
 char* get_memory(unsigned int start)

@@ -70,6 +70,7 @@ int main(int argc, char **argv)
 	char* c;
 	int length;
 	int Memory_Size = (16 * 1024);
+	int Stack_Size = (64 * 1024);
 
 	tape_01_name = "tape_01";
 	tape_02_name = "tape_02";
@@ -124,6 +125,27 @@ int main(int argc, char **argv)
 			}
 			i = i + 2;
 		}
+		else if(match(argv[i], "-s") || match(argv[i], "--stack"))
+		{
+			length = strlen(argv[i + 1]) - 1;
+			c = argv[i+1];
+			class = c[length];
+			c[length] = 0;
+			Stack_Size = atoi(c);
+			if('K' == class)
+			{
+				Stack_Size = Stack_Size * 1024;
+			}
+			else if('M' == class)
+			{
+				Stack_Size = Stack_Size * 1024 * 1024;
+			}
+			else if('G' == class)
+			{
+				Stack_Size = Stack_Size * 1024 * 1024 * 1024;
+			}
+			i = i + 2;
+		}
 		else if(match(argv[i], "-P") || match(argv[i], "--POSIX-MODE"))
 		{
 				POSIX_MODE = true;
@@ -152,7 +174,16 @@ int main(int argc, char **argv)
 	size_t image;
 	vm = create_vm(Memory_Size);
 	image = load_program(vm, rom_name);
-	if(POSIX_MODE) vm->reg[15] = image;
+	if(POSIX_MODE)
+	{
+		/* Set HEAP pointer */
+		vm->reg[12] = image + Stack_Size;
+		/* HEAP starts right after stack ends */
+
+		/* Set STACK pointer */
+		vm->reg[15] = image;
+		/* STACK starts right after core image ends */
+	}
 	execute_vm(vm);
 	destroy_vm(vm);
 
