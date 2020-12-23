@@ -24,7 +24,7 @@ FILE* source_file;
 void line_Comment()
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(('\n' != c) && ('\r' != c)) //Discard input until we get to a newline
 	{
 		c = fgetc(source_file);
 	}
@@ -43,7 +43,7 @@ int hex(int c)
 	if('0' > c) return -1;
 
 	/* Deal with 0-9 */
-	if('9' >= c) return (c - 48);
+	if('9' >= c) return (c - ('0' - 0x0));
 
 	/* Convert a-f to A-F*/
 	c = c & 0xDF;
@@ -52,7 +52,7 @@ int hex(int c)
 	if('A' > c) return -1;
 
 	/* Deal with A-F */
-	if('F' >= c) return (c - 55);
+	if('F' >= c) return (c - ('A' - 0xA));
 
 	/* Everything else is garbage */
 	return -1;

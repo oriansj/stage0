@@ -70,7 +70,7 @@ void storeLabel()
 
 void storePointer(char ch)
 {
-	if(38 == ch)
+	if('&' == ch)
 	{
 		ip = ip + 4;
 	}
@@ -98,19 +98,19 @@ void storePointer(char ch)
 
 	int target = GetTarget(temp);
 	uint8_t first, second;
-	if(36 == ch)
+	if('$' == ch)
 	{ /* Deal with $ */
 		first = target/256;
 		second = target%256;
 		printf("%c%c", first, second );
 	}
-	else if(64 == ch)
+	else if('@' == ch)
 	{ /* Deal with @ */
 		first = (target - ip + 4)/256;
 		second = (target - ip + 4)%256;
 		printf("%c%c", first, second );
 	}
-	else if(38 == ch)
+	else if('&' == ch)
 	{
 		uint8_t third, fourth;
 		first = target >> 24;
@@ -124,7 +124,7 @@ void storePointer(char ch)
 void line_Comment()
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(('\n' != c) && ('\r' != c))
 	{
 		c = fgetc(source_file);
 	}
@@ -136,18 +136,18 @@ int8_t hex(int c)
 	{
 		case '0' ... '9':
 		{
-			return (c - 48);
+			return (c - ('0' - 0x0));
 		}
 		case 'a' ... 'z':
 		{
-			return (c - 87);
+			return (c - ('a' - 0xa));
 		}
 		case 'A' ... 'Z':
 		{
-			return (c - 55);
+			return (c - ('A' - 0xA));
 		}
-		case 35:
-		case 59:
+		case '#':
+		case ';':
 		{
 			line_Comment();
 			return -1;
@@ -163,13 +163,13 @@ void first_pass()
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
 		/* Check for and deal with label */
-		if(58 == c)
+		if(':' == c)
 		{
 			storeLabel();
 		}
 
 		/* check for and deal with relative pointers to labels */
-		if((64 == c) || (36 == c))
+		if(('@' == c) || ('$' == c))
 		{ /* deal with @ and $ */
 			while((' ' != c) && ('\t' != c) && ('\n' != c))
 			{
@@ -177,7 +177,7 @@ void first_pass()
 			}
 			ip = ip + 2;
 		}
-		else if(38 == c)
+		else if('&' == c)
 		{ /* deal with & */
 			while((' ' != c) && ('\t' != c) && ('\n' != c))
 			{
@@ -205,14 +205,14 @@ void second_pass()
 	int c;
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
-		if(58 == c)
+		if(':' == c)
 		{ /* Deal with : */
 			while((' ' != c) && ('\t' != c) && ('\n' != c))
 			{
 				c = fgetc(source_file);
 			}
 		}
-		else if((64 == c) || (36 == c) || (38 == c))
+		else if(('@' == c) || ('$' == c) || ('&' == c))
 		{ /* Deal with @, $ and & */
 			storePointer(c);
 		}

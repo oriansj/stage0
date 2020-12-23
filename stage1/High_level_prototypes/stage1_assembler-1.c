@@ -47,7 +47,7 @@ void storePointer()
 void line_Comment()
 {
 	int c = fgetc(source_file);
-	while((10 != c) && (13 != c))
+	while(('\n' != c) && ('\r' != c))
 	{
 		c = fgetc(source_file);
 	}
@@ -69,8 +69,8 @@ int8_t hex(int c)
 		{
 			return (c - 55);
 		}
-		case 35:
-		case 59:
+		case '#':
+		case ';':
 		{
 			line_Comment();
 			return -1;
@@ -86,13 +86,13 @@ void first_pass()
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
 		/* Check for and deal with label */
-		if(58 == c)
+		if(':' == c)
 		{
 			storeLabel();
 		}
 
 		/* check for and deal with pointers to labels */
-		if(64 == c)
+		if('@' == c)
 		{
 			c = fgetc(source_file);
 			ip = ip + 2;
@@ -117,11 +117,11 @@ void second_pass()
 	int c;
 	for(c = fgetc(source_file); EOF != c; c = fgetc(source_file))
 	{
-		if(58 == c)
+		if(':' == c)
 		{
 			c = fgetc(source_file);
 		}
-		else if(64 == c)
+		else if('@' == c)
 		{
 			storePointer();
 		}
