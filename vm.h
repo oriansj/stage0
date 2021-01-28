@@ -20,21 +20,25 @@
 #include "vm_types.h"
 
 /* Prototypes for functions in vm_instructions.c*/
-extern void vm_EXIT(struct lilith* vm, uint64_t performance_counter);
-extern void vm_CHMOD(struct lilith* vm);
-extern void vm_UNAME(struct lilith* vm);
-extern void vm_GETCWD(struct lilith* vm);
-extern void vm_CHDIR(struct lilith* vm);
-extern void vm_FCHDIR(struct lilith* vm);
-extern void vm_ACCESS(struct lilith* vm);
-extern void vm_FOPEN(struct lilith* vm);
+extern void vm_HALT(struct lilith* vm, uint64_t performance_counter);
+extern void vm_SYS_EXIT(struct lilith* vm, uint64_t performance_counter);
+extern void vm_SYS_CHMOD(struct lilith* vm);
+extern void vm_SYS_UNAME(struct lilith* vm);
+extern void vm_SYS_GETCWD(struct lilith* vm);
+extern void vm_SYS_CHDIR(struct lilith* vm);
+extern void vm_SYS_FCHDIR(struct lilith* vm);
+extern void vm_SYS_ACCESS(struct lilith* vm);
+extern void vm_SYS_FOPEN(struct lilith* vm);
 extern void vm_FOPEN_READ(struct lilith* vm);
 extern void vm_FOPEN_WRITE(struct lilith* vm);
+extern void vm_SYS_FCLOSE(struct lilith* vm);
 extern void vm_FCLOSE(struct lilith* vm);
-extern void vm_FSEEK(struct lilith* vm);
+extern void vm_SYS_FSEEK(struct lilith* vm);
 extern void vm_REWIND(struct lilith* vm);
 extern void vm_FGETC(struct lilith* vm);
+extern void vm_SYS_READ(struct lilith* vm);
 extern void vm_FPUTC(struct lilith* vm);
+extern void vm_SYS_WRITE(struct lilith* vm);
 extern void vm_HAL_MEM(struct lilith* vm);
 extern void ADD_CI(struct lilith* vm, struct Instruction* c);
 extern void ADD_CO(struct lilith* vm, struct Instruction* c);
@@ -251,6 +255,7 @@ extern FILE* TTY_in;
 /* Enable POSIX Mode */
 extern bool POSIX_MODE;
 extern bool FUZZING;
+extern int Memory_Size;
 
 /* Commonly useful functions */
 extern void require(int boolean, char* error);

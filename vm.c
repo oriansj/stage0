@@ -16,6 +16,7 @@
  */
 
 #include "vm.h"
+int Memory_Size;
 
 /* Load program tape into Memory */
 size_t load_program(struct lilith* vm, char* rom_name)
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
 	FUZZING = false;
 	char* c;
 	int length;
-	int Memory_Size = (16 * 1024);
+	Memory_Size = (16 * 1024);
 	int Stack_Size = (64 * 1024);
 
 	tape_01_name = "tape_01";

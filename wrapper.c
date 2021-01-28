@@ -19,6 +19,7 @@
 #define DEBUG true
 extern uint32_t performance_counter;
 static struct lilith* Globalvm;
+int Memory_Size;
 
 void unpack_byte(uint8_t a, char* c);
 
@@ -60,6 +61,7 @@ void initialize_lilith(unsigned int size, unsigned int posix)
 	struct lilith* vm;
 	vm = create_vm(size);
 	Globalvm = vm;
+	Memory_Size = size;
 }
 
 void load_lilith(char* name)

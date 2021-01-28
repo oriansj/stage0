@@ -236,136 +236,136 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 	{
 		switch(c->HAL_CODE)
 		{
-			case 0x000002: /* fopen */
+			case 0x000000: /* sys_read */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "FOPEN", 19);
+				strncpy(Name, "SYS_READ", 19);
 				#elif TRACE
-				record_trace("FOPEN");
+				record_trace("SYS_READ");
 				#endif
 
-				vm_FOPEN(vm);
+				vm_SYS_READ(vm);
 				break;
 			}
-			case 0x000003: /* fclose */
+			case 0x000001: /* sys_write */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "FCLOSE", 19);
+				strncpy(Name, "SYS_WRITE", 19);
 				#elif TRACE
-				record_trace("FCLOSE");
+				record_trace("SYS_WRITE");
 				#endif
 
-				vm_FCLOSE(vm);
+				vm_SYS_WRITE(vm);
 				break;
 			}
-			case 0x000008: /* fseek */
+			case 0x000002: /* sys_fopen */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "FSEEK", 19);
+				strncpy(Name, "SYS_FOPEN", 19);
 				#elif TRACE
-				record_trace("FSEEK");
+				record_trace("SYS_FOPEN");
 				#endif
 
-				vm_FSEEK(vm);
+				vm_SYS_FOPEN(vm);
 				break;
 			}
-			case 0x000015: /* access */
+			case 0x000003: /* sys_fclose */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "ACCESS", 19);
+				strncpy(Name, "SYS_FCLOSE", 19);
 				#elif TRACE
-				record_trace("ACCESS");
+				record_trace("SYS_FCLOSE");
 				#endif
 
-				vm_ACCESS(vm);
+				vm_SYS_FCLOSE(vm);
 				break;
 			}
-			case 0x00003C: /* EXIT */
+			case 0x000008: /* sys_fseek */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "EXIT", 19);
+				strncpy(Name, "SYS_FSEEK", 19);
 				#elif TRACE
-				record_trace("EXIT");
+				record_trace("SYS_FSEEK");
 				#endif
 
-				vm_EXIT(vm, performance_counter);
+				vm_SYS_FSEEK(vm);
 				break;
 			}
-			case 0x00003F: /* UNAME */
+			case 0x000015: /* sys_access */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "UNAME", 19);
+				strncpy(Name, "SYS_ACCESS", 19);
 				#elif TRACE
-				record_trace("UNAME");
+				record_trace("SYS_ACCESS");
 				#endif
 
-				vm_UNAME(vm);
+				vm_SYS_ACCESS(vm);
 				break;
 			}
-			case 0x00004F: /* GETCWD */
+			case 0x00003C: /* sys_exit */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "GETCWD", 19);
+				strncpy(Name, "SYS_EXIT", 19);
 				#elif TRACE
-				record_trace("GETCWD");
+				record_trace("SYS_EXIT");
 				#endif
 
-				vm_GETCWD(vm);
+				vm_SYS_EXIT(vm, performance_counter);
 				break;
 			}
-			case 0x000050: /* CHDIR */
+			case 0x00003F: /* sys_uname */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "CHDIR", 19);
+				strncpy(Name, "SYS_UNAME", 19);
 				#elif TRACE
-				record_trace("CHDIR");
+				record_trace("SYS_UNAME");
 				#endif
 
-				vm_CHDIR(vm);
+				vm_SYS_UNAME(vm);
 				break;
 			}
-			case 0x000051: /* FCHDIR */
+			case 0x00004F: /* sys_getcwd */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "FCHDIR", 19);
+				strncpy(Name, "SYS_GETCWD", 19);
 				#elif TRACE
-				record_trace("FCHDIR");
+				record_trace("SYS_GETCWD");
 				#endif
 
-				vm_FCHDIR(vm);
+				vm_SYS_GETCWD(vm);
 				break;
 			}
-			case 0x00005A: /* CHMOD */
+			case 0x000050: /* sys_chdir */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "CHMOD", 19);
+				strncpy(Name, "SYS_CHDIR", 19);
 				#elif TRACE
-				record_trace("CHMOD");
+				record_trace("SYS_CHDIR");
 				#endif
 
-				vm_CHMOD(vm);
+				vm_SYS_CHDIR(vm);
 				break;
 			}
-			case 0x100100: /* fgetc */
+			case 0x000051: /* sys_fchdir */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "FGETC", 19);
+				strncpy(Name, "SYS_FCHDIR", 19);
 				#elif TRACE
-				record_trace("FGETC");
+				record_trace("SYS_FCHDIR");
 				#endif
 
-				vm_FGETC(vm);
+				vm_SYS_FCHDIR(vm);
 				break;
 			}
-			case 0x100200: /* fputc */
+			case 0x00005A: /* sys_chmod */
 			{
 				#ifdef DEBUG
-				strncpy(Name, "FPUTC", 19);
+				strncpy(Name, "SYS_CHMOD", 19);
 				#elif TRACE
-				record_trace("FPUTC");
+				record_trace("SYS_CHMOD");
 				#endif
 
-				vm_FPUTC(vm);
+				vm_SYS_CHMOD(vm);
 				break;
 			}
 			default:
@@ -422,17 +422,6 @@ bool eval_HALCODE(struct lilith* vm, struct Instruction* c)
 				#endif
 
 				vm_REWIND(vm);
-				break;
-			}
-			case 0x100004: /* fseek */
-			{
-				#ifdef DEBUG
-				strncpy(Name, "FSEEK", 19);
-				#elif TRACE
-				record_trace("FSEEK");
-				#endif
-
-				vm_FSEEK(vm);
 				break;
 			}
 			case 0x100100: /* fgetc */
@@ -2897,13 +2886,7 @@ void eval_instruction(struct lilith* vm, struct Instruction* current)
 		}
 		case 0xFF: /* Deal with HALT */
 		{
-			vm->halted = true;
-			fprintf(stderr, "Computer Program has Halted\nAfter Executing %lu instructions\n", performance_counter);
-
-			#ifdef TRACE
-			record_trace("HALT");
-			print_traces();
-			#endif
+			vm_HALT(vm, performance_counter);
 			break;
 		}
 		default: /* Deal with illegal instruction */

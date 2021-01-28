@@ -25,23 +25,23 @@ production: libvm-production.so vm-production asm dis ALL-ROMS
 development: vm libvm.so asm dis ALL-ROMS
 
 # VM Builds
-vm-minimal: vm.h vm_types.h vm_globals.c vm_minimal.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -DVM32=true vm_minimal.c vm_globals.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-minimal
+vm-minimal: vm.h vm_types.h vm_globals.c vm_minimal.c vm_instructions.c vm_halcode.c vm_decode.c functions/require.c functions/file_print.c functions/match.c | bin
+	$(CC) -DVM32=true vm_minimal.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-minimal
 
-vm16: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -ggdb -DVM16=true -Dtty_lib=true vm.c vm_globals.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm16
+vm16: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_halcode.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
+	$(CC) -ggdb -DVM16=true -Dtty_lib=true vm.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm16
 
-vm: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.c vm_globals.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
+vm: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_halcode.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true vm.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
 
-vm64: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -ggdb -DVM64=true -Dtty_lib=true vm.c vm_globals.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm64
+vm64: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_halcode.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c | bin
+	$(CC) -ggdb -DVM64=true -Dtty_lib=true vm.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c tty.c functions/require.c functions/file_print.c functions/match.c -o bin/vm64
 
-vm-production: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -DVM32=true vm.c vm_globals.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-production
+vm-production: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_halcode.c vm_decode.c functions/require.c functions/file_print.c functions/match.c | bin
+	$(CC) -DVM32=true vm.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c functions/require.c functions/file_print.c functions/match.c -o bin/vm-production
 
-vm-trace: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c functions/require.c functions/file_print.c functions/match.c | bin
-	$(CC) -DVM32=true -ggdb -Dtty_lib=true -DTRACE=true vm.c vm_globals.c vm_instructions.c vm_decode.c tty.c dynamic_execution_trace.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
+vm-trace: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_halcode.c vm_decode.c tty.c dynamic_execution_trace.c functions/require.c functions/file_print.c functions/match.c | bin
+	$(CC) -DVM32=true -ggdb -Dtty_lib=true -DTRACE=true vm.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c tty.c dynamic_execution_trace.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
 
 # Build the roms
 ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp cc_x86 forth
@@ -111,11 +111,11 @@ xeh: Linux\ Bootstrap/Legacy_pieces/xeh.c | bin
 	$(CC) Linux\ Bootstrap/Legacy_pieces/xeh.c -o bin/xeh
 
 # libVM Builds for Development tools
-libvm.so: wrapper.c vm_instructions.c vm_decode.c vm.h tty.c
-	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_globals.c vm_instructions.c vm_decode.c tty.c functions/require.c functions/file_print.c
+libvm.so: wrapper.c vm_instructions.c vm_halcode.c vm_decode.c vm.h tty.c
+	$(CC) -ggdb -DVM32=true -Dtty_lib=true -shared -Wl,-soname,libvm.so -o libvm.so -fPIC wrapper.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c tty.c functions/require.c functions/file_print.c
 
-libvm-production.so: wrapper.c vm_instructions.c vm_decode.c vm.h
-	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_globals.c vm_instructions.c vm_decode.c functions/require.c functions/file_print.c
+libvm-production.so: wrapper.c vm_instructions.c vm_halcode.c vm_decode.c vm.h
+	$(CC) -DVM32=true -shared -Wl,-soname,libvm.so -o libvm-production.so -fPIC wrapper.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c functions/require.c functions/file_print.c
 
 # Tests
 Generate-rom-test: ALL-ROMS
