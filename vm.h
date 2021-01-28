@@ -245,6 +245,8 @@ extern void outside_of_world(struct lilith* vm, unsigned_vm_register place, char
 /* Allow tape names to be effectively changed */
 extern char* tape_01_name;
 extern char* tape_02_name;
+extern FILE* TTY_out;
+extern FILE* TTY_in;
 
 /* Enable POSIX Mode */
 extern bool POSIX_MODE;

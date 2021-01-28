@@ -369,7 +369,7 @@ void vm_FGETC(struct lilith* vm)
 			byte = tty_getchar();
 			#endif
 			#ifndef tty_lib
-			byte = fgetc(stdin);
+			byte = fgetc(TTY_in);
 			#endif
 		}
 
@@ -401,9 +401,9 @@ void vm_FPUTC(struct lilith* vm)
 	{
 		if (0x00000000 == vm->reg[1])
 		{
-			fputc(byte, stdout);
+			fputc(byte, TTY_out);
 			#ifdef tty_lib
-			fflush(stdout);
+			fflush(TTY_out);
 			#endif
 		}
 

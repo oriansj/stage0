@@ -74,6 +74,8 @@ int main(int argc, char **argv)
 
 	tape_01_name = "tape_01";
 	tape_02_name = "tape_02";
+	TTY_out = stdout;
+	TTY_in = stdin;
 	char* rom_name = NULL;
 	char class;
 
@@ -102,6 +104,18 @@ int main(int argc, char **argv)
 		else if(match(argv[i], "-2") || match(argv[i], "--tape_02"))
 		{
 			tape_02_name = argv[i + 1];
+			i = i + 2;
+		}
+		else if(match(argv[i], "--tty-in"))
+		{
+			TTY_in = fopen(argv[i+1], "r");
+			require(NULL != TTY_in, "unable to open file for --tty-in\n");
+			i = i + 2;
+		}
+		else if(match(argv[i], "--tty-out"))
+		{
+			TTY_out = fopen(argv[i+1], "w");
+			require(NULL != TTY_out, "unable to open file for --tty-out\n");
 			i = i + 2;
 		}
 		else if(match(argv[i], "-m") || match(argv[i], "--memory"))
