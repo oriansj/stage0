@@ -60,6 +60,7 @@ void vm_SYS_READ(struct lilith* vm)
 	if(NULL == SYS_READ_BUF) SYS_READ_BUF = calloc(Memory_Size, sizeof(char)); /* 20MB */
 	int fd = vm->reg[0];
 	int want = vm->reg[2];
+	require(want < Memory_Size, "ERROR trying to read more than we have memory\n");
 	int count = read(fd, SYS_READ_BUF, want);
 
 	int i = 0;
@@ -103,7 +104,7 @@ void vm_SYS_FCLOSE(struct lilith* vm)
 
 void vm_SYS_FSEEK(struct lilith* vm)
 {
-	lseek(vm->reg[0], vm->reg[1], SEEK_CUR);
+	vm->reg[0] = lseek(vm->reg[0], vm->reg[1], vm->reg[2]);
 }
 
 
