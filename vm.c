@@ -124,19 +124,27 @@ int main(int argc, char **argv)
 			length = strlen(argv[i + 1]) - 1;
 			c = argv[i+1];
 			class = c[length];
-			c[length] = 0;
-			Memory_Size = atoi(c);
 			if('K' == class)
 			{
+				c[length] = 0;
+				Memory_Size = atoi(c);
 				Memory_Size = Memory_Size * 1024;
 			}
 			else if('M' == class)
 			{
+				c[length] = 0;
+				Memory_Size = atoi(c);
 				Memory_Size = Memory_Size * 1024 * 1024;
 			}
 			else if('G' == class)
 			{
+				c[length] = 0;
+				Memory_Size = atoi(c);
 				Memory_Size = Memory_Size * 1024 * 1024 * 1024;
+			}
+			else
+			{
+				Memory_Size = atoi(c);
 			}
 			i = i + 2;
 		}
@@ -145,19 +153,27 @@ int main(int argc, char **argv)
 			length = strlen(argv[i + 1]) - 1;
 			c = argv[i+1];
 			class = c[length];
-			c[length] = 0;
-			Stack_Size = atoi(c);
 			if('K' == class)
 			{
+				c[length] = 0;
+				Stack_Size = atoi(c);
 				Stack_Size = Stack_Size * 1024;
 			}
 			else if('M' == class)
 			{
+				c[length] = 0;
+				Stack_Size = atoi(c);
 				Stack_Size = Stack_Size * 1024 * 1024;
 			}
 			else if('G' == class)
 			{
+				c[length] = 0;
+				Stack_Size = atoi(c);
 				Stack_Size = Stack_Size * 1024 * 1024 * 1024;
+			}
+			else
+			{
+				Stack_Size = atoi(c);
 			}
 			i = i + 2;
 		}

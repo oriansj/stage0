@@ -81,19 +81,19 @@ CAT: M0 stage1_assembler-2 vm High_level_prototypes/defs stage1/CAT.s | roms
 
 lisp: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/lisp.s | roms
 	cat High_level_prototypes/defs stage2/lisp.s > lisp_TEMP
-	./bin/vm --rom roms/M0-compact --tape_01 lisp_TEMP --tape_02 lisp_TEMP2 --memory 8K
+	./bin/vm --rom roms/M0-compact --tape_01 lisp_TEMP --tape_02 lisp_TEMP2 --memory 9K
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 lisp_TEMP2 --tape_02 roms/lisp --memory 48K
 	rm lisp_TEMP lisp_TEMP2
 
 cc_x86: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_x86.s | roms
 	cat High_level_prototypes/defs stage2/cc_x86.s > cc_TEMP
-	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 8K
+	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 9K
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 32K
 	rm cc_TEMP cc_TEMP2
 
 forth: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/forth.s | roms
 	cat High_level_prototypes/defs stage2/forth.s > forth_TEMP
-	./bin/vm --rom roms/M0-compact --tape_01 forth_TEMP --tape_02 forth_TEMP2 --memory 8K
+	./bin/vm --rom roms/M0-compact --tape_01 forth_TEMP --tape_02 forth_TEMP2 --memory 9K
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 forth_TEMP2 --tape_02 roms/forth --memory 12K
 	rm forth_TEMP forth_TEMP2
 
