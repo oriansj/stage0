@@ -24,6 +24,9 @@ or patches/diffs can be sent via email to Jeremiah (at) pdp10 [dot] guru
 or join us on freenode's #bootstrappable
 or update the wiki at https://bootstrapping.miraheze.org/wiki/Stage0
 
+Those wishing to work on POSIX ports of stage0 can do so here: https://github.com/oriansj/stage0-posix
+Those wishing to do work with CPM/DOS porting let me know (I have some easy work for you)
+
 * Goal
 This is a set of manually created hex programs in a Cthulhu Path to madness fashion.
 Which only have the goal of creating a bootstrapping path to a C compiler capable of
@@ -36,6 +39,8 @@ If the code can not be understood by that volume, it needs to be altered until i
 This repo contains a few of my false start pieces that may be of interest to people who
 want to independently create the root binary. I welcome all bug fixes and code that aids
 in the above stated goal.
+
+A link to the successful POSIX ports for x86, AMD64 and AArch64 in the POSIX submodule
 
 * FYI
 I'll be adding more code and documentation as I build pieces.

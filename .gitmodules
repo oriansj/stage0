@@ -1,6 +1,6 @@
 [submodule "Linux Bootstrap"]
-	path = Linux Bootstrap
-	url = https://github.com/oriansj/mescc-tools-seed
+	path = POSIX
+	url = https://github.com/oriansj/stage0-posix
 [submodule "seed"]
 	path = seed
 	url = https://github.com/oriansj/bootstrap-seeds
