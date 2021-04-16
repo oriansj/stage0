@@ -30,6 +30,11 @@ int main(int argc, char **argv)
 	}
 
 	FILE* source_file = fopen(argv[1], "r");
+	if(NULL == source_file)
+	{
+		fprintf(stderr, "Was unable to open file: %s please verify the file exits\n", argv[1]);
+		exit(EXIT_FAILURE);
+	}
 	int numbers = 0;
 	int lowers = 0;
 	int upppers = 0;
