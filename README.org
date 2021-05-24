@@ -21,7 +21,7 @@ https://savannah.nongnu.org/projects/stage0/
 pull requests can be made at https://github.com/oriansj/stage0
 and https://gitlab.com/janneke/stage0
 or patches/diffs can be sent via email to Jeremiah (at) pdp10 [dot] guru
-or join us on freenode's #bootstrappable
+or join us on libera.chat's #bootstrappable
 or update the wiki at https://bootstrapping.miraheze.org/wiki/Stage0
 
 Those wishing to work on POSIX ports of stage0 can do so here: https://github.com/oriansj/stage0-posix
