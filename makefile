@@ -104,11 +104,11 @@ asm: High_level_prototypes/asm.c | bin
 dis: High_level_prototypes/disasm.c | bin
 	$(CC) -ggdb High_level_prototypes/disasm.c -o bin/dis
 
-hex: Linux\ Bootstrap/Legacy_pieces/hex.c | bin
-	$(CC) Linux\ Bootstrap/Legacy_pieces/hex.c -o bin/hex
+hex: POSIX/Legacy_pieces/hex.c | bin
+	$(CC) POSIX/Legacy_pieces/hex.c -o bin/hex
 
-xeh: Linux\ Bootstrap/Legacy_pieces/xeh.c | bin
-	$(CC) Linux\ Bootstrap/Legacy_pieces/xeh.c -o bin/xeh
+xeh: POSIX/Legacy_pieces/xeh.c | bin
+	$(CC) POSIX/Legacy_pieces/xeh.c -o bin/xeh
 
 # libVM Builds for Development tools
 libvm.so: wrapper.c vm_instructions.c vm_halcode.c vm_decode.c vm.h tty.c
@@ -271,6 +271,7 @@ prototype_lisp: stage2/High_level_prototypes/lisp/lisp.c stage2/High_level_proto
 # Clean up after ourselves
 .PHONY: clean
 clean:
+	rm -rf bin/
 	rm -f libvm.so libvm-production.so bin/vm bin/vm-production
 	rm -rf test/stage0_test_scratch prototypes/
 
