@@ -104,6 +104,9 @@ asm: High_level_prototypes/asm.c | bin
 dis: High_level_prototypes/disasm.c | bin
 	$(CC) -ggdb High_level_prototypes/disasm.c -o bin/dis
 
+execve_image: High_level_prototypes/execve_image.c | bin
+	$(CC) -ggdb High_level_prototypes/execve_image.c -o bin/execve_image
+
 hex: POSIX/Legacy_pieces/hex.c | bin
 	$(CC) POSIX/Legacy_pieces/hex.c -o bin/hex
 

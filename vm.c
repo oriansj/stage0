@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 		{
 			i = i + 1;
 		}
-		else if(match(argv[i], "-r") || match(argv[i], "--rom"))
+		else if(match(argv[i], "-r") || match(argv[i], "--rom") || match(argv[i], "--tape-00") || match(argv[i], "-0"))
 		{
 			rom_name = argv[i + 1];
 			i = i + 2;
@@ -97,12 +97,12 @@ int main(int argc, char **argv)
 			fprintf(stdout, "Usage: %s --rom $rom [--tape_01 $foo] [--tape_02 $bar]\n", argv[0]);
 			exit(EXIT_SUCCESS);
 		}
-		else if(match(argv[i], "-1") || match(argv[i], "--tape_01"))
+		else if(match(argv[i], "-1") || match(argv[i], "--tape_01") || match(argv[i], "--tape-01"))
 		{
 			tape_01_name = argv[i + 1];
 			i = i + 2;
 		}
-		else if(match(argv[i], "-2") || match(argv[i], "--tape_02"))
+		else if(match(argv[i], "-2") || match(argv[i], "--tape_02") || match(argv[i], "--tape-02"))
 		{
 			tape_02_name = argv[i + 1];
 			i = i + 2;
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 			}
 			i = i + 2;
 		}
-		else if(match(argv[i], "-P") || match(argv[i], "--POSIX-MODE"))
+		else if(match(argv[i], "-P") || match(argv[i], "--POSIX-MODE") || match(argv[i], "--posix-mode"))
 		{
 				POSIX_MODE = true;
 				i = i + 1;
