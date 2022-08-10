@@ -80,3 +80,8 @@ the only step you need to start the live-bootstrap chain to GCC.)
 The stage0_monitor.hex0 is written in the knight Instruction Set Architecture
 as are all of the pieces in the stage0, stage1 and stage2 folders in the root
 directory.
+
+* how can I boot into stage2 LISP in QEMU?
+Currently stage2 LISP is only written in the knight Instruction Set Architecture
+assembly instructions so the produced binary would only work on a knight emulator
+or hardware which supports the knight instruction set.
