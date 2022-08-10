@@ -1,0 +1,82 @@
+* What is the difference between the repo name "stage0" and the "Need to know information > stage0" in README.org?
+stage0 is the project name and one of the 4 stages of functionality one can implement
+with stage0 being the simplest and smallest to implement from scratch and stage3
+being a relatively easy to use foundation of assembly and C code.
+
+* Why hex0, hex1, hex2, M0 are not part of stage0?
+The absolute foundation for a non-scripted bootstrap has to be a monitor as how
+else could the source code even get on the computer for the hex0 assembler to
+build? stage1 allows the assumption that you have the ability to put text files
+on either punched paper tape or on a disk drive for reading. This is also the same
+reason cc_x86.s, cc_knight_native.s, forth.s and lisp.s are in stage2 as that
+stage can safely assume everything of the prior stages along with the assumption
+that there is a working linker and assembler. and stage3 allows one to assume a
+minimal C compiler, a minimal FORTH and a minimal lisp.
+
+* What are the differences Hex0_monitor makes if we already have a hex0 compiler?
+Imagine you had absolutely ZERO software, literally not a single byte nor any other
+computers on the planet you could use. If you only had a hex0 compiler, you wouldn't
+have any way to create the text files you would need to build going forward. So
+you would be stuck. A monitor however could be hand toggled (or written directly
+into memory by a human hand and a strong magnet). Once you had a monitor of the
+class implemented here, you would instantly have the ability to create both the
+hex0 compiler by typing it in and create the source files it would build by typing
+those in as well.
+
+* What are the differences between hex0_riscv64.hex0, stage1/stage1_assembler-0.hex0, and stage0/stage0_monitor.hex0? Why?
+hex0_riscv64.hex0 is a risc-v (64bit) port of hex0 as hex0 is a strictly defined
+language. Further you'll notice that hex0 can be an ELF binary to run on POSIX
+systems, UEFI binaries or even binaries that run on bare metal hardware. As not
+all architectures share the exact same instruction encoding nor is there a univeral
+standard for reading and writing of bytes even on the exact same hardware there
+will be changes required for self-hosting versions of hex0 for those combinations.
+
+The reason for why the hex0_monitor exists is addressed in the question:
+"What are the differences Hex0_monitor makes if we already have a hex0 compiler?"
+
+* What is the purposes of stage0, stage1, ..., etc., respectively?
+The purpose of stage0 is to reduce the total number of assumed abilities you need
+to start the bootstrap chain down to the ability to set a handful of bytes in
+memory. Which generally means you have the ability to manually toggle bits into
+memory or a steady enough hand to flip bits in memory to your desired values.
+Assuming you have that ability, hex0_monitor which can be toggled into memory
+implements all the functionality you would need to start creating files and binaries
+which enable a complete bootstrap.
+The purpose of stage1 is to isolate out the pieces that need to assume you have
+all of the abilities of stage0 along with you having the ability to create text
+files and build hex0 binaries.
+The purpose of stage2 is to isolate out the pieces that require all of the
+functionality of the prior stages along with the ability to assume you have a
+working assembler, linker and tools for auditing of source code.
+The purpose of stage3 is to isolate out the pieces that require all of the
+functionality of the prior stages along with the ability to assume you have a
+working C compiler, FORTH interpreter and a lisp interpreter. Although you can
+reduce that assumption down to just a working C compiler as that appears to be
+easiest path forward.
+
+* If I'm the computer, what should I do to proceed the full process?
+Well, the most important question is what level of functionality you have available
+to you at this very second that you *trust* if the answer is nothing, then good
+news just start by toggling in hex0_monitor into memory. Once that is done we can
+begin by using it to write the source code of SET in stage1 onto disk and the first
+hex0 compiler which will then be used to build the SET line editor, which should
+be used to create the source code files for the rest of the bootstrap. The next
+piece you'll want to build is hex1 as hex0 is quite tedious to work in (especially
+calculating the offsets needed for jumps and calls). The next piece to build would
+be hex2 as it would eliminate the need to calculate the address of labels which
+is the second most tedious thing to do. To finish out stage1 we build M0 as it
+will give a rather useful assembly language.
+Once you have the functionality of stage1, we then should build cc_* (replace *
+with the architecture of your bootstrap) as it is the most useful bit of this
+entire stage. (You can build FORTH and lisp if you wish but they aren't as useful
+but were requested as being *magic bullets* to bootstrapping but they ended up
+being quite disappointing.)
+Finally after you have the functionality of stage2 we build a much more advanced
+C compiler and everything else as we can just leverage C and everything after that
+is just a technicality. (The building of mes.c and running mescc to build tcc is
+the only step you need to start the live-bootstrap chain to GCC.)
+
+* What is the ISA of stage0_monitor.hex0? x86 or RISC-V?
+The stage0_monitor.hex0 is written in the knight Instruction Set Architecture
+as are all of the pieces in the stage0, stage1 and stage2 folders in the root
+directory.
