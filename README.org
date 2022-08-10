@@ -67,7 +67,7 @@ This repository utilizes submodules, so you need to clone this repository using
 
 ** stage0
 The stage0 is the ultimate lowest level of bootstrap that is useful for systems
-without firmware, operating systems nor any other provided software functionality
+without firmware, operating systems nor any other provided software functionality.
 Those with such capabilities can skip this stage as it requires human input.
 
 *** Hex0_monitor
