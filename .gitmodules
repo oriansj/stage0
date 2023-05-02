@@ -4,3 +4,6 @@
 [submodule "seed"]
 	path = seed
 	url = https://github.com/oriansj/bootstrap-seeds
+[submodule "UEFI"]
+	path = UEFI
+	url = https://git.stikonas.eu/andrius/stage0-uefi.git
