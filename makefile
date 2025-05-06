@@ -44,7 +44,7 @@ vm-trace: vm.h vm_types.h vm_globals.c vm.c vm_instructions.c vm_halcode.c vm_de
 	$(CC) -DVM32=true -ggdb -Dtty_lib=true -DTRACE=true vm.c vm_globals.c vm_instructions.c vm_halcode.c vm_decode.c tty.c dynamic_execution_trace.c functions/require.c functions/file_print.c functions/match.c -o bin/vm
 
 # Build the roms
-ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp cc_x86 forth
+ALL-ROMS: stage0_monitor stage1_assembler-0 SET DEHEX stage1_assembler-1 stage1_assembler-2 M0 CAT lisp cc_x86 cc_aarch64 cc_amd64 cc_armv7l cc_knight-posix cc_knight-native forth
 
 stage0_monitor: vm stage0/stage0_monitor.hex0 | roms
 	./bin/vm --rom seed/NATIVE/knight/hex0-seed --tape_01 stage0/stage0_monitor.hex0 --tape_02 roms/stage0_monitor
@@ -85,10 +85,40 @@ lisp: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/lisp.s 
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 lisp_TEMP2 --tape_02 roms/lisp --memory 48K
 	rm lisp_TEMP lisp_TEMP2
 
+cc_aarch64: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_aarch64.s | roms
+	cat High_level_prototypes/defs stage2/cc_aarch64.s > cc_TEMP
+	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 9K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_aarch64 --memory 32K
+	rm cc_TEMP cc_TEMP2
+
+cc_amd64: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_amd64.s | roms
+	cat High_level_prototypes/defs stage2/cc_amd64.s > cc_TEMP
+	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 9K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_amd64 --memory 32K
+	rm cc_TEMP cc_TEMP2
+
+cc_armv7l: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_armv7l.s | roms
+	cat High_level_prototypes/defs stage2/cc_armv7l.s > cc_TEMP
+	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 9K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_armv7l --memory 32K
+	rm cc_TEMP cc_TEMP2
+
 cc_x86: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_x86.s | roms
 	cat High_level_prototypes/defs stage2/cc_x86.s > cc_TEMP
 	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 9K
 	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 32K
+	rm cc_TEMP cc_TEMP2
+
+cc_knight-posix: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_knight-posix.s | roms
+	cat High_level_prototypes/defs stage2/cc_knight-posix.s > cc_TEMP
+	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 9K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_knight-posix --memory 32K
+	rm cc_TEMP cc_TEMP2
+
+cc_knight-native: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/cc_knight-native.s | roms
+	cat High_level_prototypes/defs stage2/cc_knight-native.s > cc_TEMP
+	./bin/vm --rom roms/M0-compact --tape_01 cc_TEMP --tape_02 cc_TEMP2 --memory 9K
+	./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_knight-native --memory 32K
 	rm cc_TEMP cc_TEMP2
 
 forth: M0-compact stage1_assembler-2 vm High_level_prototypes/defs stage2/forth.s | roms

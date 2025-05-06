@@ -3096,6 +3096,22 @@ Missing ;
 :current_count
 	NOP
 
+:enum_error_open_curly
+"ERROR in enum
+Expected {
+"
+:enum_error_equal
+"ERROR in enum
+Expected =
+"
+:enum_error_close_curly
+"ERROR in enum
+Expected }
+"
+:enum_error_semi_colon
+"ERROR in enum
+Expected ;
+"
 
 ;; program function
 ;; Receives struct token_list* global_token in R13,
@@ -3112,6 +3128,64 @@ Missing ;
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
 :program_iter
+	JUMP.Z R13 @program_done    ; Looks like we read all the tokens
+
+	LOADUI R0 $enum             ; "enum"
+	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
+	CALLI R15 @match            ; Check if they match
+	JUMP.Z R0 @constant_value   ; Looks like not an enum
+
+	;; Deal with enum case
+	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	LOADUI R0 $enum_error_open_curly  ; Using "ERROR in enum\nExpected {"
+	LOADUI R1 $open_curly_brace       ; Checking for {
+	CALLI R15 @require_match          ; Require match and skip
+
+:enumerator
+	LOAD32 R0 R13 8                   ; GLOBAL_TOKEN->S
+	FALSE R1                          ; Set NULL
+	LOADR32 R2 @global_constant_list  ; GLOBAL_CONSTANTS_LIST
+	CALLI R15 @sym_declare
+	STORER32 R0 @global_constant_list ; global_constant_list = sym_declare(global_token->s, NULL, global_constant_list);
+
+	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	LOADUI R0 $enum_error_equal       ; Using "ERROR in enum\nExpected ="
+	LOADUI R1 $equal                  ; Checking for =
+	CALLI R15 @require_match          ; Require match and skip
+
+	LOADR32 R0 @global_constant_list  ; GLOBAL_CONSTANTS_LIST
+	STORE32 R13 R0 16                 ; GLOBAL_CONSTANT_LIST->ARGUMENTS = GLOBAL_TOKEN
+
+	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	LOAD32 R1 R13 8                   ; GLOBAL_TOKEN->S
+	LOADUI R0 $comma                  ; ","
+	CALLI R15 @match                  ; Check if they match
+	JUMP.Z R0 @enum_end               ; No comma means no more enumerators
+
+	;; Skip comma
+	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+
+	;; Check if there are more enumerators or if it was a trailing comma
+	LOAD32 R1 R13 8                   ; GLOBAL_TOKEN->S
+	LOADUI R0 $close_curly_brace      ; "}"
+	CALLI R15 @match                  ; Check if they match
+	JUMP.Z R0 @enumerator               ; More enumerators
+
+:enum_end
+	LOADUI R0 $enum_error_close_curly ; Using "ERROR in enum\nExpected }"
+	LOADUI R1 $close_curly_brace      ; Checking for }
+	CALLI R15 @require_match          ; Require match and skip
+
+	LOADUI R0 $enum_error_semi_colon  ; Using "ERROR in enum\nExpected ;"
+	LOADUI R1 $semicolon              ; Checking for ;
+	CALLI R15 @require_match          ; Require match and skip
+
+	JUMP @program_iter                ; Loop again
+
+:constant_value
 	JUMP.Z R13 @program_done    ; Looks like we read all the tokens
 	LOADUI R0 $constant         ; Using the constant string
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
@@ -4105,6 +4179,8 @@ Missing ;
 	"union"
 :struct
 	"struct"
+:enum
+	"enum"
 :constant
 	"CONSTANT"
 :main_string
@@ -4189,6 +4265,8 @@ Missing ;
 	"["
 :close_bracket
 	"]"
+:comma
+	","
 :semicolon
 	";"
 :equal
