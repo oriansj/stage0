@@ -1096,7 +1096,32 @@ struct token_list* program()
 
 new_type:
 	if (NULL == global_token) return out;
-	if(match("CONSTANT", global_token->s))
+	if(match("enum", global_token->s))
+	{
+		global_token = global_token->next;
+		require_match("ERROR in enum\nExpected {\n", "{");
+
+		do
+		{
+			global_constant_list = sym_declare(global_token->s, NULL, global_constant_list);
+			global_token = global_token->next;
+
+			require_match("ERROR in enum\nExpected =\n", "=");
+
+			global_constant_list->arguments = global_token;
+			global_token = global_token->next;
+
+			if(match(global_token->s, ","))
+			{
+				global_token = global_token->next;
+			}
+		}
+		while(!match(global_token->s, "}"));
+
+		require_match("ERROR in enum\nExpected }\n", "}");
+		require_match("ERROR in enum\nExpected ;\n", ";");
+	}
+	else if(match("CONSTANT", global_token->s))
 	{
 		global_token = global_token->next;
 		global_constant_list = sym_declare(global_token->s, NULL, global_constant_list);
