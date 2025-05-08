@@ -26,12 +26,12 @@ cc_amd64: cc_reader.c cc_strings.c cc_core.c cc.c cc_types.c cc.h
 	functions/numerate_number.c \
 	functions/file_print.c \
 	functions/string.c \
+	cc_globals.c \
 	cc_reader.c \
 	cc_strings.c \
 	cc_types.c \
 	cc_core.c \
 	cc.c \
-	cc.h \
 	gcc_req.h \
 	-o cc_amd64
 

@@ -18,9 +18,11 @@
 
 #include "cc.h"
 #include <stdint.h>
+extern char* hold_string;
+extern int string_index;
 
-struct token_list* emit(char *s, struct token_list* head);
-int char2hex(int c);
+extern struct token_list* emit(char *s, struct token_list* head);
+extern int char2hex(int c);
 
 char upcase(char a)
 {

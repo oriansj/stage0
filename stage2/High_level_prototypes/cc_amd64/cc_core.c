@@ -20,6 +20,12 @@
 #include "gcc_req.h"
 #include <stdint.h>
 
+extern struct type* global_types;
+extern struct type* prim_types;
+extern struct token_list* global_token;
+extern struct token_list* strings_list;
+extern struct token_list* globals_list;
+
 /* Global lists */
 struct token_list* global_symbol_list;
 struct token_list* global_function_list;
@@ -40,9 +46,9 @@ struct type* last_type;
 int Address_of;
 
 /* Imported functions */
-char* parse_string(char* string);
-int escape_lookup(char* c);
-char* numerate_number(int a);
+extern char* parse_string(char* string);
+extern int escape_lookup(char* c);
+extern char* numerate_number(int a);
 
 
 struct token_list* emit(char *s, struct token_list* head)

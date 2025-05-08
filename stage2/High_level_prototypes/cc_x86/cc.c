@@ -17,7 +17,12 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
-#include"cc.h"
+#include "cc.h"
+
+extern struct token_list* global_token;
+extern char* hold_string;
+extern struct token_list* strings_list;
+extern struct token_list* globals_list;
 
 /* The core functions */
 void initialize_types();

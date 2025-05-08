@@ -21,6 +21,10 @@ struct token_list* token;
 int line;
 char* file;
 
+extern char* hold_string;
+extern int string_index;
+
+
 int clearWhiteSpace(int c)
 {
 	if((32 == c) || (9 == c)) return clearWhiteSpace(fgetc(input));

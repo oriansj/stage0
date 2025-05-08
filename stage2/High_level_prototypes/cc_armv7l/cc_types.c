@@ -17,8 +17,12 @@
 
 #include "cc.h"
 #include <stdint.h>
-void line_error();
-int numerate_string(char *a);
+extern struct type* global_types;
+extern struct type* prim_types;
+extern struct token_list* global_token;
+
+extern void line_error();
+extern int numerate_string(char *a);
 
 /* Initialize default types */
 void initialize_types()

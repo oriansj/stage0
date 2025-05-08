@@ -17,17 +17,22 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<string.h>
-#include"cc.h"
+#include "cc.h"
+
+extern struct token_list* globals_list;
+extern struct token_list* global_token;
+extern struct token_list* strings_list;
+extern char* hold_string;
 
 /* The core functions */
-void initialize_types();
-struct token_list* read_all_tokens(FILE* a, struct token_list* current, char* filename);
-struct token_list* reverse_list(struct token_list* head);
-struct token_list* program();
-void recursive_output(struct token_list* i, FILE* out);
-int match(char* a, char* b);
-void file_print(char* s, FILE* f);
-char* parse_string(char* string);
+extern void initialize_types();
+extern struct token_list* read_all_tokens(FILE* a, struct token_list* current, char* filename);
+extern struct token_list* reverse_list(struct token_list* head);
+extern struct token_list* program();
+extern void recursive_output(struct token_list* i, FILE* out);
+extern int match(char* a, char* b);
+extern void file_print(char* s, FILE* f);
+extern char* parse_string(char* string);
 
 int main()
 {

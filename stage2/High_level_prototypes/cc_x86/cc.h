@@ -26,11 +26,11 @@
 #define TRUE 1
 // CONSTANT TRUE 1
 
-void file_print(char* s, FILE* f);
-int match(char* a, char* b);
-char* copy_string(char* target, char* source);
-void reset_hold_string();
-int in_set(int c, char* s);
+extern void file_print(char* s, FILE* f);
+extern int match(char* a, char* b);
+extern char* copy_string(char* target, char* source);
+extern void reset_hold_string();
+extern int in_set(int c, char* s);
 
 struct type
 {
@@ -65,17 +65,3 @@ struct token_list
 	};
 };
 
-/* What types we have */
-struct type* global_types;
-struct type* prim_types;
-
-/* What we are currently working on */
-struct token_list* global_token;
-
-/* Output reorder collections*/
-struct token_list* strings_list;
-struct token_list* globals_list;
-
-/* Make our string collection more efficient */
-char* hold_string;
-int string_index;

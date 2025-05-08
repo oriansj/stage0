@@ -20,6 +20,12 @@
 #include "gcc_req.h"
 #include <stdint.h>
 
+extern struct type* global_types;
+extern struct type* prim_types;
+extern struct token_list* global_token;
+extern struct token_list* strings_list;
+extern struct token_list* globals_list;
+
 /* Global lists */
 struct token_list* global_symbol_list;
 struct token_list* global_function_list;
