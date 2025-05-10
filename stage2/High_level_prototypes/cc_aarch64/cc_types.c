@@ -161,25 +161,6 @@ struct type* build_member(struct type* last, int offset)
 	return i;
 }
 
-struct type* build_union(struct type* last, int offset)
-{
-	int size = 0;
-	global_token = global_token->next;
-	require_match("ERROR in build_union\nMissing {\n", "{");
-	while('}' != global_token->s[0])
-	{
-		last = build_member(last, offset);
-		if(member_size > size)
-		{
-			size = member_size;
-		}
-		require_match("ERROR in build_union\nMissing ;\n", ";");
-	}
-	member_size = size;
-	global_token = global_token->next;
-	return last;
-}
-
 void create_struct()
 {
 	int offset = 0;
@@ -198,14 +179,7 @@ void create_struct()
 	struct type* last = NULL;
 	while('}' != global_token->s[0])
 	{
-		if(match(global_token->s, "union"))
-		{
-			last = build_union(last, offset);
-		}
-		else
-		{
-			last = build_member(last, offset);
-		}
+        last = build_member(last, offset);
 		offset = offset + member_size;
 		require_match("ERROR in create_struct\n Missing ;\n", ";");
 	}
