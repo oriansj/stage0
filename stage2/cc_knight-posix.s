@@ -354,8 +354,7 @@
 	JUMP @get_token_done        ; Finish off the token
 
 	;; Looks like it was //
-	FGETC                       ; Get next char
-	JUMP @get_token_reset       ; Try again
+	JUMP @purge_macro           ; Discard all until newline
 
 	;; Deal with the mess that is C block comments
 :get_token_comment_block
@@ -3174,7 +3173,7 @@ Expected ;
 	LOADUI R0 $enum             ; "enum"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if they match
-	JUMP.Z R0 @constant_value   ; Looks like not an enum
+	JUMP.Z R0 @program_type     ; Looks like not an enum
 
 	;; Deal with enum case
 	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
@@ -3225,26 +3224,6 @@ Expected ;
 	CALLI R15 @require_match          ; Require match and skip
 
 	JUMP @program_iter                ; Loop again
-
-:constant_value
-	JUMP.Z R13 @program_done    ; Looks like we read all the tokens
-	LOADUI R0 $constant         ; Using the constant string
-	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
-	CALLI R15 @match            ; Check if they match
-	JUMP.Z R0 @program_type     ; Looks like not
-
-	;; Deal with CONSTANT case
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
-	FALSE R1                    ; Set NULL
-	LOADR32 R2 @global_constant_list ; GLOBAL_CONSTANTS_LIST
-	CALLI R15 @sym_declare      ; Declare the global constant
-	STORER32 R0 @global_constant_list ; Update global constant
-
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	STORE32 R13 R0 16           ; GLOBAL_CONSTANT_LIST->ARGUMENTS = GLOBAL_TOKEN
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	JUMP @program_iter          ; Loop again
 
 :program_type
 	CALLI R15 @type_name        ; Get the type
@@ -4227,8 +4206,6 @@ Missing ;
 	"struct"
 :enum
 	"enum"
-:constant
-	"CONSTANT"
 :main_string
 	"main"
 :argc_string

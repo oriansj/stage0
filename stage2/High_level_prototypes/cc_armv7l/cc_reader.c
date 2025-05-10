@@ -170,7 +170,7 @@ reset:
 		}
 		else if(c == '/')
 		{
-			c = fgetc(input);
+			c = purge_macro(c);
 			goto reset;
 		}
 	}
