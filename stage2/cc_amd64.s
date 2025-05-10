@@ -354,8 +354,7 @@
 	JUMP @get_token_done        ; Finish off the token
 
 	;; Looks like it was //
-	FGETC                       ; Get next char
-	JUMP @get_token_reset       ; Try again
+	JUMP @purge_macro           ; Discard all until newline
 
 	;; Deal with the mess that is C block comments
 :get_token_comment_block
@@ -3133,7 +3132,7 @@ Expected ;
 	LOADUI R0 $enum             ; "enum"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if they match
-	JUMP.Z R0 @constant_value   ; Looks like not an enum
+	JUMP.Z R0 @program_type     ; Looks like not an enum
 
 	;; Deal with enum case
 	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
@@ -3184,26 +3183,6 @@ Expected ;
 	CALLI R15 @require_match          ; Require match and skip
 
 	JUMP @program_iter                ; Loop again
-
-:constant_value
-	JUMP.Z R13 @program_done    ; Looks like we read all the tokens
-	LOADUI R0 $constant         ; Using the constant string
-	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
-	CALLI R15 @match            ; Check if they match
-	JUMP.Z R0 @program_type     ; Looks like not
-
-	;; Deal with CONSTANT case
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
-	FALSE R1                    ; Set NULL
-	LOADR32 R2 @global_constant_list ; GLOBAL_CONSTANTS_LIST
-	CALLI R15 @sym_declare      ; Declare the global constant
-	STORER32 R0 @global_constant_list ; Update global constant
-
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	STORE32 R13 R0 16           ; GLOBAL_CONSTANT_LIST->ARGUMENTS = GLOBAL_TOKEN
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	JUMP @program_iter          ; Loop again
 
 :program_type
 	CALLI R15 @type_name        ; Get the type
@@ -3790,58 +3769,6 @@ LOAD_INTEGER
 "
 
 
-;; build_union function
-;; Receives a struct type* in R0, int in R1 and int in R2
-;; R13 Holds pointer to global_token, R14 is HEAP Pointer
-;; Modifies R2 to current member_size
-;; Returns struct type* in R0
-:build_union
-	PUSHR R3 R15                ; Protect R3
-	PUSHR R4 R15                ; Protect R4
-	PUSHR R5 R15                ; Protect R5
-	MOVE R4 R0                  ; Protect LAST
-	MOVE R3 R1                  ; Protect OFFSET
-	FALSE R5                    ; SIZE = 0
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	LOADUI R0 $build_union_string0 ; ERROR MESSAGE
-	LOADUI R1 $open_curly_brace ; OPEN CURLY BRACE
-	CALLI R15 @require_match    ; Ensure we have that curly brace
-:build_union_iter
-	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
-	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
-	LOADUI R1 125               ; numerical value of }
-	CMPJUMPI.E R0 R1 @build_union_done ; No more looping required
-	MOVE R0 R4                  ; We are passing last to be overwritten
-	MOVE R1 R3                  ; We are also passing OFFSET
-	CALLI R15 @build_member     ; To build_member to get new LAST and new member_size
-	CMPSKIP.LE R2 R5            ; If MEMBER_SIZE > SIZE
-	COPY R5 R2                  ; SIZE = MEMMER_SIZE
-	MOVE R4 R0                  ; Protect LAST
-	MOVE R3 R1                  ; Protect OFFSET
-	LOADUI R0 $build_union_string1 ; ERROR MESSAGE
-	LOADUI R1 $semicolon        ; SEMICOLON
-	CALLI R15 @require_match    ; Ensure we have that curly brace
-	JUMP @build_union_iter      ; Loop until we get that closing curly brace
-:build_union_done
-	MOVE R2 R5                  ; Setting MEMBER_SIZE = SIZE
-	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
-	MOVE R1 R3                  ; Restore OFFSET
-	MOVE R0 R4                  ; Restore LAST as we are turning that
-	POPR R5 R15                 ; Restore R5
-	POPR R4 R15                 ; Restore R4
-	POPR R3 R15                 ; Restore R3
-	RET R15
-
-:build_union_string0
-"ERROR in build_union
-Missing {
-"
-:build_union_string1
-"ERROR in build_union
-Missing ;
-"
-
-
 ;; create_struct function
 ;; Receives Nothing
 ;; R13 Holds pointer to global_token, R14 is HEAP Pointer
@@ -3880,19 +3807,13 @@ Missing ;
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	LOADUI R1 125               ; Numerical value of }
 	CMPJUMPI.E R0 R1 @create_struct_done ; Stop looping if match
-	LOADUI R1 $union            ; Pointer to string UNION
-	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
-	CALLI R15 @match            ; Check if they Match
-	SWAP R0 R6                  ; Put LAST in place
-	MOVE R1 R5                  ; Put OFFSET in place
-	JUMP.NZ R6 @create_struct_union ; Deal with union case
 
 	;; Deal with standard member case
+	SWAP R0 R6                  ; Put LAST in place
+	MOVE R1 R5                  ; Put OFFSET in place
+
 	CALLI R15 @build_member     ; Sets new LAST and MEMBER_SIZE
 	JUMP @create_struct_iter2   ; reset for loop
-
-:create_struct_union
-	CALLI R15 @build_union
 
 :create_struct_iter2
 	ADD R5 R1 R2                ; OFFSET = OFFSET + MEMBER_SIZE
@@ -4175,14 +4096,10 @@ Missing ;
 
 
 ;; Keywords
-:union
-	"union"
 :struct
 	"struct"
 :enum
 	"enum"
-:constant
-	"CONSTANT"
 :main_string
 	"main"
 :argc_string

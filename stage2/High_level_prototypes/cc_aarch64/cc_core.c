@@ -1081,7 +1081,6 @@ void declare_function()
  *     declaration program
  *
  * declaration:
- *     CONSTANT identifer value
  *     type-name identifier ;
  *     type-name identifier ( parameter-list ) ;
  *     type-name identifier ( parameter-list ) statement
@@ -1126,13 +1125,6 @@ new_type:
 
 		require_match("ERROR in enum\nExpected }\n", "}");
 		require_match("ERROR in enum\nExpected ;\n", ";");
-	}
-	else if(match("CONSTANT", global_token->s))
-	{
-		global_token = global_token->next;
-		global_constant_list = sym_declare(global_token->s, NULL, global_constant_list);
-		global_constant_list->arguments = global_token->next;
-		global_token = global_token->next->next;
 	}
 	else
 	{
