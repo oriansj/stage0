@@ -21,9 +21,9 @@
 
 void file_print(char* s, FILE* f);
 
-void require(int bool, char* error)
+void require(int condition, char* error)
 {
-	if(!bool)
+	if(!condition)
 	{
 		file_print(error, stderr);
 		exit(EXIT_FAILURE);
