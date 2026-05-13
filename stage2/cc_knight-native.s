@@ -126,6 +126,8 @@
 :consume_byte
 	STOREX8 R0 R14 R13          ; Put char onto HEAP
 	ADDUI R13 R13 1             ; Increment index
+	FALSE R0                    ; NULL terminate string
+	STOREX8 R0 R14 R13          ; Put NULL onto HEAP
 	FGETC                       ; Get next char
 	RET R15
 

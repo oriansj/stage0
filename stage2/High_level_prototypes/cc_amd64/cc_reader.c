@@ -40,6 +40,7 @@ int consume_byte(int c)
 {
 	hold_string[string_index] = c;
 	string_index = string_index + 1;
+	hold_string[string_index] = 0;
 	return fgetc(input);
 }
 
