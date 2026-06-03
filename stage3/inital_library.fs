@@ -244,3 +244,57 @@ CREATE LINE-SIZE CELL ,
 \ addr n char --
 : FILL   >R BOUNDS BEGIN 2DUP > WHILE DUP R@ C! 1 + REPEAT 2DROP R> DROP ;
 : <> != ;
+
+\ Software stacks
+\ <https://www.forth.org/svfig/Len/softstak.htm>
+\
+\ They're used here for linear processing, replacing recursion.
+
+: JOIN ( ab cd width -- abcd ) ROT SWAP LSHIFT SWAP OR ;
+: ->WORD 8 JOIN ;
+: ->CELL 16 JOIN ;
+
+: CUT ( abcd -- ab cd )
+  DUP 0xFF00 AND 8 RSHIFT
+  SWAP 0xFF AND ;
+
+: GLUED ( ab cd ef gh -- abcdefgh )
+  ->WORD -ROT ->WORD SWAP ->CELL ;
+: PIECES ( abcdefgh -- ab cd ef gh )
+  DUP 16 RSHIFT CUT ROT CUT ;
+
+VARIABLE _TMP
+: >C! SWAP +C! ;
+: C!> 1 - DUP C@ SWAP ;
+: LIFO ( -- addr) PAD 100 CELLS ALLOT ;
+: PUSH ( addr x -- addr )
+  SWAP _TMP ! PIECES _TMP @
+  >C! >C! >C! >C! ;
+: POP ( addr -- addr x )
+  C!> C!> C!> C!>
+  _TMP ! GLUED _TMP @ SWAP ;
+: >L ( x lifo -- lifo ) SWAP PUSH ;
+: L> ( lifo -- x lifo ) POP SWAP ;
+
+VARIABLE _COUNT
+: >STR ( a b c ... N -- ... c b a N ) ( lifo )
+  DUP _COUNT !
+  LIFO SWAP BEGIN DUP 0 > WHILE
+ 	      SWAP ROT PUSH SWAP 1 - REPEAT
+  DROP _COUNT @ PUSH ;
+
+: STR>
+  POP DUP _COUNT !
+  SWAP BEGIN OVER 0 > WHILE
+	 POP -ROT SWAP 1 - SWAP REPEAT
+  2DROP _COUNT @ ;
+
+VARIABLE _ROLL?
+VARIABLE _ITEM
+: PICK ( xn-1 ... x0 i -- xn-1 ... x0 xi )
+  1 + >STR L> L> OVER _ITEM !
+  _ROLL? @ IF SWAP DROP SWAP 1 - SWAP ELSE >L THEN >L
+  STR> DROP _ITEM @ ;
+
+: ROLL ( xn-1 ... x0 i -- xn-1 ... xi-1 xi+1 ... x0 xi )
+  -1 _ROLL? ! PICK 0 _ROLL? ! ;
