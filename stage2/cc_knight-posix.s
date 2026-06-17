@@ -146,9 +146,14 @@
 	FALSE R3                    ; Looks like we are no longer in an escape
 :consume_word_iter2
 	CALLI R15 @consume_byte     ; Store the char
+	CMPSKIPI.L R0 0             ; If we hit EOF
+	JUMP @consume_word_has_char ; Continue if not EOF
+	JUMP @consume_word_done     ; Stop if the string was not closed
+:consume_word_has_char
 	JUMP.NZ R3 @consume_word_reset        ; If escape loop
 	CMPJUMPI.NE R0 R2 @consume_word_reset ; if not matching frequent loop
 	FGETC                       ; Get a new char to return
+:consume_word_done
 	POPR R3 R15                 ; Restore R3
 	RET R15
 
@@ -281,6 +286,10 @@
 ;; Receives a Char in R0, FILE* in R1 and index in R13
 ;; Returns next CHAR via jumping to get_token_reset
 :purge_macro
+	CMPSKIPI.L R0 0             ; Check for EOF
+	JUMP @purge_macro_check_lf  ; Continue if not EOF
+	JUMP @get_token_EOF         ; Done if EOF
+:purge_macro_check_lf
 	CMPSKIPI.NE R0 10           ; Check for Line Feed
 	JUMP @get_token_reset       ; Looks like we found it, call it done
 
@@ -361,6 +370,9 @@
 	;; Deal with the mess that is C block comments
 :get_token_comment_block
 	FGETC                       ; Get next char
+	CMPSKIPI.L R0 0             ; Check for EOF
+	JUMP @get_token_comment_block_outer ; Continue if not EOF
+	JUMP @get_token_EOF         ; Stop if the comment was not closed
 :get_token_comment_block_outer
 	CMPSKIPI.NE R0 47           ; Check for closing /
 	JUMP @get_token_comment_block_outer_done ; Yep has closing /
@@ -370,12 +382,20 @@
 
 	;; Otherwise we are just consuming
 	FGETC                       ; Remove another CHAR
+	CMPSKIPI.L R0 0             ; Check for EOF
+	JUMP @get_token_comment_block_inner_continue ; Continue if not EOF
+	JUMP @get_token_EOF         ; Stop if the comment was not closed
+:get_token_comment_block_inner_continue
 	CMPSKIPI.NE R0 10           ; Check for Line Feed
 	ADDUI R11 R11 1             ; Found one, updating line number
 	JUMP @get_token_comment_block_inner
 
 :get_token_comment_block_inner_done
 	FGETC                       ; Remove another CHAR
+	CMPSKIPI.L R0 0             ; Check for EOF
+	JUMP @get_token_comment_block_outer_continue ; Continue if not EOF
+	JUMP @get_token_EOF         ; Stop if the comment was not closed
+:get_token_comment_block_outer_continue
 	CMPSKIPI.NE R0 10           ; Check for Line Feed
 	ADDUI R11 R11 1             ; Found one, updating line number
 	JUMP @get_token_comment_block_outer
@@ -812,6 +832,7 @@ Missing )
 	JUMP.Z R0 @variable_load_regular ; Nope
 
 	LOADUI R0 $open_paren       ; Using "("
+	JUMP.Z R13 @variable_load_regular ; EOF means not a function call
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF "(" == GLOBAL_TOKEN->S
 	JUMP.Z R0 @variable_load_regular ; Nope
@@ -837,6 +858,7 @@ Missing )
 
 	;; check for special case 1
 	LOADUI R0 $equal            ; Using "="
+	JUMP.Z R13 @variable_load_done ; EOF means not an assignment
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
 	JUMP.NZ R0 @variable_load_done ; Be done
@@ -866,6 +888,7 @@ Missing )
 	LOAD32 R0 R0 8              ; A->S
 	PUSHR R0 R15                ; Protect A->S
 	LOADUI R0 $open_paren       ; Using "("
+	JUMP.Z R13 @function_load_regular ; EOF means address load
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; If GLOBAL_TOKEN->S == "("
 	JUMP.Z R0 @function_load_regular ; If not do the simple thing
@@ -912,6 +935,7 @@ JUMP 4
 
 	PUSHR R1 R15                ; Protect R1
 	LOADUI R0 $equal            ; Using "="
+	JUMP.Z R13 @global_load_done ; EOF means not an assignment
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
 	JUMP.NZ R0 @global_load_done ; Skip the following
@@ -957,6 +981,15 @@ JUMP 4
 :primary_expr_failure_string1
 	" in primary_expr
 "
+
+
+;; require_global_token function
+;; Aborts if global_token is NULL before callers dereference it
+:require_global_token
+	JUMP.NZ R13 @require_global_token_done
+	HALT
+:require_global_token_done
+	RET R15
 
 
 ;; primary_expr_string function
@@ -1273,6 +1306,7 @@ JUMP 4
 	MOVE R2 R0                  ; Protect F
 	COPY R1 R8                  ; LAST_TYPE = CURRENT_TARGET
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Ensure RHS token is not EOF
 
 	LOADUI R0 $common_recursion_string0 ; Header string
 	CALLI R15 @emit_out         ; Our header
@@ -1313,6 +1347,7 @@ JUMP 4
 	PUSHR R1 R15                ; Protect S
 	PUSHR R0 R15                ; Protect F
 	COPY R0 R2                  ; Using NAME
+	JUMP.Z R13 @general_recursion_done ; EOF means no matching operator
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == NAME
 	JUMP.Z R0 @general_recursion_done
@@ -1380,11 +1415,13 @@ JUMP 4
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 
 	COPY R0 R8                  ; Passing CURRENT_TARGET
+	CALLI R15 @require_global_token ; Abort on missing member name
 	LOAD32 R1 R13 8             ; Using GLOBAL_TOKEN->S
 	CALLI R15 @lookup_member    ; Look it up
 	LOAD32 R2 R0 4              ; Protect I->SIZE
 	LOAD32 R8 R0 20             ; CURRENT_TARGET = I->TYPE
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP.Z R13 @postfix_expr_arrow_done ; EOF means not an assignment
 
 	LOAD32 R1 R0 8              ; I->OFFSET
 	JUMP.Z R1 @postfix_expr_arrow_offset ; If no offset needed skip the work
@@ -1404,6 +1441,7 @@ JUMP 4
 
 :postfix_expr_arrow_offset
 	LOADUI R0 $equal            ; Using "="
+	JUMP.Z R13 @postfix_expr_arrow_done ; EOF means not an assignment
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
 	JUMP.NZ R0 @postfix_expr_arrow_done
@@ -1481,12 +1519,14 @@ JUMP 4
 	LOADUI R1 $close_bracket    ; Using "]"
 	CALLI R15 @require_match    ; Ensure match
 
+	JUMP.Z R13 @postfix_expr_array_done ; EOF means not an assignment
 	LOADUI R0 $equal            ; Using "="
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
 	CMPSKIPI.E R0 0             ; If match
 	LOADUI R2 $postfix_expr_array_string5 ; empty string
 
+:postfix_expr_array_done
 	MOVE R0 R2                  ; What ever string survived
 	CALLI R15 @emit_out         ; emit it
 
@@ -1528,6 +1568,7 @@ Missing ]
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 
+	JUMP.Z R13 @postfix_expr_stub_done ; EOF means no postfix operator
 	LOADUI R0 $open_bracket     ; Using "["
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "["
@@ -1837,6 +1878,7 @@ MOVE R0 R2
 :primary_expr
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOADUI R0 $sizeof_string    ; Load "sizeof"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "sizeof"
@@ -1952,6 +1994,7 @@ Didn't get )
 	PUSHR R2 R15                ; Protect R2
 	PUSHR R3 R15                ; Protect R3
 	CALLI R15 @bitwise_expr     ; Check for more primitives first
+	JUMP.Z R13 @expression_done  ; EOF means not an assignment
 	LOADUI R0 $equal            ; Using "="
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "="
@@ -2049,6 +2092,8 @@ Didn't get )
 	CALLI R15 @emit_out         ; emit it
 	LOAD32 R0 R9 8              ; FUNCTION->S
 	CALLI R15 @uniqueID_out     ; Add unique identifier
+
+	JUMP.Z R13 @process_if_else  ; EOF means no else to process
 
 	LOADUI R0 $else_string      ; Using "else"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
@@ -2226,6 +2271,7 @@ MISSING )
 	LOADUI R0 $process_for_string11 ; Our final error message
 	LOADUI R1 $close_paren      ; Using ")"
 	CALLI R15 @require_match    ; Verify match
+	CALLI R15 @require_global_token ; Ensure for body is not EOF
 	CALLI R15 @statement        ; Main body
 
 	LOADUI R0 $process_for_string12 ; Our comment header
@@ -2467,6 +2513,7 @@ MISSING )
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	CMPSKIPI.E R0 59            ; IF GLOBAL_TOKEN->S[0] == ';'
@@ -2603,6 +2650,7 @@ Missing ;
 	CALLI R15 @require_match    ; Make sure of our required match
 
 :process_asm_iter
+	JUMP.Z R13 @process_asm_done ; Missing ) will be reported below
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	CMPSKIPI.E R0 34            ; IF GLOBAL_TOKEN->S[0] == '"'
@@ -2662,6 +2710,7 @@ MISSING ;
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	LOAD32 R3 R9 4              ; FRAME = FUNCTION->LOCALS
 :recursive_statement_iter
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	LOADUI R0 $close_curly_brace ; '}'
 	CALLI R15 @match            ; IF GLOBAL_TOKEN->S == "}"
@@ -2715,6 +2764,7 @@ MISSING ;
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R2 0              ; GLOBAL_TOKEN->S[0]
 	CMPSKIPI.E R0 123           ; If GLOBAL_TOKEN->S[0] != '{'
@@ -2801,6 +2851,7 @@ MISSING ;
 
 	;; Deal with goto label:
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Require a label after goto
 	LOADUI R0 $statement_string1 ; Using our JUMP string
 	CALLI R15 @emit_out         ; emit it
 
@@ -2895,6 +2946,7 @@ MISSING ;
 	PUSHR R2 R15                ; Protect R2
 	CALLI R15 @type_name        ; Get it's type
 	MOVE R1 R0                  ; Prepare for call
+	CALLI R15 @require_global_token ; Missing local name
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOAD32 R2 R9 4              ; FUNC->LOCALS
 	CALLI R15 @sym_declare      ; SET A
@@ -2952,6 +3004,7 @@ MISSING ;
 	CALLI R15 @emit_out         ; emit it
 
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP.Z R13 @collect_local_nonassign ; Missing ; will be reported below
 
 	;; Deal with possible assignment
 	LOADUI R0 $equal            ; Using "="
@@ -3006,6 +3059,7 @@ Missing ;
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 :collect_arguments_iter
 	LOADUI R0 $close_paren      ; Using ")"
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
@@ -3015,6 +3069,7 @@ Missing ;
 	;; Collect the arguments
 	CALLI R15 @type_name        ; Get what type we are working with
 	MOVE R1 R0                  ; Put TYPE where it will be used
+	CALLI R15 @require_global_token ; Ensure argument token exists
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	CMPSKIPI.NE R0 41           ; IF GLOBAL_TOKEN->S[0] == ')'
@@ -3079,6 +3134,7 @@ Missing ;
 	STORER32 R0 @global_function_list ; GLOBAL_FUNCTION_LIST = FUNC
 	MOVE R9 R0                  ; SETS FUNC
 	CALLI R15 @collect_arguments ; Collect function arguments
+	CALLI R15 @require_global_token ; Ensure prototype or body token exists
 	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R2 0              ; GLOBAL_TOKEN->S[0]
 	CMPSKIPI.NE R0 59           ; IF GLOBAL_TOKEN->S[0] == ';'
@@ -3185,6 +3241,7 @@ Expected ;
 	CALLI R15 @require_match          ; Require match and skip
 
 :enumerator
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOAD32 R0 R13 8                   ; GLOBAL_TOKEN->S
 	FALSE R1                          ; Set NULL
 	LOADR32 R2 @global_constant_list  ; GLOBAL_CONSTANTS_LIST
@@ -3197,10 +3254,12 @@ Expected ;
 	LOADUI R1 $equal                  ; Checking for =
 	CALLI R15 @require_match          ; Require match and skip
 
+	CALLI R15 @require_global_token ; Ensure enum value exists
 	LOADR32 R0 @global_constant_list  ; GLOBAL_CONSTANTS_LIST
 	STORE32 R13 R0 16                 ; GLOBAL_CONSTANT_LIST->ARGUMENTS = GLOBAL_TOKEN
 
 	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP.Z R13 @enum_end               ; Let enum_end report missing }
 
 	LOAD32 R1 R13 8                   ; GLOBAL_TOKEN->S
 	LOADUI R0 $comma                  ; ","
@@ -3209,6 +3268,7 @@ Expected ;
 
 	;; Skip comma
 	LOAD32 R13 R13 0                  ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP.Z R13 @enum_end               ; Let enum_end report missing }
 
 	;; Check if there are more enumerators or if it was a trailing comma
 	LOAD32 R1 R13 8                   ; GLOBAL_TOKEN->S
@@ -3230,6 +3290,7 @@ Expected ;
 :program_type
 	CALLI R15 @type_name        ; Get the type
 	JUMP.Z R0 @program_iter     ; If newly defined type iterate
+	CALLI R15 @require_global_token ; Missing declarator
 
 	;; Looks like we got a defined type
 	MOVE R1 R0                  ; Put the type where it can be used
@@ -3241,6 +3302,7 @@ Expected ;
 
 	LOAD32 R3 R13 8             ; GLOBAL_TOKEN->S
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP.Z R13 @program_error    ; Missing ; or function body
 	LOADUI R0 $semicolon        ; Get semicolon string
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if they match
@@ -3284,6 +3346,7 @@ Expected ;
 	CALLI R15 @emit             ; emit it
 	MOVE R10 R0                 ; Update GLOBALS_LIST
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Ensure global initializer exists
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	LOADUI R1 $digit_chars      ; 0-9
@@ -3324,6 +3387,7 @@ Expected ;
 	JUMP @program_iter
 
 :program_error
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOADUI R0 $program_string2  ; message part 1
 	FALSE R1                    ; Show to user
 	CALLI R15 @file_print       ; write
@@ -3414,6 +3478,7 @@ Missing ;
 	LOADUI R1 $open_paren       ; Using "("
 	CALLI R15 @require_match    ; Make sure of a match
 
+	CALLI R15 @require_global_token ; Ensure argument list is present
 	FALSE R4                    ; PASSED = 0
 	LOADUI R0 $function_call_string1 ; Our first header
 	CALLI R15 @emit_out         ; emit it
@@ -3441,6 +3506,7 @@ Missing ;
 
 	;; Collect another argument
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Ensure argument follows comma
 	CALLI R15 @expression       ; Deal with Nth argument
 	LOADUI R0 $function_call_string5 ; Push it onto stack
 	CALLI R15 @emit_out         ; emit it
@@ -3769,6 +3835,7 @@ CALL R0 R15
 	MOVE R4 R0                  ; Protect LAST
 	CALLI R15 @type_name        ; Get MEMBER_TYPE
 	MOVE R5 R0                  ; Protect MEMBER_TYPE
+	CALLI R15 @require_global_token ; Ensure member name exists
 	ADDUI R3 R14 28             ; CALLOC struct type
 	SWAP R3 R14                 ; SET I
 
@@ -3776,6 +3843,7 @@ CALL R0 R15
 	STORE32 R0 R3 24            ; I->NAME = GLOBAL_TOKEN->S
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
 	STORE32 R4 R3 16            ; I->MEMBERS = LAST
+	JUMP.Z R13 @build_member_single ; Missing ; will be reported by caller
 
 	LOADUI R0 $open_bracket     ; Using "["
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
@@ -3784,6 +3852,13 @@ CALL R0 R15
 
 	;; Deal with type name [ number ] ;
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Require an array size after [
+	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
+	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
+	LOADUI R1 48                ; Low digit
+	CMPJUMPI.L R0 R1 @build_member_array_bad_size
+	LOADUI R1 57                ; High digit
+	CMPJUMPI.L R1 R0 @build_member_array_bad_size
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @numerate_string  ; Convert string to int NUMBER
 	LOAD32 R1 R5 20             ; MEMBER_TYPE->TYPE
@@ -3795,6 +3870,9 @@ CALL R0 R15
 	LOADUI R1 $close_bracket    ; Using "]"
 	CALLI R15 @require_match    ; Make sure it is right
 	JUMP @build_member_done     ; Skip over single steps
+
+:build_member_array_bad_size
+	HALT
 
 :build_member_single
 	LOAD32 R0 R5 4              ; MEMBER_TYPE->SIZE
@@ -3833,6 +3911,7 @@ CALL R0 R15
 	FALSE R2                    ; MEMBER_SIZE = 0
 	COPY R3 R14                 ; SET HEAD
 	ADDUI R14 R14 28            ; CALLOC struct type
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	COPY R4 R14                 ; SET I
 	ADDUI R14 R14 28            ; CALLOC struct type
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
@@ -3851,6 +3930,7 @@ CALL R0 R15
 	CALLI R15 @require_match    ; Ensure we have that curly brace
 	FALSE R6                    ; LAST = NULL
 :create_struct_iter
+	CALLI R15 @require_global_token ; Ensure struct member or } exists
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R0 R0 0              ; GLOBAL_TOKEN->S[0]
 	LOADUI R1 125               ; Numerical value of }
@@ -3905,11 +3985,13 @@ Missing ;
 :type_name
 	PUSHR R1 R15                ; Protect R1
 	PUSHR R2 R15                ; Protect R2
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOADUI R0 $struct           ; String for struct for comparison
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if they match
 	CMPSKIPI.E R0 0             ; If STRUCTURE
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	CALLI R15 @require_global_token ; Ensure type name exists
 	LOAD32 R2 R13 8             ; GLOBAL_TOKEN->S
 	LOADR32 R1 @global_types    ; Check using the GLOBAL TYPES LIST
 	SWAP R0 R2                  ; Put GLOBAL_TOKEN->S in the right place
@@ -3936,6 +4018,7 @@ Missing ;
 
 :type_name_iter
 	LOAD32 R13 R13 0            ; GLOBAL_TOKEN = GLOBAL_TOKEN->NEXT
+	JUMP.Z R13 @type_name_done        ; EOF means no more pointer markers
 	LOAD32 R1 R13 8             ; GLOBAL_TOKEN->S
 	LOADU8 R1 R1 0              ; GLOBAL_TOKEN->S[0]
 	CMPSKIPI.E R1 42            ; if GLOBAL_TOKEN->S[0] == '*'
@@ -3981,6 +4064,7 @@ Missing ;
 	PUSHR R0 R15                ; Protect R0
 	PUSHR R2 R15                ; Protect R2
 	MOVE R2 R0                  ; Get MESSAGE out of the way
+	CALLI R15 @require_global_token ; Ensure global_token is not EOF
 	LOAD32 R0 R13 8             ; GLOBAL_TOKEN->S
 	CALLI R15 @match            ; Check if GLOBAL_TOKEN->S == REQUIRED
 	JUMP.NZ R0 @require_match_done ; Looks like it was a match
