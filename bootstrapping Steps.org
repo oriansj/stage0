@@ -194,7 +194,7 @@ Then we use our M0 Line macro assembler to convert our assembly into hex2 format
 Then we need to assemble that hex into our desired program:
 ./bin/vm --rom roms/stage1_assembler-2 --tape_01 cc_TEMP2 --tape_02 roms/cc_x86 --memory 48K
 
-roms/cc_x86 should with the sha256sum of 20bb83238f4692f6062e5b47530fdbd1f60dcf94f9d62b724176941931127a9f
+roms/cc_x86 should with the sha256sum of 90c82617821e45c6d136d4f69459e9543f1cd3f1ace81eeb41404143f12c8e9f
 
 Our C compiler will read any code in tape_01 and output the compiled output to tape_02.
 The compiled output is macro assembly (allowing for easy inspection) which then must go through the appropriate macro assembler and hex2 steps to become a working binary.
