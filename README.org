@@ -229,8 +229,8 @@ bootstrapping M2-Planet on x86 hardware.
 This work wouldn't have come so far without the inspirational work of others
 They are in alphabetical order of the Author's last names
 
-GRIMLEY EVANS, Edmund - bcompiler [http://homepage.ntlworld.com/edmund.grimley-evans/bcompiler.html] :: The inspiration for hex0, hex1 and hex2
-GRIMLEY EVANS, Edmund - cc500 [http://homepage.ntlworld.com/edmund.grimley-evans/cc500] :: The inspiration for M2-Planet
+GRIMLEY EVANS, Edmund - bcompiler [https://github.com/smtlaissezfaire/bcompiler] :: The inspiration for hex0, hex1 and hex2
+GRIMLEY EVANS, Edmund - cc500 [https://github.com/8l/cc500] :: The inspiration for M2-Planet
 Jones, Richard W.M. - jonesforth [http://git.annexia.org/?p=jonesforth.git] :: The inspiration for stage2 FORTH and initial_library
 Piner, Steve and Deutsch, L. Peter - Expensive Typewriter [http://archive.computerhistory.org/resources/text/DEC/pdp-1/DEC.pdp_1.1972.102650079.pdf] :: The inspiration for SET
-kragensitaker - The Monitor [https://old.reddit.com/r/programming/comments/9x15g/programming_thought_experiment_stuck_in_a_room/c0ewj2c/] :: The inspiration for the hex0-monitor
+kragensitaker - The Monitor [https://reddit.com/r/programming/comments/9x15g/programming_thought_experiment_stuck_in_a_room/c0ewj2c/] :: The inspiration for the hex0-monitor
